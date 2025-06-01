@@ -1,0 +1,26 @@
+{
+  &quot;short_name&quot;: &quot;12K&quot;,
+  &quot;name&quot;: &quot;12K - Your 12-Week Transformation&quot;,
+  &quot;icons&quot;: [
+    {
+      &quot;src&quot;: &quot;favicon.ico&quot;,
+      &quot;sizes&quot;: &quot;64x64 32x32 24x24 16x16&quot;,
+      &quot;type&quot;: &quot;image/x-icon&quot;
+    },
+    {
+      &quot;src&quot;: &quot;logo192.png&quot;,
+      &quot;type&quot;: &quot;image/png&quot;,
+      &quot;sizes&quot;: &quot;192x192&quot;
+    },
+    {
+      &quot;src&quot;: &quot;logo512.png&quot;,
+      &quot;type&quot;: &quot;image/png&quot;,
+      &quot;sizes&quot;: &quot;512x512&quot;
+    }
+  ],
+  &quot;start_url&quot;: &quot;.&quot;,
+  &quot;display&quot;: &quot;standalone&quot;,
+  &quot;theme_color&quot;: &quot;#0B0B0B&quot;,
+  &quot;background_color&quot;: &quot;#0B0B0B&quot;,
+  &quot;description&quot;: &quot;12K: Your 12-Week Transformation. Powered by the Kairos System.&quot;
+}
