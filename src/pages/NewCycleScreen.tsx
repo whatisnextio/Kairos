@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAppStore } from '@/store/useAppStore';
 import { supabase } from '@/services/supabaseClient';
@@ -8,13 +8,25 @@ import Card from '@/components/common/Card';
 
 export default function NewCycleScreen() {
   const navigate = useNavigate();
-  const { authUser, profile, setProfile, setCurrentCycle, setDomainFocuses } = useAppStore();
+  const { authUser, profile, setProfile, setCurrentCycle, setDomainFocuses, setTodayCheckIns } = useAppStore();
   const [anchorId, setAnchorId] = useState<IdentityAnchorId | null>(
     profile?.identityAnchorId ?? null
   );
   const [customAnchor, setCustomAnchor] = useState(profile?.customAnchorName ?? '');
   const [starting, setStarting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [cycleNumber, setCycleNumber] = useState(2);
+
+  useEffect(() => {
+    if (!authUser) return;
+    supabase
+      .from('kairos_cycles')
+      .select('id', { count: 'exact', head: true })
+      .eq('user_id', authUser.id)
+      .then(({ count }) => {
+        if (count != null) setCycleNumber(count + 1);
+      });
+  }, [authUser?.id]);
 
   if (!authUser || !profile) return null;
 
@@ -71,11 +83,10 @@ export default function NewCycleScreen() {
     });
 
     setDomainFocuses([]);
+    setTodayCheckIns({});
     setStarting(false);
     navigate('/', { replace: true });
   }
-
-  const cycleNumber = 2; // TODO: query completed cycles count for accurate number
 
   return (
     <div className="px-4 pt-6 pb-4 flex flex-col gap-4">
@@ -135,7 +146,7 @@ export default function NewCycleScreen() {
         disabled={!anchorId || (anchorId === 'custom' && !customAnchor.trim()) || starting}
         className="w-full"
       >
-        {starting ? 'Starting…' : 'Begin Cycle 2'}
+        {starting ? 'Starting…' : `Begin Cycle ${cycleNumber}`}
       </Button>
 
       <p className="text-base-muted text-xs text-center">

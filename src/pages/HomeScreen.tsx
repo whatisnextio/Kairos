@@ -8,7 +8,7 @@ import WeeklyVibeCheckModal from '@/components/modals/WeeklyVibeCheckModal';
 import ProgressiveDomainSetupModal from '@/components/modals/ProgressiveDomainSetupModal';
 import Day84CompletionModal from '@/components/modals/Day84CompletionModal';
 import { useNudge } from '@/hooks/useNudge';
-import { useSquadPulse } from '@/hooks/useSquad';
+import { useSquadPulse, useSquadMembers } from '@/hooks/useSquad';
 
 const STATUS_LABELS: Record<CheckInStatus, string> = {
   Done: 'Done',
@@ -40,6 +40,7 @@ export default function HomeScreen() {
   const { profile, currentCycle, domainFocuses, todayCheckIns, lastVibeCheckDate, setDailyCheckIn } = useAppStore();
   const { data: nudge } = useNudge();
   const { data: squadPulse } = useSquadPulse();
+  const { data: squadMembers } = useSquadMembers();
   const [showVibeCheck, setShowVibeCheck] = useState(false);
   const [showDomainSetup, setShowDomainSetup] = useState(false);
   const [showDay84, setShowDay84] = useState(false);
@@ -145,13 +146,46 @@ export default function HomeScreen() {
           </button>
         )}
 
-        {/* Squad pulse: Brotherhood only */}
-        {profile.tier === 'brotherhood' && profile.squadId && squadPulse && (
+        {/* Squad: Brotherhood only */}
+        {profile.tier === 'brotherhood' && profile.squadId && (
           <Card>
-            <p className="font-heading text-xs text-base-subtext tracking-widest uppercase mb-1">
-              Squad, Week {squadPulse.weekNumber}
+            <p className="font-heading text-xs text-base-subtext tracking-widest uppercase mb-3">
+              Squad
             </p>
-            <p className="text-base-text text-sm italic">{squadPulse.message}</p>
+
+            {/* Anonymous member tiles */}
+            {squadMembers && squadMembers.length > 0 && (
+              <div className="flex gap-2 mb-3 flex-wrap">
+                {squadMembers.map((m) => {
+                  const dots = [m.bodyStatus, m.loveStatus, m.missionStatus, m.spiritStatus];
+                  return (
+                    <div key={m.memberIndex} className="flex flex-col items-center gap-1.5">
+                      <div className="w-8 h-8 rounded-full bg-base-border flex items-center justify-center">
+                        <span className="font-heading font-bold text-xs text-base-subtext">
+                          {m.anchorInitial}
+                        </span>
+                      </div>
+                      <div className="flex gap-0.5">
+                        {dots.map((status, i) => {
+                          let dotClass = 'bg-base-border/50';
+                          if (status === 'Done') dotClass = 'bg-status-done';
+                          else if (status === 'Partial') dotClass = 'bg-status-partial';
+                          else if (status === 'Missed') dotClass = 'bg-status-missed';
+                          return <div key={i} className={`w-1.5 h-1.5 rounded-full ${dotClass}`} />;
+                        })}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+
+            {/* Weekly pulse message */}
+            {squadPulse && (
+              <p className="text-base-text text-xs italic border-t border-base-border pt-2 mt-1">
+                Week {squadPulse.weekNumber}: {squadPulse.message}
+              </p>
+            )}
           </Card>
         )}
 

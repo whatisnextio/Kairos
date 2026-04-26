@@ -50,6 +50,38 @@ export function useSquadPulse() {
   });
 }
 
+export interface SquadMemberStatus {
+  memberIndex: number;
+  anchorInitial: string;
+  bodyStatus: string | null;
+  loveStatus: string | null;
+  missionStatus: string | null;
+  spiritStatus: string | null;
+}
+
+export function useSquadMembers() {
+  const profile = useAppStore((s) => s.profile);
+  const enabled = !!profile && profile.tier === 'brotherhood' && !!profile.squadId;
+
+  return useQuery({
+    queryKey: ['squad-members', profile?.squadId],
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc('get_squad_members_status');
+      if (error) throw new Error(error.message);
+      return (data ?? []).map((row: Record<string, unknown>) => ({
+        memberIndex: row.member_index as number,
+        anchorInitial: row.anchor_initial as string,
+        bodyStatus: row.body_status as string | null,
+        loveStatus: row.love_status as string | null,
+        missionStatus: row.mission_status as string | null,
+        spiritStatus: row.spirit_status as string | null,
+      })) as SquadMemberStatus[];
+    },
+    enabled,
+    staleTime: 1000 * 60 * 5,
+  });
+}
+
 export function useMatchToSquad() {
   const profile = useAppStore((s) => s.profile);
   const setProfile = useAppStore((s) => s.setProfile);
