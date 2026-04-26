@@ -20,10 +20,12 @@ export default function OnboardingFlow() {
   const [microAction, setMicroAction] = useState('');
   const [displayName, setDisplayName] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
   const handleWin = async () => {
     if (!authUser || !anchorId || !domain || !microAction) return;
     setSubmitting(true);
+    setSubmitError(null);
 
     const today = new Date().toISOString().split('T')[0];
 
@@ -46,7 +48,7 @@ export default function OnboardingFlow() {
       .single();
 
     if (profileErr || !profile) {
-      console.error('Profile upsert failed:', profileErr?.message);
+      setSubmitError(profileErr?.message ?? 'Setup failed. Check your connection.');
       setSubmitting(false);
       return;
     }
@@ -58,7 +60,7 @@ export default function OnboardingFlow() {
       .single();
 
     if (cycleErr || !cycle) {
-      console.error('Cycle insert failed:', cycleErr?.message);
+      setSubmitError(cycleErr?.message ?? 'Could not create your cycle. Try again.');
       setSubmitting(false);
       return;
     }
@@ -257,6 +259,9 @@ export default function OnboardingFlow() {
           <Button onClick={handleWin} disabled={submitting} className="w-full">
             Done. Day 0 complete.
           </Button>
+          {submitError && (
+            <p role="alert" className="text-status-missed text-sm mt-4 text-center">{submitError}</p>
+          )}
         </div>
       )}
 
