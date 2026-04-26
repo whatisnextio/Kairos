@@ -12,6 +12,7 @@ import type {
   SquadPulse,
   DomainType,
   CheckInStatus,
+  VibeCheck,
 } from '@/types';
 import { XP_PER_CHECK_IN_DONE, XP_PER_CHECK_IN_PARTIAL } from '@/types';
 import { supabase } from '@/services/supabaseClient';
@@ -41,6 +42,9 @@ interface AppState {
   squadMembers: SquadMember[];
   latestSquadPulse: SquadPulse | null;
 
+  // Vibe check
+  lastVibeCheckDate: string | null;
+
   // UI
   onboardingComplete: boolean;
 }
@@ -64,6 +68,7 @@ interface AppActions {
 
   setSquadData: (members: SquadMember[], pulse: SquadPulse | null) => void;
   setOnboardingComplete: (complete: boolean) => void;
+  submitVibeCheck: (rating: VibeCheck['rating']) => Promise<void>;
 
   signOut: () => Promise<void>;
   reset: () => void;
@@ -84,6 +89,7 @@ const initialState: AppState = {
   isNudgeLoading: false,
   squadMembers: [],
   latestSquadPulse: null,
+  lastVibeCheckDate: null,
   onboardingComplete: false,
 };
 
@@ -177,6 +183,27 @@ export const useAppStore = create<AppState & AppActions>()(
 
       setOnboardingComplete: (onboardingComplete) => set({ onboardingComplete }),
 
+      submitVibeCheck: async (rating) => {
+        const { profile, currentCycle } = get();
+        if (!profile || !currentCycle) return;
+
+        const today = new Date().toISOString().split('T')[0];
+        set({ lastVibeCheckDate: today });
+
+        if (profile.tier === 'free') return;
+
+        const { error } = await supabase.from('vibe_checks').insert({
+          user_id: profile.id,
+          cycle_id: currentCycle.id,
+          date: today,
+          rating,
+        });
+
+        if (error) {
+          console.error('Vibe check sync failed:', error.message);
+        }
+      },
+
       signOut: async () => {
         await supabase.auth.signOut();
         get().reset();
@@ -192,6 +219,7 @@ export const useAppStore = create<AppState & AppActions>()(
         profile: state.profile,
         currentCycle: state.currentCycle,
         domainFocuses: state.domainFocuses,
+        lastVibeCheckDate: state.lastVibeCheckDate,
       }),
     },
   ),

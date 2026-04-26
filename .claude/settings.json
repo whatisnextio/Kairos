@@ -1,0 +1,22 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(*)",
+      "PowerShell(*)",
+      "Write",
+      "Edit",
+      "Read(//c/Users/ldgmc/**)",
+      "Read(//c//**)",
+      "WebFetch",
+      "WebSearch"
+    ],
+    "deny": [],
+    "defaultMode": "bypassPermissions"
+  },
+  "skipDangerousModePermissionPrompt": true,
+  "additionalDirectories": [
+    "C:\\Users\\ldgmc\\.claude\\agents",
+    "C:\\Users\\ldgmc\\.claude",
+    "C:\\Users\\ldgmc\\Documents\\devos"
+  ]
+}

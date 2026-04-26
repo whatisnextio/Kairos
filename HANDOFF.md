@@ -1,70 +1,53 @@
 # HANDOFF — Kairos / 12K
 
 **Last updated:** 2026-04-26
-**Hours since launch:** H+0 (session 1)
-**Next session priority:** Supabase project setup + schema migrations
+**Hours since launch:** H+0 (session 2)
+**Next session priority:** Phase 3 — TanStack Query hooks, ImproveScreen nudge fetch, Stripe webhook Edge Function
 
 ---
 
 ## State right now
 
 - **Phase 0:** Complete. Audit done, decisions logged, repo skeleton built.
-- **Phase 1 foundation:** Complete. Vite + React + TS + Tailwind wired, all screens scaffolded, types, store, router, auth, onboarding all real code. TypeScript clean (0 errors).
-- **Phase 2:** Not started. Requires Supabase credentials.
-- **AI nudge:** Not built. Edge Function spec is in ROADMAP.md Section 18.
-- **Squads:** Not built.
-- **Stripe:** Not wired.
+- **Phase 1:** Complete. Full React + TS + Tailwind + Zustand scaffold, 0 TS errors.
+- **Phase 2:** Complete. Supabase schema + Edge Functions + Vitest unit tests + WeeklyVibeCheckModal.
+- **Phase 3:** Not started. Requires Supabase credentials.
+- **Stripe:** Not wired. Requires credentials.
 
 ---
 
 ## What was shipped this session
 
-1. `ROADMAP.md` — full master plan saved at repo root
-2. `audit/file-inventory.md` — 34 files audited, 0 real
-3. `audit/salvage-list.md` — what to copy from legacy dir
-4. `audit/decisions.md` — D1-D7 locked
-5. Clean repo scaffold at `C:\Users\ldgmc\Documents\Kairos\`:
-   - `package.json`, `vite.config.ts`, `tsconfig.json`, `tailwind.config.ts`, `postcss.config.js`, `biome.json`
-   - `index.html` — dark, Oswald + Inter, correct meta tags
-   - `src/vite-env.d.ts` — ImportMeta env types
-   - `src/types/index.ts` — all types: phases, domains, profile, cycle, check-in, nudge, squad, XP
-   - `src/utils/kairos.ts` — KAIROS phase logic, day-to-phase, progress percentages
-   - `src/utils/gamification.ts` — XP levels 1-10 (Starter to Kairos)
-   - `src/services/supabaseClient.ts` — createClient wired to env vars
-   - `src/store/useAppStore.ts` — Zustand store: auth, cycle, check-in (optimistic + Supabase sync), nudge, squad, onboarding
-   - `src/index.css` — Tailwind layers, all component classes (.btn, .card, .input-field, .tab-item)
-   - `src/main.tsx` — React root + TanStack Query provider
-   - `src/App.tsx` — auth router, onboarding gate, full app routes
-   - `src/components/layout/AppShell.tsx` + `BottomTabBar.tsx`
-   - `src/components/common/Button.tsx`, `Card.tsx`, `Input.tsx`
-   - All pages: SplashScreen, LoginPage, RegisterPage, OnboardingFlow, HomeScreen, ProgressScreen, DetailScreen, ImproveScreen, YouScreen, SubscriptionScreen, PrivacyPolicyPage, TermsServicePage, HelpFAQPage
+### Supabase Edge Functions
+1. `supabase/functions/generate-kairos-nudge/index.ts` — Daily AI nudge via Claude Haiku 4.5. JWT auth, free/brotherhood tier gate, date-based cache, full user state (cycle, focuses, streaks, vibe check), stores to ai_nudges with cost_pence tracking.
+2. `supabase/functions/match-to-squad/index.ts` — Silent squad matching. Same KAIROS phase + cycle start within 7 days, fills existing squads to 8 before creating new ones. Brotherhood only.
+3. `supabase/functions/generate-squad-pulse/index.ts` — Sunday squad pulse via Claude Sonnet 4.6. Processes all eligible squads (4+ members), collects anonymised stats (avg streak, avg completion rate), upserts to squad_pulses by week number.
 
----
+### Testing
+4. `src/tests/kairos.test.ts` — 32 tests for all KAIROS utility functions. 52/52 passing total.
+5. `src/tests/gamification.test.ts` — 20 tests for XP level system, boundary transitions.
 
-## What was learned this session
-
-- Legacy `12k_transform_populated/` is 100% broken — a failed export pipeline put wrong content in every file. 0 of 34 files are real code. Kept for reference, not reuse.
-- KAIROS phase logic was entirely absent from the legacy codebase. Built from scratch.
-- Stack is correct. Vite + React 18 + TS 5 + Tailwind 3 + Zustand + TanStack Query + Supabase = right choices.
-- TypeScript strict mode passes clean on the full scaffold.
+### UI
+6. `src/components/modals/WeeklyVibeCheckModal.tsx` — 5-option vibe check (1=Rough to 5=Elite), bottom-sheet modal, syncs to Supabase for Brotherhood users.
+7. `src/store/useAppStore.ts` — Added `submitVibeCheck` action, `lastVibeCheckDate` state (persisted).
+8. `src/pages/HomeScreen.tsx` — WeeklyVibeCheckModal wired: shows on Sundays when 7+ days since last check.
 
 ---
 
 ## Blocked on (requires Liam input)
 
-1. **Supabase credentials** — need `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` in `.env`. Is a Supabase project already provisioned?
-2. **Stripe credentials** — need `VITE_STRIPE_CHECKOUT_URL` (Brotherhood £7.99/month checkout link). Is Stripe set up?
-3. **Accent green hex** — brand doc references green but exact hex not confirmed. Currently `#22C55E` (Tailwind green-500). Confirm or override.
-4. **XP constants** — `XP_PER_CHECK_IN_DONE = 10`, `XP_PER_CHECK_IN_PARTIAL = 5`. Reasonable? Lock or adjust?
-5. **Anthropic API key** — needed for Edge Function. Goes in Supabase Vault, not `.env`.
+1. **Supabase credentials** — `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` in `.env`.
+2. **Stripe credentials** — `VITE_STRIPE_CHECKOUT_URL` (Brotherhood £7.99/month).
+3. **Anthropic API key** — Supabase Vault secret for Edge Functions.
+4. **Accent green hex** — Currently `#22C55E`. Confirm or override.
 
 ---
 
 ## Next 3 tasks (in order)
 
-1. **Set up Supabase project** (if not done): create project in EU region, copy URL and anon key to `.env`
-2. **Run database migrations**: schema from ROADMAP.md Section 17, RLS policies for each table
-3. **Build `generate-kairos-nudge` Edge Function**: spec in ROADMAP.md Section 18, deploy via Supabase CLI
+1. **TanStack Query hooks** — `useNudge`, `useStreaks`, `useSquad` hooks fetching from Supabase + Edge Functions.
+2. **ImproveScreen nudge fetch** — Wire `useNudge` into ImproveScreen, call generate-kairos-nudge Edge Function.
+3. **Stripe webhook Edge Function** — `supabase/functions/stripe-webhook/index.ts` — syncs profiles.tier on subscription events.
 
 ---
 
@@ -74,25 +57,31 @@
 |---|---|
 | `ROADMAP.md` | Master plan, all phases and specs |
 | `audit/decisions.md` | Locked decisions D1-D7 |
-| `src/types/index.ts` | All TypeScript types, phase/domain/anchor constants |
+| `src/types/index.ts` | All TypeScript types |
 | `src/utils/kairos.ts` | KAIROS phase logic |
-| `src/store/useAppStore.ts` | Zustand store, all actions |
-| `src/pages/onboarding/OnboardingFlow.tsx` | Day 0 win onboarding |
-| `src/pages/HomeScreen.tsx` | Daily check-in dashboard |
-| `src/pages/ImproveScreen.tsx` | AI nudge tab |
+| `src/utils/gamification.ts` | XP level system |
+| `src/store/useAppStore.ts` | Zustand store, all actions including submitVibeCheck |
+| `src/pages/HomeScreen.tsx` | Daily check-in + WeeklyVibeCheckModal trigger |
+| `src/pages/ImproveScreen.tsx` | AI nudge tab (needs TanStack Query hook) |
+| `supabase/migrations/001_initial_schema.sql` | All 12 tables + RLS + triggers |
+| `supabase/migrations/002_streak_update_function.sql` | update_streak() PL/pgSQL |
+| `supabase/functions/generate-kairos-nudge/index.ts` | Daily nudge Edge Function |
+| `supabase/functions/match-to-squad/index.ts` | Squad matching Edge Function |
+| `supabase/functions/generate-squad-pulse/index.ts` | Squad pulse Edge Function |
+| `src/tests/kairos.test.ts` | 32 Vitest tests for KAIROS utils |
+| `src/tests/gamification.test.ts` | 20 Vitest tests for XP system |
+| `src/components/modals/WeeklyVibeCheckModal.tsx` | Weekly vibe check modal |
 
 ---
-
-## Voice check status
-
-- British English: enforced in all UI copy
-- No em dashes: confirmed
-- No wellness jargon: confirmed
-- Brand voice (sharp, direct, action-oriented): applied
 
 ## Test status
 
 - TypeScript: 0 errors
-- Unit tests: not yet written (Vitest configured in package.json, no test files yet)
+- Unit tests: 52/52 passing (Vitest)
 - E2E: not yet written (Playwright configured)
-- Lighthouse: not yet run (dev server not started this session)
+
+## Voice check status
+
+- British English: enforced
+- No em dashes: confirmed
+- No wellness jargon: confirmed
