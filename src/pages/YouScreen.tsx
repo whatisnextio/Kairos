@@ -30,7 +30,7 @@ async function registerPush(): Promise<boolean> {
 }
 
 export default function YouScreen() {
-  const { profile, signOut } = useAppStore();
+  const { profile, authUser, signOut } = useAppStore();
   const { data: squadPulse } = useSquadPulse();
   const { mutate: matchToSquad, isPending: isMatching } = useMatchToSquad();
   const [pushStatus, setPushStatus] = useState<'idle' | 'requesting' | 'done' | 'denied'>('idle');
@@ -130,7 +130,7 @@ export default function YouScreen() {
           <>
             <p className="text-base-subtext text-xs mt-1">Brotherhood active.</p>
             <a
-              href={`${import.meta.env.VITE_STRIPE_PORTAL_URL}?prefilled_email=${encodeURIComponent(profile.displayName)}`}
+              href={`${import.meta.env.VITE_STRIPE_PORTAL_URL}?prefilled_email=${encodeURIComponent(authUser?.email ?? '')}`}
               target="_blank"
               rel="noopener noreferrer"
               className="text-xs text-base-muted hover:text-base-subtext underline mt-2 inline-block"
