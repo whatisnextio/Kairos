@@ -1,102 +1,85 @@
-# HANDOFF — Kairos / 12K
+# HANDOFF.md
 
 **Last updated:** 2026-04-26
-**Session:** 3
-**Next session priority:** Credentials unblock (Supabase + Stripe + Anthropic) → deploy, test live, PWA icons
+**Branch:** main
+**Last commit:** 195e807 — pre-commit hook + GitHub Actions CI
+**Next session priority:** Credentials unblock → deploy → soft launch
 
 ---
 
-## State right now
+## State Right Now
 
-- **Phase 0:** Complete.
-- **Phase 1:** Complete. Full scaffold, 0 TS errors.
-- **Phase 2:** Complete. Migrations + 3 core Edge Functions + tests.
-- **Phase 3:** Complete. TanStack hooks, ImproveScreen live, Stripe webhook, squad hooks.
-- **Phase 4:** Complete. Push notifications, check-in history, DetailScreen upgraded.
-- **Phase 5:** Complete. GDPR deletion, metrics Edge Function, account deletion UI.
-- **Phase 6:** Complete. Deployment guide, Supabase config, cron SQL.
-- **Pending:** Credentials, PWA icons, live deploy, E2E tests.
+All 6 ROADMAP phases built. App is feature-complete for soft launch pending live credentials. 16 commits on main, 52/52 unit tests passing, pre-commit hook active.
 
 ---
 
-## Everything shipped
+## This Loop Shipped
 
-### Edge Functions (7 total)
-| Function | Purpose |
+- **HomeScreen**: safe-area insets, tile split (check-in + chevron nav), nudge preview card, squad pulse card, Day 84 modal trigger, domain setup modal trigger
+- **ProgressScreen**: 7-day domain dot grid
+- **ProgressiveDomainSetupModal**: Days 2-4 progressive domain focus collection
+- **Day84CompletionModal**: intro → reflection → celebrate, +50 XP, "Start Cycle 2" → /new-cycle
+- **NewCycleScreen**: anchor re-selection, creates new kairos_cycle
+- **AdminMetricsPage**: email-gated, metrics_snapshots display, "Compute Now" trigger
+- **migration 004**: cycle_reflections with RLS
+- **store.completeCycle()**: marks completed, saves reflection, +50 XP, Supabase sync
+- **E2E specs**: auth, home, onboarding, setup (Playwright, require live Supabase)
+- **Vitest config**: e2e excluded, 52 tests passing
+- **YouScreen**: Stripe Customer Portal "Manage billing" link
+- **Pre-commit hook**: tsc + voice check (src/ only) + vitest
+- **GitHub Actions CI**: type check, voice check, unit tests, build on push/PR
+
+---
+
+## Full Feature Inventory
+
+### Pages (14)
+SplashScreen, LoginPage, RegisterPage, OnboardingFlow (Day 0 win), HomeScreen, ProgressScreen, DetailScreen, ImproveScreen, YouScreen, SubscriptionScreen, AdminMetricsPage (/admin/metrics), NewCycleScreen (/new-cycle), PrivacyPolicyPage, TermsServicePage, HelpFAQPage
+
+### Modals (3)
+WeeklyVibeCheckModal, ProgressiveDomainSetupModal, Day84CompletionModal
+
+### Edge Functions (7)
+generate-kairos-nudge (Claude Haiku), match-to-squad, generate-squad-pulse (Claude Sonnet), stripe-webhook, save-push-subscription, compute-weekly-metrics, delete-account
+
+### Migrations (4)
+001 initial schema, 002 streak function, 003 push subscriptions, 004 cycle reflections
+
+### TanStack Query Hooks
+useNudge, useUpdateNudgeStatus, useStreaks, useSquadPulse, useMatchToSquad, useDomainCheckIns
+
+---
+
+## Blocked On (Credentials Only)
+
+| Item | Env var / location |
 |---|---|
-| `generate-kairos-nudge` | Daily AI nudge, Claude Haiku 4.5, tier gate, cache, cost tracking |
-| `match-to-squad` | Brotherhood squad matching by phase + window |
-| `generate-squad-pulse` | Sunday squad pulse, Claude Sonnet 4.6 |
-| `stripe-webhook` | Subscription sync (created/updated/deleted) + checkout |
-| `save-push-subscription` | Web Push opt-in, saves PushSubscription JSON |
-| `compute-weekly-metrics` | Weekly platform metrics snapshot |
-| `delete-account` | GDPR right-to-erasure |
-
-### Migrations (3)
-| File | Tables/Objects |
-|---|---|
-| `001_initial_schema.sql` | 12 tables, RLS, triggers, seed data |
-| `002_streak_update_function.sql` | update_streak() PL/pgSQL |
-| `003_push_subscriptions.sql` | push_subscriptions table |
-
-### Hooks (4)
-| Hook | Data |
-|---|---|
-| `useNudge` | Generates/fetches today's nudge via Edge Function |
-| `useStreaks` | Domain streaks from Supabase (brotherhood) |
-| `useSquad` | Squad pulse + match-to-squad mutation |
-| `useCheckIns` | Domain check-in history |
-
-### UI
-- HomeScreen: check-ins, progress bars, vibe check modal (Sundays)
-- ImproveScreen: live nudge fetch, accept/dismiss/complete, free-tier blur gate
-- DetailScreen: streak (remote/local by tier), 28-day history, today's status
-- YouScreen: squad section, push opt-in, delete account (GDPR), squad matching
-- WeeklyVibeCheckModal: 5-point rating, bottom-sheet, Supabase sync
-- SubscriptionScreen: Brotherhood CTA, Stripe redirect
-
-### Tests
-- 52/52 Vitest unit tests passing
-- TypeScript: 0 errors (strict mode)
+| Supabase URL + anon key | .env: VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY |
+| Anthropic API key | Supabase Vault: ANTHROPIC_API_KEY |
+| Stripe checkout URL | .env: VITE_STRIPE_CHECKOUT_URL |
+| Stripe webhook secret | Supabase Vault: STRIPE_WEBHOOK_SECRET |
+| Stripe portal URL | .env: VITE_STRIPE_PORTAL_URL |
+| VAPID public key | .env: VITE_VAPID_PUBLIC_KEY |
+| VAPID private key | Supabase Vault: VAPID_PRIVATE_KEY |
+| PWA icons | /public/logo192.png + logo512.png |
 
 ---
 
-## Blocked on (requires Liam input)
+## Deployment Steps (Once Credentials Available)
 
-1. **Supabase project** — URL + anon key → `.env`
-2. **Stripe** — Checkout link + webhook secret
-3. **Anthropic API key** → Supabase Vault
-4. **VAPID keys** → run `npx web-push generate-vapid-keys`, pub key → `.env`, priv key → Vault
-5. **PWA icons** — `logo192.png` and `logo512.png` in `/public/`
-6. **Accent green hex** — currently `#22C55E`, confirm or override
+1. `cp .env.example .env` and fill in all values
+2. `supabase db push` — runs all 4 migrations
+3. `supabase secrets set ANTHROPIC_API_KEY=... STRIPE_WEBHOOK_SECRET=... VAPID_PRIVATE_KEY=...`
+4. `supabase functions deploy --all`
+5. `npm run build`
+6. `vercel --prod`
 
----
-
-## Next 3 tasks (in order)
-
-1. **Provide credentials** → run `npm run dev`, test auth + onboarding live
-2. **Deploy to Vercel/Netlify** → DEPLOY.md is ready
-3. **PWA icons** → any 192x192 and 512x512 PNGs in `/public/`
+Full guide: DEPLOY.md
 
 ---
 
-## Key files
+## Test Status
 
-| File | Purpose |
-|---|---|
-| `ROADMAP.md` | Master plan |
-| `DEPLOY.md` | Deployment step-by-step |
-| `supabase/config.toml` | Supabase local config + cron SQL |
-| `src/types/index.ts` | All TypeScript types |
-| `src/store/useAppStore.ts` | Zustand store |
-| `src/pages/HomeScreen.tsx` | Check-ins + vibe check trigger |
-| `src/pages/ImproveScreen.tsx` | Live AI nudge |
-| `src/pages/DetailScreen.tsx` | Domain detail + history |
-| `src/pages/YouScreen.tsx` | Profile + squad + notifications + delete |
-
-## Test status
-
-- TypeScript: 0 errors (strict)
-- Unit tests: 52/52 passing (Vitest)
-- E2E: not yet (Playwright configured, no tests written)
-- Live deploy: not yet (credentials needed)
+52/52 unit tests passing. E2E specs written, require live Supabase (marked TODO: VERIFY).
+Pre-commit hook active: tsc + voice check + vitest on every commit.
+GitHub Actions CI: same checks on push/PR to main.
