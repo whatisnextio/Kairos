@@ -4,6 +4,7 @@ import { useAppStore } from '@/store/useAppStore';
 import { Suspense, lazy, useEffect } from 'react';
 import { HashRouter, Navigate, Route, Routes } from 'react-router-dom';
 
+import ErrorBoundary from '@/components/common/ErrorBoundary';
 import AppShell from '@/components/layout/AppShell';
 import HomeScreen from '@/pages/HomeScreen';
 import ImproveScreen from '@/pages/ImproveScreen';
@@ -76,22 +77,24 @@ export default function App() {
   return (
     <HashRouter>
       <AppShell>
-        <Suspense fallback={<PageFallback />}>
-          <Routes>
-            <Route path="/" element={<HomeScreen />} />
-            <Route path="/progress" element={<ProgressScreen />} />
-            <Route path="/detail/:domain" element={<DetailScreen />} />
-            <Route path="/improve" element={<ImproveScreen />} />
-            <Route path="/you" element={<YouScreen />} />
-            <Route path="/subscription" element={<SubscriptionScreen />} />
-            <Route path="/privacy" element={<PrivacyPolicyPage />} />
-            <Route path="/terms" element={<TermsServicePage />} />
-            <Route path="/help" element={<HelpFAQPage />} />
-            <Route path="/admin/metrics" element={<AdminMetricsPage />} />
-            <Route path="/new-cycle" element={<NewCycleScreen />} />
-            <Route path="*" element={<Navigate to="/" replace />} />
-          </Routes>
-        </Suspense>
+        <ErrorBoundary>
+          <Suspense fallback={<PageFallback />}>
+            <Routes>
+              <Route path="/" element={<HomeScreen />} />
+              <Route path="/progress" element={<ProgressScreen />} />
+              <Route path="/detail/:domain" element={<DetailScreen />} />
+              <Route path="/improve" element={<ImproveScreen />} />
+              <Route path="/you" element={<YouScreen />} />
+              <Route path="/subscription" element={<SubscriptionScreen />} />
+              <Route path="/privacy" element={<PrivacyPolicyPage />} />
+              <Route path="/terms" element={<TermsServicePage />} />
+              <Route path="/help" element={<HelpFAQPage />} />
+              <Route path="/admin/metrics" element={<AdminMetricsPage />} />
+              <Route path="/new-cycle" element={<NewCycleScreen />} />
+              <Route path="*" element={<Navigate to="/" replace />} />
+            </Routes>
+          </Suspense>
+        </ErrorBoundary>
       </AppShell>
     </HashRouter>
   );
