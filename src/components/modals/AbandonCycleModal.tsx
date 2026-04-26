@@ -79,7 +79,7 @@ export default function AbandonCycleModal({ onClose }: Props) {
             <p className="text-base-subtext text-sm mb-6">
               Day {currentCycle ? Math.round((Date.now() - new Date(currentCycle.startDate).getTime()) / 86_400_000) : '?'} progress will be marked abandoned. This cannot be undone.
             </p>
-            {error && <p className="text-red-400 text-xs mb-3">{error}</p>}
+            {error && <p role="alert" className="text-status-missed text-xs mb-3">{error}</p>}
             <div className="flex gap-3">
               <Button variant="ghost" onClick={() => setConfirming(false)} className="flex-1">
                 Go back

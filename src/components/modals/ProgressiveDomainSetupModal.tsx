@@ -94,7 +94,7 @@ export default function ProgressiveDomainSetupModal({ onClose }: Props) {
           autoFocus
         />
 
-        {error && <p className="text-red-400 text-xs mb-3">{error}</p>}
+        {error && <p role="alert" className="text-status-missed text-xs mb-3">{error}</p>}
 
         <div className="flex gap-3">
           <Button variant="ghost" onClick={onClose} className="flex-1">
