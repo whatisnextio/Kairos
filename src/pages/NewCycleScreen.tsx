@@ -8,8 +8,7 @@ import { useNavigate } from 'react-router-dom';
 
 export default function NewCycleScreen() {
   const navigate = useNavigate();
-  const { authUser, profile, setProfile, setCurrentCycle, setDomainFocuses, setTodayCheckIns } =
-    useAppStore();
+  const { authUser, profile, setProfile, setCurrentCycle, resetCycleLocalState } = useAppStore();
   const [anchorId, setAnchorId] = useState<IdentityAnchorId | null>(
     profile?.identityAnchorId ?? null,
   );
@@ -84,8 +83,7 @@ export default function NewCycleScreen() {
       customAnchorName: anchorId === 'custom' ? customAnchor : undefined,
     });
 
-    setDomainFocuses([]);
-    setTodayCheckIns({});
+    resetCycleLocalState();
     setStarting(false);
     navigate('/', { replace: true });
   }

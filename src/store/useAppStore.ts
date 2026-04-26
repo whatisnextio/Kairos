@@ -67,6 +67,7 @@ interface AppActions {
   submitVibeCheck: (rating: VibeCheck['rating']) => Promise<void>;
   completeCycle: (reflection: string) => Promise<void>;
 
+  resetCycleLocalState: () => void;
   signOut: () => Promise<void>;
   reset: () => void;
 }
@@ -278,6 +279,11 @@ export const useAppStore = create<AppState & AppActions>()(
             .eq('id', profile.id);
         }
       },
+
+      // Clears per-cycle local state when a new cycle begins so streak history
+      // from the previous cycle doesn't bleed into the new one.
+      resetCycleLocalState: () =>
+        set({ checkInHistory: {}, todayCheckIns: {}, domainFocuses: [], streaks: {} }),
 
       signOut: async () => {
         await supabase.auth.signOut();
