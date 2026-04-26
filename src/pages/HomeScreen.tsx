@@ -84,6 +84,10 @@ export default function HomeScreen() {
   const cyclePct = getCycleProgressPct(dayInCycle);
   const phasePct = getPhaseProgressPct(dayInCycle);
   const anchor = IDENTITY_ANCHORS.find((a) => a.id === profile.identityAnchorId);
+  const anchorDisplayName =
+    profile.identityAnchorId === 'custom'
+      ? (profile.customAnchorName ?? 'Custom')
+      : (anchor?.name ?? 'Your identity');
 
   const handleCheckIn = (domain: DomainType, current: CheckInStatus | undefined) => {
     if (current === 'Done') {
@@ -101,7 +105,7 @@ export default function HomeScreen() {
         {/* Header */}
         <div>
           <p className="text-base-subtext text-xs font-heading tracking-widest uppercase">
-            {anchor?.name ?? 'Your identity'}
+            {anchorDisplayName}
           </p>
           <h1 className="font-heading text-2xl font-bold text-base-text tracking-wide mt-0.5">
             Day {dayInCycle} of 84
