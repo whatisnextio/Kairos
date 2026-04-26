@@ -14,21 +14,25 @@ const SAVE_PUSH_ENDPOINT = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/sa
 const DELETE_ACCOUNT_ENDPOINT = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/delete-account`;
 
 async function registerPush(): Promise<boolean> {
-  const sub = await subscribeToPush();
-  if (!sub) return false;
-  const {
-    data: { session },
-  } = await supabase.auth.getSession();
-  if (!session) return false;
-  const res = await fetch(SAVE_PUSH_ENDPOINT, {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${session.access_token}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({ subscription: sub }),
-  });
-  return res.ok;
+  try {
+    const sub = await subscribeToPush();
+    if (!sub) return false;
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+    if (!session) return false;
+    const res = await fetch(SAVE_PUSH_ENDPOINT, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${session.access_token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ subscription: sub }),
+    });
+    return res.ok;
+  } catch {
+    return false;
+  }
 }
 
 export default function YouScreen() {
