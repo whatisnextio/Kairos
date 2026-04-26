@@ -105,7 +105,14 @@ export function useBootstrap() {
 
       if (!profileRow) return;
 
-      const profile = mapProfile(profileRow as Record<string, unknown>);
+      const mapped = mapProfile(profileRow as Record<string, unknown>);
+      // Free users never sync XP to Supabase. Preserve locally accumulated XP
+      // so logins don't reset it back to the Supabase default.
+      const localProfile = useAppStore.getState().profile;
+      const profile =
+        mapped.tier === 'free' && localProfile?.id === mapped.id && localProfile.xp > mapped.xp
+          ? { ...mapped, xp: localProfile.xp }
+          : mapped;
       setProfile(profile);
       // Only mark onboarding complete if the user has a cycle.
       // The handle_new_user trigger creates a minimal profile with no cycle;
