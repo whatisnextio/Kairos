@@ -5,7 +5,7 @@ test.describe('Auth', () => {
   test('unauthenticated user sees login page', async ({ page }) => {
     await page.goto('/');
     await expect(page).toHaveURL(/#\/login/);
-    await expect(page.getByRole('heading', { name: /sign in/i })).toBeVisible();
+    await expect(page.getByRole('heading', { name: '12K' })).toBeVisible();
   });
 
   test('register page loads with correct fields', async ({ page }) => {
