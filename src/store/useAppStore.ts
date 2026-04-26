@@ -32,6 +32,9 @@ interface AppState {
   // Check-ins
   todayCheckIns: Partial<Record<DomainType, DailyCheckIn>>;
   streaks: Partial<Record<DomainType, UserStreak>>;
+  // Persisted history for local streak computation (free tier)
+  // Key: ISO date string. Kept to 90 days max.
+  checkInHistory: Record<string, Partial<Record<DomainType, CheckInStatus>>>;
 
   // AI
   todayNudge: AiNudge | null;
@@ -84,6 +87,7 @@ const initialState: AppState = {
   currentCycle: null,
   domainFocuses: [],
   todayCheckIns: {},
+  checkInHistory: {},
   streaks: {},
   todayNudge: null,
   activeNudges: [],
@@ -132,12 +136,50 @@ export const useAppStore = create<AppState & AppActions>()(
           updatedAt: new Date().toISOString(),
         };
 
-        set((state) => ({
-          todayCheckIns: { ...state.todayCheckIns, [domainType]: optimisticCheckIn },
-          profile: state.profile
-            ? { ...state.profile, xp: state.profile.xp + xpDelta }
-            : null,
-        }));
+        set((state) => {
+          // Update history (keep 90 days)
+          const history = { ...state.checkInHistory };
+          history[today] = { ...(history[today] ?? {}), [domainType]: status };
+          const cutoff = new Date(Date.now() - 90 * 86_400_000).toISOString().split('T')[0];
+          for (const date of Object.keys(history)) {
+            if (date < cutoff) delete history[date];
+          }
+
+          // Compute local streak for this domain
+          let currentStreak = 0;
+          let longestStreak = 0;
+          let running = 0;
+          for (let i = 0; i < 90; i++) {
+            const d = new Date(Date.now() - i * 86_400_000).toISOString().split('T')[0];
+            const s = history[d]?.[domainType];
+            if (s === 'Done' || s === 'Partial') {
+              running++;
+              if (i === 0 || currentStreak > 0) currentStreak = running;
+            } else {
+              if (running > longestStreak) longestStreak = running;
+              if (i > 0 && currentStreak > 0) { longestStreak = Math.max(longestStreak, currentStreak); break; }
+              running = 0;
+            }
+          }
+          longestStreak = Math.max(longestStreak, running);
+
+          const updatedStreak: UserStreak = {
+            userId: state.profile?.id ?? '',
+            domainType,
+            currentStreak,
+            longestStreak,
+            lastCheckInDate: today,
+          };
+
+          return {
+            todayCheckIns: { ...state.todayCheckIns, [domainType]: optimisticCheckIn },
+            checkInHistory: history,
+            streaks: { ...state.streaks, [domainType]: updatedStreak },
+            profile: state.profile
+              ? { ...state.profile, xp: state.profile.xp + xpDelta }
+              : null,
+          };
+        });
 
         if (profile.tier === 'free') return;
 
@@ -253,6 +295,8 @@ export const useAppStore = create<AppState & AppActions>()(
       partialize: (state) => ({
         onboardingComplete: state.onboardingComplete,
         todayCheckIns: state.todayCheckIns,
+        checkInHistory: state.checkInHistory,
+        streaks: state.streaks,
         profile: state.profile,
         currentCycle: state.currentCycle,
         domainFocuses: state.domainFocuses,

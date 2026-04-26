@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { HashRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { useAppStore } from '@/store/useAppStore';
 import { supabase } from '@/services/supabaseClient';
+import { useBootstrap } from '@/hooks/useBootstrap';
 
 // Pages
 import SplashScreen from '@/pages/SplashScreen';
@@ -24,6 +25,8 @@ import AppShell from '@/components/layout/AppShell';
 export default function App() {
   const { authUser, profile, onboardingComplete, setAuthUser, isAuthLoading } =
     useAppStore();
+
+  useBootstrap();
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
