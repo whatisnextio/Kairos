@@ -79,7 +79,9 @@ export default function ImproveScreen() {
           <p className="text-base-subtext text-sm mb-4">{nudge.body}</p>
           <Button
             size="sm"
-            onClick={() => updateStatus({ nudgeId: nudge.id, status: 'completed' })}
+            onClick={() =>
+              updateStatus({ nudgeId: nudge.id, status: 'completed', xpReward: nudge.xpReward })
+            }
           >
             Mark complete
           </Button>

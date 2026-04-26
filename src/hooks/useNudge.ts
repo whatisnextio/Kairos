@@ -69,18 +69,37 @@ export function useNudge() {
 export function useUpdateNudgeStatus() {
   const queryClient = useQueryClient();
   const profile = useAppStore((s) => s.profile);
+  const setProfile = useAppStore((s) => s.setProfile);
   const today = new Date().toISOString().split('T')[0];
 
   return useMutation({
-    mutationFn: async ({ nudgeId, status }: { nudgeId: string; status: NudgeStatus }) => {
+    mutationFn: async ({
+      nudgeId,
+      status,
+      xpReward,
+    }: {
+      nudgeId: string;
+      status: NudgeStatus;
+      xpReward?: number | null;
+    }) => {
       const { error } = await supabase.from('ai_nudges').update({ status }).eq('id', nudgeId);
       if (error) throw new Error(error.message);
-      return { nudgeId, status };
+      return { nudgeId, status, xpReward };
     },
-    onSuccess: ({ status }) => {
+    onSuccess: async ({ status, xpReward }) => {
       queryClient.setQueryData(['nudge', profile?.id, today], (old: AiNudge | undefined) =>
         old ? { ...old, status } : old,
       );
+
+      // Award XP when the nudge is marked complete and carries a reward.
+      // Applies to all tiers: optimistic update + Supabase sync for brotherhood.
+      if (status === 'completed' && xpReward && xpReward > 0 && profile) {
+        const newXp = profile.xp + xpReward;
+        setProfile({ ...profile, xp: newXp });
+        if (profile.tier === 'brotherhood') {
+          await supabase.from('profiles').update({ xp: newXp }).eq('id', profile.id);
+        }
+      }
     },
   });
 }
