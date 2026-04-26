@@ -1,3 +1,4 @@
+import { useNavigate } from 'react-router-dom';
 import { useAppStore } from '@/store/useAppStore';
 import Button from '@/components/common/Button';
 import Card from '@/components/common/Card';
@@ -5,18 +6,28 @@ import Card from '@/components/common/Card';
 const STRIPE_CHECKOUT_URL = import.meta.env.VITE_STRIPE_CHECKOUT_URL as string;
 
 export default function SubscriptionScreen() {
+  const navigate = useNavigate();
   const { profile } = useAppStore();
 
   const handleUpgrade = () => {
     if (!STRIPE_CHECKOUT_URL || !profile) return;
     const url = new URL(STRIPE_CHECKOUT_URL);
-    // Pass user ID so the webhook can link the Stripe customer back to this profile
     url.searchParams.set('client_reference_id', profile.id);
     window.location.href = url.toString();
   };
 
   return (
     <div className="px-4 pt-6 pb-4 flex flex-col gap-4">
+      <button
+        onClick={() => navigate(-1)}
+        aria-label="Go back"
+        className="flex items-center gap-1.5 text-base-subtext hover:text-base-text text-sm -mb-1 transition-colors"
+      >
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M10 3L5 8l5 5" />
+        </svg>
+        Back
+      </button>
       <h1 className="font-heading text-2xl font-bold text-base-text tracking-wide">Brotherhood</h1>
       <p className="text-base-subtext text-sm">
         The full 12K system. Daily AI nudges. Silent squad accountability. Cloud sync.
