@@ -1,0 +1,73 @@
+# Supabase project configuration
+# Run: supabase link --project-ref YOUR_PROJECT_REF to link this config
+# Run: supabase db push to apply migrations
+# Run: supabase functions deploy to deploy all Edge Functions
+
+[api]
+port = 54321
+schemas = ["public", "graphql_public"]
+extra_search_path = ["public", "extensions"]
+max_rows = 1000
+
+[db]
+port = 54322
+shadow_port = 54320
+major_version = 15
+
+[studio]
+port = 54323
+
+[auth]
+site_url = "http://localhost:5173"
+additional_redirect_urls = []
+jwt_expiry = 3600
+enable_signup = true
+[auth.email]
+enable_signup = true
+double_confirm_changes = true
+enable_confirmations = false
+
+[storage]
+file_size_limit = "50MiB"
+
+# Cron jobs — configured in Supabase dashboard or via pg_cron extension
+# Uncomment and run via SQL editor:
+#
+# -- Daily nudge cron (runs at 06:00 UTC, Edge Function handles user timezone)
+# SELECT cron.schedule(
+#   'daily-nudge-cron',
+#   '0 6 * * *',
+#   $$
+#   SELECT net.http_post(
+#     url := 'https://YOUR_PROJECT.supabase.co/functions/v1/generate-kairos-nudge',
+#     headers := '{"x-service-role": "YOUR_SERVICE_ROLE_KEY"}'::jsonb,
+#     body := '{}'::jsonb
+#   );
+#   $$
+# );
+#
+# -- Weekly squad pulse (Sundays 08:00 UTC)
+# SELECT cron.schedule(
+#   'weekly-squad-pulse',
+#   '0 8 * * 0',
+#   $$
+#   SELECT net.http_post(
+#     url := 'https://YOUR_PROJECT.supabase.co/functions/v1/generate-squad-pulse',
+#     headers := '{"x-service-role": "YOUR_SERVICE_ROLE_KEY"}'::jsonb,
+#     body := '{}'::jsonb
+#   );
+#   $$
+# );
+#
+# -- Weekly metrics snapshot (Sundays 22:00 UTC)
+# SELECT cron.schedule(
+#   'weekly-metrics',
+#   '0 22 * * 0',
+#   $$
+#   SELECT net.http_post(
+#     url := 'https://YOUR_PROJECT.supabase.co/functions/v1/compute-weekly-metrics',
+#     headers := '{"x-service-role": "YOUR_SERVICE_ROLE_KEY"}'::jsonb,
+#     body := '{}'::jsonb
+#   );
+#   $$
+# );
