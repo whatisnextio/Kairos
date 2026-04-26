@@ -37,7 +37,7 @@ export function useDomainCheckIns(domainType: DomainType, limit = 28) {
   const enabled = !!profile && !!currentCycle && profile.tier === 'brotherhood';
 
   return useQuery({
-    queryKey: ['check-ins', profile?.id, domainType, limit],
+    queryKey: ['check-ins', profile?.id, currentCycle?.id, domainType, limit],
     queryFn: async () => {
       if (!profile || !currentCycle) throw new Error('No profile or cycle');
 
