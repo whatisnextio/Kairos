@@ -47,6 +47,17 @@ Deno.serve(async (req: Request) => {
   const userId = user.id;
 
   try {
+    // Decrement squad member_count before profile delete so the squad isn't left over-counted.
+    const { data: profileSnap } = await supabase
+      .from('profiles')
+      .select('squad_id')
+      .eq('id', userId)
+      .maybeSingle();
+
+    if (profileSnap?.squad_id) {
+      await supabase.rpc('decrement_squad_member_count', { p_squad_id: profileSnap.squad_id });
+    }
+
     // Delete profile — cascades to:
     // kairos_cycles, user_domain_focuses, daily_check_ins, user_streaks,
     // vibe_checks, squad_pulses (via squads), ai_nudges, outcomes, push_subscriptions

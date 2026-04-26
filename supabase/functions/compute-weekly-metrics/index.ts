@@ -8,6 +8,10 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL') ?? '';
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
 const STRIPE_SECRET_KEY = Deno.env.get('STRIPE_SECRET_KEY') ?? '';
+// Comma-separated list of admin emails allowed to trigger manual computation.
+const ADMIN_EMAILS = new Set(
+  (Deno.env.get('ADMIN_EMAILS') ?? 'liam@whatisnext.io').split(',').map((e) => e.trim()),
+);
 
 async function fetchMrrPence(): Promise<number> {
   if (!STRIPE_SECRET_KEY) return 0;
@@ -45,15 +49,24 @@ async function fetchMrrPence(): Promise<number> {
 }
 
 Deno.serve(async (req: Request) => {
-  // Accept service role header for cron triggers
   const serviceRole = req.headers.get('x-service-role');
   const authHeader = req.headers.get('Authorization');
 
-  if (serviceRole !== SUPABASE_SERVICE_ROLE_KEY && !authHeader) {
-    return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 });
-  }
-
   const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+
+  // Cron path: service role key in header.
+  // Admin UI path: valid JWT belonging to an admin email.
+  if (serviceRole !== SUPABASE_SERVICE_ROLE_KEY) {
+    if (!authHeader) {
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 });
+    }
+    const { data: { user }, error: authErr } = await supabase.auth.getUser(
+      authHeader.replace('Bearer ', ''),
+    );
+    if (authErr || !user || !user.email || !ADMIN_EMAILS.has(user.email)) {
+      return new Response(JSON.stringify({ error: 'Forbidden' }), { status: 403 });
+    }
+  }
   const today = new Date().toISOString().split('T')[0];
 
   try {

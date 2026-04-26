@@ -94,11 +94,11 @@ Deno.serve(async (req: Request) => {
     });
   }
 
-  // Accept service role header or Authorization header
+  // Cron-triggered function: only service role key is accepted.
+  // A bare Authorization JWT is not validated here, so we enforce service role only.
   const serviceRole = req.headers.get('x-service-role');
-  const authHeader = req.headers.get('Authorization');
 
-  if (serviceRole !== SUPABASE_SERVICE_ROLE_KEY && !authHeader) {
+  if (serviceRole !== SUPABASE_SERVICE_ROLE_KEY) {
     return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 });
   }
 
