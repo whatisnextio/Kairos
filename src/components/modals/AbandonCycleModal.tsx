@@ -11,7 +11,7 @@ interface Props {
 
 export default function AbandonCycleModal({ onClose }: Props) {
   const navigate = useNavigate();
-  const { authUser, profile, currentCycle, setCurrentCycle, setDomainFocuses } = useAppStore();
+  const { authUser, currentCycle, setCurrentCycle, setDomainFocuses } = useAppStore();
   const [confirming, setConfirming] = useState(false);
   const [abandoning, setAbandoning] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -21,16 +21,16 @@ export default function AbandonCycleModal({ onClose }: Props) {
     setAbandoning(true);
     setError(null);
 
-    if (profile?.tier === 'brotherhood') {
-      const { error: err } = await supabase
-        .from('kairos_cycles')
-        .update({ status: 'abandoned', end_date: new Date().toISOString().split('T')[0] })
-        .eq('id', currentCycle.id);
-      if (err) {
-        setError(err.message);
-        setAbandoning(false);
-        return;
-      }
+    // All tiers have their cycle row in Supabase (created during onboarding for all users).
+    // Must update it regardless of tier so bootstrap doesn't reload the cycle as 'active' on next login.
+    const { error: err } = await supabase
+      .from('kairos_cycles')
+      .update({ status: 'abandoned', end_date: new Date().toISOString().split('T')[0] })
+      .eq('id', currentCycle.id);
+    if (err) {
+      setError(err.message);
+      setAbandoning(false);
+      return;
     }
 
     setCurrentCycle({ ...currentCycle, status: 'abandoned' });
