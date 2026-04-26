@@ -113,16 +113,14 @@ export const useAppStore = create<AppState & AppActions>()(
       setTodayCheckIns: (todayCheckIns) => set({ todayCheckIns }),
 
       setDailyCheckIn: async (domainType, status, notes) => {
-        const { profile, currentCycle } = get();
+        const { profile, currentCycle, todayCheckIns } = get();
         if (!profile || !currentCycle) return;
 
         const today = new Date().toISOString().split('T')[0];
-        const xpDelta =
-          status === 'Done'
-            ? XP_PER_CHECK_IN_DONE
-            : status === 'Partial'
-            ? XP_PER_CHECK_IN_PARTIAL
-            : 0;
+        const xpForStatus = (s: CheckInStatus | undefined): number =>
+          s === 'Done' ? XP_PER_CHECK_IN_DONE : s === 'Partial' ? XP_PER_CHECK_IN_PARTIAL : 0;
+        const previousStatus = todayCheckIns[domainType]?.status;
+        const xpDelta = xpForStatus(status) - xpForStatus(previousStatus);
 
         // Optimistic update
         const optimisticCheckIn: DailyCheckIn = {
