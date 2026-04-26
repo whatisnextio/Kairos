@@ -40,8 +40,9 @@ function shouldShowVibeCheck(lastVibeCheckDate: string | null, dayInCycle: numbe
   return daysSince >= 7;
 }
 
-// Module-level flag: prevents re-prompting within the same JS session even if HomeScreen remounts
+// Module-level flags: prevent re-prompting within the same JS session even if HomeScreen remounts
 let vibeCheckShownThisSession = false;
+let domainSetupShownThisSession = false;
 
 export default function HomeScreen() {
   const navigate = useNavigate();
@@ -75,7 +76,8 @@ export default function HomeScreen() {
     ) {
       vibeCheckShownThisSession = true;
       setShowVibeCheck(true);
-    } else if (dayInCycle >= 2 && domainFocuses.length < 4) {
+    } else if (!domainSetupShownThisSession && dayInCycle >= 2 && domainFocuses.length < 4) {
+      domainSetupShownThisSession = true;
       setShowDomainSetup(true);
     }
   }, [profile, currentCycle, lastVibeCheckDate, dayInCycle, domainFocuses.length]);
