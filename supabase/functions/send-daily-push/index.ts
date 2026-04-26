@@ -170,7 +170,7 @@ async function sendPush(
   endpoint: string,
   keys: { p256dh: string; auth: string },
   message: string,
-): Promise<boolean> {
+): Promise<{ ok: boolean; stale: boolean }> {
   const url = new URL(endpoint);
   const audience = `${url.protocol}//${url.host}`;
   const jwt = await buildVapidJwt(audience);
@@ -188,7 +188,8 @@ async function sendPush(
   };
 
   const res = await fetch(endpoint, { method: 'POST', headers, body });
-  return res.ok || res.status === 201;
+  const stale = res.status === 404 || res.status === 410;
+  return { ok: res.ok || res.status === 201, stale };
 }
 
 // ─── Main handler ─────────────────────────────────────────────────────────────
@@ -256,18 +257,15 @@ Deno.serve(async (req: Request) => {
     const message = JSON.stringify({ title: nudge.title, body: nudge.body });
 
     try {
-      const ok = await sendPush(sub.endpoint, sub.keys, message);
+      const { ok, stale } = await sendPush(sub.endpoint, sub.keys, message);
       if (ok) {
         sent++;
       } else {
+        if (stale) staleIds.push(userId);
         failed++;
       }
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);
-      // 404/410 means the subscription is expired — clean it up
-      if (msg.includes('404') || msg.includes('410')) {
-        staleIds.push(userId);
-      }
       failed++;
       console.error(`send-daily-push: push failed for user ${userId}:`, msg);
     }
