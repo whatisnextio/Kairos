@@ -2,19 +2,47 @@
 // Supabase Edge Function (Deno runtime)
 // Called by: weekly cron (Sunday 22:00 UTC)
 // Aggregates platform metrics and writes one row to metrics_snapshots.
-//
-// Metrics:
-//   total_users: count of profiles
-//   paid_users: profiles where tier = brotherhood AND subscription_status = active
-//   conversion_rate: paid / total (%)
-//   day7_retention: % of users who checked in at least once between days 5-7 of their cycle
-//   day84_completion: % of users who reached day 84+ with status = completed or active
-//   mrr_pence: 0 (TODO: fetch from Stripe API — requires Stripe secret key)
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL') ?? '';
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
+const STRIPE_SECRET_KEY = Deno.env.get('STRIPE_SECRET_KEY') ?? '';
+
+async function fetchMrrPence(): Promise<number> {
+  if (!STRIPE_SECRET_KEY) return 0;
+  let mrr = 0;
+  let startingAfter: string | null = null;
+  // Paginate through all active subscriptions
+  while (true) {
+    const params = new URLSearchParams({ status: 'active', limit: '100' });
+    if (startingAfter) params.set('starting_after', startingAfter);
+    const res = await fetch(`https://api.stripe.com/v1/subscriptions?${params}`, {
+      headers: { Authorization: `Bearer ${STRIPE_SECRET_KEY}` },
+    });
+    if (!res.ok) return 0;
+    const body = await res.json() as {
+      data: Array<{ items: { data: Array<{ price: { unit_amount: number; currency: string; recurring: { interval: string } } }> } }>;
+      has_more: boolean;
+    };
+    for (const sub of body.data) {
+      for (const item of sub.items.data) {
+        const price = item.price;
+        // Normalise to monthly pence (GBP)
+        if (price.currency !== 'gbp') continue;
+        const amount = price.unit_amount ?? 0;
+        if (price.recurring.interval === 'month') mrr += amount;
+        else if (price.recurring.interval === 'year') mrr += Math.round(amount / 12);
+      }
+    }
+    if (!body.has_more) break;
+    startingAfter = body.data[body.data.length - 1]
+      ? (body.data[body.data.length - 1] as { id?: string }).id ?? null
+      : null;
+    if (!startingAfter) break;
+  }
+  return mrr;
+}
 
 Deno.serve(async (req: Request) => {
   // Accept service role header for cron triggers
@@ -90,6 +118,8 @@ Deno.serve(async (req: Request) => {
         ? Math.round(((completedCycles ?? 0) / (totalOldCycles ?? 1)) * 10000) / 100
         : 0;
 
+    const mrrPence = await fetchMrrPence();
+
     // Upsert snapshot
     const { error: upsertErr } = await supabase
       .from('metrics_snapshots')
@@ -101,7 +131,7 @@ Deno.serve(async (req: Request) => {
           conversion_rate: conversionRate,
           day7_retention: day7Retention,
           day84_completion: day84Completion,
-          mrr_pence: 0, // TODO: fetch from Stripe
+          mrr_pence: mrrPence,
           computed_at: new Date().toISOString(),
         },
         { onConflict: 'snapshot_date' },
@@ -117,6 +147,7 @@ Deno.serve(async (req: Request) => {
         conversion_rate: conversionRate,
         day7_retention: day7Retention,
         day84_completion: day84Completion,
+        mrr_pence: mrrPence,
       }),
       { headers: { 'Content-Type': 'application/json' } },
     );

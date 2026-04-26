@@ -13,6 +13,7 @@ interface MetricsSnapshot {
   conversion_rate: number;
   day7_retention: number;
   day84_completion: number;
+  mrr_pence: number;
 }
 
 function MetricRow({ label, value }: { label: string; value: string }) {
@@ -105,6 +106,10 @@ export default function AdminMetricsPage() {
           <MetricRow label="Conversion Rate" value={`${latest.conversion_rate.toFixed(1)}%`} />
           <MetricRow label="Day-7 Retention" value={`${latest.day7_retention.toFixed(1)}%`} />
           <MetricRow label="Day-84 Completion" value={`${latest.day84_completion.toFixed(1)}%`} />
+          <MetricRow
+            label="MRR"
+            value={latest.mrr_pence > 0 ? `£${(latest.mrr_pence / 100).toFixed(2)}` : 'N/A'}
+          />
         </Card>
       )}
 

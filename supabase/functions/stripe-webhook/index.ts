@@ -125,7 +125,10 @@ Deno.serve(async (req: Request) => {
         const customerId = obj['customer'] as string;
         const subStatus = obj['status'] as string;
         const subId = obj['id'] as string;
-        const tier = subStatus === 'active' || subStatus === 'trialing' ? 'brotherhood' : 'free';
+        // Retain brotherhood during grace periods (past_due = first payment failure).
+        // Only downgrade on incomplete (never paid) or hard cancellation paths.
+        const graceStatuses = new Set(['active', 'trialing', 'past_due']);
+        const tier = graceStatuses.has(subStatus) ? 'brotherhood' : 'free';
 
         await supabase.from('profiles').update({
           tier,
