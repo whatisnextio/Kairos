@@ -63,6 +63,7 @@ export default function HomeScreen() {
 
   const dayInCycle = profile && currentCycle ? getDayInCycle(currentCycle.startDate) : 1;
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: setCelebrationPending is a stable Zustand setter; store setters never change between renders
   useEffect(() => {
     if (!profile || !currentCycle) return;
     if (dayInCycle >= 84 && currentCycle.status === 'active') {
