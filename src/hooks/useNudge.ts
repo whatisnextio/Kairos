@@ -90,10 +90,16 @@ export function useUpdateNudgeStatus() {
 
       // Award XP when the nudge is marked complete and carries a reward.
       // Applies to all tiers: optimistic update + Supabase sync for brotherhood.
-      if (status === 'completed' && xpReward && xpReward > 0 && profile) {
-        setProfile({ ...profile, xp: profile.xp + xpReward });
-        if (profile.tier === 'brotherhood') {
-          await supabase.rpc('increment_profile_xp', { p_user_id: profile.id, p_delta: xpReward });
+      if (status === 'completed' && xpReward && xpReward > 0) {
+        const currentProfile = useAppStore.getState().profile;
+        if (currentProfile) {
+          setProfile({ ...currentProfile, xp: currentProfile.xp + xpReward });
+          if (currentProfile.tier === 'brotherhood') {
+            await supabase.rpc('increment_profile_xp', {
+              p_user_id: currentProfile.id,
+              p_delta: xpReward,
+            });
+          }
         }
       }
     },
