@@ -102,15 +102,15 @@ export default function AdminMetricsPage() {
           <MetricRow label="Brotherhood (Paid)" value={latest.paid_users.toLocaleString()} />
           <MetricRow
             label="Conversion Rate"
-            value={`${(latest.conversion_rate * 100).toFixed(1)}%`}
+            value={`${latest.conversion_rate.toFixed(1)}%`}
           />
           <MetricRow
             label="Day-7 Retention"
-            value={`${(latest.day7_retention * 100).toFixed(1)}%`}
+            value={`${latest.day7_retention.toFixed(1)}%`}
           />
           <MetricRow
             label="Day-84 Completion"
-            value={`${(latest.day84_completion * 100).toFixed(1)}%`}
+            value={`${latest.day84_completion.toFixed(1)}%`}
           />
         </Card>
       )}
@@ -139,13 +139,13 @@ export default function AdminMetricsPage() {
                     <td className="py-1.5 pr-3 text-base-text text-right">{s.total_users}</td>
                     <td className="py-1.5 pr-3 text-base-text text-right">{s.paid_users}</td>
                     <td className="py-1.5 pr-3 text-base-text text-right">
-                      {(s.conversion_rate * 100).toFixed(1)}
+                      {s.conversion_rate.toFixed(1)}
                     </td>
                     <td className="py-1.5 pr-3 text-base-text text-right">
-                      {(s.day7_retention * 100).toFixed(1)}
+                      {s.day7_retention.toFixed(1)}
                     </td>
                     <td className="py-1.5 text-base-text text-right">
-                      {(s.day84_completion * 100).toFixed(1)}
+                      {s.day84_completion.toFixed(1)}
                     </td>
                   </tr>
                 ))}

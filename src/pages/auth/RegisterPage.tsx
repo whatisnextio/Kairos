@@ -84,7 +84,7 @@ export default function RegisterPage() {
               I confirm I am 18 years of age or over. 12K is an adult product.
             </span>
           </label>
-          {error && <p className="text-xs text-status-missed">{error}</p>}
+          {error && <p role="alert" className="text-xs text-status-missed">{error}</p>}
           <Button type="submit" disabled={loading || !ageConfirmed} className="w-full">
             {loading ? 'Sending...' : 'Create account'}
           </Button>
