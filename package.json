@@ -13,7 +13,8 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:e2e": "playwright test",
-    "lighthouse": "lhci autorun"
+    "lighthouse": "lhci autorun",
+    "prepare": "git config core.hooksPath .githooks || true"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.45.0",

@@ -1,0 +1,23 @@
+#!/usr/bin/env bash
+set -e
+
+echo "→ TypeScript check..."
+npx tsc --noEmit
+
+echo "→ Voice check (banned words in src/)..."
+BANNED="(—|embrace your|authentic journey|holistic wellness)"
+STAGED_SRC=$(git diff --cached --name-only | grep -E '^src/.*\.(ts|tsx)$' || true)
+if [ -n "$STAGED_SRC" ]; then
+  HITS=$(echo "$STAGED_SRC" | xargs grep -lE "$BANNED" 2>/dev/null || true)
+  if [ -n "$HITS" ]; then
+    echo "✗ Banned words found:"
+    echo "$HITS"
+    echo "  Remove em dashes and wellness jargon before committing."
+    exit 1
+  fi
+fi
+
+echo "→ Unit tests..."
+npx vitest run --silent
+
+echo "✓ Pre-commit checks passed."
