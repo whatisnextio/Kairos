@@ -8,8 +8,6 @@ import type {
   DailyCheckIn,
   UserStreak,
   AiNudge,
-  SquadMember,
-  SquadPulse,
   DomainType,
   CheckInStatus,
   VibeCheck,
@@ -38,12 +36,6 @@ interface AppState {
 
   // AI
   todayNudge: AiNudge | null;
-  activeNudges: AiNudge[];
-  isNudgeLoading: boolean;
-
-  // Squad
-  squadMembers: SquadMember[];
-  latestSquadPulse: SquadPulse | null;
 
   // Vibe check
   lastVibeCheckDate: string | null;
@@ -71,7 +63,6 @@ interface AppActions {
   setNudgeStatus: (nudgeId: string, status: AiNudge['status']) => Promise<void>;
 
   mergeCheckInHistory: (entries: Record<string, Partial<Record<DomainType, CheckInStatus>>>) => void;
-  setSquadData: (members: SquadMember[], pulse: SquadPulse | null) => void;
   setOnboardingComplete: (complete: boolean) => void;
   submitVibeCheck: (rating: VibeCheck['rating']) => Promise<void>;
   completeCycle: (reflection: string) => Promise<void>;
@@ -92,10 +83,6 @@ const initialState: AppState = {
   checkInHistory: {},
   streaks: {},
   todayNudge: null,
-  activeNudges: [],
-  isNudgeLoading: false,
-  squadMembers: [],
-  latestSquadPulse: null,
   lastVibeCheckDate: null,
   onboardingComplete: false,
 };
@@ -225,9 +212,6 @@ export const useAppStore = create<AppState & AppActions>()(
 
       mergeCheckInHistory: (entries) =>
         set((state) => ({ checkInHistory: { ...state.checkInHistory, ...entries } })),
-
-      setSquadData: (squadMembers, latestSquadPulse) =>
-        set({ squadMembers, latestSquadPulse }),
 
       setOnboardingComplete: (onboardingComplete) => set({ onboardingComplete }),
 
