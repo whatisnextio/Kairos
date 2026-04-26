@@ -1,0 +1,128 @@
+// compute-weekly-metrics
+// Supabase Edge Function (Deno runtime)
+// Called by: weekly cron (Sunday 22:00 UTC)
+// Aggregates platform metrics and writes one row to metrics_snapshots.
+//
+// Metrics:
+//   total_users: count of profiles
+//   paid_users: profiles where tier = brotherhood AND subscription_status = active
+//   conversion_rate: paid / total (%)
+//   day7_retention: % of users who checked in at least once between days 5-7 of their cycle
+//   day84_completion: % of users who reached day 84+ with status = completed or active
+//   mrr_pence: 0 (TODO: fetch from Stripe API — requires Stripe secret key)
+
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+
+const SUPABASE_URL = Deno.env.get('SUPABASE_URL') ?? '';
+const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
+
+Deno.serve(async (req: Request) => {
+  // Accept service role header for cron triggers
+  const serviceRole = req.headers.get('x-service-role');
+  const authHeader = req.headers.get('Authorization');
+
+  if (serviceRole !== SUPABASE_SERVICE_ROLE_KEY && !authHeader) {
+    return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 });
+  }
+
+  const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+  const today = new Date().toISOString().split('T')[0];
+
+  try {
+    // Total users
+    const { count: totalUsers } = await supabase
+      .from('profiles')
+      .select('*', { count: 'exact', head: true });
+
+    // Paid users
+    const { count: paidUsers } = await supabase
+      .from('profiles')
+      .select('*', { count: 'exact', head: true })
+      .eq('tier', 'brotherhood')
+      .eq('subscription_status', 'active');
+
+    const total = totalUsers ?? 0;
+    const paid = paidUsers ?? 0;
+    const conversionRate = total > 0 ? Math.round((paid / total) * 10000) / 100 : 0;
+
+    // Day 7 retention: users whose cycle started 5-7 days ago and have a check-in in that window
+    const day5Ago = new Date(Date.now() - 5 * 86_400_000).toISOString().split('T')[0];
+    const day7Ago = new Date(Date.now() - 7 * 86_400_000).toISOString().split('T')[0];
+
+    const { data: day7Users } = await supabase
+      .from('kairos_cycles')
+      .select('user_id')
+      .gte('start_date', day7Ago)
+      .lte('start_date', day5Ago)
+      .eq('status', 'active');
+
+    let day7Retention = 0;
+    if (day7Users && day7Users.length > 0) {
+      const userIds = day7Users.map((u: { user_id: string }) => u.user_id);
+      const { data: activeDay7 } = await supabase
+        .from('daily_check_ins')
+        .select('user_id')
+        .in('user_id', userIds)
+        .gte('date', day7Ago)
+        .lte('date', today)
+        .in('status', ['Done', 'Partial']);
+
+      const retained = new Set((activeDay7 ?? []).map((c: { user_id: string }) => c.user_id)).size;
+      day7Retention = Math.round((retained / userIds.length) * 10000) / 100;
+    }
+
+    // Day 84 completion: users whose cycle started 84+ days ago, status completed
+    const day84Ago = new Date(Date.now() - 84 * 86_400_000).toISOString().split('T')[0];
+
+    const { count: completedCycles } = await supabase
+      .from('kairos_cycles')
+      .select('*', { count: 'exact', head: true })
+      .lte('start_date', day84Ago)
+      .eq('status', 'completed');
+
+    const { count: totalOldCycles } = await supabase
+      .from('kairos_cycles')
+      .select('*', { count: 'exact', head: true })
+      .lte('start_date', day84Ago);
+
+    const day84Completion =
+      (totalOldCycles ?? 0) > 0
+        ? Math.round(((completedCycles ?? 0) / (totalOldCycles ?? 1)) * 10000) / 100
+        : 0;
+
+    // Upsert snapshot
+    const { error: upsertErr } = await supabase
+      .from('metrics_snapshots')
+      .upsert(
+        {
+          snapshot_date: today,
+          total_users: total,
+          paid_users: paid,
+          conversion_rate: conversionRate,
+          day7_retention: day7Retention,
+          day84_completion: day84Completion,
+          mrr_pence: 0, // TODO: fetch from Stripe
+          computed_at: new Date().toISOString(),
+        },
+        { onConflict: 'snapshot_date' },
+      );
+
+    if (upsertErr) throw new Error(upsertErr.message);
+
+    return new Response(
+      JSON.stringify({
+        snapshot_date: today,
+        total_users: total,
+        paid_users: paid,
+        conversion_rate: conversionRate,
+        day7_retention: day7Retention,
+        day84_completion: day84Completion,
+      }),
+      { headers: { 'Content-Type': 'application/json' } },
+    );
+  } catch (err) {
+    const message = err instanceof Error ? err.message : 'Unknown error';
+    console.error('compute-weekly-metrics error:', message);
+    return new Response(JSON.stringify({ error: message }), { status: 500 });
+  }
+});

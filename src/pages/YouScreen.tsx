@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { useAppStore } from '@/store/useAppStore';
 import { useSquadPulse, useMatchToSquad } from '@/hooks/useSquad';
@@ -10,6 +10,7 @@ import Card from '@/components/common/Card';
 import Button from '@/components/common/Button';
 
 const SAVE_PUSH_ENDPOINT = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/save-push-subscription`;
+const DELETE_ACCOUNT_ENDPOINT = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/delete-account`;
 
 async function registerPush(): Promise<boolean> {
   const sub = await subscribeToPush();
@@ -32,6 +33,19 @@ export default function YouScreen() {
   const { data: squadPulse } = useSquadPulse();
   const { mutate: matchToSquad, isPending: isMatching } = useMatchToSquad();
   const [pushStatus, setPushStatus] = useState<'idle' | 'requesting' | 'done' | 'denied'>('idle');
+  const [deleteConfirm, setDeleteConfirm] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  const handleDeleteAccount = useCallback(async () => {
+    setIsDeleting(true);
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) { setIsDeleting(false); return; }
+    await fetch(DELETE_ACCOUNT_ENDPOINT, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${session.access_token}` },
+    });
+    signOut();
+  }, [signOut]);
 
   if (!profile) return null;
 
@@ -171,6 +185,46 @@ export default function YouScreen() {
       <Button variant="secondary" onClick={signOut} className="w-full">
         Sign out
       </Button>
+
+      {/* GDPR account deletion */}
+      <div className="pt-2">
+        {!deleteConfirm ? (
+          <button
+            onClick={() => setDeleteConfirm(true)}
+            className="text-base-muted text-xs underline w-full text-center"
+          >
+            Delete my account
+          </button>
+        ) : (
+          <Card className="border-status-missed/40">
+            <p className="text-base-text text-sm font-heading font-medium mb-1">
+              This is permanent.
+            </p>
+            <p className="text-base-subtext text-xs mb-4">
+              All your data will be deleted and cannot be recovered. Your subscription will not be automatically cancelled — do that in your billing settings first.
+            </p>
+            <div className="flex gap-2">
+              <Button
+                variant="danger"
+                size="sm"
+                disabled={isDeleting}
+                onClick={handleDeleteAccount}
+                className="flex-1"
+              >
+                {isDeleting ? 'Deleting...' : 'Delete account'}
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setDeleteConfirm(false)}
+                className="flex-1"
+              >
+                Cancel
+              </Button>
+            </div>
+          </Card>
+        )}
+      </div>
     </div>
   );
 }
