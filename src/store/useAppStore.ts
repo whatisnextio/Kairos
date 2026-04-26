@@ -137,20 +137,25 @@ export const useAppStore = create<AppState & AppActions>()(
             if (date < cutoff) delete history[date];
           }
 
-          // Compute local streak for this domain
+          // Compute local streak for this domain.
+          // Scan backwards through history to find both current streak and longest ever.
+          // currentStreak: the unbroken run ending today (or 0 if today is empty).
+          // longestStreak: max of all unbroken runs in the 90-day window.
           let currentStreak = 0;
           let longestStreak = 0;
           let running = 0;
+          let pastCurrentStreak = false; // true once we've seen the first gap
           for (let i = 0; i < 90; i++) {
             const d = new Date(Date.now() - i * 86_400_000).toISOString().split('T')[0];
             const s = history[d]?.[domainType];
             if (s === 'Done' || s === 'Partial') {
               running++;
-              if (i === 0 || currentStreak > 0) currentStreak = running;
+              if (!pastCurrentStreak) currentStreak = running;
             } else {
               if (running > longestStreak) longestStreak = running;
-              if (i > 0 && currentStreak > 0) { longestStreak = Math.max(longestStreak, currentStreak); break; }
               running = 0;
+              if (i === 0) pastCurrentStreak = true; // today is empty, current streak is 0
+              else if (!pastCurrentStreak) pastCurrentStreak = true; // hit first gap
             }
           }
           longestStreak = Math.max(longestStreak, running);
