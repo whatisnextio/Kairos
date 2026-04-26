@@ -1,15 +1,21 @@
 import Button from '@/components/common/Button';
 import { supabase } from '@/services/supabaseClient';
 import { useAppStore } from '@/store/useAppStore';
-import type { DomainType, IdentityAnchorId } from '@/types';
+import type { DailyCheckIn, DomainType, IdentityAnchorId } from '@/types';
 import { DOMAINS, IDENTITY_ANCHORS } from '@/types';
 import { useState } from 'react';
 
 type Step = 'welcome' | 'anchor' | 'domain' | 'action' | 'win' | 'celebrate';
 
 export default function OnboardingFlow() {
-  const { authUser, setProfile, setCurrentCycle, setDomainFocuses, setOnboardingComplete } =
-    useAppStore();
+  const {
+    authUser,
+    setProfile,
+    setCurrentCycle,
+    setDomainFocuses,
+    setOnboardingComplete,
+    setTodayCheckIns,
+  } = useAppStore();
 
   const [step, setStep] = useState<Step>('welcome');
   const [anchorId, setAnchorId] = useState<IdentityAnchorId | null>(null);
@@ -76,14 +82,34 @@ export default function OnboardingFlow() {
       .select()
       .single();
 
-    await supabase.from('daily_check_ins').insert({
-      user_id: authUser.id,
-      cycle_id: cycle.id,
-      date: today,
-      domain_type: domain,
-      status: 'Done',
-      xp_awarded: 10,
-    });
+    const { data: checkInRow } = await supabase
+      .from('daily_check_ins')
+      .insert({
+        user_id: authUser.id,
+        cycle_id: cycle.id,
+        date: today,
+        domain_type: domain,
+        status: 'Done',
+        xp_awarded: 10,
+      })
+      .select()
+      .single();
+
+    if (checkInRow && domain) {
+      const ci: DailyCheckIn = {
+        id: checkInRow.id,
+        userId: authUser.id,
+        cycleId: cycle.id,
+        date: today,
+        domainType: domain,
+        status: 'Done',
+        notes: null,
+        xpAwarded: 10,
+        createdAt: checkInRow.created_at,
+        updatedAt: checkInRow.updated_at,
+      };
+      setTodayCheckIns({ [domain]: ci });
+    }
 
     await supabase
       .from('profiles')
