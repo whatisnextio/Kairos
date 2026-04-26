@@ -26,7 +26,7 @@ async function fetchMrrPence(): Promise<number> {
     });
     if (!res.ok) return 0;
     const body = await res.json() as {
-      data: Array<{ items: { data: Array<{ price: { unit_amount: number; currency: string; recurring: { interval: string } } }> } }>;
+      data: Array<{ id: string; items: { data: Array<{ price: { unit_amount: number; currency: string; recurring: { interval: string } } }> } }>;
       has_more: boolean;
     };
     for (const sub of body.data) {
@@ -40,10 +40,9 @@ async function fetchMrrPence(): Promise<number> {
       }
     }
     if (!body.has_more) break;
-    startingAfter = body.data[body.data.length - 1]
-      ? (body.data[body.data.length - 1] as { id?: string }).id ?? null
-      : null;
-    if (!startingAfter) break;
+    const lastId = body.data[body.data.length - 1]?.id;
+    if (!lastId) break;
+    startingAfter = lastId;
   }
   return mrr;
 }
