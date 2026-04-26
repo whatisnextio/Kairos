@@ -83,7 +83,6 @@ export function useSquadMembers() {
 }
 
 export function useMatchToSquad() {
-  const profile = useAppStore((s) => s.profile);
   const setProfile = useAppStore((s) => s.setProfile);
 
   return useMutation({
@@ -109,8 +108,9 @@ export function useMatchToSquad() {
       return res.json() as Promise<{ squad_id: string; already_matched: boolean }>;
     },
     onSuccess: ({ squad_id }) => {
-      if (profile) {
-        setProfile({ ...profile, squadId: squad_id });
+      const currentProfile = useAppStore.getState().profile;
+      if (currentProfile) {
+        setProfile({ ...currentProfile, squadId: squad_id });
       }
     },
   });
