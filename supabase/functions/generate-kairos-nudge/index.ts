@@ -334,27 +334,31 @@ Deno.serve(async (req: Request) => {
       _costPence?: number;
     };
 
-    // Store nudge
+    // Store nudge — upsert so concurrent cron + user-refresh can't both slip past
+    // the cache check and then collide on the unique (user_id, date, type) constraint.
     const { data: nudge, error: insertErr } = await supabase
       .from('ai_nudges')
-      .insert({
-        user_id: userId,
-        date: today,
-        type: 'daily_nudge',
-        title: result.title,
-        body: result.body,
-        domain_type: result.domain,
-        kairos_phase: phaseConfig.phase,
-        xp_reward: result.xp_reward,
-        status: 'new',
-        cta: result.cta,
-        cost_pence: result._costPence ?? 0,
-      })
+      .upsert(
+        {
+          user_id: userId,
+          date: today,
+          type: 'daily_nudge',
+          title: result.title,
+          body: result.body,
+          domain_type: result.domain,
+          kairos_phase: phaseConfig.phase,
+          xp_reward: result.xp_reward,
+          status: 'new',
+          cta: result.cta,
+          cost_pence: result._costPence ?? 0,
+        },
+        { onConflict: 'user_id,date,type', ignoreDuplicates: false },
+      )
       .select()
       .single();
 
     if (insertErr) {
-      console.error('Insert nudge failed:', insertErr.message);
+      console.error('Upsert nudge failed:', insertErr.message);
       return new Response(JSON.stringify({ error: 'Failed to store nudge' }), { status: 500 });
     }
 
