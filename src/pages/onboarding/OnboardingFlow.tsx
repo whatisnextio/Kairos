@@ -27,6 +27,10 @@ export default function OnboardingFlow() {
 
     const today = new Date().toISOString().split('T')[0];
 
+    // Prefer the DOB the user provided at registration; fall back to today
+    const { data: { user: fullUser } } = await supabase.auth.getUser();
+    const dobFromAuth: string = fullUser?.user_metadata?.date_of_birth ?? today;
+
     const { data: profile, error: profileErr } = await supabase
       .from('profiles')
       .upsert({
@@ -36,7 +40,7 @@ export default function OnboardingFlow() {
         custom_anchor_name: anchorId === 'custom' ? customAnchor : null,
         tier: 'free',
         xp: 10,
-        date_of_birth: today,
+        date_of_birth: dobFromAuth,
       })
       .select()
       .single();
