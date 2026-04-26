@@ -125,9 +125,17 @@ export default function YouScreen() {
           </Link>
         )}
         {profile.tier === 'brotherhood' && (
-          <p className="text-base-subtext text-xs mt-1">
-            Brotherhood active.
-          </p>
+          <>
+            <p className="text-base-subtext text-xs mt-1">Brotherhood active.</p>
+            <a
+              href={`${import.meta.env.VITE_STRIPE_PORTAL_URL}?prefilled_email=${encodeURIComponent(profile.displayName)}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-xs text-base-muted hover:text-base-subtext underline mt-2 inline-block"
+            >
+              Manage billing
+            </a>
+          </>
         )}
       </Card>
 

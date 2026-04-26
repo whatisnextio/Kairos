@@ -7,6 +7,8 @@ import Card from '@/components/common/Card';
 import WeeklyVibeCheckModal from '@/components/modals/WeeklyVibeCheckModal';
 import ProgressiveDomainSetupModal from '@/components/modals/ProgressiveDomainSetupModal';
 import Day84CompletionModal from '@/components/modals/Day84CompletionModal';
+import { useNudge } from '@/hooks/useNudge';
+import { useSquadPulse } from '@/hooks/useSquad';
 
 const STATUS_LABELS: Record<CheckInStatus, string> = {
   Done: 'Done',
@@ -36,6 +38,8 @@ function shouldShowVibeCheck(lastVibeCheckDate: string | null, dayInCycle: numbe
 export default function HomeScreen() {
   const navigate = useNavigate();
   const { profile, currentCycle, domainFocuses, todayCheckIns, lastVibeCheckDate, setDailyCheckIn } = useAppStore();
+  const { data: nudge } = useNudge();
+  const { data: squadPulse } = useSquadPulse();
   const [showVibeCheck, setShowVibeCheck] = useState(false);
   const [showDomainSetup, setShowDomainSetup] = useState(false);
   const [showDay84, setShowDay84] = useState(false);
@@ -116,6 +120,40 @@ export default function HomeScreen() {
           </div>
           <p className="text-base-subtext text-xs mt-3 italic">{phaseConfig.tagline}</p>
         </Card>
+
+        {/* Today's nudge preview */}
+        {nudge && nudge.status === 'new' && (
+          <button
+            className="w-full text-left"
+            onClick={() => navigate('/improve')}
+          >
+            <Card className="border-accent-green/30 hover:border-accent-green/60 transition-colors">
+              <div className="flex items-start justify-between gap-2">
+                <div className="flex-1 min-w-0">
+                  <p className="font-heading text-xs text-accent-green tracking-widest uppercase mb-1">
+                    Today's nudge
+                  </p>
+                  <p className="text-base-text text-sm font-medium leading-snug truncate">
+                    {nudge.title}
+                  </p>
+                </div>
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="text-accent-green shrink-0 mt-1">
+                  <path d="M5 2l5 5-5 5" />
+                </svg>
+              </div>
+            </Card>
+          </button>
+        )}
+
+        {/* Squad pulse — Brotherhood only */}
+        {profile.tier === 'brotherhood' && profile.squadId && squadPulse && (
+          <Card>
+            <p className="font-heading text-xs text-base-subtext tracking-widest uppercase mb-1">
+              Squad — Week {squadPulse.weekNumber}
+            </p>
+            <p className="text-base-text text-sm italic">{squadPulse.message}</p>
+          </Card>
+        )}
 
         {/* Domain check-ins */}
         <div>
