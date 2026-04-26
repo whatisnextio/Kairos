@@ -89,7 +89,7 @@ export default function Day84CompletionModal({ onClose }: Props) {
         {step === 'celebrate' && (
           <div className="text-center">
             <p className="font-heading text-5xl font-bold text-accent-green mb-4 tracking-widest">
-              +50 XP
+              +500 XP
             </p>
             <h2 className="font-heading text-2xl font-bold text-base-text mb-3 tracking-wide">
               Cycle Complete.

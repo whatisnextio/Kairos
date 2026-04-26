@@ -35,6 +35,9 @@ function shouldShowVibeCheck(lastVibeCheckDate: string | null, dayInCycle: numbe
   return daysSince >= 7;
 }
 
+// Module-level flag: prevents re-prompting within the same JS session even if HomeScreen remounts
+let vibeCheckShownThisSession = false;
+
 export default function HomeScreen() {
   const navigate = useNavigate();
   const { profile, currentCycle, domainFocuses, todayCheckIns, lastVibeCheckDate, setDailyCheckIn } = useAppStore();
@@ -51,7 +54,8 @@ export default function HomeScreen() {
     if (!profile || !currentCycle) return;
     if (dayInCycle >= 84 && currentCycle.status === 'active') {
       setShowDay84(true);
-    } else if (shouldShowVibeCheck(lastVibeCheckDate, dayInCycle) && new Date().getDay() === 0) {
+    } else if (!vibeCheckShownThisSession && shouldShowVibeCheck(lastVibeCheckDate, dayInCycle) && new Date().getDay() === 0) {
+      vibeCheckShownThisSession = true;
       setShowVibeCheck(true);
     } else if (dayInCycle >= 2 && domainFocuses.length < 4) {
       setShowDomainSetup(true);

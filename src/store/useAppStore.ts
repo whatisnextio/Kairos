@@ -12,7 +12,7 @@ import type {
   CheckInStatus,
   VibeCheck,
 } from '@/types';
-import { XP_PER_CHECK_IN_DONE, XP_PER_CHECK_IN_PARTIAL } from '@/types';
+import { XP_PER_CHECK_IN_DONE, XP_PER_CHECK_IN_PARTIAL, XP_PER_CYCLE_COMPLETE } from '@/types';
 import { supabase } from '@/services/supabaseClient';
 
 // ─── State Shape ─────────────────────────────────────────────────────────────
@@ -245,7 +245,7 @@ export const useAppStore = create<AppState & AppActions>()(
         if (!profile || !currentCycle) return;
 
         const today = new Date().toISOString().split('T')[0];
-        const completionXp = 50;
+        const completionXp = XP_PER_CYCLE_COMPLETE;
 
         set((state) => ({
           currentCycle: state.currentCycle

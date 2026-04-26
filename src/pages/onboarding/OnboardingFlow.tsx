@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { useAppStore } from '@/store/useAppStore';
 import { supabase } from '@/services/supabaseClient';
 import type { IdentityAnchorId, DomainType } from '@/types';
@@ -9,7 +8,6 @@ import Button from '@/components/common/Button';
 type Step = 'welcome' | 'anchor' | 'domain' | 'action' | 'win' | 'celebrate';
 
 export default function OnboardingFlow() {
-  const navigate = useNavigate();
   const { authUser, setProfile, setCurrentCycle, setDomainFocuses, setOnboardingComplete } =
     useAppStore();
 
@@ -126,7 +124,9 @@ export default function OnboardingFlow() {
       }]);
     }
 
-    setOnboardingComplete(true);
+    // Do NOT call setOnboardingComplete here. It would cause App.tsx to switch to the
+    // main router immediately, unmounting OnboardingFlow before the celebrate step renders.
+    // setOnboardingComplete(true) is called by the celebrate step's CTA button instead.
     setStep('celebrate');
     setSubmitting(false);
   };
@@ -275,7 +275,7 @@ export default function OnboardingFlow() {
           <h2 className="font-heading text-2xl font-bold text-base-text mb-2 tracking-wide">Day 0 done.</h2>
           <p className="text-base-subtext text-sm mb-2">That's how it starts.</p>
           <p className="text-base-subtext text-sm mb-10">Day 1 begins tomorrow. Same time. Same commitment.</p>
-          <Button onClick={() => navigate('/')} className="w-full">
+          <Button onClick={() => setOnboardingComplete(true)} className="w-full">
             Go to dashboard
           </Button>
         </div>

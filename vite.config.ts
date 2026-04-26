@@ -7,6 +7,9 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
+      strategies: 'injectManifest',
+      srcDir: 'src',
+      filename: 'sw.ts',
       includeAssets: ['favicon.ico', 'logo192.png', 'logo512.png'],
       manifest: {
         name: '12K - Your 12-Week Transformation',
@@ -21,6 +24,9 @@ export default defineConfig({
           { src: 'logo192.png', type: 'image/png', sizes: '192x192' },
           { src: 'logo512.png', type: 'image/png', sizes: '512x512', purpose: 'any maskable' },
         ],
+      },
+      injectManifest: {
+        globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
       },
       workbox: {
         globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
