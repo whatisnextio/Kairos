@@ -127,15 +127,30 @@ Deno.serve(async (req: Request) => {
     let squadId: string;
 
     if (candidates && candidates.length > 0) {
-      // Join existing squad
+      // Join existing squad — conditional update guards against race condition.
+      // If another user filled the squad between our SELECT and UPDATE, the
+      // lt('member_count', 8) filter will match 0 rows and we create a new squad.
       squadId = candidates[0].id;
 
-      const { error: incrementErr } = await supabase
+      const { count: updatedCount, error: incrementErr } = await supabase
         .from('squads')
         .update({ member_count: candidates[0].member_count + 1 })
-        .eq('id', squadId);
+        .eq('id', squadId)
+        .lt('member_count', 8)
+        .select('*', { count: 'exact', head: true });
 
       if (incrementErr) throw new Error(`Squad increment failed: ${incrementErr.message}`);
+
+      if (!updatedCount || updatedCount === 0) {
+        // Squad was filled by a concurrent request; fall through to create a new one
+        const { data: newSquad, error: createErr } = await supabase
+          .from('squads')
+          .insert({ kairos_phase: phase, cycle_start_window: today, member_count: 1 })
+          .select('id')
+          .single();
+        if (createErr || !newSquad) throw new Error(`Squad create failed: ${createErr?.message}`);
+        squadId = newSquad.id;
+      }
     } else {
       // Create new squad
       const { data: newSquad, error: createErr } = await supabase
