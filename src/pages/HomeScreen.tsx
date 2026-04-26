@@ -5,6 +5,7 @@ import { getDayInCycle, getCurrentPhaseConfig, getCycleProgressPct, getPhaseProg
 import { DOMAINS, IDENTITY_ANCHORS, type DomainType, type CheckInStatus } from '@/types';
 import Card from '@/components/common/Card';
 import WeeklyVibeCheckModal from '@/components/modals/WeeklyVibeCheckModal';
+import ProgressiveDomainSetupModal from '@/components/modals/ProgressiveDomainSetupModal';
 
 const STATUS_LABELS: Record<CheckInStatus, string> = {
   Done: 'Done',
@@ -35,15 +36,18 @@ export default function HomeScreen() {
   const navigate = useNavigate();
   const { profile, currentCycle, domainFocuses, todayCheckIns, lastVibeCheckDate, setDailyCheckIn } = useAppStore();
   const [showVibeCheck, setShowVibeCheck] = useState(false);
+  const [showDomainSetup, setShowDomainSetup] = useState(false);
 
   const dayInCycle = profile && currentCycle ? getDayInCycle(currentCycle.startDate) : 1;
 
   useEffect(() => {
-    if (profile && currentCycle && shouldShowVibeCheck(lastVibeCheckDate, dayInCycle)) {
-      const isSunday = new Date().getDay() === 0;
-      if (isSunday) setShowVibeCheck(true);
+    if (!profile || !currentCycle) return;
+    if (shouldShowVibeCheck(lastVibeCheckDate, dayInCycle) && new Date().getDay() === 0) {
+      setShowVibeCheck(true);
+    } else if (dayInCycle >= 2 && domainFocuses.length < 4) {
+      setShowDomainSetup(true);
     }
-  }, [profile, currentCycle, lastVibeCheckDate, dayInCycle]);
+  }, [profile, currentCycle, lastVibeCheckDate, dayInCycle, domainFocuses.length]);
 
   if (!profile || !currentCycle) return null;
 
@@ -159,6 +163,9 @@ export default function HomeScreen() {
         </div>
       </div>
 
+      {showDomainSetup && !showVibeCheck && (
+        <ProgressiveDomainSetupModal onClose={() => setShowDomainSetup(false)} />
+      )}
       {showVibeCheck && (
         <WeeklyVibeCheckModal onClose={() => setShowVibeCheck(false)} />
       )}

@@ -32,13 +32,14 @@ export interface DomainConfig {
   type: DomainType;
   label: string;
   colour: string; // tailwind text colour class
+  focusPrompt: string;
 }
 
 export const DOMAINS: DomainConfig[] = [
-  { type: 'BODY',    label: 'Body',    colour: 'text-domain-body' },
-  { type: 'LOVE',    label: 'Love',    colour: 'text-domain-love' },
-  { type: 'MISSION', label: 'Mission', colour: 'text-domain-mission' },
-  { type: 'SPIRIT',  label: 'Spirit',  colour: 'text-domain-spirit' },
+  { type: 'BODY',    label: 'Body',    colour: 'text-domain-body',    focusPrompt: 'e.g. Train 4x per week. Walk 10k steps daily.' },
+  { type: 'LOVE',    label: 'Love',    colour: 'text-domain-love',    focusPrompt: 'e.g. Date night every Friday. No phone at dinner.' },
+  { type: 'MISSION', label: 'Mission', colour: 'text-domain-mission', focusPrompt: 'e.g. Ship one feature per week. Write for 30 min daily.' },
+  { type: 'SPIRIT',  label: 'Spirit',  colour: 'text-domain-spirit',  focusPrompt: 'e.g. Meditate for 10 min. Journal each morning.' },
 ];
 
 // ─── Subscription ────────────────────────────────────────────────────────────
