@@ -62,13 +62,14 @@ function mapCheckIn(row: Record<string, unknown>): DailyCheckIn {
 }
 
 export function useBootstrap() {
-  const { authUser, todayCheckIns, setProfile, setCurrentCycle, setDomainFocuses, setOnboardingComplete, setTodayCheckIns, mergeCheckInHistory } =
+  const { authUser, todayCheckIns, setProfile, setCurrentCycle, setDomainFocuses, setOnboardingComplete, setTodayCheckIns, mergeCheckInHistory, setIsBootstrapLoading } =
     useAppStore();
   const bootstrapped = useRef<string | null>(null);
 
   useEffect(() => {
     if (!authUser || bootstrapped.current === authUser.id) return;
     bootstrapped.current = authUser.id;
+    setIsBootstrapLoading(true);
 
     const today = new Date().toISOString().split('T')[0];
 
@@ -89,7 +90,10 @@ export function useBootstrap() {
 
       const profile = mapProfile(profileRow as Record<string, unknown>);
       setProfile(profile);
-      setOnboardingComplete(true);
+      // Only mark onboarding complete if the user has a cycle.
+      // The handle_new_user trigger creates a minimal profile with no cycle;
+      // without this check, new users would bypass OnboardingFlow.
+      setOnboardingComplete(!!profile.currentKairosCycleId);
 
       if (!profile.currentKairosCycleId) return;
 
@@ -145,6 +149,6 @@ export function useBootstrap() {
       }
     }
 
-    load();
+    load().finally(() => setIsBootstrapLoading(false));
   }, [authUser?.id]);
 }

@@ -22,6 +22,7 @@ interface AppState {
   authUser: AuthUser | null;
   profile: Profile | null;
   isAuthLoading: boolean;
+  isBootstrapLoading: boolean;
 
   // Cycle
   currentCycle: KairosCycle | null;
@@ -49,6 +50,7 @@ interface AppState {
 interface AppActions {
   setAuthUser: (user: AuthUser | null) => void;
   setProfile: (profile: Profile | null) => void;
+  setIsBootstrapLoading: (loading: boolean) => void;
   setCurrentCycle: (cycle: KairosCycle | null) => void;
   setDomainFocuses: (focuses: UserDomainFocus[]) => void;
 
@@ -77,6 +79,7 @@ const initialState: AppState = {
   authUser: null,
   profile: null,
   isAuthLoading: true,
+  isBootstrapLoading: false,
   currentCycle: null,
   domainFocuses: [],
   todayCheckIns: {},
@@ -96,6 +99,7 @@ export const useAppStore = create<AppState & AppActions>()(
 
       setAuthUser: (authUser) => set({ authUser, isAuthLoading: false }),
       setProfile: (profile) => set({ profile }),
+      setIsBootstrapLoading: (isBootstrapLoading) => set({ isBootstrapLoading }),
       setCurrentCycle: (currentCycle) => set({ currentCycle }),
       setDomainFocuses: (domainFocuses) => set({ domainFocuses }),
       setTodayCheckIns: (todayCheckIns) => set({ todayCheckIns }),

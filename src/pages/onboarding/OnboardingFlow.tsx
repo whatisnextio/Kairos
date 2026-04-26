@@ -95,7 +95,7 @@ export default function OnboardingFlow() {
       tier: 'free',
       xp: 10,
       currentKairosCycleId: cycle.id,
-      dateOfBirth: today,
+      dateOfBirth: dobFromAuth,
       squadId: null,
       stripeCustomerId: null,
       stripeSubscriptionId: null,

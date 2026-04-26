@@ -29,7 +29,7 @@ function PageFallback() {
 }
 
 export default function App() {
-  const { authUser, profile, onboardingComplete, setAuthUser, isAuthLoading } =
+  const { authUser, profile, onboardingComplete, setAuthUser, isAuthLoading, isBootstrapLoading } =
     useAppStore();
 
   useBootstrap();
@@ -48,7 +48,7 @@ export default function App() {
     return () => listener.subscription.unsubscribe();
   }, [setAuthUser]);
 
-  if (isAuthLoading) return <SplashScreen />;
+  if (isAuthLoading || isBootstrapLoading) return <SplashScreen />;
 
   if (!authUser) {
     return (
