@@ -70,6 +70,7 @@ interface AppActions {
   setTodayNudge: (nudge: AiNudge | null) => void;
   setNudgeStatus: (nudgeId: string, status: AiNudge['status']) => Promise<void>;
 
+  mergeCheckInHistory: (entries: Record<string, Partial<Record<DomainType, CheckInStatus>>>) => void;
   setSquadData: (members: SquadMember[], pulse: SquadPulse | null) => void;
   setOnboardingComplete: (complete: boolean) => void;
   submitVibeCheck: (rating: VibeCheck['rating']) => Promise<void>;
@@ -221,6 +222,9 @@ export const useAppStore = create<AppState & AppActions>()(
           .update({ status })
           .eq('id', nudgeId);
       },
+
+      mergeCheckInHistory: (entries) =>
+        set((state) => ({ checkInHistory: { ...state.checkInHistory, ...entries } })),
 
       setSquadData: (squadMembers, latestSquadPulse) =>
         set({ squadMembers, latestSquadPulse }),

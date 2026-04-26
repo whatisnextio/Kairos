@@ -139,7 +139,7 @@ export default function NewCycleScreen() {
         )}
       </Card>
 
-      {error && <p className="text-red-400 text-sm">{error}</p>}
+      {error && <p role="alert" className="text-status-missed text-sm">{error}</p>}
 
       <Button
         onClick={handleStart}

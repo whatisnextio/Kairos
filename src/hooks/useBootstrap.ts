@@ -62,7 +62,7 @@ function mapCheckIn(row: Record<string, unknown>): DailyCheckIn {
 }
 
 export function useBootstrap() {
-  const { authUser, todayCheckIns, setProfile, setCurrentCycle, setDomainFocuses, setOnboardingComplete, setTodayCheckIns } =
+  const { authUser, todayCheckIns, setProfile, setCurrentCycle, setDomainFocuses, setOnboardingComplete, setTodayCheckIns, mergeCheckInHistory } =
     useAppStore();
   const bootstrapped = useRef<string | null>(null);
 
@@ -113,20 +113,34 @@ export function useBootstrap() {
         setDomainFocuses(focuses.map((f) => mapFocus(f as Record<string, unknown>)));
       }
 
-      // Brotherhood: reload today's check-ins from Supabase (cross-device sync)
+      // Brotherhood: reload recent check-ins from Supabase (cross-device sync + history backfill)
       if (profile.tier === 'brotherhood') {
+        const sevenDaysAgo = new Date(Date.now() - 6 * 86_400_000).toISOString().split('T')[0];
         const { data: checkIns } = await supabase
           .from('daily_check_ins')
           .select('*')
           .eq('user_id', authUser!.id)
           .eq('cycle_id', profile.currentKairosCycleId)
-          .eq('date', today);
+          .gte('date', sevenDaysAgo)
+          .lte('date', today);
 
         if (checkIns && checkIns.length > 0) {
           const mapped = checkIns.map((c) => mapCheckIn(c as Record<string, unknown>));
-          const byDomain: Partial<Record<DomainType, DailyCheckIn>> = {};
-          for (const ci of mapped) byDomain[ci.domainType] = ci;
-          setTodayCheckIns(byDomain);
+
+          // Set today's check-ins for optimistic UI
+          const todayOnly: Partial<Record<DomainType, DailyCheckIn>> = {};
+          for (const ci of mapped) {
+            if (ci.date === today) todayOnly[ci.domainType] = ci;
+          }
+          if (Object.keys(todayOnly).length > 0) setTodayCheckIns(todayOnly);
+
+          // Backfill checkInHistory so ProgressScreen 7-day grid works on fresh install
+          const historyEntries: Record<string, Partial<Record<DomainType, CheckInStatus>>> = {};
+          for (const ci of mapped) {
+            if (!historyEntries[ci.date]) historyEntries[ci.date] = {};
+            historyEntries[ci.date][ci.domainType] = ci.status;
+          }
+          mergeCheckInHistory(historyEntries);
         }
       }
     }

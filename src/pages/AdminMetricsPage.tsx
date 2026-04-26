@@ -86,7 +86,7 @@ export default function AdminMetricsPage() {
       </div>
 
       {error && (
-        <p className="text-red-400 text-sm">{error}</p>
+        <p role="alert" className="text-status-missed text-sm">{error}</p>
       )}
 
       {loading && (
