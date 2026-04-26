@@ -84,7 +84,11 @@ export function useBootstrap() {
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: runs once per auth session via ref guard; store setters are stable
   useEffect(() => {
-    if (!authUser || bootstrapped.current === authUser.id) return;
+    if (!authUser) {
+      bootstrapped.current = null;
+      return;
+    }
+    if (bootstrapped.current === authUser.id) return;
     bootstrapped.current = authUser.id;
     setIsBootstrapLoading(true);
 
