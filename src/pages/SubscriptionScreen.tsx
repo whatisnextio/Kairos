@@ -8,8 +8,11 @@ export default function SubscriptionScreen() {
   const { profile } = useAppStore();
 
   const handleUpgrade = () => {
-    if (!STRIPE_CHECKOUT_URL) return;
-    window.location.href = STRIPE_CHECKOUT_URL;
+    if (!STRIPE_CHECKOUT_URL || !profile) return;
+    const url = new URL(STRIPE_CHECKOUT_URL);
+    // Pass user ID so the webhook can link the Stripe customer back to this profile
+    url.searchParams.set('client_reference_id', profile.id);
+    window.location.href = url.toString();
   };
 
   return (

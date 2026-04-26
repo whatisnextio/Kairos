@@ -104,10 +104,11 @@ Deno.serve(async (req: Request) => {
   try {
     switch (event.type) {
       case 'checkout.session.completed': {
-        // Link stripe customer ID to profile via metadata.user_id
+        // Link stripe customer ID to profile via client_reference_id (= profile.id)
         const customerId = obj['customer'] as string;
         const subscriptionId = obj['subscription'] as string | null;
-        const userId = (obj['metadata'] as Record<string, string> | null)?.['user_id'];
+        const userId = (obj['client_reference_id'] as string | null)
+          ?? (obj['metadata'] as Record<string, string> | null)?.['user_id'];
 
         if (!userId || !customerId) break;
 
