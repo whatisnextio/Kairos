@@ -69,6 +69,7 @@ interface AppActions {
   setSquadData: (members: SquadMember[], pulse: SquadPulse | null) => void;
   setOnboardingComplete: (complete: boolean) => void;
   submitVibeCheck: (rating: VibeCheck['rating']) => Promise<void>;
+  completeCycle: (reflection: string) => Promise<void>;
 
   signOut: () => Promise<void>;
   reset: () => void;
@@ -201,6 +202,42 @@ export const useAppStore = create<AppState & AppActions>()(
 
         if (error) {
           console.error('Vibe check sync failed:', error.message);
+        }
+      },
+
+      completeCycle: async (reflection) => {
+        const { profile, currentCycle } = get();
+        if (!profile || !currentCycle) return;
+
+        const today = new Date().toISOString().split('T')[0];
+        const completionXp = 50;
+
+        set((state) => ({
+          currentCycle: state.currentCycle
+            ? { ...state.currentCycle, status: 'completed', endDate: today }
+            : null,
+          profile: state.profile
+            ? { ...state.profile, xp: state.profile.xp + completionXp }
+            : null,
+        }));
+
+        if (profile.tier === 'brotherhood') {
+          await supabase.from('kairos_cycles').update({
+            status: 'completed',
+            end_date: today,
+            total_xp_earned: currentCycle.totalXpEarned + completionXp,
+          }).eq('id', currentCycle.id);
+
+          await supabase.from('cycle_reflections').insert({
+            user_id: profile.id,
+            cycle_id: currentCycle.id,
+            reflection_text: reflection,
+            xp_awarded: completionXp,
+          });
+
+          await supabase.from('profiles').update({
+            xp: profile.xp + completionXp,
+          }).eq('id', profile.id);
         }
       },
 

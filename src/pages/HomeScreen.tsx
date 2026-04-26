@@ -6,6 +6,7 @@ import { DOMAINS, IDENTITY_ANCHORS, type DomainType, type CheckInStatus } from '
 import Card from '@/components/common/Card';
 import WeeklyVibeCheckModal from '@/components/modals/WeeklyVibeCheckModal';
 import ProgressiveDomainSetupModal from '@/components/modals/ProgressiveDomainSetupModal';
+import Day84CompletionModal from '@/components/modals/Day84CompletionModal';
 
 const STATUS_LABELS: Record<CheckInStatus, string> = {
   Done: 'Done',
@@ -37,12 +38,15 @@ export default function HomeScreen() {
   const { profile, currentCycle, domainFocuses, todayCheckIns, lastVibeCheckDate, setDailyCheckIn } = useAppStore();
   const [showVibeCheck, setShowVibeCheck] = useState(false);
   const [showDomainSetup, setShowDomainSetup] = useState(false);
+  const [showDay84, setShowDay84] = useState(false);
 
   const dayInCycle = profile && currentCycle ? getDayInCycle(currentCycle.startDate) : 1;
 
   useEffect(() => {
     if (!profile || !currentCycle) return;
-    if (shouldShowVibeCheck(lastVibeCheckDate, dayInCycle) && new Date().getDay() === 0) {
+    if (dayInCycle >= 84 && currentCycle.status === 'active') {
+      setShowDay84(true);
+    } else if (shouldShowVibeCheck(lastVibeCheckDate, dayInCycle) && new Date().getDay() === 0) {
       setShowVibeCheck(true);
     } else if (dayInCycle >= 2 && domainFocuses.length < 4) {
       setShowDomainSetup(true);
@@ -163,7 +167,10 @@ export default function HomeScreen() {
         </div>
       </div>
 
-      {showDomainSetup && !showVibeCheck && (
+      {showDay84 && (
+        <Day84CompletionModal onClose={() => setShowDay84(false)} />
+      )}
+      {showDomainSetup && !showVibeCheck && !showDay84 && (
         <ProgressiveDomainSetupModal onClose={() => setShowDomainSetup(false)} />
       )}
       {showVibeCheck && (
