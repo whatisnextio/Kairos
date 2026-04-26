@@ -1,66 +1,102 @@
+import { useNavigate } from 'react-router-dom';
 import { useAppStore } from '@/store/useAppStore';
+import { useNudge, useUpdateNudgeStatus } from '@/hooks/useNudge';
 import Card from '@/components/common/Card';
 import Button from '@/components/common/Button';
 import { Zap } from 'lucide-react';
 
 export default function ImproveScreen() {
-  const { profile, todayNudge, setNudgeStatus, isNudgeLoading } = useAppStore();
+  const navigate = useNavigate();
+  const profile = useAppStore((s) => s.profile);
 
   const isBrotherhood = profile?.tier === 'brotherhood';
   const today = new Date();
   const isSunday = today.getDay() === 0;
-  const canSeeFreeNudge = !isBrotherhood && isSunday;
-  const canSeeNudge = isBrotherhood || canSeeFreeNudge;
+  const canSeeNudge = isBrotherhood || isSunday;
+
+  const { data: nudge, isLoading, refetch } = useNudge();
+  const { mutate: updateStatus } = useUpdateNudgeStatus();
 
   return (
     <div className="px-4 pt-6 pb-4 flex flex-col gap-4">
       <div className="flex items-center justify-between">
         <h1 className="font-heading text-2xl font-bold text-base-text tracking-wide">Improve</h1>
         {canSeeNudge && (
-          <button className="text-base-subtext hover:text-base-text transition-colors">
+          <button
+            onClick={() => refetch()}
+            className="text-base-subtext hover:text-base-text transition-colors"
+            aria-label="Refresh nudge"
+          >
             <Zap size={18} />
           </button>
         )}
       </div>
 
+      {/* Loading state */}
+      {canSeeNudge && isLoading && (
+        <Card>
+          <p className="text-base-subtext text-sm">Generating your nudge...</p>
+        </Card>
+      )}
+
       {/* Today's nudge */}
-      {canSeeNudge && todayNudge && todayNudge.status === 'new' && (
+      {canSeeNudge && nudge && nudge.status === 'new' && (
         <Card className="border-accent-green/40">
-          <p className="text-base-subtext text-xs font-heading tracking-widest uppercase mb-2">Today's nudge</p>
-          <p className="font-heading text-base font-medium text-base-text mb-1">{todayNudge.title}</p>
-          <p className="text-base-subtext text-sm mb-4">{todayNudge.body}</p>
+          <p className="text-base-subtext text-xs font-heading tracking-widest uppercase mb-2">
+            Today's nudge
+          </p>
+          <p className="font-heading text-base font-medium text-base-text mb-1">{nudge.title}</p>
+          <p className="text-base-subtext text-sm mb-4">{nudge.body}</p>
           <div className="flex gap-2">
             <Button
               size="sm"
-              onClick={() => setNudgeStatus(todayNudge.id, 'accepted')}
+              onClick={() => updateStatus({ nudgeId: nudge.id, status: 'accepted' })}
             >
               Accept
             </Button>
             <Button
               size="sm"
               variant="ghost"
-              onClick={() => setNudgeStatus(todayNudge.id, 'dismissed')}
+              onClick={() => updateStatus({ nudgeId: nudge.id, status: 'dismissed' })}
             >
               Dismiss
             </Button>
           </div>
-          {todayNudge.xpReward && (
-            <p className="text-accent-green text-xs mt-3">+{todayNudge.xpReward} XP on completion</p>
+          {nudge.xpReward && (
+            <p className="text-accent-green text-xs mt-3">+{nudge.xpReward} XP on completion</p>
           )}
         </Card>
       )}
 
-      {canSeeNudge && !todayNudge && !isNudgeLoading && (
-        <Card>
-          <p className="text-base-subtext text-sm">
-            Your nudge is being generated. Check back shortly.
+      {/* Accepted nudge */}
+      {canSeeNudge && nudge && nudge.status === 'accepted' && (
+        <Card className="border-accent-green/40">
+          <p className="text-base-subtext text-xs font-heading tracking-widest uppercase mb-2">
+            Accepted
           </p>
+          <p className="font-heading text-base font-medium text-base-text mb-1">{nudge.title}</p>
+          <p className="text-base-subtext text-sm mb-4">{nudge.body}</p>
+          <Button
+            size="sm"
+            onClick={() => updateStatus({ nudgeId: nudge.id, status: 'completed' })}
+          >
+            Mark complete
+          </Button>
+          {nudge.xpReward && (
+            <p className="text-accent-green text-xs mt-3">+{nudge.xpReward} XP</p>
+          )}
         </Card>
       )}
 
-      {isNudgeLoading && (
+      {/* No nudge yet */}
+      {canSeeNudge && !nudge && !isLoading && (
         <Card>
-          <p className="text-base-subtext text-sm">Generating your nudge...</p>
+          <p className="text-base-subtext text-sm mb-3">
+            No nudge yet today. Tap the lightning bolt to generate one.
+          </p>
+          <Button size="sm" onClick={() => refetch()}>
+            Generate nudge
+          </Button>
         </Card>
       )}
 
@@ -77,7 +113,7 @@ export default function ImproveScreen() {
             <p className="font-heading font-medium text-base-text text-sm mb-3">
               Daily nudges are a Brotherhood feature.
             </p>
-            <Button size="sm" onClick={() => {}}>
+            <Button size="sm" onClick={() => navigate('/subscription')}>
               Unlock Brotherhood, £7.99/mo
             </Button>
             <p className="text-base-muted text-xs mt-3">Free tier gets one nudge on Sundays.</p>
