@@ -7,7 +7,7 @@ import { supabase } from '@/services/supabaseClient';
 import { useAppStore } from '@/store/useAppStore';
 import { IDENTITY_ANCHORS } from '@/types';
 import { getLevelForXp } from '@/utils/gamification';
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 
 const SAVE_PUSH_ENDPOINT = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/save-push-subscription`;
@@ -40,6 +40,20 @@ export default function YouScreen() {
   const { data: squadPulse } = useSquadPulse();
   const { mutate: matchToSquad, isPending: isMatching } = useMatchToSquad();
   const [pushStatus, setPushStatus] = useState<'idle' | 'requesting' | 'done' | 'denied'>('idle');
+
+  useEffect(() => {
+    if (!isPushSupported()) return;
+    if (Notification.permission === 'denied') {
+      setPushStatus('denied');
+      return;
+    }
+    navigator.serviceWorker.ready.then((reg) =>
+      reg.pushManager.getSubscription().then((sub) => {
+        if (sub) setPushStatus('done');
+      }),
+    );
+  }, []);
+
   const [deleteConfirm, setDeleteConfirm] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
