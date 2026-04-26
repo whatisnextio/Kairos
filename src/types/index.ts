@@ -1,12 +1,6 @@
 // ─── KAIROS Phases ───────────────────────────────────────────────────────────
 
-export type KairosPhase =
-  | 'KICKOFF'
-  | 'ANCHOR'
-  | 'INCREASE'
-  | 'RHYTHM'
-  | 'OWN'
-  | 'SUSTAIN';
+export type KairosPhase = 'KICKOFF' | 'ANCHOR' | 'INCREASE' | 'RHYTHM' | 'OWN' | 'SUSTAIN';
 
 export interface KairosPhaseConfig {
   phase: KairosPhase;
@@ -16,12 +10,42 @@ export interface KairosPhaseConfig {
 }
 
 export const KAIROS_PHASES: KairosPhaseConfig[] = [
-  { phase: 'KICKOFF',  label: 'Kickoff',  days: [1,  14], tagline: 'Build the base. Consistency over perfection.' },
-  { phase: 'ANCHOR',   label: 'Anchor',   days: [15, 28], tagline: 'Lock in habits. Streak matters now.' },
-  { phase: 'INCREASE', label: 'Increase', days: [29, 42], tagline: 'Step up intensity. 10-15% more.' },
-  { phase: 'RHYTHM',   label: 'Rhythm',   days: [43, 56], tagline: 'Find natural flow. Variability welcome.' },
-  { phase: 'OWN',      label: 'Own',      days: [57, 70], tagline: 'Identity crystallisation. You are this now.' },
-  { phase: 'SUSTAIN',  label: 'Sustain',  days: [71, 84], tagline: 'Plan the long game. Beyond the cycle.' },
+  {
+    phase: 'KICKOFF',
+    label: 'Kickoff',
+    days: [1, 14],
+    tagline: 'Build the base. Consistency over perfection.',
+  },
+  {
+    phase: 'ANCHOR',
+    label: 'Anchor',
+    days: [15, 28],
+    tagline: 'Lock in habits. Streak matters now.',
+  },
+  {
+    phase: 'INCREASE',
+    label: 'Increase',
+    days: [29, 42],
+    tagline: 'Step up intensity. 10-15% more.',
+  },
+  {
+    phase: 'RHYTHM',
+    label: 'Rhythm',
+    days: [43, 56],
+    tagline: 'Find natural flow. Variability welcome.',
+  },
+  {
+    phase: 'OWN',
+    label: 'Own',
+    days: [57, 70],
+    tagline: 'Identity crystallisation. You are this now.',
+  },
+  {
+    phase: 'SUSTAIN',
+    label: 'Sustain',
+    days: [71, 84],
+    tagline: 'Plan the long game. Beyond the cycle.',
+  },
 ];
 
 // ─── Domains ─────────────────────────────────────────────────────────────────
@@ -36,10 +60,30 @@ export interface DomainConfig {
 }
 
 export const DOMAINS: DomainConfig[] = [
-  { type: 'BODY',    label: 'Body',    colour: 'text-domain-body',    focusPrompt: 'e.g. Train 4x per week. Walk 10k steps daily.' },
-  { type: 'LOVE',    label: 'Love',    colour: 'text-domain-love',    focusPrompt: 'e.g. Date night every Friday. No phone at dinner.' },
-  { type: 'MISSION', label: 'Mission', colour: 'text-domain-mission', focusPrompt: 'e.g. Ship one feature per week. Write for 30 min daily.' },
-  { type: 'SPIRIT',  label: 'Spirit',  colour: 'text-domain-spirit',  focusPrompt: 'e.g. Meditate for 10 min. Journal each morning.' },
+  {
+    type: 'BODY',
+    label: 'Body',
+    colour: 'text-domain-body',
+    focusPrompt: 'e.g. Train 4x per week. Walk 10k steps daily.',
+  },
+  {
+    type: 'LOVE',
+    label: 'Love',
+    colour: 'text-domain-love',
+    focusPrompt: 'e.g. Date night every Friday. No phone at dinner.',
+  },
+  {
+    type: 'MISSION',
+    label: 'Mission',
+    colour: 'text-domain-mission',
+    focusPrompt: 'e.g. Ship one feature per week. Write for 30 min daily.',
+  },
+  {
+    type: 'SPIRIT',
+    label: 'Spirit',
+    colour: 'text-domain-spirit',
+    focusPrompt: 'e.g. Meditate for 10 min. Journal each morning.',
+  },
 ];
 
 // ─── Subscription ────────────────────────────────────────────────────────────
@@ -64,13 +108,25 @@ export interface IdentityAnchor {
 }
 
 export const IDENTITY_ANCHORS: IdentityAnchor[] = [
-  { id: 'provider', name: 'The Provider',  description: 'You show up. Every day. No excuses.' },
-  { id: 'builder',  name: 'The Builder',   description: 'You make things real that others only imagine.' },
-  { id: 'guardian', name: 'The Guardian',  description: 'You protect what matters. Family, health, standards.' },
-  { id: 'leader',   name: 'The Leader',    description: 'Others follow because you go first.' },
-  { id: 'mentor',   name: 'The Mentor',    description: 'Your hard-won lessons become someone else\'s shortcut.' },
-  { id: 'creator',  name: 'The Creator',   description: 'You build worlds with your hands or mind.' },
-  { id: 'custom',   name: 'Custom',        description: 'Define your own.' },
+  { id: 'provider', name: 'The Provider', description: 'You show up. Every day. No excuses.' },
+  {
+    id: 'builder',
+    name: 'The Builder',
+    description: 'You make things real that others only imagine.',
+  },
+  {
+    id: 'guardian',
+    name: 'The Guardian',
+    description: 'You protect what matters. Family, health, standards.',
+  },
+  { id: 'leader', name: 'The Leader', description: 'Others follow because you go first.' },
+  {
+    id: 'mentor',
+    name: 'The Mentor',
+    description: "Your hard-won lessons become someone else's shortcut.",
+  },
+  { id: 'creator', name: 'The Creator', description: 'You build worlds with your hands or mind.' },
+  { id: 'custom', name: 'Custom', description: 'Define your own.' },
 ];
 
 // ─── Profile ─────────────────────────────────────────────────────────────────

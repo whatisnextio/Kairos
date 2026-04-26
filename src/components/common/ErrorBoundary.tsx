@@ -24,10 +24,9 @@ export default class ErrorBoundary extends Component<Props, State> {
           <h1 className="font-heading text-2xl font-bold text-base-text mb-3 tracking-wide">
             Something went wrong.
           </h1>
-          <p className="text-base-subtext text-sm mb-6">
-            {this.state.error.message}
-          </p>
+          <p className="text-base-subtext text-sm mb-6">{this.state.error.message}</p>
           <button
+            type="button"
             onClick={() => window.location.reload()}
             className="font-heading text-sm text-accent-green border border-accent-green/30 rounded px-4 py-2"
           >

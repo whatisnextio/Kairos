@@ -1,7 +1,14 @@
-import { useEffect, useRef } from 'react';
 import { supabase } from '@/services/supabaseClient';
 import { useAppStore } from '@/store/useAppStore';
-import type { Profile, KairosCycle, UserDomainFocus, DomainType, DailyCheckIn, CheckInStatus } from '@/types';
+import type {
+  CheckInStatus,
+  DailyCheckIn,
+  DomainType,
+  KairosCycle,
+  Profile,
+  UserDomainFocus,
+} from '@/types';
+import { useEffect, useRef } from 'react';
 
 function mapProfile(row: Record<string, unknown>): Profile {
   return {
@@ -62,10 +69,20 @@ function mapCheckIn(row: Record<string, unknown>): DailyCheckIn {
 }
 
 export function useBootstrap() {
-  const { authUser, todayCheckIns, setProfile, setCurrentCycle, setDomainFocuses, setOnboardingComplete, setTodayCheckIns, mergeCheckInHistory, setIsBootstrapLoading } =
-    useAppStore();
+  const {
+    authUser,
+    todayCheckIns,
+    setProfile,
+    setCurrentCycle,
+    setDomainFocuses,
+    setOnboardingComplete,
+    setTodayCheckIns,
+    mergeCheckInHistory,
+    setIsBootstrapLoading,
+  } = useAppStore();
   const bootstrapped = useRef<string | null>(null);
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: runs once per auth session via ref guard; store setters are stable
   useEffect(() => {
     if (!authUser || bootstrapped.current === authUser.id) return;
     bootstrapped.current = authUser.id;
@@ -83,7 +100,7 @@ export function useBootstrap() {
       const { data: profileRow } = await supabase
         .from('profiles')
         .select('*')
-        .eq('id', authUser!.id)
+        .eq('id', authUser?.id)
         .single();
 
       if (!profileRow) return;
@@ -110,7 +127,7 @@ export function useBootstrap() {
       const { data: focuses } = await supabase
         .from('user_domain_focuses')
         .select('*')
-        .eq('user_id', authUser!.id)
+        .eq('user_id', authUser?.id)
         .eq('cycle_id', profile.currentKairosCycleId);
 
       if (focuses) {
@@ -123,7 +140,7 @@ export function useBootstrap() {
         const { data: checkIns } = await supabase
           .from('daily_check_ins')
           .select('*')
-          .eq('user_id', authUser!.id)
+          .eq('user_id', authUser?.id)
           .eq('cycle_id', profile.currentKairosCycleId)
           .gte('date', sevenDaysAgo)
           .lte('date', today);

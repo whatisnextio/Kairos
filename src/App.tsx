@@ -1,19 +1,19 @@
-import { lazy, Suspense, useEffect } from 'react';
-import { HashRouter, Routes, Route, Navigate } from 'react-router-dom';
-import { useAppStore } from '@/store/useAppStore';
-import { supabase } from '@/services/supabaseClient';
 import { useBootstrap } from '@/hooks/useBootstrap';
+import { supabase } from '@/services/supabaseClient';
+import { useAppStore } from '@/store/useAppStore';
+import { Suspense, lazy, useEffect } from 'react';
+import { HashRouter, Navigate, Route, Routes } from 'react-router-dom';
 
+import AppShell from '@/components/layout/AppShell';
+import HomeScreen from '@/pages/HomeScreen';
+import ImproveScreen from '@/pages/ImproveScreen';
+import ProgressScreen from '@/pages/ProgressScreen';
 // Critical path: in the main bundle
 import SplashScreen from '@/pages/SplashScreen';
+import YouScreen from '@/pages/YouScreen';
 import LoginPage from '@/pages/auth/LoginPage';
 import RegisterPage from '@/pages/auth/RegisterPage';
 import OnboardingFlow from '@/pages/onboarding/OnboardingFlow';
-import HomeScreen from '@/pages/HomeScreen';
-import ProgressScreen from '@/pages/ProgressScreen';
-import ImproveScreen from '@/pages/ImproveScreen';
-import YouScreen from '@/pages/YouScreen';
-import AppShell from '@/components/layout/AppShell';
 
 // Non-critical: lazy loaded
 const DetailScreen = lazy(() => import('@/pages/DetailScreen'));

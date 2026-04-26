@@ -1,8 +1,8 @@
+import Button from '@/components/common/Button';
+import Input from '@/components/common/Input';
+import { supabase } from '@/services/supabaseClient';
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { supabase } from '@/services/supabaseClient';
-import Input from '@/components/common/Input';
-import Button from '@/components/common/Button';
 
 export default function RegisterPage() {
   const [email, setEmail] = useState('');
@@ -84,7 +84,11 @@ export default function RegisterPage() {
               I confirm I am 18 years of age or over. 12K is an adult product.
             </span>
           </label>
-          {error && <p role="alert" className="text-xs text-status-missed">{error}</p>}
+          {error && (
+            <p role="alert" className="text-xs text-status-missed">
+              {error}
+            </p>
+          )}
           <Button type="submit" disabled={loading || !ageConfirmed} className="w-full">
             {loading ? 'Sending...' : 'Create account'}
           </Button>

@@ -1,7 +1,7 @@
-import { useQuery, useMutation } from '@tanstack/react-query';
 import { supabase } from '@/services/supabaseClient';
 import { useAppStore } from '@/store/useAppStore';
 import type { SquadPulse } from '@/types';
+import { useMutation, useQuery } from '@tanstack/react-query';
 
 const SQUAD_MATCH_ENDPOINT = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/match-to-squad`;
 
@@ -88,7 +88,9 @@ export function useMatchToSquad() {
 
   return useMutation({
     mutationFn: async () => {
-      const { data: { session } } = await supabase.auth.getSession();
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
       if (!session) throw new Error('No session');
 
       const res = await fetch(SQUAD_MATCH_ENDPOINT, {

@@ -1,7 +1,7 @@
-import { useNavigate } from 'react-router-dom';
-import { useAppStore } from '@/store/useAppStore';
 import Button from '@/components/common/Button';
 import Card from '@/components/common/Card';
+import { useAppStore } from '@/store/useAppStore';
+import { useNavigate } from 'react-router-dom';
 
 const STRIPE_CHECKOUT_URL = import.meta.env.VITE_STRIPE_CHECKOUT_URL as string;
 
@@ -19,11 +19,22 @@ export default function SubscriptionScreen() {
   return (
     <div className="px-4 pt-6 pb-4 flex flex-col gap-4">
       <button
+        type="button"
         onClick={() => navigate(-1)}
         aria-label="Go back"
         className="flex items-center gap-1.5 text-base-subtext hover:text-base-text text-sm -mb-1 transition-colors"
       >
-        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+        <svg
+          aria-hidden="true"
+          width="16"
+          height="16"
+          viewBox="0 0 16 16"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.5"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        >
           <path d="M10 3L5 8l5 5" />
         </svg>
         Back
@@ -54,13 +65,19 @@ export default function SubscriptionScreen() {
           ))}
         </ul>
 
-        <Button onClick={handleUpgrade} className="w-full mt-6" disabled={profile?.tier === 'brotherhood'}>
+        <Button
+          onClick={handleUpgrade}
+          className="w-full mt-6"
+          disabled={profile?.tier === 'brotherhood'}
+        >
           {profile?.tier === 'brotherhood' ? 'Already active' : 'Unlock Brotherhood'}
         </Button>
       </Card>
 
       <Card>
-        <p className="text-base-subtext text-xs font-heading tracking-widest uppercase mb-2">Free tier</p>
+        <p className="text-base-subtext text-xs font-heading tracking-widest uppercase mb-2">
+          Free tier
+        </p>
         <ul className="flex flex-col gap-2">
           {[
             'Track 4 domains',

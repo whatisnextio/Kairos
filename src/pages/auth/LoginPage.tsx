@@ -1,8 +1,8 @@
+import Button from '@/components/common/Button';
+import Input from '@/components/common/Input';
+import { supabase } from '@/services/supabaseClient';
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { supabase } from '@/services/supabaseClient';
-import Input from '@/components/common/Input';
-import Button from '@/components/common/Button';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');

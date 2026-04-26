@@ -1,14 +1,19 @@
-import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useAppStore } from '@/store/useAppStore';
-import { getDayInCycle, getCurrentPhaseConfig, getCycleProgressPct, getPhaseProgressPct } from '@/utils/kairos';
-import { DOMAINS, IDENTITY_ANCHORS, type DomainType, type CheckInStatus } from '@/types';
 import Card from '@/components/common/Card';
-import WeeklyVibeCheckModal from '@/components/modals/WeeklyVibeCheckModal';
-import ProgressiveDomainSetupModal from '@/components/modals/ProgressiveDomainSetupModal';
 import Day84CompletionModal from '@/components/modals/Day84CompletionModal';
+import ProgressiveDomainSetupModal from '@/components/modals/ProgressiveDomainSetupModal';
+import WeeklyVibeCheckModal from '@/components/modals/WeeklyVibeCheckModal';
 import { useNudge } from '@/hooks/useNudge';
-import { useSquadPulse, useSquadMembers } from '@/hooks/useSquad';
+import { useSquadMembers, useSquadPulse } from '@/hooks/useSquad';
+import { useAppStore } from '@/store/useAppStore';
+import { type CheckInStatus, DOMAINS, type DomainType, IDENTITY_ANCHORS } from '@/types';
+import {
+  getCurrentPhaseConfig,
+  getCycleProgressPct,
+  getDayInCycle,
+  getPhaseProgressPct,
+} from '@/utils/kairos';
+import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 const STATUS_LABELS: Record<CheckInStatus, string> = {
   Done: 'Done',
@@ -19,10 +24,10 @@ const STATUS_LABELS: Record<CheckInStatus, string> = {
 };
 
 const STATUS_COLOURS: Record<CheckInStatus, string> = {
-  Done:      'border-status-done text-status-done',
-  Partial:   'border-status-partial text-status-partial',
-  Missed:    'border-status-missed text-status-missed',
-  Pending:   'border-base-border text-base-subtext hover:border-base-muted',
+  Done: 'border-status-done text-status-done',
+  Partial: 'border-status-partial text-status-partial',
+  Missed: 'border-status-missed text-status-missed',
+  Pending: 'border-base-border text-base-subtext hover:border-base-muted',
   Protected: 'border-domain-spirit text-domain-spirit',
 };
 
@@ -40,7 +45,14 @@ let vibeCheckShownThisSession = false;
 
 export default function HomeScreen() {
   const navigate = useNavigate();
-  const { profile, currentCycle, domainFocuses, todayCheckIns, lastVibeCheckDate, setDailyCheckIn } = useAppStore();
+  const {
+    profile,
+    currentCycle,
+    domainFocuses,
+    todayCheckIns,
+    lastVibeCheckDate,
+    setDailyCheckIn,
+  } = useAppStore();
   const { data: nudge } = useNudge();
   const { data: squadPulse } = useSquadPulse();
   const { data: squadMembers } = useSquadMembers();
@@ -54,7 +66,11 @@ export default function HomeScreen() {
     if (!profile || !currentCycle) return;
     if (dayInCycle >= 84 && currentCycle.status === 'active') {
       setShowDay84(true);
-    } else if (!vibeCheckShownThisSession && shouldShowVibeCheck(lastVibeCheckDate, dayInCycle) && new Date().getDay() === 0) {
+    } else if (
+      !vibeCheckShownThisSession &&
+      shouldShowVibeCheck(lastVibeCheckDate, dayInCycle) &&
+      new Date().getDay() === 0
+    ) {
       vibeCheckShownThisSession = true;
       setShowVibeCheck(true);
     } else if (dayInCycle >= 2 && domainFocuses.length < 4) {
@@ -128,10 +144,7 @@ export default function HomeScreen() {
 
         {/* Today's nudge preview */}
         {nudge && nudge.status === 'new' && (
-          <button
-            className="w-full text-left"
-            onClick={() => navigate('/improve')}
-          >
+          <button type="button" className="w-full text-left" onClick={() => navigate('/improve')}>
             <Card className="border-accent-green/30 hover:border-accent-green/60 transition-colors">
               <div className="flex items-start justify-between gap-2">
                 <div className="flex-1 min-w-0">
@@ -142,7 +155,18 @@ export default function HomeScreen() {
                     {nudge.title}
                   </p>
                 </div>
-                <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="text-accent-green shrink-0 mt-1">
+                <svg
+                  aria-hidden="true"
+                  width="14"
+                  height="14"
+                  viewBox="0 0 14 14"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  className="text-accent-green shrink-0 mt-1"
+                >
                   <path d="M5 2l5 5-5 5" />
                 </svg>
               </div>
@@ -170,12 +194,15 @@ export default function HomeScreen() {
                         </span>
                       </div>
                       <div className="flex gap-0.5">
-                        {dots.map((status, i) => {
+                        {(['body', 'love', 'mission', 'spirit'] as const).map((domain, i) => {
+                          const status = dots[i];
                           let dotClass = 'bg-base-border/50';
                           if (status === 'Done') dotClass = 'bg-status-done';
                           else if (status === 'Partial') dotClass = 'bg-status-partial';
                           else if (status === 'Missed') dotClass = 'bg-status-missed';
-                          return <div key={i} className={`w-1.5 h-1.5 rounded-full ${dotClass}`} />;
+                          return (
+                            <div key={domain} className={`w-1.5 h-1.5 rounded-full ${dotClass}`} />
+                          );
                         })}
                       </div>
                     </div>
@@ -210,6 +237,7 @@ export default function HomeScreen() {
                   className={`w-full flex rounded border transition-colors ${STATUS_COLOURS[status]} bg-base-surface`}
                 >
                   <button
+                    type="button"
                     className="flex-1 text-left p-4"
                     onClick={() => handleCheckIn(d.type, checkIn?.status)}
                     aria-label={`Check in ${d.label}`}
@@ -221,18 +249,31 @@ export default function HomeScreen() {
                       <span className="text-xs">{STATUS_LABELS[status]}</span>
                     </div>
                     {focus && (
-                      <p className="text-base-subtext text-xs mt-1 truncate">{focus.focusDescription}</p>
+                      <p className="text-base-subtext text-xs mt-1 truncate">
+                        {focus.focusDescription}
+                      </p>
                     )}
                     {!focus && (
                       <p className="text-base-muted text-xs mt-1">Set your focus for tomorrow.</p>
                     )}
                   </button>
                   <button
+                    type="button"
                     className="px-3 flex items-center text-base-muted hover:text-base-subtext transition-colors border-l border-current/20"
                     onClick={() => navigate(`/detail/${d.type.toLowerCase()}`)}
                     aria-label={`View ${d.label} detail`}
                   >
-                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                    <svg
+                      aria-hidden="true"
+                      width="14"
+                      height="14"
+                      viewBox="0 0 14 14"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="1.5"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
                       <path d="M5 2l5 5-5 5" />
                     </svg>
                   </button>
@@ -243,15 +284,11 @@ export default function HomeScreen() {
         </div>
       </div>
 
-      {showDay84 && (
-        <Day84CompletionModal onClose={() => setShowDay84(false)} />
-      )}
+      {showDay84 && <Day84CompletionModal onClose={() => setShowDay84(false)} />}
       {showDomainSetup && !showVibeCheck && !showDay84 && (
         <ProgressiveDomainSetupModal onClose={() => setShowDomainSetup(false)} />
       )}
-      {showVibeCheck && (
-        <WeeklyVibeCheckModal onClose={() => setShowVibeCheck(false)} />
-      )}
+      {showVibeCheck && <WeeklyVibeCheckModal onClose={() => setShowVibeCheck(false)} />}
     </>
   );
 }

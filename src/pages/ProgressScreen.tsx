@@ -1,16 +1,16 @@
-import { useAppStore } from '@/store/useAppStore';
-import { useStreaks } from '@/hooks/useStreaks';
-import { getDayInCycle, getCurrentPhaseConfig, KAIROS_PHASES } from '@/utils/kairos';
-import type { KairosPhaseConfig } from '@/types';
-import { getLevelForXp, getXpProgressInLevel } from '@/utils/gamification';
-import { DOMAINS } from '@/types';
 import Card from '@/components/common/Card';
+import { useStreaks } from '@/hooks/useStreaks';
+import { useAppStore } from '@/store/useAppStore';
+import type { KairosPhaseConfig } from '@/types';
+import { DOMAINS } from '@/types';
+import { getLevelForXp, getXpProgressInLevel } from '@/utils/gamification';
+import { KAIROS_PHASES, getCurrentPhaseConfig, getDayInCycle } from '@/utils/kairos';
 
 const STATUS_DOT: Record<string, string> = {
-  Done:      'bg-status-done',
-  Partial:   'bg-status-partial',
-  Missed:    'bg-status-missed',
-  Pending:   'bg-base-border',
+  Done: 'bg-status-done',
+  Partial: 'bg-status-partial',
+  Missed: 'bg-status-missed',
+  Pending: 'bg-base-border',
   Protected: 'bg-domain-spirit',
 };
 
@@ -24,7 +24,13 @@ function getLast7Days(): string[] {
 }
 
 export default function ProgressScreen() {
-  const { profile, currentCycle, todayCheckIns, checkInHistory, streaks: localStreaks } = useAppStore();
+  const {
+    profile,
+    currentCycle,
+    todayCheckIns,
+    checkInHistory,
+    streaks: localStreaks,
+  } = useAppStore();
   const { data: remoteStreaks } = useStreaks();
 
   if (!profile || !currentCycle) return null;
@@ -42,7 +48,9 @@ export default function ProgressScreen() {
 
       {/* XP / Level */}
       <Card>
-        <p className="text-base-subtext text-xs font-heading tracking-widest uppercase mb-1">Level {level.level}</p>
+        <p className="text-base-subtext text-xs font-heading tracking-widest uppercase mb-1">
+          Level {level.level}
+        </p>
         <p className="font-heading text-xl font-bold text-base-text">{level.label}</p>
         <p className="text-base-subtext text-xs mt-1">{profile.xp} XP total</p>
         <div className="mt-3 h-1.5 bg-base-border rounded-full overflow-hidden">
@@ -66,12 +74,14 @@ export default function ProgressScreen() {
         <div className="grid grid-cols-[80px_repeat(7,1fr)] gap-1 mb-2">
           <div />
           {last7.map((date) => {
-            const d = new Date(date + 'T00:00:00');
+            const d = new Date(`${date}T00:00:00`);
             const label = d.toLocaleDateString('en-GB', { weekday: 'narrow' });
             const isToday = date === today;
             return (
               <div key={date} className="text-center">
-                <span className={`text-xs ${isToday ? 'text-accent-green font-medium' : 'text-base-muted'}`}>
+                <span
+                  className={`text-xs ${isToday ? 'text-accent-green font-medium' : 'text-base-muted'}`}
+                >
                   {label}
                 </span>
               </div>
@@ -81,14 +91,19 @@ export default function ProgressScreen() {
 
         {/* Domain rows: pulled from local checkInHistory (all tiers) */}
         {DOMAINS.map((d) => (
-          <div key={d.type} className="grid grid-cols-[80px_repeat(7,1fr)] gap-1 mb-1.5 items-center">
+          <div
+            key={d.type}
+            className="grid grid-cols-[80px_repeat(7,1fr)] gap-1 mb-1.5 items-center"
+          >
             <span className={`text-xs font-heading font-medium ${d.colour}`}>{d.label}</span>
             {last7.map((date) => {
               const status =
                 date === today
                   ? (todayCheckIns[d.type]?.status ?? 'Pending')
                   : (checkInHistory[date]?.[d.type] ?? undefined);
-              const dotClass = status ? (STATUS_DOT[status] ?? 'bg-base-border') : 'bg-base-border/40';
+              const dotClass = status
+                ? (STATUS_DOT[status] ?? 'bg-base-border')
+                : 'bg-base-border/40';
               return (
                 <div key={date} className="flex justify-center">
                   <div className={`w-2 h-2 rounded-full ${dotClass}`} />
@@ -159,12 +174,18 @@ export default function ProgressScreen() {
                 <div className="flex-1 min-w-0">
                   <p
                     className={`font-heading text-xs font-medium tracking-wider uppercase ${
-                      isActive ? 'text-accent-green' : isPast ? 'text-base-muted' : 'text-base-subtext'
+                      isActive
+                        ? 'text-accent-green'
+                        : isPast
+                          ? 'text-base-muted'
+                          : 'text-base-subtext'
                     }`}
                   >
                     {phase.label}
                   </p>
-                  <p className="text-base-muted text-xs">Days {phase.days[0]}-{phase.days[1]}</p>
+                  <p className="text-base-muted text-xs">
+                    Days {phase.days[0]}-{phase.days[1]}
+                  </p>
                 </div>
                 {isPast && <span className="text-base-muted text-xs">Done</span>}
                 {isActive && <span className="text-accent-green text-xs">Active</span>}

@@ -1,8 +1,8 @@
+import Card from '@/components/common/Card';
+import { supabase } from '@/services/supabaseClient';
+import { useAppStore } from '@/store/useAppStore';
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAppStore } from '@/store/useAppStore';
-import { supabase } from '@/services/supabaseClient';
-import Card from '@/components/common/Card';
 
 const ADMIN_EMAILS = ['liam@whatisnext.io'];
 
@@ -34,6 +34,7 @@ export default function AdminMetricsPage() {
 
   const isAdmin = authUser && ADMIN_EMAILS.includes(authUser.email);
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: navigate and loadSnapshots are stable; only re-run when admin status changes
   useEffect(() => {
     if (!isAdmin) {
       navigate('/', { replace: true });
@@ -77,6 +78,7 @@ export default function AdminMetricsPage() {
       <div className="flex items-center justify-between">
         <h1 className="font-heading text-2xl font-bold text-base-text tracking-wide">Admin</h1>
         <button
+          type="button"
           onClick={triggerCompute}
           disabled={triggering}
           className="text-xs font-heading text-accent-green border border-accent-green/30 rounded px-3 py-1.5 disabled:opacity-50"
@@ -86,12 +88,12 @@ export default function AdminMetricsPage() {
       </div>
 
       {error && (
-        <p role="alert" className="text-status-missed text-sm">{error}</p>
+        <p role="alert" className="text-status-missed text-sm">
+          {error}
+        </p>
       )}
 
-      {loading && (
-        <p className="text-base-subtext text-sm">Loading…</p>
-      )}
+      {loading && <p className="text-base-subtext text-sm">Loading…</p>}
 
       {!loading && latest && (
         <Card>
@@ -100,18 +102,9 @@ export default function AdminMetricsPage() {
           </p>
           <MetricRow label="Total Users" value={latest.total_users.toLocaleString()} />
           <MetricRow label="Brotherhood (Paid)" value={latest.paid_users.toLocaleString()} />
-          <MetricRow
-            label="Conversion Rate"
-            value={`${latest.conversion_rate.toFixed(1)}%`}
-          />
-          <MetricRow
-            label="Day-7 Retention"
-            value={`${latest.day7_retention.toFixed(1)}%`}
-          />
-          <MetricRow
-            label="Day-84 Completion"
-            value={`${latest.day84_completion.toFixed(1)}%`}
-          />
+          <MetricRow label="Conversion Rate" value={`${latest.conversion_rate.toFixed(1)}%`} />
+          <MetricRow label="Day-7 Retention" value={`${latest.day7_retention.toFixed(1)}%`} />
+          <MetricRow label="Day-84 Completion" value={`${latest.day84_completion.toFixed(1)}%`} />
         </Card>
       )}
 

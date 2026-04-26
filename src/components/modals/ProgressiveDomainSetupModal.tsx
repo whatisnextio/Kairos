@@ -1,9 +1,9 @@
-import { useState } from 'react';
-import { useAppStore } from '@/store/useAppStore';
+import Button from '@/components/common/Button';
 import { supabase } from '@/services/supabaseClient';
+import { useAppStore } from '@/store/useAppStore';
 import { DOMAINS } from '@/types';
 import type { DomainType } from '@/types';
-import Button from '@/components/common/Button';
+import { useState } from 'react';
 
 interface Props {
   onClose: () => void;
@@ -21,15 +21,15 @@ export default function ProgressiveDomainSetupModal({ onClose }: Props) {
   if (!nextDomain || !authUser || !profile || !currentCycle) return null;
 
   async function handleSave() {
-    if (!focus.trim() || !nextDomain) return;
+    if (!focus.trim() || !authUser || !currentCycle || !nextDomain) return;
     setSaving(true);
     setError(null);
 
     const { data, error: err } = await supabase
       .from('user_domain_focuses')
       .insert({
-        user_id: authUser!.id,
-        cycle_id: currentCycle!.id,
+        user_id: authUser.id,
+        cycle_id: currentCycle.id,
         domain_type: nextDomain.type,
         focus_description: focus.trim(),
       })
@@ -46,8 +46,8 @@ export default function ProgressiveDomainSetupModal({ onClose }: Props) {
       ...domainFocuses,
       {
         id: data.id,
-        userId: authUser!.id,
-        cycleId: currentCycle!.id,
+        userId: authUser.id,
+        cycleId: currentCycle.id,
         domainType: nextDomain.type as DomainType,
         focusDescription: focus.trim(),
         setAt: data.set_at,
@@ -64,25 +64,33 @@ export default function ProgressiveDomainSetupModal({ onClose }: Props) {
     <div
       className="fixed inset-0 z-50 flex items-end justify-center bg-black/60"
       onClick={onClose}
+      onKeyDown={(e) => {
+        if (e.key === 'Escape') onClose();
+      }}
     >
+      {/* biome-ignore lint/a11y/useSemanticElements: bottom-sheet modal, dialog element requires separate refactor */}
       <div
         role="dialog"
         aria-modal="true"
         aria-labelledby="domain-setup-title"
         className="w-full max-w-md bg-base-surface rounded-t-2xl px-6 pt-6 pb-10"
         onClick={(e) => e.stopPropagation()}
+        onKeyDown={(e) => e.stopPropagation()}
       >
         <div className="w-10 h-1 bg-base-border rounded-full mx-auto mb-6" />
 
         <p className="font-heading text-xs text-base-muted tracking-widest uppercase mb-1">
           {remaining} domain{remaining !== 1 ? 's' : ''} remaining
         </p>
-        <h2 id="domain-setup-title" className="font-heading text-2xl font-bold text-base-text mb-1 tracking-wide">
-          Set up{' '}
-          <span className={nextDomain.colour}>{nextDomain.label}</span>
+        <h2
+          id="domain-setup-title"
+          className="font-heading text-2xl font-bold text-base-text mb-1 tracking-wide"
+        >
+          Set up <span className={nextDomain.colour}>{nextDomain.label}</span>
         </h2>
         <p className="text-base-subtext text-sm mb-6">
-          What's your one focus for <span className="text-base-text font-medium">{nextDomain.label}</span> this cycle?
+          What's your one focus for{' '}
+          <span className="text-base-text font-medium">{nextDomain.label}</span> this cycle?
         </p>
 
         <textarea
@@ -90,10 +98,13 @@ export default function ProgressiveDomainSetupModal({ onClose }: Props) {
           placeholder={nextDomain.focusPrompt}
           value={focus}
           onChange={(e) => setFocus(e.target.value)}
-          autoFocus
         />
 
-        {error && <p role="alert" className="text-status-missed text-xs mb-3">{error}</p>}
+        {error && (
+          <p role="alert" className="text-status-missed text-xs mb-3">
+            {error}
+          </p>
+        )}
 
         <div className="flex gap-3">
           <Button variant="ghost" onClick={onClose} className="flex-1">

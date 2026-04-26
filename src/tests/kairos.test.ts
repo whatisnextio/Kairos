@@ -1,13 +1,13 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import {
-  getDayInCycle,
-  getCurrentPhaseConfig,
+  KAIROS_PHASES,
   getCurrentPhase,
+  getCurrentPhaseConfig,
   getCycleProgressPct,
+  getDayInCycle,
   getPhaseProgressPct,
   isCycleComplete,
-  KAIROS_PHASES,
 } from '@/utils/kairos';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 describe('getDayInCycle', () => {
   beforeEach(() => {

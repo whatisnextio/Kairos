@@ -1,9 +1,9 @@
-import { useState } from 'react';
-import { useAppStore } from '@/store/useAppStore';
-import { supabase } from '@/services/supabaseClient';
-import type { IdentityAnchorId, DomainType } from '@/types';
-import { IDENTITY_ANCHORS, DOMAINS } from '@/types';
 import Button from '@/components/common/Button';
+import { supabase } from '@/services/supabaseClient';
+import { useAppStore } from '@/store/useAppStore';
+import type { DomainType, IdentityAnchorId } from '@/types';
+import { DOMAINS, IDENTITY_ANCHORS } from '@/types';
+import { useState } from 'react';
 
 type Step = 'welcome' | 'anchor' | 'domain' | 'action' | 'win' | 'celebrate';
 
@@ -28,7 +28,9 @@ export default function OnboardingFlow() {
     const today = new Date().toISOString().split('T')[0];
 
     // Prefer the DOB the user provided at registration; fall back to today
-    const { data: { user: fullUser } } = await supabase.auth.getUser();
+    const {
+      data: { user: fullUser },
+    } = await supabase.auth.getUser();
     const dobFromAuth: string = fullUser?.user_metadata?.date_of_birth ?? today;
 
     const { data: profile, error: profileErr } = await supabase
@@ -83,7 +85,10 @@ export default function OnboardingFlow() {
       xp_awarded: 10,
     });
 
-    await supabase.from('profiles').update({ current_kairos_cycle_id: cycle.id }).eq('id', authUser.id);
+    await supabase
+      .from('profiles')
+      .update({ current_kairos_cycle_id: cycle.id })
+      .eq('id', authUser.id);
 
     setProfile({
       id: authUser.id,
@@ -114,14 +119,16 @@ export default function OnboardingFlow() {
     });
 
     if (focus) {
-      setDomainFocuses([{
-        id: focus.id,
-        userId: authUser.id,
-        cycleId: cycle.id,
-        domainType: domain,
-        focusDescription: microAction,
-        setAt: focus.set_at,
-      }]);
+      setDomainFocuses([
+        {
+          id: focus.id,
+          userId: authUser.id,
+          cycleId: cycle.id,
+          domainType: domain,
+          focusDescription: microAction,
+          setAt: focus.set_at,
+        },
+      ]);
     }
 
     // Do NOT call setOnboardingComplete here. It would cause App.tsx to switch to the
@@ -135,7 +142,9 @@ export default function OnboardingFlow() {
     <div className="min-h-screen bg-base-black flex flex-col items-center justify-center px-6 py-12">
       {step === 'welcome' && (
         <div className="text-center max-w-sm">
-          <h1 className="font-heading text-5xl font-bold text-base-text mb-4 tracking-widest">12K</h1>
+          <h1 className="font-heading text-5xl font-bold text-base-text mb-4 tracking-widest">
+            12K
+          </h1>
           <p className="text-base-subtext mb-2">12 weeks.</p>
           <p className="text-base-subtext mb-2">One transformation.</p>
           <p className="text-base-subtext mb-10">No excuses.</p>
@@ -147,7 +156,11 @@ export default function OnboardingFlow() {
             onChange={(e) => setDisplayName(e.target.value)}
             className="mb-6 text-left"
           />
-          <Button onClick={() => setStep('anchor')} disabled={!displayName.trim()} className="w-full">
+          <Button
+            onClick={() => setStep('anchor')}
+            disabled={!displayName.trim()}
+            className="w-full"
+          >
             Start
           </Button>
         </div>
@@ -158,10 +171,13 @@ export default function OnboardingFlow() {
           <h2 className="font-heading text-2xl font-bold text-base-text mb-2 tracking-wide">
             Who do you want to become?
           </h2>
-          <p className="text-base-subtext text-sm mb-6">Choose your identity anchor for this cycle.</p>
+          <p className="text-base-subtext text-sm mb-6">
+            Choose your identity anchor for this cycle.
+          </p>
           <div className="flex flex-col gap-3">
             {IDENTITY_ANCHORS.map((anchor) => (
               <button
+                type="button"
                 key={anchor.id}
                 onClick={() => setAnchorId(anchor.id)}
                 className={`w-full text-left p-4 rounded border transition-colors ${
@@ -170,7 +186,9 @@ export default function OnboardingFlow() {
                     : 'border-base-border bg-base-surface hover:border-base-muted'
                 }`}
               >
-                <p className="font-heading font-medium text-base-text tracking-wide">{anchor.name}</p>
+                <p className="font-heading font-medium text-base-text tracking-wide">
+                  {anchor.name}
+                </p>
                 <p className="text-base-subtext text-xs mt-0.5">{anchor.description}</p>
               </button>
             ))}
@@ -204,6 +222,7 @@ export default function OnboardingFlow() {
           <div className="flex flex-col gap-3">
             {DOMAINS.map((d) => (
               <button
+                type="button"
                 key={d.type}
                 onClick={() => setDomain(d.type)}
                 className={`w-full text-left p-4 rounded border transition-colors ${
@@ -260,21 +279,27 @@ export default function OnboardingFlow() {
             Done. Day 0 complete.
           </Button>
           {submitError && (
-            <p role="alert" className="text-status-missed text-sm mt-4 text-center">{submitError}</p>
+            <p role="alert" className="text-status-missed text-sm mt-4 text-center">
+              {submitError}
+            </p>
           )}
         </div>
       )}
 
-      {submitting && (
-        <p className="text-base-subtext text-sm">Setting up your cycle...</p>
-      )}
+      {submitting && <p className="text-base-subtext text-sm">Setting up your cycle...</p>}
 
       {step === 'celebrate' && (
         <div className="w-full max-w-sm text-center">
-          <p className="text-accent-green font-heading font-bold text-4xl tracking-wide mb-2">+10 XP</p>
-          <h2 className="font-heading text-2xl font-bold text-base-text mb-2 tracking-wide">Day 0 done.</h2>
+          <p className="text-accent-green font-heading font-bold text-4xl tracking-wide mb-2">
+            +10 XP
+          </p>
+          <h2 className="font-heading text-2xl font-bold text-base-text mb-2 tracking-wide">
+            Day 0 done.
+          </h2>
           <p className="text-base-subtext text-sm mb-2">That's how it starts.</p>
-          <p className="text-base-subtext text-sm mb-10">Day 1 begins tomorrow. Same time. Same commitment.</p>
+          <p className="text-base-subtext text-sm mb-10">
+            Day 1 begins tomorrow. Same time. Same commitment.
+          </p>
           <Button onClick={() => setOnboardingComplete(true)} className="w-full">
             Go to dashboard
           </Button>
@@ -293,7 +318,10 @@ function Input({
   return (
     <div className={`flex flex-col gap-1.5 w-full ${className}`}>
       {label && (
-        <label htmlFor={id} className="text-sm font-medium text-base-subtext font-heading tracking-wider uppercase">
+        <label
+          htmlFor={id}
+          className="text-sm font-medium text-base-subtext font-heading tracking-wider uppercase"
+        >
           {label}
         </label>
       )}

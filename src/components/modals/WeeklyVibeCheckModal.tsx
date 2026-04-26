@@ -1,7 +1,7 @@
-import { useState } from 'react';
+import Button from '@/components/common/Button';
 import { useAppStore } from '@/store/useAppStore';
 import type { VibeCheck } from '@/types';
-import Button from '@/components/common/Button';
+import { useState } from 'react';
 
 interface Props {
   onClose: () => void;
@@ -32,7 +32,11 @@ export default function WeeklyVibeCheckModal({ onClose }: Props) {
     <div
       className="fixed inset-0 z-50 flex items-end justify-center bg-black/70 p-4"
       onClick={(e) => e.target === e.currentTarget && onClose()}
+      onKeyDown={(e) => {
+        if (e.key === 'Escape') onClose();
+      }}
     >
+      {/* biome-ignore lint/a11y/useSemanticElements: bottom-sheet modal, dialog element requires separate refactor */}
       <div
         role="dialog"
         aria-modal="true"
@@ -40,7 +44,10 @@ export default function WeeklyVibeCheckModal({ onClose }: Props) {
         className="w-full max-w-md bg-base-surface rounded-t-2xl px-6 pt-6 pb-8 flex flex-col gap-5"
       >
         <div>
-          <h2 id="vibe-modal-title" className="font-heading text-lg font-bold text-base-text tracking-wide">
+          <h2
+            id="vibe-modal-title"
+            className="font-heading text-lg font-bold text-base-text tracking-wide"
+          >
             Weekly check-in
           </h2>
           <p className="text-base-subtext text-sm mt-1">
@@ -51,6 +58,7 @@ export default function WeeklyVibeCheckModal({ onClose }: Props) {
         <div className="flex gap-2 justify-between">
           {RATINGS.map((r) => (
             <button
+              type="button"
               key={r.value}
               onClick={() => setSelected(r.value)}
               className={`flex-1 flex flex-col items-center gap-1 py-3 rounded border transition-colors ${

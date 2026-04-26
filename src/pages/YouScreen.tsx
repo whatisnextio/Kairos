@@ -1,14 +1,14 @@
-import { useState, useCallback } from 'react';
-import { Link } from 'react-router-dom';
-import { useAppStore } from '@/store/useAppStore';
-import { useSquadPulse, useMatchToSquad } from '@/hooks/useSquad';
-import { getLevelForXp } from '@/utils/gamification';
-import { IDENTITY_ANCHORS } from '@/types';
-import { subscribeToPush, isPushSupported } from '@/services/pushNotifications';
-import { supabase } from '@/services/supabaseClient';
-import Card from '@/components/common/Card';
 import Button from '@/components/common/Button';
+import Card from '@/components/common/Card';
 import AbandonCycleModal from '@/components/modals/AbandonCycleModal';
+import { useMatchToSquad, useSquadPulse } from '@/hooks/useSquad';
+import { isPushSupported, subscribeToPush } from '@/services/pushNotifications';
+import { supabase } from '@/services/supabaseClient';
+import { useAppStore } from '@/store/useAppStore';
+import { IDENTITY_ANCHORS } from '@/types';
+import { getLevelForXp } from '@/utils/gamification';
+import { useCallback, useState } from 'react';
+import { Link } from 'react-router-dom';
 
 const SAVE_PUSH_ENDPOINT = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/save-push-subscription`;
 const DELETE_ACCOUNT_ENDPOINT = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/delete-account`;
@@ -16,7 +16,9 @@ const DELETE_ACCOUNT_ENDPOINT = `${import.meta.env.VITE_SUPABASE_URL}/functions/
 async function registerPush(): Promise<boolean> {
   const sub = await subscribeToPush();
   if (!sub) return false;
-  const { data: { session } } = await supabase.auth.getSession();
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
   if (!session) return false;
   const res = await fetch(SAVE_PUSH_ENDPOINT, {
     method: 'POST',
@@ -40,8 +42,13 @@ export default function YouScreen() {
 
   const handleDeleteAccount = useCallback(async () => {
     setIsDeleting(true);
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session) { setIsDeleting(false); return; }
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+    if (!session) {
+      setIsDeleting(false);
+      return;
+    }
     await fetch(DELETE_ACCOUNT_ENDPOINT, {
       method: 'POST',
       headers: { Authorization: `Bearer ${session.access_token}` },
@@ -53,9 +60,10 @@ export default function YouScreen() {
 
   const anchor = IDENTITY_ANCHORS.find((a) => a.id === profile.identityAnchorId);
   const level = getLevelForXp(profile.xp);
-  const anchorName = profile.identityAnchorId === 'custom'
-    ? (profile.customAnchorName ?? 'Custom')
-    : (anchor?.name ?? 'Unknown');
+  const anchorName =
+    profile.identityAnchorId === 'custom'
+      ? (profile.customAnchorName ?? 'Custom')
+      : (anchor?.name ?? 'Unknown');
 
   return (
     <div className="px-4 pt-6 pb-4 flex flex-col gap-4">
@@ -72,7 +80,9 @@ export default function YouScreen() {
           </div>
           <div>
             <p className="text-base-subtext text-xs">Level</p>
-            <p className="font-heading font-bold text-base-text">{level.level}: {level.label}</p>
+            <p className="font-heading font-bold text-base-text">
+              {level.level}: {level.label}
+            </p>
           </div>
         </div>
       </Card>
@@ -93,9 +103,7 @@ export default function YouScreen() {
                   <p className="text-base-text text-sm italic">{squadPulse.message}</p>
                 </>
               ) : (
-                <p className="text-base-subtext text-sm">
-                  Squad pulse drops on Sundays.
-                </p>
+                <p className="text-base-subtext text-sm">Squad pulse drops on Sundays.</p>
               )}
             </>
           ) : (
@@ -103,11 +111,7 @@ export default function YouScreen() {
               <p className="text-base-subtext text-sm mb-3">
                 You haven't been matched to a squad yet.
               </p>
-              <Button
-                size="sm"
-                onClick={() => matchToSquad()}
-                disabled={isMatching}
-              >
+              <Button size="sm" onClick={() => matchToSquad()} disabled={isMatching}>
                 {isMatching ? 'Matching...' : 'Find my squad'}
               </Button>
             </>
@@ -123,7 +127,9 @@ export default function YouScreen() {
         <p className="font-heading font-medium text-base-text capitalize">{profile.tier}</p>
         {profile.tier === 'free' && (
           <Link to="/subscription">
-            <Button size="sm" className="mt-3">Upgrade to Brotherhood</Button>
+            <Button size="sm" className="mt-3">
+              Upgrade to Brotherhood
+            </Button>
           </Link>
         )}
         {profile.tier === 'brotherhood' && (
@@ -180,13 +186,22 @@ export default function YouScreen() {
           Settings
         </p>
         <div className="flex flex-col gap-2">
-          <Link to="/privacy" className="text-base-subtext text-sm hover:text-base-text transition-colors">
+          <Link
+            to="/privacy"
+            className="text-base-subtext text-sm hover:text-base-text transition-colors"
+          >
             Privacy Policy
           </Link>
-          <Link to="/terms" className="text-base-subtext text-sm hover:text-base-text transition-colors">
+          <Link
+            to="/terms"
+            className="text-base-subtext text-sm hover:text-base-text transition-colors"
+          >
             Terms of Service
           </Link>
-          <Link to="/help" className="text-base-subtext text-sm hover:text-base-text transition-colors">
+          <Link
+            to="/help"
+            className="text-base-subtext text-sm hover:text-base-text transition-colors"
+          >
             Help and FAQ
           </Link>
         </div>
@@ -199,6 +214,7 @@ export default function YouScreen() {
       {/* Cycle reset */}
       <div>
         <button
+          type="button"
           onClick={() => setShowAbandon(true)}
           className="text-base-muted text-xs underline w-full text-center"
         >
@@ -210,6 +226,7 @@ export default function YouScreen() {
       <div className="pt-2">
         {!deleteConfirm ? (
           <button
+            type="button"
             onClick={() => setDeleteConfirm(true)}
             className="text-base-muted text-xs underline w-full text-center"
           >
@@ -221,7 +238,8 @@ export default function YouScreen() {
               This is permanent.
             </p>
             <p className="text-base-subtext text-xs mb-4">
-              All your data will be deleted and cannot be recovered. Your subscription will not be automatically cancelled. Cancel that in your billing settings first.
+              All your data will be deleted and cannot be recovered. Your subscription will not be
+              automatically cancelled. Cancel that in your billing settings first.
             </p>
             <div className="flex gap-2">
               <Button

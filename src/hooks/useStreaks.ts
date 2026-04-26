@@ -1,7 +1,7 @@
-import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/services/supabaseClient';
 import { useAppStore } from '@/store/useAppStore';
-import type { UserStreak, DomainType } from '@/types';
+import type { DomainType, UserStreak } from '@/types';
+import { useQuery } from '@tanstack/react-query';
 
 interface RawStreak {
   domain_type: DomainType;

@@ -1,22 +1,22 @@
-import { useParams, useNavigate } from 'react-router-dom';
-import { useAppStore } from '@/store/useAppStore';
-import { useStreaks } from '@/hooks/useStreaks';
-import { useDomainCheckIns } from '@/hooks/useCheckIns';
-import { DOMAINS, type DomainType, type CheckInStatus } from '@/types';
 import Card from '@/components/common/Card';
+import { useDomainCheckIns } from '@/hooks/useCheckIns';
+import { useStreaks } from '@/hooks/useStreaks';
+import { useAppStore } from '@/store/useAppStore';
+import { type CheckInStatus, DOMAINS, type DomainType } from '@/types';
+import { useNavigate, useParams } from 'react-router-dom';
 
 const STATUS_DOT: Record<string, string> = {
-  Done:    'bg-status-done',
+  Done: 'bg-status-done',
   Partial: 'bg-status-partial',
-  Missed:  'bg-status-missed',
+  Missed: 'bg-status-missed',
   Pending: 'bg-base-border',
 };
 
 const STATUS_LABEL: Record<string, string> = {
-  Done:      'Done',
-  Partial:   'Partial',
-  Missed:    'Missed',
-  Pending:   'Pending',
+  Done: 'Done',
+  Partial: 'Partial',
+  Missed: 'Missed',
+  Pending: 'Pending',
   Protected: 'Protected',
 };
 
@@ -31,7 +31,13 @@ function getLast7Days(): string[] {
 export default function DetailScreen() {
   const navigate = useNavigate();
   const { domain } = useParams<{ domain: string }>();
-  const { profile, domainFocuses, streaks: localStreaks, todayCheckIns, checkInHistory } = useAppStore();
+  const {
+    profile,
+    domainFocuses,
+    streaks: localStreaks,
+    todayCheckIns,
+    checkInHistory,
+  } = useAppStore();
 
   const domainType = domain?.toUpperCase() as DomainType;
   const domainConfig = DOMAINS.find((d) => d.type === domainType);
@@ -56,11 +62,22 @@ export default function DetailScreen() {
   return (
     <div className="px-4 pt-6 pb-4 flex flex-col gap-4">
       <button
+        type="button"
         onClick={() => navigate(-1)}
         aria-label="Go back"
         className="flex items-center gap-1.5 text-base-subtext hover:text-base-text text-sm -mb-1 transition-colors"
       >
-        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+        <svg
+          aria-hidden="true"
+          width="16"
+          height="16"
+          viewBox="0 0 16 16"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.5"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        >
           <path d="M10 3L5 8l5 5" />
         </svg>
         Back
@@ -87,19 +104,17 @@ export default function DetailScreen() {
           {streak?.currentStreak ?? 0}
           <span className="text-base-subtext text-base font-normal ml-1">days</span>
         </p>
-        <p className="text-base-subtext text-xs mt-1">
-          Longest: {streak?.longestStreak ?? 0} days
-        </p>
+        <p className="text-base-subtext text-xs mt-1">Longest: {streak?.longestStreak ?? 0} days</p>
         {streak?.lastCheckInDate && (
-          <p className="text-base-muted text-xs mt-0.5">
-            Last check-in: {streak.lastCheckInDate}
-          </p>
+          <p className="text-base-muted text-xs mt-0.5">Last check-in: {streak.lastCheckInDate}</p>
         )}
       </Card>
 
       {/* Today */}
       <Card>
-        <p className="text-base-subtext text-xs font-heading tracking-widest uppercase mb-2">Today</p>
+        <p className="text-base-subtext text-xs font-heading tracking-widest uppercase mb-2">
+          Today
+        </p>
         <div className="flex items-center gap-2">
           <div
             className={`w-2.5 h-2.5 rounded-full ${STATUS_DOT[todayCheckIns[domainType]?.status ?? 'Pending'] ?? 'bg-base-border'}`}
@@ -122,7 +137,9 @@ export default function DetailScreen() {
                 <div key={checkIn.id} className="flex items-center justify-between">
                   <span className="text-base-subtext text-xs">{checkIn.date}</span>
                   <div className="flex items-center gap-1.5">
-                    <div className={`w-1.5 h-1.5 rounded-full ${STATUS_DOT[checkIn.status] ?? 'bg-base-border'}`} />
+                    <div
+                      className={`w-1.5 h-1.5 rounded-full ${STATUS_DOT[checkIn.status] ?? 'bg-base-border'}`}
+                    />
                     <span className="text-base-muted text-xs">{STATUS_LABEL[checkIn.status]}</span>
                   </div>
                 </div>
@@ -146,9 +163,15 @@ export default function DetailScreen() {
                 date === today
                   ? (todayCheckIns[domainType]?.status ?? undefined)
                   : (checkInHistory[date]?.[domainType] ?? undefined);
-              const dotClass = status ? (STATUS_DOT[status] ?? 'bg-base-border') : 'bg-base-border/40';
-              const d = new Date(date + 'T00:00:00');
-              const dayLabel = d.toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' });
+              const dotClass = status
+                ? (STATUS_DOT[status] ?? 'bg-base-border')
+                : 'bg-base-border/40';
+              const d = new Date(`${date}T00:00:00`);
+              const dayLabel = d.toLocaleDateString('en-GB', {
+                weekday: 'short',
+                day: 'numeric',
+                month: 'short',
+              });
               return (
                 <div key={date} className="flex items-center justify-between">
                   <span className="text-base-subtext text-xs">{dayLabel}</span>

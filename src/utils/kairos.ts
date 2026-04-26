@@ -1,6 +1,6 @@
-import { differenceInDays, parseISO, startOfDay } from 'date-fns';
 import type { KairosPhase, KairosPhaseConfig } from '@/types';
 import { KAIROS_PHASES } from '@/types';
+import { differenceInDays, parseISO, startOfDay } from 'date-fns';
 
 export { KAIROS_PHASES };
 
@@ -11,9 +11,7 @@ export function getDayInCycle(cycleStartDate: string): number {
 }
 
 export function getCurrentPhaseConfig(dayInCycle: number): KairosPhaseConfig {
-  const phase = KAIROS_PHASES.find(
-    (p) => dayInCycle >= p.days[0] && dayInCycle <= p.days[1],
-  );
+  const phase = KAIROS_PHASES.find((p) => dayInCycle >= p.days[0] && dayInCycle <= p.days[1]);
   return phase ?? KAIROS_PHASES[KAIROS_PHASES.length - 1];
 }
 

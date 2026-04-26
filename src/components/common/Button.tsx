@@ -7,10 +7,10 @@ interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 }
 
 const variantClasses = {
-  primary:   'btn-primary',
+  primary: 'btn-primary',
   secondary: 'btn-secondary',
-  ghost:     'btn-ghost',
-  danger:    'btn border border-status-missed text-status-missed hover:bg-status-missed/10 px-6 py-3',
+  ghost: 'btn-ghost',
+  danger: 'btn border border-status-missed text-status-missed hover:bg-status-missed/10 px-6 py-3',
 };
 
 const sizeClasses = {
@@ -27,10 +27,7 @@ export default function Button({
   ...props
 }: ButtonProps) {
   return (
-    <button
-      className={`${variantClasses[variant]} ${sizeClasses[size]} ${className}`}
-      {...props}
-    >
+    <button className={`${variantClasses[variant]} ${sizeClasses[size]} ${className}`} {...props}>
       {children}
     </button>
   );

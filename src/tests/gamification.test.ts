@@ -1,5 +1,5 @@
-import { describe, it, expect } from 'vitest';
 import { getLevelForXp, getXpProgressInLevel } from '@/utils/gamification';
+import { describe, expect, it } from 'vitest';
 
 describe('getLevelForXp', () => {
   it('returns level 1 (Starter) for 0 XP', () => {

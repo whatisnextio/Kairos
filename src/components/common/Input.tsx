@@ -10,7 +10,10 @@ export default function Input({ label, error, className = '', id, ...props }: In
   return (
     <div className="flex flex-col gap-1.5 w-full">
       {label && (
-        <label htmlFor={id} className="text-sm font-medium text-base-subtext font-heading tracking-wider uppercase">
+        <label
+          htmlFor={id}
+          className="text-sm font-medium text-base-subtext font-heading tracking-wider uppercase"
+        >
           {label}
         </label>
       )}

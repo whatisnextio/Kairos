@@ -1,7 +1,7 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/services/supabaseClient';
 import { useAppStore } from '@/store/useAppStore';
-import type { AiNudge, NudgeStatus, NudgeType, NudgeCta, DomainType, KairosPhase } from '@/types';
+import type { AiNudge, DomainType, KairosPhase, NudgeCta, NudgeStatus, NudgeType } from '@/types';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 const NUDGE_ENDPOINT = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-kairos-nudge`;
 
@@ -52,7 +52,9 @@ export function useNudge() {
   return useQuery({
     queryKey: ['nudge', profile?.id, today],
     queryFn: async () => {
-      const { data: { session } } = await supabase.auth.getSession();
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
       if (!session) throw new Error('No session');
       const nudge = await fetchOrGenerateNudge(session.access_token);
       setTodayNudge(nudge);
@@ -71,17 +73,13 @@ export function useUpdateNudgeStatus() {
 
   return useMutation({
     mutationFn: async ({ nudgeId, status }: { nudgeId: string; status: NudgeStatus }) => {
-      const { error } = await supabase
-        .from('ai_nudges')
-        .update({ status })
-        .eq('id', nudgeId);
+      const { error } = await supabase.from('ai_nudges').update({ status }).eq('id', nudgeId);
       if (error) throw new Error(error.message);
       return { nudgeId, status };
     },
     onSuccess: ({ status }) => {
-      queryClient.setQueryData(
-        ['nudge', profile?.id, today],
-        (old: AiNudge | undefined) => old ? { ...old, status } : old,
+      queryClient.setQueryData(['nudge', profile?.id, today], (old: AiNudge | undefined) =>
+        old ? { ...old, status } : old,
       );
     },
   });

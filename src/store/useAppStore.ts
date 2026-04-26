@@ -1,19 +1,19 @@
-import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
+import { supabase } from '@/services/supabaseClient';
 import type {
-  AuthUser,
-  Profile,
-  KairosCycle,
-  UserDomainFocus,
-  DailyCheckIn,
-  UserStreak,
   AiNudge,
-  DomainType,
+  AuthUser,
   CheckInStatus,
+  DailyCheckIn,
+  DomainType,
+  KairosCycle,
+  Profile,
+  UserDomainFocus,
+  UserStreak,
   VibeCheck,
 } from '@/types';
 import { XP_PER_CHECK_IN_DONE, XP_PER_CHECK_IN_PARTIAL, XP_PER_CYCLE_COMPLETE } from '@/types';
-import { supabase } from '@/services/supabaseClient';
+import { create } from 'zustand';
+import { persist } from 'zustand/middleware';
 
 // ─── State Shape ─────────────────────────────────────────────────────────────
 
@@ -54,17 +54,15 @@ interface AppActions {
   setCurrentCycle: (cycle: KairosCycle | null) => void;
   setDomainFocuses: (focuses: UserDomainFocus[]) => void;
 
-  setDailyCheckIn: (
-    domainType: DomainType,
-    status: CheckInStatus,
-    notes?: string,
-  ) => Promise<void>;
+  setDailyCheckIn: (domainType: DomainType, status: CheckInStatus, notes?: string) => Promise<void>;
 
   setTodayCheckIns: (checkIns: Partial<Record<DomainType, DailyCheckIn>>) => void;
   setTodayNudge: (nudge: AiNudge | null) => void;
   setNudgeStatus: (nudgeId: string, status: AiNudge['status']) => Promise<void>;
 
-  mergeCheckInHistory: (entries: Record<string, Partial<Record<DomainType, CheckInStatus>>>) => void;
+  mergeCheckInHistory: (
+    entries: Record<string, Partial<Record<DomainType, CheckInStatus>>>,
+  ) => void;
   setOnboardingComplete: (complete: boolean) => void;
   submitVibeCheck: (rating: VibeCheck['rating']) => Promise<void>;
   completeCycle: (reflection: string) => Promise<void>;
@@ -154,7 +152,8 @@ export const useAppStore = create<AppState & AppActions>()(
             } else {
               if (running > longestStreak) longestStreak = running;
               running = 0;
-              if (i === 0) pastCurrentStreak = true; // today is empty, current streak is 0
+              if (i === 0)
+                pastCurrentStreak = true; // today is empty, current streak is 0
               else if (!pastCurrentStreak) pastCurrentStreak = true; // hit first gap
             }
           }
@@ -181,24 +180,24 @@ export const useAppStore = create<AppState & AppActions>()(
         if (profile.tier === 'free') return;
 
         // Sync to Supabase for Brotherhood tier
-        const { error } = await supabase.from('daily_check_ins').upsert({
-          user_id: profile.id,
-          cycle_id: currentCycle.id,
-          date: today,
-          domain_type: domainType,
-          status,
-          notes: notes ?? null,
-          xp_awarded: xpDelta,
-        }, { onConflict: 'user_id,cycle_id,date,domain_type' });
+        const { error } = await supabase.from('daily_check_ins').upsert(
+          {
+            user_id: profile.id,
+            cycle_id: currentCycle.id,
+            date: today,
+            domain_type: domainType,
+            status,
+            notes: notes ?? null,
+            xp_awarded: xpDelta,
+          },
+          { onConflict: 'user_id,cycle_id,date,domain_type' },
+        );
 
         if (error) {
           console.error('Check-in sync failed:', error.message);
         } else if (xpDelta !== 0) {
           const newXp = Math.max(0, profile.xp + xpDelta);
-          await supabase
-            .from('profiles')
-            .update({ xp: newXp })
-            .eq('id', profile.id);
+          await supabase.from('profiles').update({ xp: newXp }).eq('id', profile.id);
         }
       },
 
@@ -208,15 +207,10 @@ export const useAppStore = create<AppState & AppActions>()(
         const { profile } = get();
         set((state) => ({
           todayNudge:
-            state.todayNudge?.id === nudgeId
-              ? { ...state.todayNudge, status }
-              : state.todayNudge,
+            state.todayNudge?.id === nudgeId ? { ...state.todayNudge, status } : state.todayNudge,
         }));
         if (!profile || profile.tier === 'free') return;
-        await supabase
-          .from('ai_nudges')
-          .update({ status })
-          .eq('id', nudgeId);
+        await supabase.from('ai_nudges').update({ status }).eq('id', nudgeId);
       },
 
       mergeCheckInHistory: (entries) =>
@@ -256,17 +250,18 @@ export const useAppStore = create<AppState & AppActions>()(
           currentCycle: state.currentCycle
             ? { ...state.currentCycle, status: 'completed', endDate: today }
             : null,
-          profile: state.profile
-            ? { ...state.profile, xp: state.profile.xp + completionXp }
-            : null,
+          profile: state.profile ? { ...state.profile, xp: state.profile.xp + completionXp } : null,
         }));
 
         if (profile.tier === 'brotherhood') {
-          await supabase.from('kairos_cycles').update({
-            status: 'completed',
-            end_date: today,
-            total_xp_earned: currentCycle.totalXpEarned + completionXp,
-          }).eq('id', currentCycle.id);
+          await supabase
+            .from('kairos_cycles')
+            .update({
+              status: 'completed',
+              end_date: today,
+              total_xp_earned: currentCycle.totalXpEarned + completionXp,
+            })
+            .eq('id', currentCycle.id);
 
           await supabase.from('cycle_reflections').insert({
             user_id: profile.id,
@@ -275,9 +270,12 @@ export const useAppStore = create<AppState & AppActions>()(
             xp_awarded: completionXp,
           });
 
-          await supabase.from('profiles').update({
-            xp: profile.xp + completionXp,
-          }).eq('id', profile.id);
+          await supabase
+            .from('profiles')
+            .update({
+              xp: profile.xp + completionXp,
+            })
+            .eq('id', profile.id);
         }
       },
 

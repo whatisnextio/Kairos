@@ -1,22 +1,24 @@
-import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useAppStore } from '@/store/useAppStore';
-import { supabase } from '@/services/supabaseClient';
-import { IDENTITY_ANCHORS, type IdentityAnchorId } from '@/types';
 import Button from '@/components/common/Button';
 import Card from '@/components/common/Card';
+import { supabase } from '@/services/supabaseClient';
+import { useAppStore } from '@/store/useAppStore';
+import { IDENTITY_ANCHORS, type IdentityAnchorId } from '@/types';
+import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 export default function NewCycleScreen() {
   const navigate = useNavigate();
-  const { authUser, profile, setProfile, setCurrentCycle, setDomainFocuses, setTodayCheckIns } = useAppStore();
+  const { authUser, profile, setProfile, setCurrentCycle, setDomainFocuses, setTodayCheckIns } =
+    useAppStore();
   const [anchorId, setAnchorId] = useState<IdentityAnchorId | null>(
-    profile?.identityAnchorId ?? null
+    profile?.identityAnchorId ?? null,
   );
   const [customAnchor, setCustomAnchor] = useState(profile?.customAnchorName ?? '');
   const [starting, setStarting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [cycleNumber, setCycleNumber] = useState(2);
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: supabase client is module-singleton; setCycleNumber is stable
   useEffect(() => {
     if (!authUser) return;
     supabase
@@ -97,21 +99,18 @@ export default function NewCycleScreen() {
         <h1 className="font-heading text-2xl font-bold text-base-text tracking-wide">
           Start fresh.
         </h1>
-        <p className="text-base-subtext text-sm mt-1">
-          Same system. New man.
-        </p>
+        <p className="text-base-subtext text-sm mt-1">Same system. New man.</p>
       </div>
 
       <Card>
         <p className="font-heading text-xs text-base-subtext tracking-widest uppercase mb-3">
           Your identity anchor
         </p>
-        <p className="text-base-subtext text-xs mb-4">
-          You can keep the same or choose a new one.
-        </p>
+        <p className="text-base-subtext text-xs mb-4">You can keep the same or choose a new one.</p>
         <div className="flex flex-col gap-2">
           {IDENTITY_ANCHORS.map((anchor) => (
             <button
+              type="button"
               key={anchor.id}
               onClick={() => setAnchorId(anchor.id)}
               className={`w-full text-left p-3 rounded border transition-colors text-sm ${
@@ -120,9 +119,11 @@ export default function NewCycleScreen() {
                   : 'border-base-border bg-base-surface hover:border-base-muted'
               }`}
             >
-              <span className={`font-heading font-medium tracking-wide ${
-                anchorId === anchor.id ? 'text-accent-green' : 'text-base-text'
-              }`}>
+              <span
+                className={`font-heading font-medium tracking-wide ${
+                  anchorId === anchor.id ? 'text-accent-green' : 'text-base-text'
+                }`}
+              >
                 {anchor.name}
               </span>
               <span className="text-base-subtext text-xs block mt-0.5">{anchor.description}</span>
@@ -139,7 +140,11 @@ export default function NewCycleScreen() {
         )}
       </Card>
 
-      {error && <p role="alert" className="text-status-missed text-sm">{error}</p>}
+      {error && (
+        <p role="alert" className="text-status-missed text-sm">
+          {error}
+        </p>
+      )}
 
       <Button
         onClick={handleStart}

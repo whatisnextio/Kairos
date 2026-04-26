@@ -1,16 +1,12 @@
-/// <reference lib="WebWorker" />
-import {
-  cleanupOutdatedCaches,
-  precacheAndRoute,
-} from 'workbox-precaching';
-import { registerRoute } from 'workbox-routing';
-import { StaleWhileRevalidate, CacheFirst } from 'workbox-strategies';
 import { ExpirationPlugin } from 'workbox-expiration';
+import { cleanupOutdatedCaches, precacheAndRoute } from 'workbox-precaching';
+import { registerRoute } from 'workbox-routing';
+import { CacheFirst, StaleWhileRevalidate } from 'workbox-strategies';
 
 declare const self: ServiceWorkerGlobalScope;
 
 cleanupOutdatedCaches();
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+// biome-ignore lint/suspicious/noExplicitAny: Workbox injects __WB_MANIFEST at build time; type is not exported
 precacheAndRoute((self as any).__WB_MANIFEST);
 
 registerRoute(
@@ -61,13 +57,11 @@ self.addEventListener('push', (event: PushEvent) => {
 self.addEventListener('notificationclick', (event: NotificationEvent) => {
   event.notification.close();
   event.waitUntil(
-    self.clients
-      .matchAll({ type: 'window', includeUncontrolled: true })
-      .then((clientList) => {
-        for (const client of clientList) {
-          if ('focus' in client) return (client as WindowClient).focus();
-        }
-        return self.clients.openWindow('/');
-      }),
+    self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
+      for (const client of clientList) {
+        if ('focus' in client) return (client as WindowClient).focus();
+      }
+      return self.clients.openWindow('/');
+    }),
   );
 });

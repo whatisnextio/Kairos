@@ -15,7 +15,7 @@ const FAQS = [
   },
   {
     q: 'What is the Brotherhood squad?',
-    a: 'A group of 4-8 men matched to you by phase and cycle start date. You see each other\'s daily check-in status as coloured dots. No names, no chat, no leaderboards. Silent accountability.',
+    a: "A group of 4-8 men matched to you by phase and cycle start date. You see each other's daily check-in status as coloured dots. No names, no chat, no leaderboards. Silent accountability.",
   },
   {
     q: 'How does the AI nudge work?',
@@ -49,20 +49,35 @@ export default function HelpFAQPage() {
   return (
     <div className="px-4 pt-6 pb-4">
       <button
+        type="button"
         onClick={() => navigate(-1)}
         aria-label="Go back"
         className="flex items-center gap-1.5 text-base-subtext hover:text-base-text text-sm mb-4 transition-colors"
       >
-        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+        <svg
+          aria-hidden="true"
+          width="16"
+          height="16"
+          viewBox="0 0 16 16"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.5"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        >
           <path d="M10 3L5 8l5 5" />
         </svg>
         Back
       </button>
-      <h1 className="font-heading text-2xl font-bold text-base-text tracking-wide mb-4">Help and FAQ</h1>
+      <h1 className="font-heading text-2xl font-bold text-base-text tracking-wide mb-4">
+        Help and FAQ
+      </h1>
       <div className="flex flex-col gap-4">
         {FAQS.map(({ q, a }) => (
           <div key={q}>
-            <p className="font-heading font-medium text-base-text text-sm tracking-wide mb-1">{q}</p>
+            <p className="font-heading font-medium text-base-text text-sm tracking-wide mb-1">
+              {q}
+            </p>
             <p className="text-base-subtext text-sm leading-relaxed">{a}</p>
           </div>
         ))}

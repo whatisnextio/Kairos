@@ -1,7 +1,7 @@
-import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/services/supabaseClient';
 import { useAppStore } from '@/store/useAppStore';
-import type { DailyCheckIn, DomainType, CheckInStatus } from '@/types';
+import type { CheckInStatus, DailyCheckIn, DomainType } from '@/types';
+import { useQuery } from '@tanstack/react-query';
 
 interface RawCheckIn {
   id: string;

@@ -1,9 +1,9 @@
-import { useNavigate } from 'react-router-dom';
-import { useAppStore } from '@/store/useAppStore';
-import { useNudge, useUpdateNudgeStatus } from '@/hooks/useNudge';
-import Card from '@/components/common/Card';
 import Button from '@/components/common/Button';
+import Card from '@/components/common/Card';
+import { useNudge, useUpdateNudgeStatus } from '@/hooks/useNudge';
+import { useAppStore } from '@/store/useAppStore';
 import { Zap } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 export default function ImproveScreen() {
   const navigate = useNavigate();
@@ -23,6 +23,7 @@ export default function ImproveScreen() {
         <h1 className="font-heading text-2xl font-bold text-base-text tracking-wide">Improve</h1>
         {canSeeNudge && (
           <button
+            type="button"
             onClick={() => refetch()}
             className="text-base-subtext hover:text-base-text transition-colors"
             aria-label="Refresh nudge"
@@ -82,9 +83,7 @@ export default function ImproveScreen() {
           >
             Mark complete
           </Button>
-          {nudge.xpReward && (
-            <p className="text-accent-green text-xs mt-3">+{nudge.xpReward} XP</p>
-          )}
+          {nudge.xpReward && <p className="text-accent-green text-xs mt-3">+{nudge.xpReward} XP</p>}
         </Card>
       )}
 
@@ -104,7 +103,9 @@ export default function ImproveScreen() {
       {!isBrotherhood && !isSunday && (
         <Card className="relative overflow-hidden">
           <div className="blur-sm pointer-events-none select-none">
-            <p className="font-heading text-base font-medium text-base-text mb-1">Your daily nudge</p>
+            <p className="font-heading text-base font-medium text-base-text mb-1">
+              Your daily nudge
+            </p>
             <p className="text-base-subtext text-sm">
               A sharp, personal message based on where you are in your cycle.
             </p>

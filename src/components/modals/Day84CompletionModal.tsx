@@ -1,7 +1,7 @@
+import Button from '@/components/common/Button';
+import { useAppStore } from '@/store/useAppStore';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAppStore } from '@/store/useAppStore';
-import Button from '@/components/common/Button';
 
 interface Props {
   onClose: () => void;
@@ -25,19 +25,22 @@ export default function Day84CompletionModal({ onClose }: Props) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 px-6">
+      {/* biome-ignore lint/a11y/useSemanticElements: centered modal, dialog element requires separate refactor */}
       <div
         role="dialog"
         aria-modal="true"
         aria-labelledby="day84-modal-title"
         className="w-full max-w-sm bg-base-surface rounded-2xl px-6 py-8"
       >
-
         {step === 'intro' && (
           <>
             <p className="font-heading text-xs text-accent-green tracking-widest uppercase mb-3">
               Day 84 Complete
             </p>
-            <h2 id="day84-modal-title" className="font-heading text-3xl font-bold text-base-text mb-4 tracking-wide leading-tight">
+            <h2
+              id="day84-modal-title"
+              className="font-heading text-3xl font-bold text-base-text mb-4 tracking-wide leading-tight"
+            >
               You did it.
             </h2>
             <p className="text-base-subtext text-sm mb-6">
@@ -69,7 +72,6 @@ export default function Day84CompletionModal({ onClose }: Props) {
               placeholder="I used to... Now I..."
               value={reflection}
               onChange={(e) => setReflection(e.target.value)}
-              autoFocus
             />
             <div className="flex gap-3">
               <Button variant="ghost" onClick={() => setStep('intro')} className="flex-1">
@@ -94,13 +96,17 @@ export default function Day84CompletionModal({ onClose }: Props) {
             <h2 className="font-heading text-2xl font-bold text-base-text mb-3 tracking-wide">
               Cycle Complete.
             </h2>
-            <p className="text-base-subtext text-sm mb-2">
-              Your reflection has been saved.
-            </p>
+            <p className="text-base-subtext text-sm mb-2">Your reflection has been saved.</p>
             <p className="text-base-subtext text-sm mb-8">
               When you're ready, start your next 84 days.
             </p>
-            <Button onClick={() => { onClose(); navigate('/new-cycle'); }} className="w-full mb-3">
+            <Button
+              onClick={() => {
+                onClose();
+                navigate('/new-cycle');
+              }}
+              className="w-full mb-3"
+            >
               Start Cycle 2
             </Button>
             <Button variant="ghost" onClick={onClose} className="w-full">
@@ -108,7 +114,6 @@ export default function Day84CompletionModal({ onClose }: Props) {
             </Button>
           </div>
         )}
-
       </div>
     </div>
   );
