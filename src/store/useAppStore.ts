@@ -176,8 +176,7 @@ export const useAppStore = create<AppState & AppActions>()(
         if (error) {
           console.error('Check-in sync failed:', error.message);
         } else if (xpDelta !== 0) {
-          const newXp = Math.max(0, profile.xp + xpDelta);
-          await supabase.from('profiles').update({ xp: newXp }).eq('id', profile.id);
+          await supabase.rpc('increment_profile_xp', { p_user_id: profile.id, p_delta: xpDelta });
         }
       },
 
@@ -251,12 +250,10 @@ export const useAppStore = create<AppState & AppActions>()(
             xp_awarded: completionXp,
           });
 
-          await supabase
-            .from('profiles')
-            .update({
-              xp: profile.xp + completionXp,
-            })
-            .eq('id', profile.id);
+          await supabase.rpc('increment_profile_xp', {
+            p_user_id: profile.id,
+            p_delta: completionXp,
+          });
         }
       },
 
