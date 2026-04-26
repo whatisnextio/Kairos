@@ -89,6 +89,26 @@ export default function ImproveScreen() {
         </Card>
       )}
 
+      {/* Completed nudge */}
+      {canSeeNudge && nudge && nudge.status === 'completed' && (
+        <Card className="border-accent-green/40">
+          <p className="text-accent-green font-heading text-xs tracking-widest uppercase mb-2">
+            Done
+          </p>
+          <p className="font-heading text-base font-medium text-base-text mb-1">{nudge.title}</p>
+          {nudge.xpReward && (
+            <p className="text-accent-green text-xs mt-1">+{nudge.xpReward} XP earned</p>
+          )}
+        </Card>
+      )}
+
+      {/* Dismissed nudge */}
+      {canSeeNudge && nudge && nudge.status === 'dismissed' && (
+        <Card>
+          <p className="text-base-subtext text-sm">Today's nudge dismissed. See you tomorrow.</p>
+        </Card>
+      )}
+
       {/* No nudge yet */}
       {canSeeNudge && !nudge && !isLoading && (
         <Card>
