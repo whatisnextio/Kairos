@@ -116,7 +116,7 @@ Deno.serve(async (req: Request) => {
 
     const { data: candidates } = await supabase
       .from('squads')
-      .select('id, member_count')
+      .select('id')
       .eq('kairos_phase', phase)
       .gte('cycle_start_window', sevenDaysAgo)
       .lte('cycle_start_window', today)
@@ -132,16 +132,12 @@ Deno.serve(async (req: Request) => {
       // lt('member_count', 8) filter will match 0 rows and we create a new squad.
       squadId = candidates[0].id;
 
-      const { count: updatedCount, error: incrementErr } = await supabase
-        .from('squads')
-        .update({ member_count: candidates[0].member_count + 1 })
-        .eq('id', squadId)
-        .lt('member_count', 8)
-        .select('*', { count: 'exact', head: true });
+      const { data: incremented, error: incrementErr } = await supabase
+        .rpc('increment_squad_member_count', { p_squad_id: squadId });
 
       if (incrementErr) throw new Error(`Squad increment failed: ${incrementErr.message}`);
 
-      if (!updatedCount || updatedCount === 0) {
+      if (!incremented) {
         // Squad was filled by a concurrent request; fall through to create a new one
         const { data: newSquad, error: createErr } = await supabase
           .from('squads')
