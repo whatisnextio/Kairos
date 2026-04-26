@@ -1,4 +1,5 @@
 import { useAppStore } from '@/store/useAppStore';
+import { useStreaks } from '@/hooks/useStreaks';
 import { getDayInCycle, getCurrentPhaseConfig, KAIROS_PHASES } from '@/utils/kairos';
 import type { KairosPhaseConfig } from '@/types';
 import { getLevelForXp, getXpProgressInLevel } from '@/utils/gamification';
@@ -23,7 +24,8 @@ function getLast7Days(): string[] {
 }
 
 export default function ProgressScreen() {
-  const { profile, currentCycle, todayCheckIns, checkInHistory, streaks } = useAppStore();
+  const { profile, currentCycle, todayCheckIns, checkInHistory, streaks: localStreaks } = useAppStore();
+  const { data: remoteStreaks } = useStreaks();
 
   if (!profile || !currentCycle) return null;
 
@@ -104,7 +106,10 @@ export default function ProgressScreen() {
         </h2>
         <div className="flex flex-col gap-2">
           {DOMAINS.map((d) => {
-            const streak = streaks[d.type];
+            const streak =
+              profile.tier === 'brotherhood'
+                ? remoteStreaks?.find((s) => s.domainType === d.type)
+                : localStreaks[d.type];
             return (
               <div key={d.type} className="flex items-center justify-between">
                 <span className={`text-xs font-heading font-medium ${d.colour}`}>{d.label}</span>
