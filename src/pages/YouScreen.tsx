@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import { useAppStore } from '@/store/useAppStore';
+import { useSquadPulse, useMatchToSquad } from '@/hooks/useSquad';
 import { getLevelForXp } from '@/utils/gamification';
 import { IDENTITY_ANCHORS } from '@/types';
 import Card from '@/components/common/Card';
@@ -7,6 +8,8 @@ import Button from '@/components/common/Button';
 
 export default function YouScreen() {
   const { profile, signOut } = useAppStore();
+  const { data: squadPulse } = useSquadPulse();
+  const { mutate: matchToSquad, isPending: isMatching } = useMatchToSquad();
 
   if (!profile) return null;
 
@@ -20,6 +23,7 @@ export default function YouScreen() {
     <div className="px-4 pt-6 pb-4 flex flex-col gap-4">
       <h1 className="font-heading text-2xl font-bold text-base-text tracking-wide">You</h1>
 
+      {/* Profile */}
       <Card>
         <p className="font-heading text-lg font-bold text-base-text">{profile.displayName}</p>
         <p className="text-accent-green text-sm font-heading tracking-wider mt-0.5">{anchorName}</p>
@@ -35,8 +39,49 @@ export default function YouScreen() {
         </div>
       </Card>
 
+      {/* Squad — brotherhood only */}
+      {profile.tier === 'brotherhood' && (
+        <Card>
+          <p className="text-base-subtext text-xs font-heading tracking-widest uppercase mb-2">
+            Squad
+          </p>
+          {profile.squadId ? (
+            <>
+              {squadPulse ? (
+                <>
+                  <p className="text-base-subtext text-xs mb-1">
+                    Week {squadPulse.weekNumber} pulse
+                  </p>
+                  <p className="text-base-text text-sm italic">{squadPulse.message}</p>
+                </>
+              ) : (
+                <p className="text-base-subtext text-sm">
+                  Squad pulse drops on Sundays.
+                </p>
+              )}
+            </>
+          ) : (
+            <>
+              <p className="text-base-subtext text-sm mb-3">
+                You haven't been matched to a squad yet.
+              </p>
+              <Button
+                size="sm"
+                onClick={() => matchToSquad()}
+                disabled={isMatching}
+              >
+                {isMatching ? 'Matching...' : 'Find my squad'}
+              </Button>
+            </>
+          )}
+        </Card>
+      )}
+
+      {/* Subscription */}
       <Card>
-        <p className="text-base-subtext text-xs font-heading tracking-widest uppercase mb-2">Subscription</p>
+        <p className="text-base-subtext text-xs font-heading tracking-widest uppercase mb-2">
+          Subscription
+        </p>
         <p className="font-heading font-medium text-base-text capitalize">{profile.tier}</p>
         {profile.tier === 'free' && (
           <Link to="/subscription">
@@ -44,12 +89,17 @@ export default function YouScreen() {
           </Link>
         )}
         {profile.tier === 'brotherhood' && (
-          <p className="text-base-subtext text-xs mt-1">Brotherhood active. Manage via Stripe portal.</p>
+          <p className="text-base-subtext text-xs mt-1">
+            Brotherhood active.
+          </p>
         )}
       </Card>
 
+      {/* Settings */}
       <Card>
-        <p className="text-base-subtext text-xs font-heading tracking-widest uppercase mb-3">Settings</p>
+        <p className="text-base-subtext text-xs font-heading tracking-widest uppercase mb-3">
+          Settings
+        </p>
         <div className="flex flex-col gap-2">
           <Link to="/privacy" className="text-base-subtext text-sm hover:text-base-text transition-colors">
             Privacy Policy
