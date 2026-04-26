@@ -176,7 +176,7 @@ export const useAppStore = create<AppState & AppActions>()(
             checkInHistory: history,
             streaks: { ...state.streaks, [domainType]: updatedStreak },
             profile: state.profile
-              ? { ...state.profile, xp: state.profile.xp + xpDelta }
+              ? { ...state.profile, xp: Math.max(0, state.profile.xp + xpDelta) }
               : null,
           };
         });
@@ -196,10 +196,11 @@ export const useAppStore = create<AppState & AppActions>()(
 
         if (error) {
           console.error('Check-in sync failed:', error.message);
-        } else if (xpDelta > 0) {
+        } else if (xpDelta !== 0) {
+          const newXp = Math.max(0, profile.xp + xpDelta);
           await supabase
             .from('profiles')
-            .update({ xp: profile.xp + xpDelta })
+            .update({ xp: newXp })
             .eq('id', profile.id);
         }
       },
