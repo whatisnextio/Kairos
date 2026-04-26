@@ -32,7 +32,6 @@ export default function WeeklyVibeCheckModal({ onClose }: Props) {
     <div
       className="fixed inset-0 z-50 flex items-end justify-center bg-black/70 p-4"
       onClick={(e) => e.target === e.currentTarget && onClose()}
-      aria-hidden="true"
     >
       <div
         role="dialog"
