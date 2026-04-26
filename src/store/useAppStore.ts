@@ -250,8 +250,13 @@ export const useAppStore = create<AppState & AppActions>()(
         set({ checkInHistory: {}, todayCheckIns: {}, domainFocuses: [], streaks: {} }),
 
       signOut: async () => {
-        await supabase.auth.signOut();
+        // reset() before signOut so the auth listener's setAuthUser(null) call
+        // (which fires synchronously inside signOut) runs AFTER isAuthLoading is
+        // already true, and its isAuthLoading: false write is the final write.
+        // If the order were reversed, reset() would overwrite isAuthLoading back
+        // to true after the listener already set it to false, causing a permanent splash.
         get().reset();
+        await supabase.auth.signOut();
       },
 
       reset: () => set(initialState),

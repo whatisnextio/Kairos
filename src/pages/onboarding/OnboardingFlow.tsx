@@ -15,6 +15,7 @@ export default function OnboardingFlow() {
     setDomainFocuses,
     setOnboardingComplete,
     setTodayCheckIns,
+    mergeCheckInHistory,
   } = useAppStore();
 
   const [step, setStep] = useState<Step>('welcome');
@@ -109,12 +110,20 @@ export default function OnboardingFlow() {
         updatedAt: checkInRow.updated_at,
       };
       setTodayCheckIns({ [domain]: ci });
+      // Seed checkInHistory so computeLocalStreak counts day 0 from day 1 onwards.
+      mergeCheckInHistory({ [today]: { [domain]: 'Done' } });
     }
 
-    await supabase
+    const { error: linkErr } = await supabase
       .from('profiles')
       .update({ current_kairos_cycle_id: cycle.id })
       .eq('id', authUser.id);
+
+    if (linkErr) {
+      setSubmitError('Setup failed. Please try again.');
+      setSubmitting(false);
+      return;
+    }
 
     setProfile({
       id: authUser.id,
