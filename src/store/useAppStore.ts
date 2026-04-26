@@ -66,6 +66,7 @@ interface AppActions {
     notes?: string,
   ) => Promise<void>;
 
+  setTodayCheckIns: (checkIns: Partial<Record<DomainType, DailyCheckIn>>) => void;
   setTodayNudge: (nudge: AiNudge | null) => void;
   setNudgeStatus: (nudgeId: string, status: AiNudge['status']) => Promise<void>;
 
@@ -109,6 +110,7 @@ export const useAppStore = create<AppState & AppActions>()(
       setProfile: (profile) => set({ profile }),
       setCurrentCycle: (currentCycle) => set({ currentCycle }),
       setDomainFocuses: (domainFocuses) => set({ domainFocuses }),
+      setTodayCheckIns: (todayCheckIns) => set({ todayCheckIns }),
 
       setDailyCheckIn: async (domainType, status, notes) => {
         const { profile, currentCycle } = get();

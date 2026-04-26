@@ -23,7 +23,7 @@ function getLast7Days(): string[] {
 }
 
 export default function ProgressScreen() {
-  const { profile, currentCycle, todayCheckIns } = useAppStore();
+  const { profile, currentCycle, todayCheckIns, checkInHistory } = useAppStore();
 
   if (!profile || !currentCycle) return null;
 
@@ -75,15 +75,16 @@ export default function ProgressScreen() {
           })}
         </div>
 
-        {/* Domain rows: today's data from store; history from useCheckIns (brotherhood) */}
+        {/* Domain rows: pulled from local checkInHistory (all tiers) */}
         {DOMAINS.map((d) => (
           <div key={d.type} className="grid grid-cols-[80px_repeat(7,1fr)] gap-1 mb-1.5 items-center">
             <span className={`text-xs font-heading font-medium ${d.colour}`}>{d.label}</span>
             {last7.map((date) => {
-              let dotClass = 'bg-base-border/40';
-              if (date === today) {
-                dotClass = STATUS_DOT[todayCheckIns[d.type]?.status ?? 'Pending'] ?? 'bg-base-border';
-              }
+              const status =
+                date === today
+                  ? (todayCheckIns[d.type]?.status ?? 'Pending')
+                  : (checkInHistory[date]?.[d.type] ?? undefined);
+              const dotClass = status ? (STATUS_DOT[status] ?? 'bg-base-border') : 'bg-base-border/40';
               return (
                 <div key={date} className="flex justify-center">
                   <div className={`w-2 h-2 rounded-full ${dotClass}`} />
@@ -93,9 +94,7 @@ export default function ProgressScreen() {
           </div>
         ))}
 
-        <p className="text-base-muted text-xs mt-3">
-          Today's data is live. Full history unlocks with Brotherhood.
-        </p>
+        <p className="text-base-muted text-xs mt-3">Last 7 days from local history.</p>
       </Card>
 
       {/* Phase timeline */}

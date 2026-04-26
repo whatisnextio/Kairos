@@ -6,7 +6,7 @@ import type { IdentityAnchorId, DomainType } from '@/types';
 import { IDENTITY_ANCHORS, DOMAINS } from '@/types';
 import Button from '@/components/common/Button';
 
-type Step = 'welcome' | 'anchor' | 'domain' | 'action' | 'win';
+type Step = 'welcome' | 'anchor' | 'domain' | 'action' | 'win' | 'celebrate';
 
 export default function OnboardingFlow() {
   const navigate = useNavigate();
@@ -121,7 +121,7 @@ export default function OnboardingFlow() {
     }
 
     setOnboardingComplete(true);
-    setStep('win');
+    setStep('celebrate');
     setSubmitting(false);
   };
 
@@ -260,11 +260,13 @@ export default function OnboardingFlow() {
         <p className="text-base-subtext text-sm">Setting up your cycle...</p>
       )}
 
-      {step === 'win' && !submitting && (
-        <div className="text-center mt-8">
-          <p className="text-accent-green font-heading font-bold text-lg tracking-wide">+10 XP</p>
-          <p className="text-base-subtext text-sm mt-1">Day 1 begins tomorrow.</p>
-          <Button onClick={() => navigate('/')} variant="ghost" className="mt-6">
+      {step === 'celebrate' && (
+        <div className="w-full max-w-sm text-center">
+          <p className="text-accent-green font-heading font-bold text-4xl tracking-wide mb-2">+10 XP</p>
+          <h2 className="font-heading text-2xl font-bold text-base-text mb-2 tracking-wide">Day 0 done.</h2>
+          <p className="text-base-subtext text-sm mb-2">That's how it starts.</p>
+          <p className="text-base-subtext text-sm mb-10">Day 1 begins tomorrow. Same time. Same commitment.</p>
+          <Button onClick={() => navigate('/')} className="w-full">
             Go to dashboard
           </Button>
         </div>

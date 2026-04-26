@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { supabase } from '@/services/supabaseClient';
 import { useAppStore } from '@/store/useAppStore';
-import type { Profile, KairosCycle, UserDomainFocus, DomainType } from '@/types';
+import type { Profile, KairosCycle, UserDomainFocus, DomainType, DailyCheckIn, CheckInStatus } from '@/types';
 
 function mapProfile(row: Record<string, unknown>): Profile {
   return {
@@ -46,14 +46,37 @@ function mapFocus(row: Record<string, unknown>): UserDomainFocus {
   };
 }
 
+function mapCheckIn(row: Record<string, unknown>): DailyCheckIn {
+  return {
+    id: row.id as string,
+    userId: row.user_id as string,
+    cycleId: row.cycle_id as string,
+    date: row.date as string,
+    domainType: row.domain_type as DomainType,
+    status: row.status as CheckInStatus,
+    notes: row.notes as string | null,
+    xpAwarded: row.xp_awarded as number,
+    createdAt: row.created_at as string,
+    updatedAt: row.updated_at as string,
+  };
+}
+
 export function useBootstrap() {
-  const { authUser, setProfile, setCurrentCycle, setDomainFocuses, setOnboardingComplete } =
+  const { authUser, todayCheckIns, setProfile, setCurrentCycle, setDomainFocuses, setOnboardingComplete, setTodayCheckIns } =
     useAppStore();
   const bootstrapped = useRef<string | null>(null);
 
   useEffect(() => {
     if (!authUser || bootstrapped.current === authUser.id) return;
     bootstrapped.current = authUser.id;
+
+    const today = new Date().toISOString().split('T')[0];
+
+    // Clear stale check-ins from a previous day (persisted in localStorage)
+    const anyCheckIn = Object.values(todayCheckIns)[0];
+    if (anyCheckIn && anyCheckIn.date !== today) {
+      setTodayCheckIns({});
+    }
 
     async function load() {
       const { data: profileRow } = await supabase
@@ -88,6 +111,23 @@ export function useBootstrap() {
 
       if (focuses) {
         setDomainFocuses(focuses.map((f) => mapFocus(f as Record<string, unknown>)));
+      }
+
+      // Brotherhood: reload today's check-ins from Supabase (cross-device sync)
+      if (profile.tier === 'brotherhood') {
+        const { data: checkIns } = await supabase
+          .from('daily_check_ins')
+          .select('*')
+          .eq('user_id', authUser!.id)
+          .eq('cycle_id', profile.currentKairosCycleId)
+          .eq('date', today);
+
+        if (checkIns && checkIns.length > 0) {
+          const mapped = checkIns.map((c) => mapCheckIn(c as Record<string, unknown>));
+          const byDomain: Partial<Record<DomainType, DailyCheckIn>> = {};
+          for (const ci of mapped) byDomain[ci.domainType] = ci;
+          setTodayCheckIns(byDomain);
+        }
       }
     }
 
