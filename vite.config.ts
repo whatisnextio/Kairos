@@ -28,32 +28,6 @@ export default defineConfig({
       injectManifest: {
         globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
       },
-      workbox: {
-        globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
-        runtimeCaching: [
-          {
-            urlPattern: /^https:\/\/fonts\.googleapis\.com\/.*/i,
-            handler: 'StaleWhileRevalidate',
-            options: { cacheName: 'google-fonts-stylesheets' },
-          },
-          {
-            urlPattern: /^https:\/\/fonts\.gstatic\.com\/.*/i,
-            handler: 'CacheFirst',
-            options: {
-              cacheName: 'google-fonts-webfonts',
-              expiration: { maxAgeSeconds: 60 * 60 * 24 * 365, maxEntries: 30 },
-            },
-          },
-          {
-            urlPattern: /^https:\/\/js\.stripe\.com\/.*/i,
-            handler: 'CacheFirst',
-            options: {
-              cacheName: 'stripe-js',
-              expiration: { maxAgeSeconds: 60 * 60 * 24 * 7, maxEntries: 1 },
-            },
-          },
-        ],
-      },
     }),
   ],
   resolve: {

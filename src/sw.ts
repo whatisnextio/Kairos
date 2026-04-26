@@ -1,11 +1,38 @@
 /// <reference lib="WebWorker" />
-import { cleanupOutdatedCaches, precacheAndRoute } from 'workbox-precaching';
+import {
+  cleanupOutdatedCaches,
+  precacheAndRoute,
+} from 'workbox-precaching';
+import { registerRoute } from 'workbox-routing';
+import { StaleWhileRevalidate, CacheFirst } from 'workbox-strategies';
+import { ExpirationPlugin } from 'workbox-expiration';
 
 declare const self: ServiceWorkerGlobalScope;
 
 cleanupOutdatedCaches();
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 precacheAndRoute((self as any).__WB_MANIFEST);
+
+registerRoute(
+  /^https:\/\/fonts\.googleapis\.com\/.*/i,
+  new StaleWhileRevalidate({ cacheName: 'google-fonts-stylesheets' }),
+);
+
+registerRoute(
+  /^https:\/\/fonts\.gstatic\.com\/.*/i,
+  new CacheFirst({
+    cacheName: 'google-fonts-webfonts',
+    plugins: [new ExpirationPlugin({ maxAgeSeconds: 60 * 60 * 24 * 365, maxEntries: 30 })],
+  }),
+);
+
+registerRoute(
+  /^https:\/\/js\.stripe\.com\/.*/i,
+  new CacheFirst({
+    cacheName: 'stripe-js',
+    plugins: [new ExpirationPlugin({ maxAgeSeconds: 60 * 60 * 24 * 7, maxEntries: 1 })],
+  }),
+);
 
 self.addEventListener('push', (event: PushEvent) => {
   let title = '12K';
