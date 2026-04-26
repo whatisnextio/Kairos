@@ -1,4 +1,4 @@
-// Push notification service — Web Push API
+// Push notification service (Web Push API)
 // VAPID public key comes from environment. Backend uses the private key to send.
 // Only requests permission when the user explicitly opts in (brotherhood tier).
 
@@ -24,7 +24,7 @@ export async function requestPushPermission(): Promise<boolean> {
 
 export async function subscribeToPush(): Promise<PushSubscription | null> {
   if (!VAPID_PUBLIC_KEY) {
-    console.warn('VITE_VAPID_PUBLIC_KEY not set — push notifications disabled');
+    console.warn('VITE_VAPID_PUBLIC_KEY not set; push notifications disabled');
     return null;
   }
 

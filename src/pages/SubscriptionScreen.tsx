@@ -25,8 +25,8 @@ export default function SubscriptionScreen() {
 
         <ul className="mt-4 flex flex-col gap-2">
           {[
-            'Daily AI nudge — personal, not generic',
-            'Silent squad — 4-8 men, same phase, anonymous',
+            'Daily AI nudge, personal not generic',
+            'Silent squad, 4-8 men, same phase, anonymous',
             'Cloud sync across devices',
             'Weekly squad pulse',
             'Day 84 cycle reflection',

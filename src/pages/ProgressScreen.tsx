@@ -75,7 +75,7 @@ export default function ProgressScreen() {
           })}
         </div>
 
-        {/* Domain rows — today's data from store; history would come from useCheckIns (brotherhood) */}
+        {/* Domain rows: today's data from store; history from useCheckIns (brotherhood) */}
         {DOMAINS.map((d) => (
           <div key={d.type} className="grid grid-cols-[80px_repeat(7,1fr)] gap-1 mb-1.5 items-center">
             <span className={`text-xs font-heading font-medium ${d.colour}`}>{d.label}</span>

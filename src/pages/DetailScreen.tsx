@@ -91,7 +91,7 @@ export default function DetailScreen() {
         </div>
       </Card>
 
-      {/* History — brotherhood only */}
+      {/* History: brotherhood only */}
       {profile?.tier === 'brotherhood' && (
         <Card>
           <p className="text-base-subtext text-xs font-heading tracking-widest uppercase mb-3">

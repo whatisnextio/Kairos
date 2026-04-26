@@ -8,6 +8,7 @@ import { subscribeToPush, isPushSupported } from '@/services/pushNotifications';
 import { supabase } from '@/services/supabaseClient';
 import Card from '@/components/common/Card';
 import Button from '@/components/common/Button';
+import AbandonCycleModal from '@/components/modals/AbandonCycleModal';
 
 const SAVE_PUSH_ENDPOINT = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/save-push-subscription`;
 const DELETE_ACCOUNT_ENDPOINT = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/delete-account`;
@@ -35,6 +36,7 @@ export default function YouScreen() {
   const [pushStatus, setPushStatus] = useState<'idle' | 'requesting' | 'done' | 'denied'>('idle');
   const [deleteConfirm, setDeleteConfirm] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [showAbandon, setShowAbandon] = useState(false);
 
   const handleDeleteAccount = useCallback(async () => {
     setIsDeleting(true);
@@ -70,12 +72,12 @@ export default function YouScreen() {
           </div>
           <div>
             <p className="text-base-subtext text-xs">Level</p>
-            <p className="font-heading font-bold text-base-text">{level.level} — {level.label}</p>
+            <p className="font-heading font-bold text-base-text">{level.level}: {level.label}</p>
           </div>
         </div>
       </Card>
 
-      {/* Squad — brotherhood only */}
+      {/* Squad: brotherhood only */}
       {profile.tier === 'brotherhood' && (
         <Card>
           <p className="text-base-subtext text-xs font-heading tracking-widest uppercase mb-2">
@@ -139,7 +141,7 @@ export default function YouScreen() {
         )}
       </Card>
 
-      {/* Notifications — brotherhood only */}
+      {/* Notifications: brotherhood only */}
       {profile.tier === 'brotherhood' && isPushSupported() && (
         <Card>
           <p className="text-base-subtext text-xs font-heading tracking-widest uppercase mb-2">
@@ -194,6 +196,16 @@ export default function YouScreen() {
         Sign out
       </Button>
 
+      {/* Cycle reset */}
+      <div>
+        <button
+          onClick={() => setShowAbandon(true)}
+          className="text-base-muted text-xs underline w-full text-center"
+        >
+          Reset cycle
+        </button>
+      </div>
+
       {/* GDPR account deletion */}
       <div className="pt-2">
         {!deleteConfirm ? (
@@ -209,7 +221,7 @@ export default function YouScreen() {
               This is permanent.
             </p>
             <p className="text-base-subtext text-xs mb-4">
-              All your data will be deleted and cannot be recovered. Your subscription will not be automatically cancelled — do that in your billing settings first.
+              All your data will be deleted and cannot be recovered. Your subscription will not be automatically cancelled. Cancel that in your billing settings first.
             </p>
             <div className="flex gap-2">
               <Button
@@ -233,6 +245,8 @@ export default function YouScreen() {
           </Card>
         )}
       </div>
+
+      {showAbandon && <AbandonCycleModal onClose={() => setShowAbandon(false)} />}
     </div>
   );
 }

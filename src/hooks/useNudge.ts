@@ -42,7 +42,7 @@ export function useNudge() {
       return nudge;
     },
     enabled,
-    staleTime: 1000 * 60 * 60 * 4, // 4 hours — nudge is cached server-side by date
+    staleTime: 1000 * 60 * 60 * 4, // 4 hours; nudge is cached server-side by date
     retry: 1,
   });
 }

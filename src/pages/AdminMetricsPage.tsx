@@ -96,7 +96,7 @@ export default function AdminMetricsPage() {
       {!loading && latest && (
         <Card>
           <p className="font-heading text-xs text-base-subtext tracking-widest uppercase mb-3">
-            Latest — {latest.snapshot_date}
+            Latest: {latest.snapshot_date}
           </p>
           <MetricRow label="Total Users" value={latest.total_users.toLocaleString()} />
           <MetricRow label="Brotherhood (Paid)" value={latest.paid_users.toLocaleString()} />

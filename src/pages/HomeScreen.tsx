@@ -145,11 +145,11 @@ export default function HomeScreen() {
           </button>
         )}
 
-        {/* Squad pulse — Brotherhood only */}
+        {/* Squad pulse: Brotherhood only */}
         {profile.tier === 'brotherhood' && profile.squadId && squadPulse && (
           <Card>
             <p className="font-heading text-xs text-base-subtext tracking-widest uppercase mb-1">
-              Squad — Week {squadPulse.weekNumber}
+              Squad, Week {squadPulse.weekNumber}
             </p>
             <p className="text-base-text text-sm italic">{squadPulse.message}</p>
           </Card>
