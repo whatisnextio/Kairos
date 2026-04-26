@@ -23,7 +23,7 @@ function getLast7Days(): string[] {
 }
 
 export default function ProgressScreen() {
-  const { profile, currentCycle, todayCheckIns, checkInHistory } = useAppStore();
+  const { profile, currentCycle, todayCheckIns, checkInHistory, streaks } = useAppStore();
 
   if (!profile || !currentCycle) return null;
 
@@ -95,6 +95,37 @@ export default function ProgressScreen() {
         ))}
 
         <p className="text-base-muted text-xs mt-3">Last 7 days from local history.</p>
+      </Card>
+
+      {/* Domain streaks */}
+      <Card>
+        <h2 className="font-heading text-xs font-medium text-base-subtext tracking-widest uppercase mb-3">
+          Streaks
+        </h2>
+        <div className="flex flex-col gap-2">
+          {DOMAINS.map((d) => {
+            const streak = streaks[d.type];
+            return (
+              <div key={d.type} className="flex items-center justify-between">
+                <span className={`text-xs font-heading font-medium ${d.colour}`}>{d.label}</span>
+                <div className="flex items-center gap-3">
+                  <div className="text-right">
+                    <p className="font-heading font-bold text-base-text text-sm">
+                      {streak?.currentStreak ?? 0}
+                      <span className="text-base-muted font-normal text-xs ml-1">current</span>
+                    </p>
+                  </div>
+                  <div className="text-right">
+                    <p className="font-heading text-base-subtext text-xs">
+                      {streak?.longestStreak ?? 0}
+                      <span className="text-base-muted ml-1">best</span>
+                    </p>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
       </Card>
 
       {/* Phase timeline */}

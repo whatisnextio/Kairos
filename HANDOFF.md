@@ -1,52 +1,60 @@
 # HANDOFF.md
 
 **Last updated:** 2026-04-26
-**Branch:** main
-**Last commit:** 195e807 — pre-commit hook + GitHub Actions CI
-**Next session priority:** Credentials unblock → deploy → soft launch
+**Branch:** main (25 commits ahead of origin)
+**Last commit:** ea2949b — Add pb-safe utility class for iOS bottom bar safe area inset
+**Next session priority:** Credentials unblock → deploy to Vercel → soft launch
 
 ---
 
 ## State Right Now
 
-All 6 ROADMAP phases built. App is feature-complete for soft launch pending live credentials. 16 commits on main, 52/52 unit tests passing, pre-commit hook active.
+App is feature-complete for soft launch. 52/52 unit tests passing, TypeScript clean, build clean (66 kB main bundle). Pre-commit hook active. All 8 bug fixes from the loop session committed.
 
 ---
 
-## This Loop Shipped
+## This Loop Shipped (loop session 2026-04-26)
 
-- **HomeScreen**: safe-area insets, tile split (check-in + chevron nav), nudge preview card, squad pulse card, Day 84 modal trigger, domain setup modal trigger
-- **ProgressScreen**: 7-day domain dot grid
-- **ProgressiveDomainSetupModal**: Days 2-4 progressive domain focus collection
-- **Day84CompletionModal**: intro → reflection → celebrate, +50 XP, "Start Cycle 2" → /new-cycle
-- **NewCycleScreen**: anchor re-selection, creates new kairos_cycle
-- **AdminMetricsPage**: email-gated, metrics_snapshots display, "Compute Now" trigger
-- **migration 004**: cycle_reflections with RLS
-- **store.completeCycle()**: marks completed, saves reflection, +50 XP, Supabase sync
-- **E2E specs**: auth, home, onboarding, setup (Playwright, require live Supabase)
-- **Vitest config**: e2e excluded, 52 tests passing
-- **YouScreen**: Stripe Customer Portal "Manage billing" link
-- **Pre-commit hook**: tsc + voice check (src/ only) + vitest
-- **GitHub Actions CI**: type check, voice check, unit tests, build on push/PR
+- **AbandonCycleModal**: 2-step confirmation, marks cycle 'abandoned', redirects to /new-cycle
+- **Stale check-in clearing**: useBootstrap clears `todayCheckIns` when date !== today on mount
+- **Cross-device sync**: useBootstrap loads today's check-ins from Supabase for Brotherhood users
+- **7-day history grid**: ProgressScreen now reads from `checkInHistory` for historical days
+- **Onboarding celebrate step**: Added `celebrate` step to OnboardingFlow, fixes dual-render bug
+- **XP net delta**: setDailyCheckIn now computes `xpForStatus(new) - xpForStatus(previous)` to prevent double-award
+- **XP floor**: `Math.max(0, xp + xpDelta)` prevents negative XP locally and in Supabase sync
+- **Squad member tiles**: HomeScreen shows anonymised member tiles (anchor initial + 4 domain dots)
+- **SECURITY DEFINER RPC**: `get_squad_members_status()` in migration 005 — no UUID/name exposure
+- **NewCycleScreen cycle number**: Queries actual count from Supabase instead of hardcoded `2`
+- **Code splitting**: React.lazy + Suspense on 7 non-critical routes; vendor chunk separation
+- **Bundle size**: Main bundle 490 kB → 66 kB (18.63 kB gzipped)
+- **Public assets**: favicon.ico, logo192.png, logo512.png, robots.txt
+- **Vercel config**: SPA rewrite + security headers + immutable asset cache
+- **Plausible Analytics**: `data-domain="12k.app"` script in index.html
+- **pb-safe CSS utility**: Added to index.css for iOS bottom-bar safe area inset
+- **DetailScreen free tier**: Now shows 7-day local history instead of hard paywall
+- **ProgressScreen streaks**: Added per-domain current/longest streak section
 
 ---
 
 ## Full Feature Inventory
 
 ### Pages (14)
-SplashScreen, LoginPage, RegisterPage, OnboardingFlow (Day 0 win), HomeScreen, ProgressScreen, DetailScreen, ImproveScreen, YouScreen, SubscriptionScreen, AdminMetricsPage (/admin/metrics), NewCycleScreen (/new-cycle), PrivacyPolicyPage, TermsServicePage, HelpFAQPage
+SplashScreen, LoginPage, RegisterPage, OnboardingFlow (Day 0 win + celebrate step), HomeScreen, ProgressScreen, DetailScreen, ImproveScreen, YouScreen, SubscriptionScreen, AdminMetricsPage (/admin/metrics), NewCycleScreen (/new-cycle), PrivacyPolicyPage, TermsServicePage, HelpFAQPage
 
-### Modals (3)
-WeeklyVibeCheckModal, ProgressiveDomainSetupModal, Day84CompletionModal
+### Modals (4)
+WeeklyVibeCheckModal, ProgressiveDomainSetupModal, Day84CompletionModal, AbandonCycleModal
 
 ### Edge Functions (7)
 generate-kairos-nudge (Claude Haiku), match-to-squad, generate-squad-pulse (Claude Sonnet), stripe-webhook, save-push-subscription, compute-weekly-metrics, delete-account
 
-### Migrations (4)
-001 initial schema, 002 streak function, 003 push subscriptions, 004 cycle reflections
+### Supabase Migrations (5)
+001 initial schema, 002 streak function, 003 push subscriptions, 004 cycle reflections, 005 squad_member_status SECURITY DEFINER RPC
 
 ### TanStack Query Hooks
-useNudge, useUpdateNudgeStatus, useStreaks, useSquadPulse, useMatchToSquad, useDomainCheckIns
+useNudge, useUpdateNudgeStatus, useStreaks, useSquadPulse, useMatchToSquad, useSquadMembers, useDomainCheckIns
+
+### Zustand Store (persisted)
+onboardingComplete, todayCheckIns, checkInHistory (90-day rolling), streaks, profile, currentCycle, domainFocuses, lastVibeCheckDate
 
 ---
 
@@ -61,25 +69,24 @@ useNudge, useUpdateNudgeStatus, useStreaks, useSquadPulse, useMatchToSquad, useD
 | Stripe portal URL | .env: VITE_STRIPE_PORTAL_URL |
 | VAPID public key | .env: VITE_VAPID_PUBLIC_KEY |
 | VAPID private key | Supabase Vault: VAPID_PRIVATE_KEY |
-| PWA icons | /public/logo192.png + logo512.png |
+| PWA icons | /public/logo192.png + logo512.png (currently 1x1 placeholders) |
+| Plausible domain | index.html data-domain="12k.app" must match registered domain |
 
 ---
 
 ## Deployment Steps (Once Credentials Available)
 
 1. `cp .env.example .env` and fill in all values
-2. `supabase db push` — runs all 4 migrations
+2. `supabase db push` — runs all 5 migrations
 3. `supabase secrets set ANTHROPIC_API_KEY=... STRIPE_WEBHOOK_SECRET=... VAPID_PRIVATE_KEY=...`
 4. `supabase functions deploy --all`
 5. `npm run build`
 6. `vercel --prod`
 
-Full guide: DEPLOY.md
-
 ---
 
 ## Test Status
 
-52/52 unit tests passing. E2E specs written, require live Supabase (marked TODO: VERIFY).
-Pre-commit hook active: tsc + voice check + vitest on every commit.
-GitHub Actions CI: same checks on push/PR to main.
+52/52 unit tests passing (src/tests/kairos.test.ts + src/tests/gamification.test.ts).
+TypeScript: no errors. Build: clean. Pre-commit hook: tsc + voice check + vitest.
+25 local commits not yet pushed to origin/main.

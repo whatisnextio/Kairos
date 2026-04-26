@@ -2,7 +2,7 @@ import { useParams } from 'react-router-dom';
 import { useAppStore } from '@/store/useAppStore';
 import { useStreaks } from '@/hooks/useStreaks';
 import { useDomainCheckIns } from '@/hooks/useCheckIns';
-import { DOMAINS, type DomainType } from '@/types';
+import { DOMAINS, type DomainType, type CheckInStatus } from '@/types';
 import Card from '@/components/common/Card';
 
 const STATUS_DOT: Record<string, string> = {
@@ -20,9 +20,17 @@ const STATUS_LABEL: Record<string, string> = {
   Protected: 'Protected',
 };
 
+function getLast7Days(): string[] {
+  const days: string[] = [];
+  for (let i = 6; i >= 0; i--) {
+    days.push(new Date(Date.now() - i * 86_400_000).toISOString().split('T')[0]);
+  }
+  return days;
+}
+
 export default function DetailScreen() {
   const { domain } = useParams<{ domain: string }>();
-  const { profile, domainFocuses, streaks: localStreaks, todayCheckIns } = useAppStore();
+  const { profile, domainFocuses, streaks: localStreaks, todayCheckIns, checkInHistory } = useAppStore();
 
   const domainType = domain?.toUpperCase() as DomainType;
   const domainConfig = DOMAINS.find((d) => d.type === domainType);
@@ -117,9 +125,34 @@ export default function DetailScreen() {
 
       {profile?.tier === 'free' && (
         <Card>
-          <p className="text-base-subtext text-xs font-heading tracking-widest uppercase mb-2">History</p>
-          <p className="text-base-muted text-sm">
-            Full history is a Brotherhood feature. Upgrade to see your last 28 days.
+          <p className="text-base-subtext text-xs font-heading tracking-widest uppercase mb-3">
+            Last 7 days
+          </p>
+          <div className="flex flex-col gap-1.5">
+            {getLast7Days().map((date) => {
+              const today = new Date().toISOString().split('T')[0];
+              const status: CheckInStatus | undefined =
+                date === today
+                  ? (todayCheckIns[domainType]?.status ?? undefined)
+                  : (checkInHistory[date]?.[domainType] ?? undefined);
+              const dotClass = status ? (STATUS_DOT[status] ?? 'bg-base-border') : 'bg-base-border/40';
+              const d = new Date(date + 'T00:00:00');
+              const dayLabel = d.toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' });
+              return (
+                <div key={date} className="flex items-center justify-between">
+                  <span className="text-base-subtext text-xs">{dayLabel}</span>
+                  <div className="flex items-center gap-1.5">
+                    <div className={`w-1.5 h-1.5 rounded-full ${dotClass}`} />
+                    <span className="text-base-muted text-xs">
+                      {status ? STATUS_LABEL[status] : 'No data'}
+                    </span>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+          <p className="text-base-muted text-xs mt-3 border-t border-base-border pt-2">
+            Upgrade to Brotherhood to see your full 28-day cloud history.
           </p>
         </Card>
       )}
