@@ -207,36 +207,51 @@ Deno.serve(async (req: Request) => {
   const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
   const today = new Date().toISOString().split('T')[0];
 
-  // All Brotherhood users with a push subscription and a nudge today
-  const { data: rows, error: rowsErr } = await supabase
+  // 1. Fetch Brotherhood users with push subscriptions.
+  // ai_nudges has no FK to push_subscriptions so we use two separate queries.
+  const { data: subscriptions, error: subErr } = await supabase
     .from('push_subscriptions')
-    .select(`
-      user_id,
-      subscription,
-      profiles!inner(tier),
-      ai_nudges!left(id, title, body, date, status)
-    `)
-    .eq('profiles.tier', 'brotherhood')
-    .eq('ai_nudges.date', today)
-    .eq('ai_nudges.type', 'daily_nudge');
+    .select('user_id, subscription, profiles!inner(tier)')
+    .eq('profiles.tier', 'brotherhood');
 
-  if (rowsErr) {
-    console.error('send-daily-push: query error', rowsErr.message);
-    return new Response(JSON.stringify({ error: rowsErr.message }), { status: 500 });
+  if (subErr) {
+    console.error('send-daily-push: subscriptions query error', subErr.message);
+    return new Response(JSON.stringify({ error: subErr.message }), { status: 500 });
   }
+
+  const userIds = (subscriptions ?? []).map((s: Record<string, unknown>) => s.user_id as string);
+
+  if (userIds.length === 0) {
+    return new Response(JSON.stringify({ sent: 0, failed: 0, staleRemoved: 0 }), {
+      headers: { 'Content-Type': 'application/json' },
+    });
+  }
+
+  // 2. Fetch today's nudges for those users.
+  const { data: nudges } = await supabase
+    .from('ai_nudges')
+    .select('user_id, title, body')
+    .in('user_id', userIds)
+    .eq('date', today)
+    .eq('type', 'daily_nudge');
+
+  const nudgeMap = new Map(
+    (nudges ?? []).map((n: { user_id: string; title: string; body: string }) => [n.user_id, n]),
+  );
 
   let sent = 0;
   let failed = 0;
   const staleIds: string[] = [];
 
-  for (const row of rows ?? []) {
+  for (const row of subscriptions ?? []) {
+    const userId = row.user_id as string;
     const sub = row.subscription as {
       endpoint: string;
       keys: { p256dh: string; auth: string };
     };
 
-    const nudge = Array.isArray(row.ai_nudges) ? row.ai_nudges[0] : row.ai_nudges;
-    if (!nudge) continue; // No nudge generated yet; skip
+    const nudge = nudgeMap.get(userId);
+    if (!nudge) continue; // No nudge generated yet for this user today; skip
 
     const message = JSON.stringify({ title: nudge.title, body: nudge.body });
 
@@ -251,10 +266,10 @@ Deno.serve(async (req: Request) => {
       const msg = e instanceof Error ? e.message : String(e);
       // 404/410 means the subscription is expired — clean it up
       if (msg.includes('404') || msg.includes('410')) {
-        staleIds.push(row.user_id as string);
+        staleIds.push(userId);
       }
       failed++;
-      console.error(`send-daily-push: push failed for user ${row.user_id}:`, msg);
+      console.error(`send-daily-push: push failed for user ${userId}:`, msg);
     }
   }
 

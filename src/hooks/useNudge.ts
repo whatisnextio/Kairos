@@ -1,9 +1,26 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/services/supabaseClient';
 import { useAppStore } from '@/store/useAppStore';
-import type { AiNudge, NudgeStatus } from '@/types';
+import type { AiNudge, NudgeStatus, NudgeType, NudgeCta, DomainType, KairosPhase } from '@/types';
 
 const NUDGE_ENDPOINT = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-kairos-nudge`;
+
+function mapNudge(raw: Record<string, unknown>): AiNudge {
+  return {
+    id: raw.id as string,
+    userId: raw.user_id as string,
+    date: raw.date as string,
+    type: raw.type as NudgeType,
+    title: raw.title as string,
+    body: raw.body as string,
+    domainType: (raw.domain_type as DomainType | null) ?? null,
+    kairosPhase: (raw.kairos_phase as KairosPhase | null) ?? null,
+    xpReward: (raw.xp_reward as number | null) ?? null,
+    status: raw.status as NudgeStatus,
+    cta: (raw.cta as NudgeCta) ?? null,
+    generatedAt: raw.generated_at as string,
+  };
+}
 
 async function fetchOrGenerateNudge(accessToken: string): Promise<AiNudge> {
   const res = await fetch(NUDGE_ENDPOINT, {
@@ -20,7 +37,7 @@ async function fetchOrGenerateNudge(accessToken: string): Promise<AiNudge> {
   }
 
   const { nudge } = await res.json();
-  return nudge as AiNudge;
+  return mapNudge(nudge as Record<string, unknown>);
 }
 
 export function useNudge() {
