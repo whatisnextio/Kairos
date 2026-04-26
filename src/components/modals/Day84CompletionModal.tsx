@@ -11,7 +11,7 @@ type Step = 'intro' | 'reflect' | 'celebrate';
 
 export default function Day84CompletionModal({ onClose }: Props) {
   const navigate = useNavigate();
-  const { completeCycle } = useAppStore();
+  const { completeCycle, profile } = useAppStore();
   const [step, setStep] = useState<Step>('intro');
   const [reflection, setReflection] = useState('');
   const [saving, setSaving] = useState(false);
@@ -96,7 +96,9 @@ export default function Day84CompletionModal({ onClose }: Props) {
             <h2 className="font-heading text-2xl font-bold text-base-text mb-3 tracking-wide">
               Cycle Complete.
             </h2>
-            <p className="text-base-subtext text-sm mb-2">Your reflection has been saved.</p>
+            {profile?.tier === 'brotherhood' && (
+              <p className="text-base-subtext text-sm mb-2">Your reflection has been saved.</p>
+            )}
             <p className="text-base-subtext text-sm mb-8">
               When you're ready, start your next 84 days.
             </p>
