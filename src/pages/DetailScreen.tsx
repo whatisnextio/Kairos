@@ -39,6 +39,7 @@ export default function DetailScreen() {
     checkInHistory,
   } = useAppStore();
 
+  const today = new Date().toISOString().split('T')[0];
   const domainType = domain?.toUpperCase() as DomainType;
   const domainConfig = DOMAINS.find((d) => d.type === domainType);
   const focus = domainFocuses.find((f) => f.domainType === domainType);
@@ -158,7 +159,6 @@ export default function DetailScreen() {
           </p>
           <div className="flex flex-col gap-1.5">
             {getLast7Days().map((date) => {
-              const today = new Date().toISOString().split('T')[0];
               const status: CheckInStatus | undefined =
                 date === today
                   ? (todayCheckIns[domainType]?.status ?? undefined)
