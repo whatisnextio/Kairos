@@ -2,10 +2,28 @@ import { useAppStore } from '@/store/useAppStore';
 import { getDayInCycle, getCurrentPhaseConfig, KAIROS_PHASES } from '@/utils/kairos';
 import type { KairosPhaseConfig } from '@/types';
 import { getLevelForXp, getXpProgressInLevel } from '@/utils/gamification';
+import { DOMAINS } from '@/types';
 import Card from '@/components/common/Card';
 
+const STATUS_DOT: Record<string, string> = {
+  Done:      'bg-status-done',
+  Partial:   'bg-status-partial',
+  Missed:    'bg-status-missed',
+  Pending:   'bg-base-border',
+  Protected: 'bg-domain-spirit',
+};
+
+function getLast7Days(): string[] {
+  const days: string[] = [];
+  for (let i = 6; i >= 0; i--) {
+    const d = new Date(Date.now() - i * 86_400_000);
+    days.push(d.toISOString().split('T')[0]);
+  }
+  return days;
+}
+
 export default function ProgressScreen() {
-  const { profile, currentCycle } = useAppStore();
+  const { profile, currentCycle, todayCheckIns } = useAppStore();
 
   if (!profile || !currentCycle) return null;
 
@@ -13,6 +31,8 @@ export default function ProgressScreen() {
   const currentPhase = getCurrentPhaseConfig(dayInCycle);
   const level = getLevelForXp(profile.xp);
   const xpProgress = getXpProgressInLevel(profile.xp);
+  const last7 = getLast7Days();
+  const today = new Date().toISOString().split('T')[0];
 
   return (
     <div className="px-4 pt-6 pb-4 flex flex-col gap-4">
@@ -30,6 +50,52 @@ export default function ProgressScreen() {
           />
         </div>
         <p className="text-base-muted text-xs mt-1">{xpProgress}% to Level {level.level + 1}</p>
+      </Card>
+
+      {/* 7-day domain grid */}
+      <Card>
+        <h2 className="font-heading text-xs font-medium text-base-subtext tracking-widest uppercase mb-3">
+          Last 7 days
+        </h2>
+
+        {/* Day headers */}
+        <div className="grid grid-cols-[80px_repeat(7,1fr)] gap-1 mb-2">
+          <div />
+          {last7.map((date) => {
+            const d = new Date(date + 'T00:00:00');
+            const label = d.toLocaleDateString('en-GB', { weekday: 'narrow' });
+            const isToday = date === today;
+            return (
+              <div key={date} className="text-center">
+                <span className={`text-xs ${isToday ? 'text-accent-green font-medium' : 'text-base-muted'}`}>
+                  {label}
+                </span>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Domain rows — today's data from store; history would come from useCheckIns (brotherhood) */}
+        {DOMAINS.map((d) => (
+          <div key={d.type} className="grid grid-cols-[80px_repeat(7,1fr)] gap-1 mb-1.5 items-center">
+            <span className={`text-xs font-heading font-medium ${d.colour}`}>{d.label}</span>
+            {last7.map((date) => {
+              let dotClass = 'bg-base-border/40';
+              if (date === today) {
+                dotClass = STATUS_DOT[todayCheckIns[d.type]?.status ?? 'Pending'] ?? 'bg-base-border';
+              }
+              return (
+                <div key={date} className="flex justify-center">
+                  <div className={`w-2 h-2 rounded-full ${dotClass}`} />
+                </div>
+              );
+            })}
+          </div>
+        ))}
+
+        <p className="text-base-muted text-xs mt-3">
+          Today's data is live. Full history unlocks with Brotherhood.
+        </p>
       </Card>
 
       {/* Phase timeline */}
@@ -61,7 +127,7 @@ export default function ProgressScreen() {
                   >
                     {phase.label}
                   </p>
-                  <p className="text-base-muted text-xs">Days {phase.days[0]}–{phase.days[1]}</p>
+                  <p className="text-base-muted text-xs">Days {phase.days[0]}-{phase.days[1]}</p>
                 </div>
                 {isPast && <span className="text-base-muted text-xs">Done</span>}
                 {isActive && <span className="text-accent-green text-xs">Active</span>}

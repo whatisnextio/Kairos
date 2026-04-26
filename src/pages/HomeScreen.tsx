@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAppStore } from '@/store/useAppStore';
 import { getDayInCycle, getCurrentPhaseConfig, getCycleProgressPct, getPhaseProgressPct } from '@/utils/kairos';
 import { DOMAINS, IDENTITY_ANCHORS, type DomainType, type CheckInStatus } from '@/types';
@@ -31,6 +32,7 @@ function shouldShowVibeCheck(lastVibeCheckDate: string | null, dayInCycle: numbe
 }
 
 export default function HomeScreen() {
+  const navigate = useNavigate();
   const { profile, currentCycle, domainFocuses, todayCheckIns, lastVibeCheckDate, setDailyCheckIn } = useAppStore();
   const [showVibeCheck, setShowVibeCheck] = useState(false);
 
@@ -119,24 +121,38 @@ export default function HomeScreen() {
               const status: CheckInStatus = checkIn?.status ?? 'Pending';
 
               return (
-                <button
+                <div
                   key={d.type}
-                  onClick={() => handleCheckIn(d.type, checkIn?.status)}
-                  className={`w-full text-left p-4 rounded border transition-colors ${STATUS_COLOURS[status]} bg-base-surface`}
+                  className={`w-full flex rounded border transition-colors ${STATUS_COLOURS[status]} bg-base-surface`}
                 >
-                  <div className="flex items-center justify-between">
-                    <span className={`font-heading font-medium tracking-wide ${d.colour}`}>
-                      {d.label}
-                    </span>
-                    <span className="text-xs">{STATUS_LABELS[status]}</span>
-                  </div>
-                  {focus && (
-                    <p className="text-base-subtext text-xs mt-1 truncate">{focus.focusDescription}</p>
-                  )}
-                  {!focus && (
-                    <p className="text-base-muted text-xs mt-1">Set your focus for tomorrow.</p>
-                  )}
-                </button>
+                  <button
+                    className="flex-1 text-left p-4"
+                    onClick={() => handleCheckIn(d.type, checkIn?.status)}
+                    aria-label={`Check in ${d.label}`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <span className={`font-heading font-medium tracking-wide ${d.colour}`}>
+                        {d.label}
+                      </span>
+                      <span className="text-xs">{STATUS_LABELS[status]}</span>
+                    </div>
+                    {focus && (
+                      <p className="text-base-subtext text-xs mt-1 truncate">{focus.focusDescription}</p>
+                    )}
+                    {!focus && (
+                      <p className="text-base-muted text-xs mt-1">Set your focus for tomorrow.</p>
+                    )}
+                  </button>
+                  <button
+                    className="px-3 flex items-center text-base-muted hover:text-base-subtext transition-colors border-l border-current/20"
+                    onClick={() => navigate(`/detail/${d.type.toLowerCase()}`)}
+                    aria-label={`View ${d.label} detail`}
+                  >
+                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M5 2l5 5-5 5" />
+                    </svg>
+                  </button>
+                </div>
               );
             })}
           </div>
