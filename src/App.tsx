@@ -17,6 +17,7 @@ import SubscriptionScreen from '@/pages/SubscriptionScreen';
 import PrivacyPolicyPage from '@/pages/PrivacyPolicyPage';
 import TermsServicePage from '@/pages/TermsServicePage';
 import HelpFAQPage from '@/pages/HelpFAQPage';
+import AdminMetricsPage from '@/pages/AdminMetricsPage';
 import AppShell from '@/components/layout/AppShell';
 
 export default function App() {
@@ -75,6 +76,7 @@ export default function App() {
           <Route path="/privacy" element={<PrivacyPolicyPage />} />
           <Route path="/terms" element={<TermsServicePage />} />
           <Route path="/help" element={<HelpFAQPage />} />
+          <Route path="/admin/metrics" element={<AdminMetricsPage />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </AppShell>
