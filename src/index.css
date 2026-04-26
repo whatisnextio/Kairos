@@ -77,4 +77,8 @@
   .status-partial { @apply bg-status-partial; }
   .status-missed { @apply bg-status-missed; }
   .status-pending { @apply bg-status-pending; }
+
+  .pb-safe {
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
 }
