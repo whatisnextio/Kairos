@@ -109,7 +109,7 @@ export default function Day84CompletionModal({ onClose }: Props) {
               }}
               className="w-full mb-3"
             >
-              Start Cycle 2
+              Start Next Cycle
             </Button>
             <Button variant="ghost" onClick={onClose} className="w-full">
               Later
