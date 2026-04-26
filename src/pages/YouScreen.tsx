@@ -38,10 +38,12 @@ export default function YouScreen() {
   const [pushStatus, setPushStatus] = useState<'idle' | 'requesting' | 'done' | 'denied'>('idle');
   const [deleteConfirm, setDeleteConfirm] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
   const [showAbandon, setShowAbandon] = useState(false);
 
   const handleDeleteAccount = useCallback(async () => {
     setIsDeleting(true);
+    setDeleteError(null);
     const {
       data: { session },
     } = await supabase.auth.getSession();
@@ -49,11 +51,16 @@ export default function YouScreen() {
       setIsDeleting(false);
       return;
     }
-    await fetch(DELETE_ACCOUNT_ENDPOINT, {
+    const res = await fetch(DELETE_ACCOUNT_ENDPOINT, {
       method: 'POST',
       headers: { Authorization: `Bearer ${session.access_token}` },
     });
-    signOut();
+    if (res.ok) {
+      signOut();
+    } else {
+      setDeleteError('Delete failed. Please try again or contact support.');
+      setIsDeleting(false);
+    }
   }, [signOut]);
 
   if (!profile) return null;
@@ -241,6 +248,11 @@ export default function YouScreen() {
               All your data will be deleted and cannot be recovered. Your subscription will not be
               automatically cancelled. Cancel that in your billing settings first.
             </p>
+            {deleteError && (
+              <p role="alert" className="text-status-missed text-xs mb-3">
+                {deleteError}
+              </p>
+            )}
             <div className="flex gap-2">
               <Button
                 variant="danger"

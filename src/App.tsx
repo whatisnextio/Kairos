@@ -30,8 +30,15 @@ function PageFallback() {
 }
 
 export default function App() {
-  const { authUser, profile, onboardingComplete, setAuthUser, isAuthLoading, isBootstrapLoading } =
-    useAppStore();
+  const {
+    authUser,
+    profile,
+    onboardingComplete,
+    setAuthUser,
+    isAuthLoading,
+    isBootstrapLoading,
+    currentCycle,
+  } = useAppStore();
 
   useBootstrap();
 
@@ -80,7 +87,16 @@ export default function App() {
         <ErrorBoundary>
           <Suspense fallback={<PageFallback />}>
             <Routes>
-              <Route path="/" element={<HomeScreen />} />
+              <Route
+                path="/"
+                element={
+                  currentCycle && currentCycle.status !== 'active' ? (
+                    <Navigate to="/new-cycle" replace />
+                  ) : (
+                    <HomeScreen />
+                  )
+                }
+              />
               <Route path="/progress" element={<ProgressScreen />} />
               <Route path="/detail/:domain" element={<DetailScreen />} />
               <Route path="/improve" element={<ImproveScreen />} />
