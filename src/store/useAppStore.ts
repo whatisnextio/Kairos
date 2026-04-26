@@ -59,7 +59,6 @@ interface AppActions {
 
   setTodayCheckIns: (checkIns: Partial<Record<DomainType, DailyCheckIn>>) => void;
   setTodayNudge: (nudge: AiNudge | null) => void;
-  setNudgeStatus: (nudgeId: string, status: AiNudge['status']) => Promise<void>;
 
   mergeCheckInHistory: (
     entries: Record<string, Partial<Record<DomainType, CheckInStatus>>>,
@@ -181,16 +180,6 @@ export const useAppStore = create<AppState & AppActions>()(
       },
 
       setTodayNudge: (todayNudge) => set({ todayNudge }),
-
-      setNudgeStatus: async (nudgeId, status) => {
-        const { profile } = get();
-        set((state) => ({
-          todayNudge:
-            state.todayNudge?.id === nudgeId ? { ...state.todayNudge, status } : state.todayNudge,
-        }));
-        if (!profile || profile.tier === 'free') return;
-        await supabase.from('ai_nudges').update({ status }).eq('id', nudgeId);
-      },
 
       mergeCheckInHistory: (entries) =>
         set((state) => ({ checkInHistory: { ...state.checkInHistory, ...entries } })),
