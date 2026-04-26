@@ -18,6 +18,7 @@ import PrivacyPolicyPage from '@/pages/PrivacyPolicyPage';
 import TermsServicePage from '@/pages/TermsServicePage';
 import HelpFAQPage from '@/pages/HelpFAQPage';
 import AdminMetricsPage from '@/pages/AdminMetricsPage';
+import NewCycleScreen from '@/pages/NewCycleScreen';
 import AppShell from '@/components/layout/AppShell';
 
 export default function App() {
@@ -77,6 +78,7 @@ export default function App() {
           <Route path="/terms" element={<TermsServicePage />} />
           <Route path="/help" element={<HelpFAQPage />} />
           <Route path="/admin/metrics" element={<AdminMetricsPage />} />
+          <Route path="/new-cycle" element={<NewCycleScreen />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </AppShell>

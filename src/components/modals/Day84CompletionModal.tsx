@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAppStore } from '@/store/useAppStore';
 import Button from '@/components/common/Button';
 
@@ -9,6 +10,7 @@ interface Props {
 type Step = 'intro' | 'reflect' | 'celebrate';
 
 export default function Day84CompletionModal({ onClose }: Props) {
+  const navigate = useNavigate();
   const { completeCycle } = useAppStore();
   const [step, setStep] = useState<Step>('intro');
   const [reflection, setReflection] = useState('');
@@ -93,8 +95,11 @@ export default function Day84CompletionModal({ onClose }: Props) {
             <p className="text-base-subtext text-sm mb-8">
               When you're ready, start your next 84 days.
             </p>
-            <Button onClick={onClose} className="w-full">
-              Continue
+            <Button onClick={() => { onClose(); navigate('/new-cycle'); }} className="w-full mb-3">
+              Start Cycle 2
+            </Button>
+            <Button variant="ghost" onClick={onClose} className="w-full">
+              Later
             </Button>
           </div>
         )}

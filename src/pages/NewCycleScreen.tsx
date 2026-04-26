@@ -1,0 +1,146 @@
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useAppStore } from '@/store/useAppStore';
+import { supabase } from '@/services/supabaseClient';
+import { IDENTITY_ANCHORS, type IdentityAnchorId } from '@/types';
+import Button from '@/components/common/Button';
+import Card from '@/components/common/Card';
+
+export default function NewCycleScreen() {
+  const navigate = useNavigate();
+  const { authUser, profile, setProfile, setCurrentCycle, setDomainFocuses } = useAppStore();
+  const [anchorId, setAnchorId] = useState<IdentityAnchorId | null>(
+    profile?.identityAnchorId ?? null
+  );
+  const [customAnchor, setCustomAnchor] = useState(profile?.customAnchorName ?? '');
+  const [starting, setStarting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  if (!authUser || !profile) return null;
+
+  async function handleStart() {
+    if (!anchorId || !authUser || !profile) return;
+    setStarting(true);
+    setError(null);
+
+    const today = new Date().toISOString().split('T')[0];
+
+    const { data: cycle, error: cycleErr } = await supabase
+      .from('kairos_cycles')
+      .insert({ user_id: authUser.id, start_date: today, status: 'active' })
+      .select()
+      .single();
+
+    if (cycleErr || !cycle) {
+      setError(cycleErr?.message ?? 'Failed to start cycle');
+      setStarting(false);
+      return;
+    }
+
+    const { error: profileErr } = await supabase
+      .from('profiles')
+      .update({
+        current_kairos_cycle_id: cycle.id,
+        identity_anchor_id: anchorId,
+        custom_anchor_name: anchorId === 'custom' ? customAnchor : null,
+      })
+      .eq('id', authUser.id);
+
+    if (profileErr) {
+      setError(profileErr.message);
+      setStarting(false);
+      return;
+    }
+
+    setCurrentCycle({
+      id: cycle.id,
+      userId: authUser.id,
+      startDate: today,
+      endDate: null,
+      status: 'active',
+      totalXpEarned: 0,
+      completionPercentage: 0,
+      createdAt: cycle.created_at,
+    });
+
+    setProfile({
+      ...profile,
+      currentKairosCycleId: cycle.id,
+      identityAnchorId: anchorId,
+      customAnchorName: anchorId === 'custom' ? customAnchor : undefined,
+    });
+
+    setDomainFocuses([]);
+    setStarting(false);
+    navigate('/', { replace: true });
+  }
+
+  const cycleNumber = 2; // TODO: query completed cycles count for accurate number
+
+  return (
+    <div className="px-4 pt-6 pb-4 flex flex-col gap-4">
+      <div>
+        <p className="font-heading text-xs text-accent-green tracking-widest uppercase mb-1">
+          Cycle {cycleNumber}
+        </p>
+        <h1 className="font-heading text-2xl font-bold text-base-text tracking-wide">
+          Start fresh.
+        </h1>
+        <p className="text-base-subtext text-sm mt-1">
+          Same system. New man.
+        </p>
+      </div>
+
+      <Card>
+        <p className="font-heading text-xs text-base-subtext tracking-widest uppercase mb-3">
+          Your identity anchor
+        </p>
+        <p className="text-base-subtext text-xs mb-4">
+          You can keep the same or choose a new one.
+        </p>
+        <div className="flex flex-col gap-2">
+          {IDENTITY_ANCHORS.map((anchor) => (
+            <button
+              key={anchor.id}
+              onClick={() => setAnchorId(anchor.id)}
+              className={`w-full text-left p-3 rounded border transition-colors text-sm ${
+                anchorId === anchor.id
+                  ? 'border-accent-green bg-accent-green/10'
+                  : 'border-base-border bg-base-surface hover:border-base-muted'
+              }`}
+            >
+              <span className={`font-heading font-medium tracking-wide ${
+                anchorId === anchor.id ? 'text-accent-green' : 'text-base-text'
+              }`}>
+                {anchor.name}
+              </span>
+              <span className="text-base-subtext text-xs block mt-0.5">{anchor.description}</span>
+            </button>
+          ))}
+        </div>
+        {anchorId === 'custom' && (
+          <input
+            className="input-field mt-3"
+            placeholder="Name your identity"
+            value={customAnchor}
+            onChange={(e) => setCustomAnchor(e.target.value)}
+          />
+        )}
+      </Card>
+
+      {error && <p className="text-red-400 text-sm">{error}</p>}
+
+      <Button
+        onClick={handleStart}
+        disabled={!anchorId || (anchorId === 'custom' && !customAnchor.trim()) || starting}
+        className="w-full"
+      >
+        {starting ? 'Starting…' : 'Begin Cycle 2'}
+      </Button>
+
+      <p className="text-base-muted text-xs text-center">
+        Your domain focuses will be set progressively over the first 4 days.
+      </p>
+    </div>
+  );
+}
