@@ -1,26 +1,32 @@
-import { useEffect } from 'react';
+import { lazy, Suspense, useEffect } from 'react';
 import { HashRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { useAppStore } from '@/store/useAppStore';
 import { supabase } from '@/services/supabaseClient';
 import { useBootstrap } from '@/hooks/useBootstrap';
 
-// Pages
+// Critical path: in the main bundle
 import SplashScreen from '@/pages/SplashScreen';
 import LoginPage from '@/pages/auth/LoginPage';
 import RegisterPage from '@/pages/auth/RegisterPage';
 import OnboardingFlow from '@/pages/onboarding/OnboardingFlow';
 import HomeScreen from '@/pages/HomeScreen';
 import ProgressScreen from '@/pages/ProgressScreen';
-import DetailScreen from '@/pages/DetailScreen';
 import ImproveScreen from '@/pages/ImproveScreen';
 import YouScreen from '@/pages/YouScreen';
-import SubscriptionScreen from '@/pages/SubscriptionScreen';
-import PrivacyPolicyPage from '@/pages/PrivacyPolicyPage';
-import TermsServicePage from '@/pages/TermsServicePage';
-import HelpFAQPage from '@/pages/HelpFAQPage';
-import AdminMetricsPage from '@/pages/AdminMetricsPage';
-import NewCycleScreen from '@/pages/NewCycleScreen';
 import AppShell from '@/components/layout/AppShell';
+
+// Non-critical: lazy loaded
+const DetailScreen = lazy(() => import('@/pages/DetailScreen'));
+const SubscriptionScreen = lazy(() => import('@/pages/SubscriptionScreen'));
+const PrivacyPolicyPage = lazy(() => import('@/pages/PrivacyPolicyPage'));
+const TermsServicePage = lazy(() => import('@/pages/TermsServicePage'));
+const HelpFAQPage = lazy(() => import('@/pages/HelpFAQPage'));
+const AdminMetricsPage = lazy(() => import('@/pages/AdminMetricsPage'));
+const NewCycleScreen = lazy(() => import('@/pages/NewCycleScreen'));
+
+function PageFallback() {
+  return <div className="px-4 pt-10 text-base-subtext text-sm">Loading...</div>;
+}
 
 export default function App() {
   const { authUser, profile, onboardingComplete, setAuthUser, isAuthLoading } =
@@ -70,20 +76,22 @@ export default function App() {
   return (
     <HashRouter>
       <AppShell>
-        <Routes>
-          <Route path="/" element={<HomeScreen />} />
-          <Route path="/progress" element={<ProgressScreen />} />
-          <Route path="/detail/:domain" element={<DetailScreen />} />
-          <Route path="/improve" element={<ImproveScreen />} />
-          <Route path="/you" element={<YouScreen />} />
-          <Route path="/subscription" element={<SubscriptionScreen />} />
-          <Route path="/privacy" element={<PrivacyPolicyPage />} />
-          <Route path="/terms" element={<TermsServicePage />} />
-          <Route path="/help" element={<HelpFAQPage />} />
-          <Route path="/admin/metrics" element={<AdminMetricsPage />} />
-          <Route path="/new-cycle" element={<NewCycleScreen />} />
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
+        <Suspense fallback={<PageFallback />}>
+          <Routes>
+            <Route path="/" element={<HomeScreen />} />
+            <Route path="/progress" element={<ProgressScreen />} />
+            <Route path="/detail/:domain" element={<DetailScreen />} />
+            <Route path="/improve" element={<ImproveScreen />} />
+            <Route path="/you" element={<YouScreen />} />
+            <Route path="/subscription" element={<SubscriptionScreen />} />
+            <Route path="/privacy" element={<PrivacyPolicyPage />} />
+            <Route path="/terms" element={<TermsServicePage />} />
+            <Route path="/help" element={<HelpFAQPage />} />
+            <Route path="/admin/metrics" element={<AdminMetricsPage />} />
+            <Route path="/new-cycle" element={<NewCycleScreen />} />
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
+        </Suspense>
       </AppShell>
     </HashRouter>
   );
