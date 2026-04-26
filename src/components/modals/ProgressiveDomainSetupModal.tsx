@@ -64,8 +64,12 @@ export default function ProgressiveDomainSetupModal({ onClose }: Props) {
     <div
       className="fixed inset-0 z-50 flex items-end justify-center bg-black/60"
       onClick={onClose}
+      aria-hidden="true"
     >
       <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="domain-setup-title"
         className="w-full max-w-md bg-base-surface rounded-t-2xl px-6 pt-6 pb-10"
         onClick={(e) => e.stopPropagation()}
       >
@@ -74,7 +78,7 @@ export default function ProgressiveDomainSetupModal({ onClose }: Props) {
         <p className="font-heading text-xs text-base-muted tracking-widest uppercase mb-1">
           {remaining} domain{remaining !== 1 ? 's' : ''} remaining
         </p>
-        <h2 className="font-heading text-2xl font-bold text-base-text mb-1 tracking-wide">
+        <h2 id="domain-setup-title" className="font-heading text-2xl font-bold text-base-text mb-1 tracking-wide">
           Set up{' '}
           <span className={nextDomain.colour}>{nextDomain.label}</span>
         </h2>

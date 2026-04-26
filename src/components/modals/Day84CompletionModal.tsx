@@ -25,14 +25,19 @@ export default function Day84CompletionModal({ onClose }: Props) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 px-6">
-      <div className="w-full max-w-sm bg-base-surface rounded-2xl px-6 py-8">
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="day84-modal-title"
+        className="w-full max-w-sm bg-base-surface rounded-2xl px-6 py-8"
+      >
 
         {step === 'intro' && (
           <>
             <p className="font-heading text-xs text-accent-green tracking-widest uppercase mb-3">
               Day 84 Complete
             </p>
-            <h2 className="font-heading text-3xl font-bold text-base-text mb-4 tracking-wide leading-tight">
+            <h2 id="day84-modal-title" className="font-heading text-3xl font-bold text-base-text mb-4 tracking-wide leading-tight">
               You did it.
             </h2>
             <p className="text-base-subtext text-sm mb-6">

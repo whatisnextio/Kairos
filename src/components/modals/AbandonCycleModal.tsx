@@ -40,8 +40,15 @@ export default function AbandonCycleModal({ onClose }: Props) {
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/60" onClick={onClose}>
+    <div
+      className="fixed inset-0 z-50 flex items-end justify-center bg-black/60"
+      onClick={onClose}
+      aria-hidden="true"
+    >
       <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="abandon-modal-title"
         className="w-full max-w-md bg-base-surface rounded-t-2xl px-6 pt-6 pb-10"
         onClick={(e) => e.stopPropagation()}
       >
@@ -49,7 +56,7 @@ export default function AbandonCycleModal({ onClose }: Props) {
 
         {!confirming ? (
           <>
-            <h2 className="font-heading text-xl font-bold text-base-text mb-2 tracking-wide">
+            <h2 id="abandon-modal-title" className="font-heading text-xl font-bold text-base-text mb-2 tracking-wide">
               Reset your cycle?
             </h2>
             <p className="text-base-subtext text-sm mb-6">

@@ -32,10 +32,16 @@ export default function WeeklyVibeCheckModal({ onClose }: Props) {
     <div
       className="fixed inset-0 z-50 flex items-end justify-center bg-black/70 p-4"
       onClick={(e) => e.target === e.currentTarget && onClose()}
+      aria-hidden="true"
     >
-      <div className="w-full max-w-md bg-base-surface rounded-t-2xl px-6 pt-6 pb-8 flex flex-col gap-5">
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="vibe-modal-title"
+        className="w-full max-w-md bg-base-surface rounded-t-2xl px-6 pt-6 pb-8 flex flex-col gap-5"
+      >
         <div>
-          <h2 className="font-heading text-lg font-bold text-base-text tracking-wide">
+          <h2 id="vibe-modal-title" className="font-heading text-lg font-bold text-base-text tracking-wide">
             Weekly check-in
           </h2>
           <p className="text-base-subtext text-sm mt-1">
