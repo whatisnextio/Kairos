@@ -51,7 +51,9 @@ export default function ProgressScreen() {
             style={{ width: `${xpProgress}%` }}
           />
         </div>
-        <p className="text-base-muted text-xs mt-1">{xpProgress}% to Level {level.level + 1}</p>
+        <p className="text-base-muted text-xs mt-1">
+          {level.level < 10 ? `${xpProgress}% to Level ${level.level + 1}` : 'Max level reached'}
+        </p>
       </Card>
 
       {/* 7-day domain grid */}
