@@ -43,7 +43,6 @@ async function fetchOrGenerateNudge(accessToken: string): Promise<AiNudge> {
 export function useNudge() {
   const profile = useAppStore((s) => s.profile);
   const authUser = useAppStore((s) => s.authUser);
-  const setTodayNudge = useAppStore((s) => s.setTodayNudge);
 
   const today = new Date().toISOString().split('T')[0];
   const isSunday = new Date().getDay() === 0;
@@ -56,9 +55,7 @@ export function useNudge() {
         data: { session },
       } = await supabase.auth.getSession();
       if (!session) throw new Error('No session');
-      const nudge = await fetchOrGenerateNudge(session.access_token);
-      setTodayNudge(nudge);
-      return nudge;
+      return fetchOrGenerateNudge(session.access_token);
     },
     enabled,
     staleTime: 1000 * 60 * 60 * 4, // 4 hours; nudge is cached server-side by date

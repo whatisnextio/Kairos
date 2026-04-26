@@ -1,6 +1,5 @@
 import { supabase } from '@/services/supabaseClient';
 import type {
-  AiNudge,
   AuthUser,
   CheckInStatus,
   DailyCheckIn,
@@ -36,9 +35,6 @@ interface AppState {
   // Key: ISO date string. Kept to 90 days max.
   checkInHistory: Record<string, Partial<Record<DomainType, CheckInStatus>>>;
 
-  // AI
-  todayNudge: AiNudge | null;
-
   // Vibe check
   lastVibeCheckDate: string | null;
 
@@ -58,7 +54,6 @@ interface AppActions {
   setDailyCheckIn: (domainType: DomainType, status: CheckInStatus, notes?: string) => Promise<void>;
 
   setTodayCheckIns: (checkIns: Partial<Record<DomainType, DailyCheckIn>>) => void;
-  setTodayNudge: (nudge: AiNudge | null) => void;
 
   mergeCheckInHistory: (
     entries: Record<string, Partial<Record<DomainType, CheckInStatus>>>,
@@ -84,7 +79,6 @@ const initialState: AppState = {
   todayCheckIns: {},
   checkInHistory: {},
   streaks: {},
-  todayNudge: null,
   lastVibeCheckDate: null,
   onboardingComplete: false,
 };
@@ -102,7 +96,6 @@ export const useAppStore = create<AppState & AppActions>()(
       setCurrentCycle: (currentCycle) => set({ currentCycle }),
       setDomainFocuses: (domainFocuses) => set({ domainFocuses }),
       setTodayCheckIns: (todayCheckIns) => set({ todayCheckIns }),
-
       setDailyCheckIn: async (domainType, status, notes) => {
         const { profile, currentCycle, todayCheckIns } = get();
         if (!profile || !currentCycle) return;
@@ -178,8 +171,6 @@ export const useAppStore = create<AppState & AppActions>()(
           await supabase.rpc('increment_profile_xp', { p_user_id: profile.id, p_delta: xpDelta });
         }
       },
-
-      setTodayNudge: (todayNudge) => set({ todayNudge }),
 
       mergeCheckInHistory: (entries) =>
         set((state) => ({ checkInHistory: { ...state.checkInHistory, ...entries } })),
