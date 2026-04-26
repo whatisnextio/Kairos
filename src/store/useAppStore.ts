@@ -1,0 +1,198 @@
+import { create } from 'zustand';
+import { persist } from 'zustand/middleware';
+import type {
+  AuthUser,
+  Profile,
+  KairosCycle,
+  UserDomainFocus,
+  DailyCheckIn,
+  UserStreak,
+  AiNudge,
+  SquadMember,
+  SquadPulse,
+  DomainType,
+  CheckInStatus,
+} from '@/types';
+import { XP_PER_CHECK_IN_DONE, XP_PER_CHECK_IN_PARTIAL } from '@/types';
+import { supabase } from '@/services/supabaseClient';
+
+// ─── State Shape ─────────────────────────────────────────────────────────────
+
+interface AppState {
+  // Auth
+  authUser: AuthUser | null;
+  profile: Profile | null;
+  isAuthLoading: boolean;
+
+  // Cycle
+  currentCycle: KairosCycle | null;
+  domainFocuses: UserDomainFocus[];
+
+  // Check-ins
+  todayCheckIns: Partial<Record<DomainType, DailyCheckIn>>;
+  streaks: Partial<Record<DomainType, UserStreak>>;
+
+  // AI
+  todayNudge: AiNudge | null;
+  activeNudges: AiNudge[];
+  isNudgeLoading: boolean;
+
+  // Squad
+  squadMembers: SquadMember[];
+  latestSquadPulse: SquadPulse | null;
+
+  // UI
+  onboardingComplete: boolean;
+}
+
+// ─── Actions Shape ───────────────────────────────────────────────────────────
+
+interface AppActions {
+  setAuthUser: (user: AuthUser | null) => void;
+  setProfile: (profile: Profile | null) => void;
+  setCurrentCycle: (cycle: KairosCycle | null) => void;
+  setDomainFocuses: (focuses: UserDomainFocus[]) => void;
+
+  setDailyCheckIn: (
+    domainType: DomainType,
+    status: CheckInStatus,
+    notes?: string,
+  ) => Promise<void>;
+
+  setTodayNudge: (nudge: AiNudge | null) => void;
+  setNudgeStatus: (nudgeId: string, status: AiNudge['status']) => Promise<void>;
+
+  setSquadData: (members: SquadMember[], pulse: SquadPulse | null) => void;
+  setOnboardingComplete: (complete: boolean) => void;
+
+  signOut: () => Promise<void>;
+  reset: () => void;
+}
+
+// ─── Initial State ───────────────────────────────────────────────────────────
+
+const initialState: AppState = {
+  authUser: null,
+  profile: null,
+  isAuthLoading: true,
+  currentCycle: null,
+  domainFocuses: [],
+  todayCheckIns: {},
+  streaks: {},
+  todayNudge: null,
+  activeNudges: [],
+  isNudgeLoading: false,
+  squadMembers: [],
+  latestSquadPulse: null,
+  onboardingComplete: false,
+};
+
+// ─── Store ───────────────────────────────────────────────────────────────────
+
+export const useAppStore = create<AppState & AppActions>()(
+  persist(
+    (set, get) => ({
+      ...initialState,
+
+      setAuthUser: (authUser) => set({ authUser, isAuthLoading: false }),
+      setProfile: (profile) => set({ profile }),
+      setCurrentCycle: (currentCycle) => set({ currentCycle }),
+      setDomainFocuses: (domainFocuses) => set({ domainFocuses }),
+
+      setDailyCheckIn: async (domainType, status, notes) => {
+        const { profile, currentCycle } = get();
+        if (!profile || !currentCycle) return;
+
+        const today = new Date().toISOString().split('T')[0];
+        const xpDelta =
+          status === 'Done'
+            ? XP_PER_CHECK_IN_DONE
+            : status === 'Partial'
+            ? XP_PER_CHECK_IN_PARTIAL
+            : 0;
+
+        // Optimistic update
+        const optimisticCheckIn: DailyCheckIn = {
+          id: crypto.randomUUID(),
+          userId: profile.id,
+          cycleId: currentCycle.id,
+          date: today,
+          domainType,
+          status,
+          notes: notes ?? null,
+          xpAwarded: xpDelta,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        };
+
+        set((state) => ({
+          todayCheckIns: { ...state.todayCheckIns, [domainType]: optimisticCheckIn },
+          profile: state.profile
+            ? { ...state.profile, xp: state.profile.xp + xpDelta }
+            : null,
+        }));
+
+        if (profile.tier === 'free') return;
+
+        // Sync to Supabase for Brotherhood tier
+        const { error } = await supabase.from('daily_check_ins').upsert({
+          user_id: profile.id,
+          cycle_id: currentCycle.id,
+          date: today,
+          domain_type: domainType,
+          status,
+          notes: notes ?? null,
+          xp_awarded: xpDelta,
+        }, { onConflict: 'user_id,cycle_id,date,domain_type' });
+
+        if (error) {
+          console.error('Check-in sync failed:', error.message);
+        } else if (xpDelta > 0) {
+          await supabase
+            .from('profiles')
+            .update({ xp: profile.xp + xpDelta })
+            .eq('id', profile.id);
+        }
+      },
+
+      setTodayNudge: (todayNudge) => set({ todayNudge }),
+
+      setNudgeStatus: async (nudgeId, status) => {
+        const { profile } = get();
+        set((state) => ({
+          todayNudge:
+            state.todayNudge?.id === nudgeId
+              ? { ...state.todayNudge, status }
+              : state.todayNudge,
+        }));
+        if (!profile || profile.tier === 'free') return;
+        await supabase
+          .from('ai_nudges')
+          .update({ status })
+          .eq('id', nudgeId);
+      },
+
+      setSquadData: (squadMembers, latestSquadPulse) =>
+        set({ squadMembers, latestSquadPulse }),
+
+      setOnboardingComplete: (onboardingComplete) => set({ onboardingComplete }),
+
+      signOut: async () => {
+        await supabase.auth.signOut();
+        get().reset();
+      },
+
+      reset: () => set(initialState),
+    }),
+    {
+      name: '12k-app-store',
+      partialize: (state) => ({
+        onboardingComplete: state.onboardingComplete,
+        todayCheckIns: state.todayCheckIns,
+        profile: state.profile,
+        currentCycle: state.currentCycle,
+        domainFocuses: state.domainFocuses,
+      }),
+    },
+  ),
+);

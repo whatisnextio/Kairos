@@ -1,0 +1,71 @@
+import { Link } from 'react-router-dom';
+import { useAppStore } from '@/store/useAppStore';
+import { getLevelForXp } from '@/utils/gamification';
+import { IDENTITY_ANCHORS } from '@/types';
+import Card from '@/components/common/Card';
+import Button from '@/components/common/Button';
+
+export default function YouScreen() {
+  const { profile, signOut } = useAppStore();
+
+  if (!profile) return null;
+
+  const anchor = IDENTITY_ANCHORS.find((a) => a.id === profile.identityAnchorId);
+  const level = getLevelForXp(profile.xp);
+  const anchorName = profile.identityAnchorId === 'custom'
+    ? (profile.customAnchorName ?? 'Custom')
+    : (anchor?.name ?? 'Unknown');
+
+  return (
+    <div className="px-4 pt-6 pb-4 flex flex-col gap-4">
+      <h1 className="font-heading text-2xl font-bold text-base-text tracking-wide">You</h1>
+
+      <Card>
+        <p className="font-heading text-lg font-bold text-base-text">{profile.displayName}</p>
+        <p className="text-accent-green text-sm font-heading tracking-wider mt-0.5">{anchorName}</p>
+        <div className="flex gap-4 mt-3">
+          <div>
+            <p className="text-base-subtext text-xs">XP</p>
+            <p className="font-heading font-bold text-base-text">{profile.xp}</p>
+          </div>
+          <div>
+            <p className="text-base-subtext text-xs">Level</p>
+            <p className="font-heading font-bold text-base-text">{level.level} — {level.label}</p>
+          </div>
+        </div>
+      </Card>
+
+      <Card>
+        <p className="text-base-subtext text-xs font-heading tracking-widest uppercase mb-2">Subscription</p>
+        <p className="font-heading font-medium text-base-text capitalize">{profile.tier}</p>
+        {profile.tier === 'free' && (
+          <Link to="/subscription">
+            <Button size="sm" className="mt-3">Upgrade to Brotherhood</Button>
+          </Link>
+        )}
+        {profile.tier === 'brotherhood' && (
+          <p className="text-base-subtext text-xs mt-1">Brotherhood active. Manage via Stripe portal.</p>
+        )}
+      </Card>
+
+      <Card>
+        <p className="text-base-subtext text-xs font-heading tracking-widest uppercase mb-3">Settings</p>
+        <div className="flex flex-col gap-2">
+          <Link to="/privacy" className="text-base-subtext text-sm hover:text-base-text transition-colors">
+            Privacy Policy
+          </Link>
+          <Link to="/terms" className="text-base-subtext text-sm hover:text-base-text transition-colors">
+            Terms of Service
+          </Link>
+          <Link to="/help" className="text-base-subtext text-sm hover:text-base-text transition-colors">
+            Help and FAQ
+          </Link>
+        </div>
+      </Card>
+
+      <Button variant="secondary" onClick={signOut} className="w-full">
+        Sign out
+      </Button>
+    </div>
+  );
+}

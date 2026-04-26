@@ -1,0 +1,80 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * {
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  html {
+    height: 100%;
+    overflow: hidden;
+  }
+
+  body {
+    height: 100%;
+    overflow-y: auto;
+    overscroll-behavior-y: contain;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  h1, h2, h3, h4 {
+    @apply font-heading tracking-wide;
+  }
+
+  ::-webkit-scrollbar {
+    width: 4px;
+  }
+
+  ::-webkit-scrollbar-track {
+    @apply bg-base-black;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    @apply bg-base-border rounded-full;
+  }
+}
+
+@layer components {
+  .btn {
+    @apply inline-flex items-center justify-center rounded font-heading tracking-wider uppercase text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-green disabled:pointer-events-none disabled:opacity-50;
+  }
+
+  .btn-primary {
+    @apply btn bg-accent-green text-base-black hover:bg-accent-green-dim px-6 py-3;
+  }
+
+  .btn-secondary {
+    @apply btn border border-base-border text-base-text hover:bg-base-surface px-6 py-3;
+  }
+
+  .btn-ghost {
+    @apply btn text-base-subtext hover:text-base-text px-4 py-2;
+  }
+
+  .card {
+    @apply bg-base-surface border border-base-border rounded-lg p-4;
+  }
+
+  .input-field {
+    @apply w-full bg-base-surface border border-base-border rounded px-4 py-3 text-base-text placeholder-base-muted focus:outline-none focus:border-accent-green transition-colors;
+  }
+
+  .tab-item {
+    @apply flex flex-col items-center justify-center gap-1 text-xs font-body text-base-muted transition-colors;
+  }
+
+  .tab-item.active {
+    @apply text-accent-green;
+  }
+
+  .domain-dot {
+    @apply w-2.5 h-2.5 rounded-full;
+  }
+
+  .status-done { @apply bg-status-done; }
+  .status-partial { @apply bg-status-partial; }
+  .status-missed { @apply bg-status-missed; }
+  .status-pending { @apply bg-status-pending; }
+}
