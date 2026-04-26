@@ -1,4 +1,4 @@
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { useAppStore } from '@/store/useAppStore';
 import { useStreaks } from '@/hooks/useStreaks';
 import { useDomainCheckIns } from '@/hooks/useCheckIns';
@@ -29,6 +29,7 @@ function getLast7Days(): string[] {
 }
 
 export default function DetailScreen() {
+  const navigate = useNavigate();
   const { domain } = useParams<{ domain: string }>();
   const { profile, domainFocuses, streaks: localStreaks, todayCheckIns, checkInHistory } = useAppStore();
 
@@ -54,6 +55,16 @@ export default function DetailScreen() {
 
   return (
     <div className="px-4 pt-6 pb-4 flex flex-col gap-4">
+      <button
+        onClick={() => navigate(-1)}
+        aria-label="Go back"
+        className="flex items-center gap-1.5 text-base-subtext hover:text-base-text text-sm -mb-1 transition-colors"
+      >
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M10 3L5 8l5 5" />
+        </svg>
+        Back
+      </button>
       <h1 className={`font-heading text-2xl font-bold tracking-wide ${domainConfig.colour}`}>
         {domainConfig.label}
       </h1>
