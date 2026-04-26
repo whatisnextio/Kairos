@@ -254,16 +254,17 @@ export const useAppStore = create<AppState & AppActions>()(
           profile: state.profile ? { ...state.profile, xp: state.profile.xp + completionXp } : null,
         }));
 
-        if (profile.tier === 'brotherhood') {
-          await supabase
-            .from('kairos_cycles')
-            .update({
-              status: 'completed',
-              end_date: today,
-              total_xp_earned: currentCycle.totalXpEarned + completionXp,
-            })
-            .eq('id', currentCycle.id);
+        // All tiers: persist cycle status so bootstrap doesn't reload it as 'active' on next login.
+        await supabase
+          .from('kairos_cycles')
+          .update({
+            status: 'completed',
+            end_date: today,
+            total_xp_earned: currentCycle.totalXpEarned + completionXp,
+          })
+          .eq('id', currentCycle.id);
 
+        if (profile.tier === 'brotherhood') {
           await supabase.from('cycle_reflections').insert({
             user_id: profile.id,
             cycle_id: currentCycle.id,
