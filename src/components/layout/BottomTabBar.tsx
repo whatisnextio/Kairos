@@ -10,7 +10,7 @@ const TABS = [
 
 export default function BottomTabBar() {
   return (
-    <nav className="fixed bottom-0 left-0 right-0 max-w-md mx-auto bg-base-surface border-t border-base-border pb-safe">
+    <nav aria-label="Main navigation" className="fixed bottom-0 left-0 right-0 max-w-md mx-auto bg-base-surface border-t border-base-border pb-safe">
       <div className="flex items-stretch">
         {TABS.map(({ to, icon: Icon, label }) => (
           <NavLink
