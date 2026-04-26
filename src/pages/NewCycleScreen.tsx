@@ -8,7 +8,8 @@ import { useNavigate } from 'react-router-dom';
 
 export default function NewCycleScreen() {
   const navigate = useNavigate();
-  const { authUser, profile, setProfile, setCurrentCycle, resetCycleLocalState } = useAppStore();
+  const { authUser, profile, currentCycle, setProfile, setCurrentCycle, resetCycleLocalState } =
+    useAppStore();
   const [anchorId, setAnchorId] = useState<IdentityAnchorId | null>(
     profile?.identityAnchorId ?? null,
   );
@@ -16,6 +17,12 @@ export default function NewCycleScreen() {
   const [starting, setStarting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [cycleNumber, setCycleNumber] = useState(2);
+
+  useEffect(() => {
+    if (currentCycle?.status === 'active') {
+      navigate('/', { replace: true });
+    }
+  }, [currentCycle, navigate]);
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: supabase client is module-singleton; setCycleNumber is stable
   useEffect(() => {
