@@ -11,7 +11,7 @@ interface Props {
 
 export default function AbandonCycleModal({ onClose }: Props) {
   const navigate = useNavigate();
-  const { authUser, currentCycle, setCurrentCycle, setDomainFocuses } = useAppStore();
+  const { authUser, currentCycle, setCurrentCycle, resetCycleLocalState } = useAppStore();
   const [confirming, setConfirming] = useState(false);
   const [abandoning, setAbandoning] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -34,7 +34,7 @@ export default function AbandonCycleModal({ onClose }: Props) {
     }
 
     setCurrentCycle({ ...currentCycle, status: 'abandoned' });
-    setDomainFocuses([]);
+    resetCycleLocalState();
     setAbandoning(false);
     onClose();
     navigate('/new-cycle', { replace: true });
