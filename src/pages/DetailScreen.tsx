@@ -1,6 +1,7 @@
 import { useParams } from 'react-router-dom';
 import { useAppStore } from '@/store/useAppStore';
 import { useStreaks } from '@/hooks/useStreaks';
+import { useDomainCheckIns } from '@/hooks/useCheckIns';
 import { DOMAINS, type DomainType } from '@/types';
 import Card from '@/components/common/Card';
 
@@ -11,16 +12,25 @@ const STATUS_DOT: Record<string, string> = {
   Pending: 'bg-base-border',
 };
 
+const STATUS_LABEL: Record<string, string> = {
+  Done:      'Done',
+  Partial:   'Partial',
+  Missed:    'Missed',
+  Pending:   'Pending',
+  Protected: 'Protected',
+};
+
 export default function DetailScreen() {
   const { domain } = useParams<{ domain: string }>();
   const { profile, domainFocuses, streaks: localStreaks, todayCheckIns } = useAppStore();
-  const { data: remoteStreaks } = useStreaks();
 
   const domainType = domain?.toUpperCase() as DomainType;
   const domainConfig = DOMAINS.find((d) => d.type === domainType);
   const focus = domainFocuses.find((f) => f.domainType === domainType);
 
-  // Brotherhood uses Supabase streaks; free tier uses local store
+  const { data: remoteStreaks } = useStreaks();
+  const { data: history } = useDomainCheckIns(domainType, 28);
+
   const streak =
     profile?.tier === 'brotherhood'
       ? remoteStreaks?.find((s) => s.domainType === domainType)
@@ -68,7 +78,7 @@ export default function DetailScreen() {
         )}
       </Card>
 
-      {/* Today's check-in status for this domain */}
+      {/* Today */}
       <Card>
         <p className="text-base-subtext text-xs font-heading tracking-widest uppercase mb-2">Today</p>
         <div className="flex items-center gap-2">
@@ -80,6 +90,39 @@ export default function DetailScreen() {
           </span>
         </div>
       </Card>
+
+      {/* History — brotherhood only */}
+      {profile?.tier === 'brotherhood' && (
+        <Card>
+          <p className="text-base-subtext text-xs font-heading tracking-widest uppercase mb-3">
+            Last 28 days
+          </p>
+          {history && history.length > 0 ? (
+            <div className="flex flex-col gap-1.5">
+              {history.map((checkIn) => (
+                <div key={checkIn.id} className="flex items-center justify-between">
+                  <span className="text-base-subtext text-xs">{checkIn.date}</span>
+                  <div className="flex items-center gap-1.5">
+                    <div className={`w-1.5 h-1.5 rounded-full ${STATUS_DOT[checkIn.status] ?? 'bg-base-border'}`} />
+                    <span className="text-base-muted text-xs">{STATUS_LABEL[checkIn.status]}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-base-muted text-sm">No check-in history yet.</p>
+          )}
+        </Card>
+      )}
+
+      {profile?.tier === 'free' && (
+        <Card>
+          <p className="text-base-subtext text-xs font-heading tracking-widest uppercase mb-2">History</p>
+          <p className="text-base-muted text-sm">
+            Full history is a Brotherhood feature. Upgrade to see your last 28 days.
+          </p>
+        </Card>
+      )}
     </div>
   );
 }

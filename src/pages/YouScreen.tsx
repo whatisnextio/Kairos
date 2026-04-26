@@ -1,15 +1,37 @@
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAppStore } from '@/store/useAppStore';
 import { useSquadPulse, useMatchToSquad } from '@/hooks/useSquad';
 import { getLevelForXp } from '@/utils/gamification';
 import { IDENTITY_ANCHORS } from '@/types';
+import { subscribeToPush, isPushSupported } from '@/services/pushNotifications';
+import { supabase } from '@/services/supabaseClient';
 import Card from '@/components/common/Card';
 import Button from '@/components/common/Button';
+
+const SAVE_PUSH_ENDPOINT = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/save-push-subscription`;
+
+async function registerPush(): Promise<boolean> {
+  const sub = await subscribeToPush();
+  if (!sub) return false;
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session) return false;
+  const res = await fetch(SAVE_PUSH_ENDPOINT, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${session.access_token}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ subscription: sub }),
+  });
+  return res.ok;
+}
 
 export default function YouScreen() {
   const { profile, signOut } = useAppStore();
   const { data: squadPulse } = useSquadPulse();
   const { mutate: matchToSquad, isPending: isMatching } = useMatchToSquad();
+  const [pushStatus, setPushStatus] = useState<'idle' | 'requesting' | 'done' | 'denied'>('idle');
 
   if (!profile) return null;
 
@@ -94,6 +116,39 @@ export default function YouScreen() {
           </p>
         )}
       </Card>
+
+      {/* Notifications — brotherhood only */}
+      {profile.tier === 'brotherhood' && isPushSupported() && (
+        <Card>
+          <p className="text-base-subtext text-xs font-heading tracking-widest uppercase mb-2">
+            Notifications
+          </p>
+          {pushStatus === 'done' ? (
+            <p className="text-accent-green text-sm">Daily nudge notifications on.</p>
+          ) : pushStatus === 'denied' ? (
+            <p className="text-base-muted text-sm">
+              Notifications blocked. Enable in your browser settings.
+            </p>
+          ) : (
+            <>
+              <p className="text-base-subtext text-sm mb-3">
+                Get your daily nudge as a notification, even when the app is closed.
+              </p>
+              <Button
+                size="sm"
+                disabled={pushStatus === 'requesting'}
+                onClick={async () => {
+                  setPushStatus('requesting');
+                  const ok = await registerPush();
+                  setPushStatus(ok ? 'done' : 'denied');
+                }}
+              >
+                {pushStatus === 'requesting' ? 'Setting up...' : 'Enable notifications'}
+              </Button>
+            </>
+          )}
+        </Card>
+      )}
 
       {/* Settings */}
       <Card>
