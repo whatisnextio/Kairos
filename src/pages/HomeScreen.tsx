@@ -56,16 +56,17 @@ export default function HomeScreen() {
   const { data: nudge } = useNudge();
   const { data: squadPulse } = useSquadPulse();
   const { data: squadMembers } = useSquadMembers();
+  const celebrationPending = useAppStore((s) => s.celebrationPending);
+  const setCelebrationPending = useAppStore((s) => s.setCelebrationPending);
   const [showVibeCheck, setShowVibeCheck] = useState(false);
   const [showDomainSetup, setShowDomainSetup] = useState(false);
-  const [showDay84, setShowDay84] = useState(false);
 
   const dayInCycle = profile && currentCycle ? getDayInCycle(currentCycle.startDate) : 1;
 
   useEffect(() => {
     if (!profile || !currentCycle) return;
     if (dayInCycle >= 84 && currentCycle.status === 'active') {
-      setShowDay84(true);
+      setCelebrationPending(true);
     } else if (
       !vibeCheckShownThisSession &&
       shouldShowVibeCheck(lastVibeCheckDate, dayInCycle) &&
@@ -288,8 +289,8 @@ export default function HomeScreen() {
         </div>
       </div>
 
-      {showDay84 && <Day84CompletionModal onClose={() => setShowDay84(false)} />}
-      {showDomainSetup && !showVibeCheck && !showDay84 && (
+      {celebrationPending && <Day84CompletionModal onClose={() => setCelebrationPending(false)} />}
+      {showDomainSetup && !showVibeCheck && !celebrationPending && (
         <ProgressiveDomainSetupModal onClose={() => setShowDomainSetup(false)} />
       )}
       {showVibeCheck && <WeeklyVibeCheckModal onClose={() => setShowVibeCheck(false)} />}

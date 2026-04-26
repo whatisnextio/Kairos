@@ -38,6 +38,7 @@ export default function App() {
     isAuthLoading,
     isBootstrapLoading,
     currentCycle,
+    celebrationPending,
   } = useAppStore();
 
   useBootstrap();
@@ -90,7 +91,7 @@ export default function App() {
               <Route
                 path="/"
                 element={
-                  currentCycle && currentCycle.status !== 'active' ? (
+                  currentCycle && currentCycle.status !== 'active' && !celebrationPending ? (
                     <Navigate to="/new-cycle" replace />
                   ) : (
                     <HomeScreen />

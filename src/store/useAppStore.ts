@@ -40,6 +40,9 @@ interface AppState {
 
   // UI
   onboardingComplete: boolean;
+  // Set during Day 84 completion to keep the celebration modal visible while
+  // the route guard would otherwise redirect to /new-cycle.
+  celebrationPending: boolean;
 }
 
 // ─── Actions Shape ───────────────────────────────────────────────────────────
@@ -59,6 +62,7 @@ interface AppActions {
     entries: Record<string, Partial<Record<DomainType, CheckInStatus>>>,
   ) => void;
   setOnboardingComplete: (complete: boolean) => void;
+  setCelebrationPending: (pending: boolean) => void;
   submitVibeCheck: (rating: VibeCheck['rating']) => Promise<void>;
   completeCycle: (reflection: string) => Promise<void>;
 
@@ -81,6 +85,7 @@ const initialState: AppState = {
   streaks: {},
   lastVibeCheckDate: null,
   onboardingComplete: false,
+  celebrationPending: false,
 };
 
 // ─── Store ───────────────────────────────────────────────────────────────────
@@ -176,6 +181,7 @@ export const useAppStore = create<AppState & AppActions>()(
         set((state) => ({ checkInHistory: { ...state.checkInHistory, ...entries } })),
 
       setOnboardingComplete: (onboardingComplete) => set({ onboardingComplete }),
+      setCelebrationPending: (celebrationPending) => set({ celebrationPending }),
 
       submitVibeCheck: async (rating) => {
         const { profile, currentCycle } = get();
@@ -210,6 +216,7 @@ export const useAppStore = create<AppState & AppActions>()(
             ? { ...state.currentCycle, status: 'completed', endDate: today }
             : null,
           profile: state.profile ? { ...state.profile, xp: state.profile.xp + completionXp } : null,
+          celebrationPending: true,
         }));
 
         // All tiers: persist cycle status so bootstrap doesn't reload it as 'active' on next login.
