@@ -150,7 +150,7 @@ export interface Profile {
 
 // ─── Cycle ───────────────────────────────────────────────────────────────────
 
-export type CycleStatus = 'active' | 'completed' | 'reset' | 'abandoned';
+export type CycleStatus = 'active' | 'completed' | 'abandoned';
 
 export interface KairosCycle {
   id: string;
@@ -241,13 +241,6 @@ export interface Squad {
   cycleStartWindow: string;
   memberCount: number;
   createdAt: string;
-}
-
-export interface SquadMember {
-  identityAnchorId: IdentityAnchorId;
-  customAnchorName?: string;
-  nameInitial: string;
-  todayCheckIns: Record<DomainType, CheckInStatus | null>;
 }
 
 export interface SquadPulse {
