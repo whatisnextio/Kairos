@@ -262,7 +262,6 @@ export interface SquadPulse {
 
 export const XP_PER_CHECK_IN_DONE = 10;
 export const XP_PER_CHECK_IN_PARTIAL = 5;
-export const XP_PER_CHALLENGE_COMPLETE = 25;
 export const XP_PER_CYCLE_COMPLETE = 500;
 
 export interface XpLevel {
