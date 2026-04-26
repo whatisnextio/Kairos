@@ -22,21 +22,17 @@ async function verifyStripeSignature(
   sigHeader: string,
   secret: string,
 ): Promise<boolean> {
-  const parts = Object.fromEntries(
-    sigHeader.split(',').map((part) => {
-      const [k, v] = part.split('=');
-      return [k, v];
-    }),
-  );
+  const parts = sigHeader.split(',').map((p) => p.trim());
 
-  const timestamp = parts['t'];
-  const signature = parts['v1'];
+  const timestamp = parts.find((p) => p.startsWith('t='))?.slice(2);
+  // Stripe sends multiple v1= values during key rotation — accept any match
+  const v1Signatures = parts.filter((p) => p.startsWith('v1=')).map((p) => p.slice(3));
 
-  if (!timestamp || !signature) return false;
+  if (!timestamp || v1Signatures.length === 0) return false;
 
   // Reject events older than 5 minutes
   const now = Math.floor(Date.now() / 1000);
-  if (Math.abs(now - parseInt(timestamp)) > 300) return false;
+  if (Math.abs(now - Number.parseInt(timestamp)) > 300) return false;
 
   const signedPayload = `${timestamp}.${payload}`;
   const encoder = new TextEncoder();
@@ -56,7 +52,7 @@ async function verifyStripeSignature(
     .map((b) => b.toString(16).padStart(2, '0'))
     .join('');
 
-  return hashHex === signature;
+  return v1Signatures.some((sig) => hashHex === sig);
 }
 
 function mapStatus(stripeStatus: string): string {
@@ -105,48 +101,58 @@ Deno.serve(async (req: Request) => {
     switch (event.type) {
       case 'checkout.session.completed': {
         // Link stripe customer ID to profile via client_reference_id (= profile.id)
-        const customerId = obj['customer'] as string;
-        const subscriptionId = obj['subscription'] as string | null;
-        const userId = (obj['client_reference_id'] as string | null)
-          ?? (obj['metadata'] as Record<string, string> | null)?.['user_id'];
+        const customerId = obj.customer as string;
+        const subscriptionId = obj.subscription as string | null;
+        const userId =
+          (obj.client_reference_id as string | null) ??
+          (obj.metadata as Record<string, string> | null)?.user_id;
 
         if (!userId || !customerId) break;
 
-        await supabase.from('profiles').update({
-          stripe_customer_id: customerId,
-          stripe_subscription_id: subscriptionId ?? null,
-        }).eq('id', userId);
+        await supabase
+          .from('profiles')
+          .update({
+            stripe_customer_id: customerId,
+            stripe_subscription_id: subscriptionId ?? null,
+          })
+          .eq('id', userId);
 
         break;
       }
 
       case 'customer.subscription.created':
       case 'customer.subscription.updated': {
-        const customerId = obj['customer'] as string;
-        const subStatus = obj['status'] as string;
-        const subId = obj['id'] as string;
+        const customerId = obj.customer as string;
+        const subStatus = obj.status as string;
+        const subId = obj.id as string;
         // Retain brotherhood during grace periods (past_due = first payment failure).
         // Only downgrade on incomplete (never paid) or hard cancellation paths.
         const graceStatuses = new Set(['active', 'trialing', 'past_due']);
         const tier = graceStatuses.has(subStatus) ? 'brotherhood' : 'free';
 
-        await supabase.from('profiles').update({
-          tier,
-          stripe_subscription_id: subId,
-          subscription_status: mapStatus(subStatus),
-        }).eq('stripe_customer_id', customerId);
+        await supabase
+          .from('profiles')
+          .update({
+            tier,
+            stripe_subscription_id: subId,
+            subscription_status: mapStatus(subStatus),
+          })
+          .eq('stripe_customer_id', customerId);
 
         break;
       }
 
       case 'customer.subscription.deleted': {
-        const customerId = obj['customer'] as string;
+        const customerId = obj.customer as string;
 
-        await supabase.from('profiles').update({
-          tier: 'free',
-          stripe_subscription_id: null,
-          subscription_status: 'cancelled',
-        }).eq('stripe_customer_id', customerId);
+        await supabase
+          .from('profiles')
+          .update({
+            tier: 'free',
+            stripe_subscription_id: null,
+            subscription_status: 'cancelled',
+          })
+          .eq('stripe_customer_id', customerId);
 
         break;
       }
