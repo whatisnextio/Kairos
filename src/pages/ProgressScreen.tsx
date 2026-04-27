@@ -1,10 +1,15 @@
+import Button from '@/components/common/Button';
 import Card from '@/components/common/Card';
+import Day84CompletionModal from '@/components/modals/Day84CompletionModal';
+import { useCycleReflection } from '@/hooks/useCycleReflection';
 import { useStreaks } from '@/hooks/useStreaks';
 import { useAppStore } from '@/store/useAppStore';
 import type { KairosPhaseConfig } from '@/types';
 import { DOMAINS } from '@/types';
 import { getLevelForXp, getXpProgressInLevel } from '@/utils/gamification';
 import { KAIROS_PHASES, getCurrentPhaseConfig, getDayInCycle } from '@/utils/kairos';
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 const STATUS_DOT: Record<string, string> = {
   Done: 'bg-status-done',
@@ -24,6 +29,8 @@ function getLast7Days(): string[] {
 }
 
 export default function ProgressScreen() {
+  const navigate = useNavigate();
+  const [showDay84Modal, setShowDay84Modal] = useState(false);
   const {
     profile,
     currentCycle,
@@ -36,6 +43,10 @@ export default function ProgressScreen() {
   if (!profile || !currentCycle) return null;
 
   const dayInCycle = getDayInCycle(currentCycle.startDate);
+  const cycleComplete = dayInCycle >= 84;
+  const { data: aiReflection } = useCycleReflection(
+    cycleComplete && profile.tier === 'brotherhood',
+  );
   const currentPhase = getCurrentPhaseConfig(dayInCycle);
   const level = getLevelForXp(profile.xp);
   const xpProgress = getXpProgressInLevel(profile.xp);
@@ -43,157 +54,211 @@ export default function ProgressScreen() {
   const today = new Date().toISOString().split('T')[0];
 
   return (
-    <div className="px-4 pt-6 pb-4 flex flex-col gap-4">
-      <h1 className="font-heading text-2xl font-bold text-base-text tracking-wide">Progress</h1>
+    <>
+      {showDay84Modal && <Day84CompletionModal onClose={() => setShowDay84Modal(false)} />}
+      <div className="px-4 pt-6 pb-4 flex flex-col gap-4">
+        <h1 className="font-heading text-2xl font-bold text-base-text tracking-wide">Progress</h1>
 
-      {/* XP / Level */}
-      <Card>
-        <p className="text-base-subtext text-xs font-heading tracking-widest uppercase mb-1">
-          Level {level.level}
-        </p>
-        <p className="font-heading text-xl font-bold text-base-text">{level.label}</p>
-        <p className="text-base-subtext text-xs mt-1">{profile.xp} XP total</p>
-        <div className="mt-3 h-1.5 bg-base-border rounded-full overflow-hidden">
-          <div
-            className="h-full bg-accent-green rounded-full transition-all"
-            style={{ width: `${xpProgress}%` }}
-          />
-        </div>
-        <p className="text-base-muted text-xs mt-1">
-          {level.level < 10 ? `${xpProgress}% to Level ${level.level + 1}` : 'Max level reached'}
-        </p>
-      </Card>
-
-      {/* 7-day domain grid */}
-      <Card>
-        <h2 className="font-heading text-xs font-medium text-base-subtext tracking-widest uppercase mb-3">
-          Last 7 days
-        </h2>
-
-        {/* Day headers */}
-        <div className="grid grid-cols-[80px_repeat(7,1fr)] gap-1 mb-2">
-          <div />
-          {last7.map((date) => {
-            const d = new Date(`${date}T00:00:00`);
-            const label = d.toLocaleDateString('en-GB', { weekday: 'narrow' });
-            const isToday = date === today;
-            return (
-              <div key={date} className="text-center">
-                <span
-                  className={`text-xs ${isToday ? 'text-accent-green font-medium' : 'text-base-muted'}`}
-                >
-                  {label}
-                </span>
+        {/* Cycle-complete banner */}
+        {cycleComplete && (
+          <div className="rounded-xl border border-accent-green/40 bg-accent-green/5 px-4 py-5">
+            <p className="font-heading text-xs text-accent-green tracking-widest uppercase mb-1">
+              Cycle complete
+            </p>
+            <h2 className="font-heading text-xl font-bold text-base-text tracking-wide mb-3">
+              84 days done.
+            </h2>
+            <div className="flex gap-4 mb-4">
+              <div>
+                <p className="font-heading font-bold text-base-text">
+                  {currentCycle.totalXpEarned?.toLocaleString() ?? profile.xp.toLocaleString()}
+                </p>
+                <p className="text-base-muted text-xs">XP earned</p>
               </div>
-            );
-          })}
-        </div>
+              {aiReflection?.stats && (
+                <>
+                  <div>
+                    <p className="font-heading font-bold text-base-text">
+                      {aiReflection.stats.totalCheckIns}
+                    </p>
+                    <p className="text-base-muted text-xs">check-ins</p>
+                  </div>
+                  <div>
+                    <p className="font-heading font-bold text-base-text">
+                      {aiReflection.stats.overallCompletionRate}%
+                    </p>
+                    <p className="text-base-muted text-xs">completion</p>
+                  </div>
+                </>
+              )}
+            </div>
+            <div className="flex gap-2">
+              {profile.tier === 'brotherhood' && (
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => setShowDay84Modal(true)}
+                  type="button"
+                >
+                  View reflection
+                </Button>
+              )}
+              <Button size="sm" onClick={() => navigate('/new-cycle')} type="button">
+                Start Cycle 2
+              </Button>
+            </div>
+          </div>
+        )}
 
-        {/* Domain rows: pulled from local checkInHistory (all tiers) */}
-        {DOMAINS.map((d) => (
-          <div
-            key={d.type}
-            className="grid grid-cols-[80px_repeat(7,1fr)] gap-1 mb-1.5 items-center"
-          >
-            <span className={`text-xs font-heading font-medium ${d.colour}`}>{d.label}</span>
+        {/* XP / Level */}
+        <Card>
+          <p className="text-base-subtext text-xs font-heading tracking-widest uppercase mb-1">
+            Level {level.level}
+          </p>
+          <p className="font-heading text-xl font-bold text-base-text">{level.label}</p>
+          <p className="text-base-subtext text-xs mt-1">{profile.xp} XP total</p>
+          <div className="mt-3 h-1.5 bg-base-border rounded-full overflow-hidden">
+            <div
+              className="h-full bg-accent-green rounded-full transition-all"
+              style={{ width: `${xpProgress}%` }}
+            />
+          </div>
+          <p className="text-base-muted text-xs mt-1">
+            {level.level < 10 ? `${xpProgress}% to Level ${level.level + 1}` : 'Max level reached'}
+          </p>
+        </Card>
+
+        {/* 7-day domain grid */}
+        <Card>
+          <h2 className="font-heading text-xs font-medium text-base-subtext tracking-widest uppercase mb-3">
+            Last 7 days
+          </h2>
+
+          {/* Day headers */}
+          <div className="grid grid-cols-[80px_repeat(7,1fr)] gap-1 mb-2">
+            <div />
             {last7.map((date) => {
-              const status =
-                date === today
-                  ? (todayCheckIns[d.type]?.status ?? 'Pending')
-                  : (checkInHistory[date]?.[d.type] ?? undefined);
-              const dotClass = status
-                ? (STATUS_DOT[status] ?? 'bg-base-border')
-                : 'bg-base-border/40';
+              const d = new Date(`${date}T00:00:00`);
+              const label = d.toLocaleDateString('en-GB', { weekday: 'narrow' });
+              const isToday = date === today;
               return (
-                <div key={date} className="flex justify-center">
-                  <div className={`w-2 h-2 rounded-full ${dotClass}`} />
+                <div key={date} className="text-center">
+                  <span
+                    className={`text-xs ${isToday ? 'text-accent-green font-medium' : 'text-base-muted'}`}
+                  >
+                    {label}
+                  </span>
                 </div>
               );
             })}
           </div>
-        ))}
 
-        <p className="text-base-muted text-xs mt-3">Last 7 days from local history.</p>
-      </Card>
-
-      {/* Domain streaks */}
-      <Card>
-        <h2 className="font-heading text-xs font-medium text-base-subtext tracking-widest uppercase mb-3">
-          Streaks
-        </h2>
-        <div className="flex flex-col gap-2">
-          {DOMAINS.map((d) => {
-            const streak =
-              profile.tier === 'brotherhood'
-                ? remoteStreaks?.find((s) => s.domainType === d.type)
-                : localStreaks[d.type];
-            return (
-              <div key={d.type} className="flex items-center justify-between">
-                <span className={`text-xs font-heading font-medium ${d.colour}`}>{d.label}</span>
-                <div className="flex items-center gap-3">
-                  <div className="text-right">
-                    <p className="font-heading font-bold text-base-text text-sm">
-                      {streak?.currentStreak ?? 0}
-                      <span className="text-base-muted font-normal text-xs ml-1">current</span>
-                    </p>
+          {/* Domain rows: pulled from local checkInHistory (all tiers) */}
+          {DOMAINS.map((d) => (
+            <div
+              key={d.type}
+              className="grid grid-cols-[80px_repeat(7,1fr)] gap-1 mb-1.5 items-center"
+            >
+              <span className={`text-xs font-heading font-medium ${d.colour}`}>{d.label}</span>
+              {last7.map((date) => {
+                const status =
+                  date === today
+                    ? (todayCheckIns[d.type]?.status ?? 'Pending')
+                    : (checkInHistory[date]?.[d.type] ?? undefined);
+                const dotClass = status
+                  ? (STATUS_DOT[status] ?? 'bg-base-border')
+                  : 'bg-base-border/40';
+                return (
+                  <div key={date} className="flex justify-center">
+                    <div className={`w-2 h-2 rounded-full ${dotClass}`} />
                   </div>
-                  <div className="text-right">
-                    <p className="font-heading text-base-subtext text-xs">
-                      {streak?.longestStreak ?? 0}
-                      <span className="text-base-muted ml-1">best</span>
-                    </p>
+                );
+              })}
+            </div>
+          ))}
+
+          <p className="text-base-muted text-xs mt-3">Last 7 days from local history.</p>
+        </Card>
+
+        {/* Domain streaks */}
+        <Card>
+          <h2 className="font-heading text-xs font-medium text-base-subtext tracking-widest uppercase mb-3">
+            Streaks
+          </h2>
+          <div className="flex flex-col gap-2">
+            {DOMAINS.map((d) => {
+              const streak =
+                profile.tier === 'brotherhood'
+                  ? remoteStreaks?.find((s) => s.domainType === d.type)
+                  : localStreaks[d.type];
+              return (
+                <div key={d.type} className="flex items-center justify-between">
+                  <span className={`text-xs font-heading font-medium ${d.colour}`}>{d.label}</span>
+                  <div className="flex items-center gap-3">
+                    <div className="text-right">
+                      <p className="font-heading font-bold text-base-text text-sm">
+                        {streak?.currentStreak ?? 0}
+                        <span className="text-base-muted font-normal text-xs ml-1">current</span>
+                      </p>
+                    </div>
+                    <div className="text-right">
+                      <p className="font-heading text-base-subtext text-xs">
+                        {streak?.longestStreak ?? 0}
+                        <span className="text-base-muted ml-1">best</span>
+                      </p>
+                    </div>
                   </div>
                 </div>
-              </div>
-            );
-          })}
-        </div>
-      </Card>
+              );
+            })}
+          </div>
+        </Card>
 
-      {/* Phase timeline */}
-      <Card>
-        <h2 className="font-heading text-xs font-medium text-base-subtext tracking-widest uppercase mb-3">
-          KAIROS Phases
-        </h2>
-        <div className="flex flex-col gap-2">
-          {KAIROS_PHASES.map((phase: KairosPhaseConfig) => {
-            const isActive = phase.phase === currentPhase.phase;
-            const isPast = phase.days[1] < dayInCycle;
-            return (
-              <div
-                key={phase.phase}
-                className={`flex items-center gap-3 p-2 rounded ${
-                  isActive ? 'bg-accent-green/10 border border-accent-green/30' : ''
-                }`}
-              >
+        {/* Phase timeline */}
+        <Card>
+          <h2 className="font-heading text-xs font-medium text-base-subtext tracking-widest uppercase mb-3">
+            KAIROS Phases
+          </h2>
+          <div className="flex flex-col gap-2">
+            {KAIROS_PHASES.map((phase: KairosPhaseConfig) => {
+              const isActive = phase.phase === currentPhase.phase;
+              const isPast = phase.days[1] < dayInCycle;
+              return (
                 <div
-                  className={`w-2 h-2 rounded-full shrink-0 ${
-                    isActive ? 'bg-accent-green' : isPast ? 'bg-base-muted' : 'bg-base-border'
+                  key={phase.phase}
+                  className={`flex items-center gap-3 p-2 rounded ${
+                    isActive ? 'bg-accent-green/10 border border-accent-green/30' : ''
                   }`}
-                />
-                <div className="flex-1 min-w-0">
-                  <p
-                    className={`font-heading text-xs font-medium tracking-wider uppercase ${
-                      isActive
-                        ? 'text-accent-green'
-                        : isPast
-                          ? 'text-base-muted'
-                          : 'text-base-subtext'
+                >
+                  <div
+                    className={`w-2 h-2 rounded-full shrink-0 ${
+                      isActive ? 'bg-accent-green' : isPast ? 'bg-base-muted' : 'bg-base-border'
                     }`}
-                  >
-                    {phase.label}
-                  </p>
-                  <p className="text-base-muted text-xs">
-                    Days {phase.days[0]}-{phase.days[1]}
-                  </p>
+                  />
+                  <div className="flex-1 min-w-0">
+                    <p
+                      className={`font-heading text-xs font-medium tracking-wider uppercase ${
+                        isActive
+                          ? 'text-accent-green'
+                          : isPast
+                            ? 'text-base-muted'
+                            : 'text-base-subtext'
+                      }`}
+                    >
+                      {phase.label}
+                    </p>
+                    <p className="text-base-muted text-xs">
+                      Days {phase.days[0]}-{phase.days[1]}
+                    </p>
+                  </div>
+                  {isPast && <span className="text-base-muted text-xs">Done</span>}
+                  {isActive && <span className="text-accent-green text-xs">Active</span>}
                 </div>
-                {isPast && <span className="text-base-muted text-xs">Done</span>}
-                {isActive && <span className="text-accent-green text-xs">Active</span>}
-              </div>
-            );
-          })}
-        </div>
-      </Card>
-    </div>
+              );
+            })}
+          </div>
+        </Card>
+      </div>
+    </>
   );
 }

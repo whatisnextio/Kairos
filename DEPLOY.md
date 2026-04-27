@@ -41,6 +41,7 @@ In Supabase dashboard → Project Settings → Edge Functions → Secrets:
 
 ```bash
 npx supabase functions deploy generate-kairos-nudge
+npx supabase functions deploy generate-cycle-reflection
 npx supabase functions deploy match-to-squad
 npx supabase functions deploy generate-squad-pulse
 npx supabase functions deploy stripe-webhook

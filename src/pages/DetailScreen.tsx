@@ -1,8 +1,11 @@
 import Card from '@/components/common/Card';
 import { useDomainCheckIns } from '@/hooks/useCheckIns';
 import { useStreaks } from '@/hooks/useStreaks';
+import { supabase } from '@/services/supabaseClient';
 import { useAppStore } from '@/store/useAppStore';
-import { type CheckInStatus, DOMAINS, type DomainType } from '@/types';
+import { type CheckInStatus, DOMAINS, type DailyCheckIn, type DomainType } from '@/types';
+import { useQueryClient } from '@tanstack/react-query';
+import { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 
 const STATUS_DOT: Record<string, string> = {
@@ -28,11 +31,143 @@ function getLast7Days(): string[] {
   return days;
 }
 
+// ─── SVG Sparkline ────────────────────────────────────────────────────────────
+
+type SparkStatus = CheckInStatus | undefined;
+
+interface SparklineProps {
+  data: SparkStatus[];
+}
+
+function Sparkline({ data }: SparklineProps) {
+  const BAR_W = 6;
+  const GAP = 3;
+  const H = 28;
+
+  return (
+    <svg
+      viewBox={`0 0 ${data.length * (BAR_W + GAP)} ${H}`}
+      className="w-full"
+      aria-hidden="true"
+      style={{ height: H }}
+    >
+      {data.map((status, i) => {
+        if (!status || status === 'Pending' || status === 'Protected') return null;
+        const x = i * (BAR_W + GAP);
+        const barH = status === 'Done' ? H : status === 'Partial' ? H / 2 : 3;
+        const y = H - barH;
+        const fill = status === 'Done' ? '#4ade80' : status === 'Partial' ? '#f59e0b' : '#ef4444';
+        return (
+          <rect key={`${i}-${status}`} x={x} y={y} width={BAR_W} height={barH} fill={fill} rx={1} />
+        );
+      })}
+    </svg>
+  );
+}
+
+// ─── Inline note editor ───────────────────────────────────────────────────────
+
+interface NoteRowProps {
+  checkIn: DailyCheckIn;
+  cycleId: string;
+  profileId: string;
+  domainType: DomainType;
+  limit: number;
+}
+
+function NoteRow({ checkIn, cycleId, profileId, domainType, limit }: NoteRowProps) {
+  const [expanded, setExpanded] = useState(false);
+  const [draft, setDraft] = useState(checkIn.notes ?? '');
+  const [saving, setSaving] = useState(false);
+  const queryClient = useQueryClient();
+
+  async function save() {
+    if (draft === (checkIn.notes ?? '')) {
+      setExpanded(false);
+      return;
+    }
+    setSaving(true);
+    await supabase
+      .from('daily_check_ins')
+      .update({ notes: draft || null })
+      .eq('id', checkIn.id);
+    setSaving(false);
+    setExpanded(false);
+    queryClient.invalidateQueries({
+      queryKey: ['check-ins', profileId, cycleId, domainType, limit],
+    });
+  }
+
+  return (
+    <div className="flex flex-col">
+      <button
+        type="button"
+        onClick={() => setExpanded((v) => !v)}
+        className="flex items-center justify-between py-1.5 group"
+      >
+        <div className="flex items-center gap-2">
+          <div
+            className={`w-1.5 h-1.5 rounded-full shrink-0 ${STATUS_DOT[checkIn.status] ?? 'bg-base-border'}`}
+          />
+          <span className="text-base-subtext text-xs">{checkIn.date}</span>
+          {checkIn.notes && (
+            <span className="text-base-muted text-xs italic truncate max-w-[120px]">
+              - {checkIn.notes}
+            </span>
+          )}
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="text-base-muted text-xs">{STATUS_LABEL[checkIn.status]}</span>
+          <span className="text-base-border group-hover:text-base-subtext text-xs transition-colors">
+            {expanded ? '−' : '+'}
+          </span>
+        </div>
+      </button>
+
+      {expanded && (
+        <div className="ml-3 mb-2">
+          <textarea
+            className="input-field w-full h-16 resize-none text-xs mb-2"
+            placeholder="Add a note for this day..."
+            value={draft}
+            onChange={(e) => setDraft(e.target.value)}
+            // biome-ignore lint/a11y/noAutofocus: inline editor should grab focus on expand
+            autoFocus
+          />
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={save}
+              disabled={saving}
+              className="text-accent-green text-xs font-medium hover:opacity-80 transition-opacity"
+            >
+              {saving ? 'Saving...' : 'Save'}
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setDraft(checkIn.notes ?? '');
+                setExpanded(false);
+              }}
+              className="text-base-muted text-xs hover:text-base-subtext transition-colors"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── Main ─────────────────────────────────────────────────────────────────────
+
 export default function DetailScreen() {
   const navigate = useNavigate();
   const { domain } = useParams<{ domain: string }>();
   const {
     profile,
+    currentCycle,
     domainFocuses,
     streaks: localStreaks,
     todayCheckIns,
@@ -45,7 +180,8 @@ export default function DetailScreen() {
   const focus = domainFocuses.find((f) => f.domainType === domainType);
 
   const { data: remoteStreaks } = useStreaks();
-  const { data: history } = useDomainCheckIns(domainType, 28);
+  const HISTORY_LIMIT = 28;
+  const { data: history } = useDomainCheckIns(domainType, HISTORY_LIMIT);
 
   const streak =
     profile?.tier === 'brotherhood'
@@ -59,6 +195,17 @@ export default function DetailScreen() {
       </div>
     );
   }
+
+  // Build sparkline data for Brotherhood (28 days oldest → newest)
+  const sparklineData: SparkStatus[] = (() => {
+    if (profile?.tier !== 'brotherhood' || !history) return [];
+    const days: string[] = [];
+    for (let i = HISTORY_LIMIT - 1; i >= 0; i--) {
+      days.push(new Date(Date.now() - i * 86_400_000).toISOString().split('T')[0]);
+    }
+    const byDate = new Map(history.map((c) => [c.date, c.status]));
+    return days.map((d) => (d === today ? todayCheckIns[domainType]?.status : byDate.get(d)));
+  })();
 
   return (
     <div className="px-4 pt-6 pb-4 flex flex-col gap-4">
@@ -126,24 +273,46 @@ export default function DetailScreen() {
         </div>
       </Card>
 
-      {/* History: brotherhood only */}
+      {/* Brotherhood: sparkline + notes history */}
       {profile?.tier === 'brotherhood' && (
         <Card>
           <p className="text-base-subtext text-xs font-heading tracking-widest uppercase mb-3">
             Last 28 days
           </p>
+
+          {/* Sparkline */}
+          {sparklineData.length > 0 && (
+            <div className="mb-4">
+              <Sparkline data={sparklineData} />
+              <div className="flex gap-3 mt-1.5">
+                <span className="flex items-center gap-1 text-xs text-base-muted">
+                  <span className="w-2 h-2 rounded-sm bg-status-done inline-block" />
+                  Done
+                </span>
+                <span className="flex items-center gap-1 text-xs text-base-muted">
+                  <span className="w-2 h-2 rounded-sm bg-status-partial inline-block" />
+                  Partial
+                </span>
+                <span className="flex items-center gap-1 text-xs text-base-muted">
+                  <span className="w-2 h-2 rounded-sm bg-status-missed inline-block" />
+                  Missed
+                </span>
+              </div>
+            </div>
+          )}
+
+          {/* Notes history */}
           {history && history.length > 0 ? (
-            <div className="flex flex-col gap-1.5">
+            <div className="flex flex-col divide-y divide-base-border/40">
               {history.map((checkIn) => (
-                <div key={checkIn.id} className="flex items-center justify-between">
-                  <span className="text-base-subtext text-xs">{checkIn.date}</span>
-                  <div className="flex items-center gap-1.5">
-                    <div
-                      className={`w-1.5 h-1.5 rounded-full ${STATUS_DOT[checkIn.status] ?? 'bg-base-border'}`}
-                    />
-                    <span className="text-base-muted text-xs">{STATUS_LABEL[checkIn.status]}</span>
-                  </div>
-                </div>
+                <NoteRow
+                  key={checkIn.id}
+                  checkIn={checkIn}
+                  cycleId={currentCycle?.id ?? ''}
+                  profileId={profile.id}
+                  domainType={domainType}
+                  limit={HISTORY_LIMIT}
+                />
               ))}
             </div>
           ) : (
@@ -152,6 +321,7 @@ export default function DetailScreen() {
         </Card>
       )}
 
+      {/* Free tier: 7-day list */}
       {profile?.tier === 'free' && (
         <Card>
           <p className="text-base-subtext text-xs font-heading tracking-widest uppercase mb-3">
@@ -186,7 +356,8 @@ export default function DetailScreen() {
             })}
           </div>
           <p className="text-base-muted text-xs mt-3 border-t border-base-border pt-2">
-            Upgrade to Brotherhood to see your full 28-day cloud history.
+            Upgrade to Brotherhood for your full 28-day history, sparkline trends, and per-day
+            notes.
           </p>
         </Card>
       )}
