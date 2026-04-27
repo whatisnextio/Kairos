@@ -13,6 +13,8 @@ export default function SubscriptionScreen() {
     if (!STRIPE_CHECKOUT_URL || !profile) return;
     const url = new URL(STRIPE_CHECKOUT_URL);
     url.searchParams.set('client_reference_id', profile.id);
+    // Set flag so the app polls for tier upgrade when Stripe redirects back.
+    localStorage.setItem('kairos_checkout_pending', String(Date.now()));
     window.location.href = url.toString();
   };
 

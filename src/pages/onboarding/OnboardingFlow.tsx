@@ -138,6 +138,8 @@ export default function OnboardingFlow() {
       stripeCustomerId: null,
       stripeSubscriptionId: null,
       subscriptionStatus: null,
+      cancelAtPeriodEnd: false,
+      currentPeriodEnd: null,
       createdAt: profile.created_at,
       updatedAt: profile.updated_at,
     });

@@ -159,7 +159,23 @@ export default function YouScreen() {
         )}
         {profile.tier === 'brotherhood' && (
           <>
-            <p className="text-base-subtext text-xs mt-1">Brotherhood active.</p>
+            {profile.subscriptionStatus === 'past_due' ? (
+              <p className="text-status-missed text-xs mt-1 font-medium">
+                Payment failed. Update your payment method to keep Brotherhood access.
+              </p>
+            ) : profile.cancelAtPeriodEnd && profile.currentPeriodEnd ? (
+              <p className="text-base-subtext text-xs mt-1">
+                Cancels on{' '}
+                {new Date(profile.currentPeriodEnd).toLocaleDateString('en-GB', {
+                  day: 'numeric',
+                  month: 'long',
+                  year: 'numeric',
+                })}
+                .
+              </p>
+            ) : (
+              <p className="text-base-subtext text-xs mt-1">Brotherhood active.</p>
+            )}
             <a
               href={`${import.meta.env.VITE_STRIPE_PORTAL_URL}?prefilled_email=${encodeURIComponent(authUser?.email ?? '')}`}
               target="_blank"

@@ -129,6 +129,11 @@ Deno.serve(async (req: Request) => {
         // Only downgrade on incomplete (never paid) or hard cancellation paths.
         const graceStatuses = new Set(['active', 'trialing', 'past_due']);
         const tier = graceStatuses.has(subStatus) ? 'brotherhood' : 'free';
+        // current_period_end from Stripe is a Unix timestamp (seconds)
+        const periodEndUnix = obj.current_period_end as number | null;
+        const currentPeriodEnd = periodEndUnix
+          ? new Date(periodEndUnix * 1000).toISOString()
+          : null;
 
         await supabase
           .from('profiles')
@@ -136,6 +141,8 @@ Deno.serve(async (req: Request) => {
             tier,
             stripe_subscription_id: subId,
             subscription_status: mapStatus(subStatus),
+            cancel_at_period_end: (obj.cancel_at_period_end as boolean | null) ?? false,
+            current_period_end: currentPeriodEnd,
           })
           .eq('stripe_customer_id', customerId);
 

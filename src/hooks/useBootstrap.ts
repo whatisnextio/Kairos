@@ -24,6 +24,8 @@ function mapProfile(row: Record<string, unknown>): Profile {
     stripeCustomerId: row.stripe_customer_id as string | null,
     stripeSubscriptionId: row.stripe_subscription_id as string | null,
     subscriptionStatus: row.subscription_status as string | null,
+    cancelAtPeriodEnd: (row.cancel_at_period_end as boolean | null) ?? false,
+    currentPeriodEnd: row.current_period_end as string | null,
     createdAt: row.created_at as string,
     updatedAt: row.updated_at as string,
   };

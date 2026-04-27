@@ -144,6 +144,8 @@ export interface Profile {
   stripeCustomerId: string | null;
   stripeSubscriptionId: string | null;
   subscriptionStatus: string | null;
+  cancelAtPeriodEnd: boolean;
+  currentPeriodEnd: string | null; // ISO datetime
   createdAt: string;
   updatedAt: string;
 }

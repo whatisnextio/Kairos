@@ -1,4 +1,5 @@
 import { useBootstrap } from '@/hooks/useBootstrap';
+import { useSubscriptionVerification } from '@/hooks/useSubscriptionVerification';
 import { supabase } from '@/services/supabaseClient';
 import { useAppStore } from '@/store/useAppStore';
 import { Suspense, lazy, useEffect } from 'react';
@@ -42,6 +43,7 @@ export default function App() {
   } = useAppStore();
 
   useBootstrap();
+  const { isVerifying, timedOut } = useSubscriptionVerification();
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
@@ -58,6 +60,21 @@ export default function App() {
   }, [setAuthUser]);
 
   if (isAuthLoading || isBootstrapLoading) return <SplashScreen />;
+
+  if (isVerifying) {
+    return (
+      <div className="min-h-screen bg-base-bg flex flex-col items-center justify-center gap-3 px-6 text-center">
+        <div className="w-8 h-8 border-2 border-accent-green border-t-transparent rounded-full animate-spin" />
+        <p className="font-heading text-base-text font-bold">Verifying your subscription</p>
+        <p className="text-base-subtext text-sm">This usually takes a few seconds.</p>
+      </div>
+    );
+  }
+
+  if (timedOut) {
+    // Webhook hasn't fired yet. Let the user in as free; they can refresh.
+    // A banner in YouScreen will prompt them if they're still on free.
+  }
 
   if (!authUser) {
     return (
