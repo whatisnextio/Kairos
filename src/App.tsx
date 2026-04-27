@@ -43,7 +43,7 @@ export default function App() {
   } = useAppStore();
 
   useBootstrap();
-  const { isVerifying, timedOut } = useSubscriptionVerification();
+  const { isVerifying } = useSubscriptionVerification();
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
@@ -71,10 +71,8 @@ export default function App() {
     );
   }
 
-  if (timedOut) {
-    // Webhook hasn't fired yet. Let the user in as free; they can refresh.
-    // A banner in YouScreen will prompt them if they're still on free.
-  }
+  // timedOut: webhook not fired within ~30s. User proceeds as free tier;
+  // YouScreen subscription card will show their current status on next load.
 
   if (!authUser) {
     return (
