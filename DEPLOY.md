@@ -18,10 +18,13 @@ npx supabase link --project-ref YOUR_PROJECT_REF
 npx supabase db push
 ```
 
-This runs all migrations in `supabase/migrations/` in order:
-- `001_initial_schema.sql` — all 12 tables + RLS + triggers
+This runs all 15 migrations in `supabase/migrations/` in order. Key ones:
+- `001_initial_schema.sql` — all core tables + RLS + triggers
 - `002_streak_update_function.sql` — update_streak() function
-- `003_push_subscriptions.sql` — push_subscriptions table
+- `005_squad_member_status.sql` — SECURITY DEFINER get_squad_members_status()
+- `013_atomic_xp_increment.sql` — increment_profile_xp() RPC
+- `014_increment_squad_member_count.sql` — increment_squad_member_count() RPC
+- `015_subscription_period.sql` — cancel_at_period_end + current_period_end columns
 
 ## 3. Supabase Vault Secrets
 
@@ -109,6 +112,7 @@ Environment variables for production (in host dashboard):
 - `VITE_SUPABASE_URL`
 - `VITE_SUPABASE_ANON_KEY`
 - `VITE_STRIPE_CHECKOUT_URL`
+- `VITE_STRIPE_PORTAL_URL`
 - `VITE_VAPID_PUBLIC_KEY`
 
 ## 9. Verify
