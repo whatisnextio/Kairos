@@ -2,18 +2,25 @@
 
 **Last updated:** 2026-04-27
 **Branch:** main
-**Last commit:** 73a7726 — Fix PWA manifest and clean up App.tsx verification stub
+**Last commit:** 1ae975a — Fix Stripe webhook race condition, SW open URL, and edge function formatting
 **Next session priority:** Fill credentials in .env and Supabase Vault → deploy → soft launch
 
 ---
 
 ## State Right Now
 
-App is feature-complete for soft launch. 66/66 unit tests passing, TypeScript clean, Biome clean, build clean. Pre-commit hook active (tsc + voice check + vitest). 15 migrations. 18 bugs fixed across two loop sessions.
+App is feature-complete for soft launch. 66/66 unit tests passing, TypeScript clean, Biome clean, build clean. Pre-commit hook active (tsc + voice check + vitest). 15 migrations. 21 bugs fixed across three loop sessions.
 
 ---
 
-## Loop Session 2026-04-27 Shipped
+## Loop Session 2026-04-27 (session 3) Shipped
+
+- **Stripe webhook race condition**: checkout.session.completed now sets tier=brotherhood + status=active directly using client_reference_id=userId, eliminating the race where subscription.created fires before the customer ID is linked and silently no-ops
+- **Stripe subscription.deleted cleanup**: now also resets cancel_at_period_end + current_period_end to false/null
+- **Service worker openWindow**: notificationclick now opens /#/ instead of / to match HashRouter start_url
+- **Edge function Biome formatting**: auto-fixed formatting across all 7 edge functions; fixed template literal lint in generate-kairos-nudge fallback
+
+## Loop Session 2026-04-27 (session 2) Shipped
 
 - **generate-kairos-nudge race**: Upsert with onConflict replaces insert for concurrent calls
 - **Nudge XP stale closure**: useUpdateNudgeStatus onSuccess reads store at execution time
