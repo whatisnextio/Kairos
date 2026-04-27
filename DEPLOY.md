@@ -35,6 +35,7 @@ In Supabase dashboard → Project Settings → Edge Functions → Secrets:
 | `ANTHROPIC_API_KEY` | sk-ant-... |
 | `STRIPE_WEBHOOK_SECRET` | whsec_... |
 | `VAPID_PRIVATE_KEY` | (from npx web-push generate-vapid-keys) |
+| `STRIPE_SECRET_KEY` | sk_live_... (optional — used by compute-weekly-metrics for MRR; omit to show MRR as N/A) |
 
 ## 4. Edge Functions
 
@@ -44,6 +45,7 @@ npx supabase functions deploy match-to-squad
 npx supabase functions deploy generate-squad-pulse
 npx supabase functions deploy stripe-webhook
 npx supabase functions deploy save-push-subscription
+npx supabase functions deploy send-daily-push
 npx supabase functions deploy compute-weekly-metrics
 npx supabase functions deploy delete-account
 ```
@@ -90,6 +92,13 @@ SELECT cron.schedule(
   'weekly-squad-pulse',
   '0 8 * * 0',
   $$ SELECT net.http_post(url := 'https://YOUR_PROJECT.supabase.co/functions/v1/generate-squad-pulse', headers := '{"x-service-role": "YOUR_SERVICE_ROLE_KEY"}'::jsonb, body := '{}'::jsonb); $$
+);
+
+-- Daily push notifications (07:00 UTC — fires after nudge generation at 06:00)
+SELECT cron.schedule(
+  'daily-push-cron',
+  '0 7 * * *',
+  $$ SELECT net.http_post(url := 'https://YOUR_PROJECT.supabase.co/functions/v1/send-daily-push', headers := '{"x-service-role": "YOUR_SERVICE_ROLE_KEY"}'::jsonb, body := '{}'::jsonb); $$
 );
 
 -- Weekly metrics (Sundays 22:00 UTC)

@@ -56,8 +56,8 @@ SplashScreen, LoginPage, RegisterPage, OnboardingFlow, HomeScreen, ProgressScree
 ### Modals (4)
 WeeklyVibeCheckModal, ProgressiveDomainSetupModal, Day84CompletionModal, AbandonCycleModal
 
-### Edge Functions (7)
-generate-kairos-nudge (Claude Haiku), match-to-squad, generate-squad-pulse (Claude Sonnet), stripe-webhook, save-push-subscription, compute-weekly-metrics, delete-account
+### Edge Functions (8)
+generate-kairos-nudge (Claude Haiku), match-to-squad, generate-squad-pulse (Claude Sonnet), stripe-webhook, save-push-subscription, send-daily-push, compute-weekly-metrics, delete-account
 
 ### Supabase Migrations (15)
 001 initial schema, 002 streak function, 003 push subscriptions, 004 cycle reflections, 005 squad_member_status SECURITY DEFINER RPC, 006 streak trigger, 007 admin metrics RLS, 008 fix cycle reflection XP default (50 → 500), 009 squads member count constraint, 010 decrement squad member count, 011 fix streak missed same day, 012 fix squad anchor initial, 013 atomic XP increment, 014 increment squad member count, 015 subscription period
@@ -94,7 +94,7 @@ See DEPLOY.md for full detail. In brief:
 2. `npx supabase link --project-ref YOUR_REF && npx supabase db push` (15 migrations)
 3. Set Supabase Vault: ANTHROPIC_API_KEY, STRIPE_WEBHOOK_SECRET, VAPID_PRIVATE_KEY
 4. `npx supabase functions deploy --all` (7 functions)
-5. Configure Stripe webhook (4 events) + 3 Supabase cron jobs
+5. Configure Stripe webhook (4 events) + 4 Supabase cron jobs (nudge 06:00, push 07:00, squad 08:00 Sun, metrics 22:00 Sun)
 6. `npm run build` → deploy dist/ to Vercel
 
 ---
