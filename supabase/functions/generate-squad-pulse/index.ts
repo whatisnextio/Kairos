@@ -130,10 +130,9 @@ Deno.serve(async (req: Request) => {
 
     if (squadsErr) throw new Error(`Squads load failed: ${squadsErr.message}`);
     if (!squads || squads.length === 0) {
-      return new Response(
-        JSON.stringify({ processed: 0, message: 'No eligible squads' }),
-        { headers: { 'Content-Type': 'application/json' } },
-      );
+      return new Response(JSON.stringify({ processed: 0, message: 'No eligible squads' }), {
+        headers: { 'Content-Type': 'application/json' },
+      });
     }
 
     const today = new Date().toISOString().split('T')[0];
@@ -144,9 +143,7 @@ Deno.serve(async (req: Request) => {
         // Compute week number from cycle_start_window
         const startDate = new Date(squad.cycle_start_window);
         const todayDate = new Date(today);
-        const daysSinceStart = Math.floor(
-          (todayDate.getTime() - startDate.getTime()) / 86_400_000,
-        );
+        const daysSinceStart = Math.floor((todayDate.getTime() - startDate.getTime()) / 86_400_000);
         const weekNumber = Math.max(1, Math.min(12, Math.ceil(daysSinceStart / 7)));
 
         // Load member streaks for this squad's phase
@@ -169,7 +166,8 @@ Deno.serve(async (req: Request) => {
 
           if (streaks && streaks.length > 0) {
             const total = streaks.reduce(
-              (sum: number, s: { current_streak: number }) => sum + s.current_streak, 0,
+              (sum: number, s: { current_streak: number }) => sum + s.current_streak,
+              0,
             );
             avgStreak = Math.round(total / streaks.length);
           }
@@ -205,17 +203,15 @@ Deno.serve(async (req: Request) => {
         const message = await generatePulse(stats);
 
         // Upsert squad pulse
-        const { error: upsertErr } = await supabase
-          .from('squad_pulses')
-          .upsert(
-            {
-              squad_id: squad.id,
-              week_number: weekNumber,
-              message,
-              generated_at: new Date().toISOString(),
-            },
-            { onConflict: 'squad_id,week_number' },
-          );
+        const { error: upsertErr } = await supabase.from('squad_pulses').upsert(
+          {
+            squad_id: squad.id,
+            week_number: weekNumber,
+            message,
+            generated_at: new Date().toISOString(),
+          },
+          { onConflict: 'squad_id,week_number' },
+        );
 
         if (upsertErr) throw new Error(upsertErr.message);
 
@@ -227,10 +223,9 @@ Deno.serve(async (req: Request) => {
       }
     }
 
-    return new Response(
-      JSON.stringify({ processed: results.length, results }),
-      { headers: { 'Content-Type': 'application/json' } },
-    );
+    return new Response(JSON.stringify({ processed: results.length, results }), {
+      headers: { 'Content-Type': 'application/json' },
+    });
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Unknown error';
     console.error('generate-squad-pulse error:', message);

@@ -30,10 +30,10 @@ function b64urlEncode(data: Uint8Array): string {
 }
 
 function b64urlDecode(str: string): Uint8Array {
-  const padded = str.replace(/-/g, '+').replace(/_/g, '/').padEnd(
-    str.length + (4 - (str.length % 4)) % 4,
-    '=',
-  );
+  const padded = str
+    .replace(/-/g, '+')
+    .replace(/_/g, '/')
+    .padEnd(str.length + ((4 - (str.length % 4)) % 4), '=');
   const binary = atob(padded);
   return new Uint8Array([...binary].map((c) => c.charCodeAt(0)));
 }
@@ -41,10 +41,14 @@ function b64urlDecode(str: string): Uint8Array {
 // ─── VAPID JWT ────────────────────────────────────────────────────────────────
 
 async function buildVapidJwt(audience: string): Promise<string> {
-  const header = b64urlEncode(new TextEncoder().encode(JSON.stringify({ typ: 'JWT', alg: 'ES256' })));
+  const header = b64urlEncode(
+    new TextEncoder().encode(JSON.stringify({ typ: 'JWT', alg: 'ES256' })),
+  );
   const now = Math.floor(Date.now() / 1000);
   const payload = b64urlEncode(
-    new TextEncoder().encode(JSON.stringify({ aud: audience, exp: now + 43200, sub: VAPID_SUBJECT })),
+    new TextEncoder().encode(
+      JSON.stringify({ aud: audience, exp: now + 43200, sub: VAPID_SUBJECT }),
+    ),
   );
 
   const keyData = b64urlDecode(VAPID_PRIVATE_KEY);
@@ -112,7 +116,9 @@ async function encryptPayload(
     info: Uint8Array,
     length: number,
   ): Promise<Uint8Array> {
-    const baseKey = await crypto.subtle.importKey('raw', inputKeyMaterial, 'HKDF', false, ['deriveBits']);
+    const baseKey = await crypto.subtle.importKey('raw', inputKeyMaterial, 'HKDF', false, [
+      'deriveBits',
+    ]);
     const bits = await crypto.subtle.deriveBits(
       { name: 'HKDF', hash: 'SHA-256', salt: salt_, info },
       baseKey,
@@ -130,10 +136,14 @@ async function encryptPayload(
       prefix.length + 2 + clientPublicKeyRaw.length + 2 + serverPublicKeyRaw.length,
     );
     let off = 0;
-    out.set(prefix, off); off += prefix.length;
-    out.set(clientLen, off); off += 2;
-    out.set(clientPublicKeyRaw, off); off += clientPublicKeyRaw.length;
-    out.set(serverLen, off); off += 2;
+    out.set(prefix, off);
+    off += prefix.length;
+    out.set(clientLen, off);
+    off += 2;
+    out.set(clientPublicKeyRaw, off);
+    off += clientPublicKeyRaw.length;
+    out.set(serverLen, off);
+    off += 2;
     out.set(serverPublicKeyRaw, off);
     return out;
   }
@@ -147,7 +157,10 @@ async function encryptPayload(
 
   // Derive content encryption key and nonce using RFC 8291 info strings
   const cekInfo = new Uint8Array([...encoder.encode('Content-Encoding: aesgcm\x00'), ...keyInfo]);
-  const nonceInfoFull = new Uint8Array([...encoder.encode('Content-Encoding: nonce\x00'), ...nonceInfo]);
+  const nonceInfoFull = new Uint8Array([
+    ...encoder.encode('Content-Encoding: nonce\x00'),
+    ...nonceInfo,
+  ]);
 
   const cek = await hkdf(ikm, salt, cekInfo, 16);
   const nonce = await hkdf(ikm, salt, nonceInfoFull, 12);
@@ -282,10 +295,7 @@ Deno.serve(async (req: Request) => {
 
   // Remove expired subscriptions
   if (staleIds.length > 0) {
-    await supabase
-      .from('push_subscriptions')
-      .delete()
-      .in('user_id', staleIds);
+    await supabase.from('push_subscriptions').delete().in('user_id', staleIds);
   }
 
   return new Response(JSON.stringify({ sent, failed, staleRemoved: staleIds.length }), {

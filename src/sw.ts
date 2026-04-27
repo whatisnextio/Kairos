@@ -61,7 +61,7 @@ self.addEventListener('notificationclick', (event: NotificationEvent) => {
       for (const client of clientList) {
         if ('focus' in client) return (client as WindowClient).focus();
       }
-      return self.clients.openWindow('/');
+      return self.clients.openWindow('/#/');
     }),
   );
 });

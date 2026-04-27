@@ -16,17 +16,18 @@ const SUPABASE_URL = Deno.env.get('SUPABASE_URL') ?? '';
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
 
 const PHASE_DAYS: Array<{ phase: string; start: number; end: number }> = [
-  { phase: 'KICKOFF',  start: 1,  end: 14 },
-  { phase: 'ANCHOR',   start: 15, end: 28 },
+  { phase: 'KICKOFF', start: 1, end: 14 },
+  { phase: 'ANCHOR', start: 15, end: 28 },
   { phase: 'INCREASE', start: 29, end: 42 },
-  { phase: 'RHYTHM',   start: 43, end: 56 },
-  { phase: 'OWN',      start: 57, end: 70 },
-  { phase: 'SUSTAIN',  start: 71, end: 84 },
+  { phase: 'RHYTHM', start: 43, end: 56 },
+  { phase: 'OWN', start: 57, end: 70 },
+  { phase: 'SUSTAIN', start: 71, end: 84 },
 ];
 
 function getPhase(dayInCycle: number): string {
-  const config = PHASE_DAYS.find((p) => dayInCycle >= p.start && dayInCycle <= p.end)
-    ?? PHASE_DAYS[PHASE_DAYS.length - 1];
+  const config =
+    PHASE_DAYS.find((p) => dayInCycle >= p.start && dayInCycle <= p.end) ??
+    PHASE_DAYS[PHASE_DAYS.length - 1];
   return config.phase;
 }
 
@@ -47,9 +48,10 @@ Deno.serve(async (req: Request) => {
 
   const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
-  const { data: { user }, error: authError } = await supabase.auth.getUser(
-    authHeader.replace('Bearer ', ''),
-  );
+  const {
+    data: { user },
+    error: authError,
+  } = await supabase.auth.getUser(authHeader.replace('Bearer ', ''));
 
   if (authError || !user) {
     return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 });
@@ -79,10 +81,9 @@ Deno.serve(async (req: Request) => {
 
     // Already in a squad
     if (profile.squad_id) {
-      return new Response(
-        JSON.stringify({ squad_id: profile.squad_id, already_matched: true }),
-        { headers: { 'Content-Type': 'application/json' } },
-      );
+      return new Response(JSON.stringify({ squad_id: profile.squad_id, already_matched: true }), {
+        headers: { 'Content-Type': 'application/json' },
+      });
     }
 
     if (!profile.current_kairos_cycle_id) {
@@ -110,9 +111,7 @@ Deno.serve(async (req: Request) => {
     const phase = getPhase(dayInCycle);
 
     // Look for compatible squads: same phase, member_count < 8, cycle start within 7 days
-    const sevenDaysAgo = new Date(todayDate.getTime() - 7 * 86_400_000)
-      .toISOString()
-      .split('T')[0];
+    const sevenDaysAgo = new Date(todayDate.getTime() - 7 * 86_400_000).toISOString().split('T')[0];
 
     const { data: candidates } = await supabase
       .from('squads')
@@ -132,8 +131,10 @@ Deno.serve(async (req: Request) => {
       // lt('member_count', 8) filter will match 0 rows and we create a new squad.
       squadId = candidates[0].id;
 
-      const { data: incremented, error: incrementErr } = await supabase
-        .rpc('increment_squad_member_count', { p_squad_id: squadId });
+      const { data: incremented, error: incrementErr } = await supabase.rpc(
+        'increment_squad_member_count',
+        { p_squad_id: squadId },
+      );
 
       if (incrementErr) throw new Error(`Squad increment failed: ${incrementErr.message}`);
 
@@ -174,10 +175,9 @@ Deno.serve(async (req: Request) => {
 
     if (assignErr) throw new Error(`Squad assignment failed: ${assignErr.message}`);
 
-    return new Response(
-      JSON.stringify({ squad_id: squadId, already_matched: false }),
-      { headers: { 'Content-Type': 'application/json' } },
-    );
+    return new Response(JSON.stringify({ squad_id: squadId, already_matched: false }), {
+      headers: { 'Content-Type': 'application/json' },
+    });
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Unknown error';
     console.error('match-to-squad error:', message);

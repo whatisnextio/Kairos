@@ -36,9 +36,10 @@ Deno.serve(async (req: Request) => {
   const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
   // Verify the token and get user
-  const { data: { user }, error: authError } = await supabase.auth.getUser(
-    authHeader.replace('Bearer ', ''),
-  );
+  const {
+    data: { user },
+    error: authError,
+  } = await supabase.auth.getUser(authHeader.replace('Bearer ', ''));
 
   if (authError || !user) {
     return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 });
@@ -61,10 +62,7 @@ Deno.serve(async (req: Request) => {
     // Delete profile — cascades to:
     // kairos_cycles, user_domain_focuses, daily_check_ins, user_streaks,
     // vibe_checks, squad_pulses (via squads), ai_nudges, outcomes, push_subscriptions
-    const { error: profileErr } = await supabase
-      .from('profiles')
-      .delete()
-      .eq('id', userId);
+    const { error: profileErr } = await supabase.from('profiles').delete().eq('id', userId);
 
     if (profileErr) throw new Error(`Profile delete failed: ${profileErr.message}`);
 

@@ -100,7 +100,9 @@ Deno.serve(async (req: Request) => {
   try {
     switch (event.type) {
       case 'checkout.session.completed': {
-        // Link stripe customer ID to profile via client_reference_id (= profile.id)
+        // Link stripe customer ID to profile via client_reference_id (= profile.id).
+        // Also set tier = brotherhood immediately — subscription.created may fire before or after
+        // this event, so we can't rely on it to be the first event that sets the tier.
         const customerId = obj.customer as string;
         const subscriptionId = obj.subscription as string | null;
         const userId =
@@ -114,6 +116,8 @@ Deno.serve(async (req: Request) => {
           .update({
             stripe_customer_id: customerId,
             stripe_subscription_id: subscriptionId ?? null,
+            tier: 'brotherhood',
+            subscription_status: 'active',
           })
           .eq('id', userId);
 
@@ -158,6 +162,8 @@ Deno.serve(async (req: Request) => {
             tier: 'free',
             stripe_subscription_id: null,
             subscription_status: 'cancelled',
+            cancel_at_period_end: false,
+            current_period_end: null,
           })
           .eq('stripe_customer_id', customerId);
 

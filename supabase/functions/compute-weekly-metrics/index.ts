@@ -25,8 +25,15 @@ async function fetchMrrPence(): Promise<number> {
       headers: { Authorization: `Bearer ${STRIPE_SECRET_KEY}` },
     });
     if (!res.ok) return 0;
-    const body = await res.json() as {
-      data: Array<{ id: string; items: { data: Array<{ price: { unit_amount: number; currency: string; recurring: { interval: string } } }> } }>;
+    const body = (await res.json()) as {
+      data: Array<{
+        id: string;
+        items: {
+          data: Array<{
+            price: { unit_amount: number; currency: string; recurring: { interval: string } };
+          }>;
+        };
+      }>;
       has_more: boolean;
     };
     for (const sub of body.data) {
@@ -59,9 +66,10 @@ Deno.serve(async (req: Request) => {
     if (!authHeader) {
       return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 });
     }
-    const { data: { user }, error: authErr } = await supabase.auth.getUser(
-      authHeader.replace('Bearer ', ''),
-    );
+    const {
+      data: { user },
+      error: authErr,
+    } = await supabase.auth.getUser(authHeader.replace('Bearer ', ''));
     if (authErr || !user || !user.email || !ADMIN_EMAILS.has(user.email)) {
       return new Response(JSON.stringify({ error: 'Forbidden' }), { status: 403 });
     }
@@ -133,21 +141,19 @@ Deno.serve(async (req: Request) => {
     const mrrPence = await fetchMrrPence();
 
     // Upsert snapshot
-    const { error: upsertErr } = await supabase
-      .from('metrics_snapshots')
-      .upsert(
-        {
-          snapshot_date: today,
-          total_users: total,
-          paid_users: paid,
-          conversion_rate: conversionRate,
-          day7_retention: day7Retention,
-          day84_completion: day84Completion,
-          mrr_pence: mrrPence,
-          computed_at: new Date().toISOString(),
-        },
-        { onConflict: 'snapshot_date' },
-      );
+    const { error: upsertErr } = await supabase.from('metrics_snapshots').upsert(
+      {
+        snapshot_date: today,
+        total_users: total,
+        paid_users: paid,
+        conversion_rate: conversionRate,
+        day7_retention: day7Retention,
+        day84_completion: day84Completion,
+        mrr_pence: mrrPence,
+        computed_at: new Date().toISOString(),
+      },
+      { onConflict: 'snapshot_date' },
+    );
 
     if (upsertErr) throw new Error(upsertErr.message);
 

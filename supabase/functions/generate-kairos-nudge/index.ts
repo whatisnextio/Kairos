@@ -52,12 +52,12 @@ Output format: JSON only, no markdown, no explanation.
 }`;
 
 const PHASE_CONTEXTS: Record<string, string> = {
-  KICKOFF:  'KICKOFF — Days 1-14. Build the base. Consistency over perfection.',
-  ANCHOR:   'ANCHOR — Days 15-28. Lock in habits. Streak matters now.',
+  KICKOFF: 'KICKOFF — Days 1-14. Build the base. Consistency over perfection.',
+  ANCHOR: 'ANCHOR — Days 15-28. Lock in habits. Streak matters now.',
   INCREASE: 'INCREASE — Days 29-42. Step up intensity. 10-15% more.',
-  RHYTHM:   'RHYTHM — Days 43-56. Find natural flow. Variability welcome.',
-  OWN:      'OWN — Days 57-70. Identity crystallisation. You are this now.',
-  SUSTAIN:  'SUSTAIN — Days 71-84. Plan the long game. Beyond the cycle.',
+  RHYTHM: 'RHYTHM — Days 43-56. Find natural flow. Variability welcome.',
+  OWN: 'OWN — Days 57-70. Identity crystallisation. You are this now.',
+  SUSTAIN: 'SUSTAIN — Days 71-84. Plan the long game. Beyond the cycle.',
 };
 
 interface UserState {
@@ -75,9 +75,7 @@ function buildUserPrompt(state: UserState, type: 'daily_nudge' | 'weekly_challen
   const anchor = state.customAnchorName ?? state.identityAnchorName;
   const phaseCtx = PHASE_CONTEXTS[state.phase] ?? state.phase;
 
-  const focusLines = state.domainFocuses
-    .map((f) => `  ${f.domain}: ${f.focus}`)
-    .join('\n');
+  const focusLines = state.domainFocuses.map((f) => `  ${f.domain}: ${f.focus}`).join('\n');
 
   const checkInLines = state.recentCheckIns.length
     ? state.recentCheckIns
@@ -147,7 +145,7 @@ async function callClaude(userPrompt: string): Promise<{
   // Cost tracking: Haiku ~$0.25/Mtok input, ~$1.25/Mtok output
   // In pence: input ~0.02p/tok, output ~0.1p/tok
   const costPence = Math.round(
-    (inputTokens * 0.25 + outputTokens * 1.25) / 1_000_000 * 100 * 100,
+    ((inputTokens * 0.25 + outputTokens * 1.25) / 1_000_000) * 100 * 100,
   );
 
   try {
@@ -156,8 +154,8 @@ async function callClaude(userPrompt: string): Promise<{
   } catch {
     // Fallback if model returns non-JSON
     return {
-      title: 'Day ' + new Date().getDate() + '. Show up.',
-      body: 'One action. That\'s all. Pick it and do it now.',
+      title: `Day ${new Date().getDate()}. Show up.`,
+      body: "One action. That's all. Pick it and do it now.",
       type: 'daily_nudge',
       domain: null,
       xp_reward: null,
@@ -185,9 +183,10 @@ Deno.serve(async (req: Request) => {
   const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
   // Verify JWT and get user
-  const { data: { user }, error: authError } = await supabase.auth.getUser(
-    authHeader.replace('Bearer ', ''),
-  );
+  const {
+    data: { user },
+    error: authError,
+  } = await supabase.auth.getUser(authHeader.replace('Bearer ', ''));
 
   if (authError || !user) {
     return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 });
@@ -253,15 +252,16 @@ Deno.serve(async (req: Request) => {
 
     // Determine KAIROS phase
     const PHASE_DAYS = [
-      { phase: 'KICKOFF',  start: 1,  end: 14 },
-      { phase: 'ANCHOR',   start: 15, end: 28 },
+      { phase: 'KICKOFF', start: 1, end: 14 },
+      { phase: 'ANCHOR', start: 15, end: 28 },
       { phase: 'INCREASE', start: 29, end: 42 },
-      { phase: 'RHYTHM',   start: 43, end: 56 },
-      { phase: 'OWN',      start: 57, end: 70 },
-      { phase: 'SUSTAIN',  start: 71, end: 84 },
+      { phase: 'RHYTHM', start: 43, end: 56 },
+      { phase: 'OWN', start: 57, end: 70 },
+      { phase: 'SUSTAIN', start: 71, end: 84 },
     ];
-    const phaseConfig = PHASE_DAYS.find((p) => dayInCycle >= p.start && dayInCycle <= p.end)
-      ?? PHASE_DAYS[PHASE_DAYS.length - 1];
+    const phaseConfig =
+      PHASE_DAYS.find((p) => dayInCycle >= p.start && dayInCycle <= p.end) ??
+      PHASE_DAYS[PHASE_DAYS.length - 1];
 
     // Load domain focuses
     const { data: focuses } = await supabase
@@ -271,9 +271,7 @@ Deno.serve(async (req: Request) => {
       .eq('cycle_id', cycle.id);
 
     // Load recent check-ins (last 7 days)
-    const sevenDaysAgo = new Date(todayDate.getTime() - 7 * 86_400_000)
-      .toISOString()
-      .split('T')[0];
+    const sevenDaysAgo = new Date(todayDate.getTime() - 7 * 86_400_000).toISOString().split('T')[0];
 
     const { data: checkIns } = await supabase
       .from('daily_check_ins')
@@ -299,32 +297,37 @@ Deno.serve(async (req: Request) => {
 
     // Build user state for prompt
     const state: UserState = {
-      identityAnchorName: (profile.identity_anchors as { name: string })?.name ?? profile.identity_anchor_id,
+      identityAnchorName:
+        (profile.identity_anchors as { name: string })?.name ?? profile.identity_anchor_id,
       customAnchorName: profile.custom_anchor_name ?? undefined,
       phase: phaseConfig.phase,
       dayInCycle,
-      domainFocuses: (focuses ?? []).map((f: { domain_type: string; focus_description: string }) => ({
-        domain: f.domain_type,
-        focus: f.focus_description,
-      })),
-      recentCheckIns: (checkIns ?? []).map((c: { date: string; domain_type: string; status: string }) => ({
-        date: c.date,
-        domain: c.domain_type,
-        status: c.status,
-      })),
-      streaks: (streaks ?? []).map((s: { domain_type: string; current_streak: number; longest_streak: number }) => ({
-        domain: s.domain_type,
-        current: s.current_streak,
-        longest: s.longest_streak,
-      })),
-      lastVibeCheck: vibeCheck
-        ? { rating: vibeCheck.rating, date: vibeCheck.date }
-        : undefined,
+      domainFocuses: (focuses ?? []).map(
+        (f: { domain_type: string; focus_description: string }) => ({
+          domain: f.domain_type,
+          focus: f.focus_description,
+        }),
+      ),
+      recentCheckIns: (checkIns ?? []).map(
+        (c: { date: string; domain_type: string; status: string }) => ({
+          date: c.date,
+          domain: c.domain_type,
+          status: c.status,
+        }),
+      ),
+      streaks: (streaks ?? []).map(
+        (s: { domain_type: string; current_streak: number; longest_streak: number }) => ({
+          domain: s.domain_type,
+          current: s.current_streak,
+          longest: s.longest_streak,
+        }),
+      ),
+      lastVibeCheck: vibeCheck ? { rating: vibeCheck.rating, date: vibeCheck.date } : undefined,
     };
 
     // Call Claude
     const userPrompt = buildUserPrompt(state, 'daily_nudge');
-    const result = await callClaude(userPrompt) as {
+    const result = (await callClaude(userPrompt)) as {
       title: string;
       body: string;
       type: string;

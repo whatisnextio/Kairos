@@ -32,9 +32,10 @@ Deno.serve(async (req: Request) => {
 
   const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
-  const { data: { user }, error: authError } = await supabase.auth.getUser(
-    authHeader.replace('Bearer ', ''),
-  );
+  const {
+    data: { user },
+    error: authError,
+  } = await supabase.auth.getUser(authHeader.replace('Bearer ', ''));
 
   if (authError || !user) {
     return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 });
@@ -51,16 +52,14 @@ Deno.serve(async (req: Request) => {
     return new Response(JSON.stringify({ error: 'Missing subscription' }), { status: 400 });
   }
 
-  const { error: upsertErr } = await supabase
-    .from('push_subscriptions')
-    .upsert(
-      {
-        user_id: user.id,
-        subscription: body.subscription,
-        updated_at: new Date().toISOString(),
-      },
-      { onConflict: 'user_id' },
-    );
+  const { error: upsertErr } = await supabase.from('push_subscriptions').upsert(
+    {
+      user_id: user.id,
+      subscription: body.subscription,
+      updated_at: new Date().toISOString(),
+    },
+    { onConflict: 'user_id' },
+  );
 
   if (upsertErr) {
     console.error('save-push-subscription error:', upsertErr.message);
