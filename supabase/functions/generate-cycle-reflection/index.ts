@@ -214,9 +214,31 @@ Deno.serve(async (req: Request) => {
       .maybeSingle();
 
     if (cached) {
-      return new Response(JSON.stringify({ reflection: cached, cached: true }), {
-        headers: { 'Content-Type': 'application/json' },
-      });
+      // body is stored as JSON for cycle_reflection: { text, domain_callouts, next_cycle_intention, stats }
+      let parsed: {
+        text: string;
+        domain_callouts: Record<string, string>;
+        next_cycle_intention: string;
+        stats: Record<string, unknown>;
+      } | null = null;
+      try {
+        parsed = JSON.parse(cached.body);
+      } catch {
+        // Older row with plain-text body — return as-is without extra fields
+      }
+      return new Response(
+        JSON.stringify({
+          reflection: {
+            ...cached,
+            body: parsed?.text ?? cached.body,
+            domain_callouts: parsed?.domain_callouts ?? {},
+            next_cycle_intention: parsed?.next_cycle_intention ?? '',
+            stats: parsed?.stats ?? {},
+          },
+          cached: true,
+        }),
+        { headers: { 'Content-Type': 'application/json' } },
+      );
     }
 
     // Only Brotherhood gets the AI reflection
@@ -334,7 +356,23 @@ Deno.serve(async (req: Request) => {
     const prompt = buildPrompt(stats);
     const result = await callSonnet(prompt);
 
-    // Store in ai_nudges — date = cycle.start_date so it's stable across session reloads
+    const reflectionStats = {
+      totalXp: stats.totalXp,
+      totalCheckIns: stats.totalCheckIns,
+      overallCompletionRate: Math.round(stats.overallCompletionRate * 100),
+      strongestDomain: stats.strongestDomain,
+      weakestDomain: stats.weakestDomain,
+    };
+
+    // Store in ai_nudges — body is JSON so cache hits return the full payload.
+    // date = cycle.start_date so the record is stable across session reloads.
+    const bodyJson = JSON.stringify({
+      text: result.body,
+      domain_callouts: result.domain_callouts,
+      next_cycle_intention: result.next_cycle_intention,
+      stats: reflectionStats,
+    });
+
     const { data: reflection, error: insertErr } = await supabase
       .from('ai_nudges')
       .upsert(
@@ -343,7 +381,7 @@ Deno.serve(async (req: Request) => {
           date: cycle.start_date,
           type: 'cycle_reflection',
           title: result.headline,
-          body: result.body,
+          body: bodyJson,
           domain_type: null,
           kairos_phase: null,
           xp_reward: null,
@@ -363,20 +401,14 @@ Deno.serve(async (req: Request) => {
       });
     }
 
-    // Return full reflection including domain callouts and next cycle intention
     return new Response(
       JSON.stringify({
         reflection: {
           ...reflection,
+          body: result.body,
           domain_callouts: result.domain_callouts,
           next_cycle_intention: result.next_cycle_intention,
-          stats: {
-            totalXp: stats.totalXp,
-            totalCheckIns: stats.totalCheckIns,
-            overallCompletionRate: Math.round(stats.overallCompletionRate * 100),
-            strongestDomain: stats.strongestDomain,
-            weakestDomain: stats.weakestDomain,
-          },
+          stats: reflectionStats,
         },
         cached: false,
       }),

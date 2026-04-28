@@ -40,13 +40,14 @@ export default function ProgressScreen() {
   } = useAppStore();
   const { data: remoteStreaks } = useStreaks();
 
-  if (!profile || !currentCycle) return null;
-
-  const dayInCycle = getDayInCycle(currentCycle.startDate);
+  // Compute before early return so hooks are never called conditionally.
+  const dayInCycle = profile && currentCycle ? getDayInCycle(currentCycle.startDate) : 0;
   const cycleComplete = dayInCycle >= 84;
   const { data: aiReflection } = useCycleReflection(
-    cycleComplete && profile.tier === 'brotherhood',
+    cycleComplete && profile?.tier === 'brotherhood',
   );
+
+  if (!profile || !currentCycle) return null;
   const currentPhase = getCurrentPhaseConfig(dayInCycle);
   const level = getLevelForXp(profile.xp);
   const xpProgress = getXpProgressInLevel(profile.xp);

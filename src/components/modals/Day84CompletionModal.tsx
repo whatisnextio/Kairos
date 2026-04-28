@@ -2,7 +2,7 @@ import Button from '@/components/common/Button';
 import { useCycleReflection, useMarkReflectionViewed } from '@/hooks/useCycleReflection';
 import { useAppStore } from '@/store/useAppStore';
 import { DOMAINS } from '@/types';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 interface Props {
@@ -61,16 +61,16 @@ export default function Day84CompletionModal({ onClose }: Props) {
     setStep('loading');
   }
 
-  // Auto-advance from loading when data arrives
-  if (step === 'loading' && !reflectionLoading) {
+  // Auto-advance from loading when data arrives. Must be in useEffect, not render body.
+  useEffect(() => {
+    if (step !== 'loading' || reflectionLoading) return;
     if (aiReflection) {
       markViewed(aiReflection.id);
-      // Use setTimeout to avoid state update during render
-      setTimeout(() => setStep('reflection'), 0);
+      setStep('reflection');
     } else if (reflectionError) {
-      setTimeout(() => setStep('your_words'), 0);
+      setStep('your_words');
     }
-  }
+  }, [step, reflectionLoading, aiReflection, reflectionError, markViewed]);
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 px-4 py-6">
