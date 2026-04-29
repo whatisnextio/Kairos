@@ -58,6 +58,67 @@ export default function YouScreen() {
   const [isDeleting, setIsDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const [showAbandon, setShowAbandon] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
+
+  const checkInHistory = useAppStore((s) => s.checkInHistory);
+  const domainFocuses = useAppStore((s) => s.domainFocuses);
+
+  const handleExportData = useCallback(async () => {
+    setIsExporting(true);
+    let payload: Record<string, unknown>;
+
+    if (profile?.tier === 'brotherhood') {
+      const { data: checkIns } = await supabase
+        .from('daily_check_ins')
+        .select('date,domain_type,status,notes,xp_awarded')
+        .eq('user_id', profile.id)
+        .order('date', { ascending: true });
+      const { data: vibeChecks } = await supabase
+        .from('vibe_checks')
+        .select('date,rating')
+        .eq('user_id', profile.id)
+        .order('date', { ascending: true });
+      payload = {
+        exportedAt: new Date().toISOString(),
+        profile: {
+          displayName: profile.displayName,
+          identityAnchorId: profile.identityAnchorId,
+          tier: profile.tier,
+          xp: profile.xp,
+        },
+        domainFocuses: domainFocuses.map((f) => ({
+          domainType: f.domainType,
+          focusDescription: f.focusDescription,
+        })),
+        checkIns: checkIns ?? [],
+        vibeChecks: vibeChecks ?? [],
+      };
+    } else {
+      payload = {
+        exportedAt: new Date().toISOString(),
+        profile: {
+          displayName: profile?.displayName,
+          identityAnchorId: profile?.identityAnchorId,
+          tier: profile?.tier,
+          xp: profile?.xp,
+        },
+        domainFocuses: domainFocuses.map((f) => ({
+          domainType: f.domainType,
+          focusDescription: f.focusDescription,
+        })),
+        checkInHistory,
+      };
+    }
+
+    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `12k-data-${new Date().toISOString().split('T')[0]}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+    setIsExporting(false);
+  }, [profile, domainFocuses, checkInHistory]);
 
   const handleDeleteAccount = useCallback(async () => {
     setIsDeleting(true);
@@ -260,6 +321,18 @@ export default function YouScreen() {
           className="text-base-muted text-xs underline w-full text-center"
         >
           Reset cycle
+        </button>
+      </div>
+
+      {/* GDPR data export */}
+      <div className="pt-2">
+        <button
+          type="button"
+          onClick={handleExportData}
+          disabled={isExporting}
+          className="text-base-muted text-xs underline w-full text-center disabled:opacity-50"
+        >
+          {isExporting ? 'Preparing download...' : 'Download my data'}
         </button>
       </div>
 
