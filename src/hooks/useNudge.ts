@@ -1,6 +1,7 @@
 import { supabase } from '@/services/supabaseClient';
 import { useAppStore } from '@/store/useAppStore';
 import type { AiNudge, DomainType, KairosPhase, NudgeCta, NudgeStatus, NudgeType } from '@/types';
+import { getLevelForXp } from '@/utils/gamification';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 const NUDGE_ENDPOINT = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-kairos-nudge`;
@@ -93,7 +94,18 @@ export function useUpdateNudgeStatus() {
       if (status === 'completed' && xpReward && xpReward > 0) {
         const currentProfile = useAppStore.getState().profile;
         if (currentProfile) {
-          setProfile({ ...currentProfile, xp: currentProfile.xp + xpReward });
+          const oldXp = currentProfile.xp;
+          const newXp = oldXp + xpReward;
+          setProfile({ ...currentProfile, xp: newXp });
+
+          const oldLevel = getLevelForXp(oldXp);
+          const newLevel = getLevelForXp(newXp);
+          if (newLevel.level > oldLevel.level) {
+            useAppStore
+              .getState()
+              .setLevelUpPending({ level: newLevel.level, label: newLevel.label });
+          }
+
           if (currentProfile.tier === 'brotherhood') {
             await supabase.rpc('increment_profile_xp', {
               p_user_id: currentProfile.id,

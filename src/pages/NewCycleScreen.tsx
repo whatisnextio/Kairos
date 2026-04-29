@@ -8,8 +8,15 @@ import { useNavigate } from 'react-router-dom';
 
 export default function NewCycleScreen() {
   const navigate = useNavigate();
-  const { authUser, profile, currentCycle, setProfile, setCurrentCycle, resetCycleLocalState } =
-    useAppStore();
+  const {
+    authUser,
+    profile,
+    currentCycle,
+    setProfile,
+    setCurrentCycle,
+    resetCycleLocalState,
+    nextCycleIntention,
+  } = useAppStore();
   const [anchorId, setAnchorId] = useState<IdentityAnchorId | null>(
     profile?.identityAnchorId ?? null,
   );
@@ -106,6 +113,16 @@ export default function NewCycleScreen() {
         </h1>
         <p className="text-base-subtext text-sm mt-1">Same system. New man.</p>
       </div>
+
+      {/* Seed from previous cycle's AI reflection */}
+      {nextCycleIntention && (
+        <div className="rounded-xl border border-accent-green/30 bg-accent-green/5 px-4 py-4">
+          <p className="font-heading text-xs text-accent-green tracking-widest uppercase mb-2">
+            From your last cycle
+          </p>
+          <p className="text-base-text text-sm italic">{nextCycleIntention}</p>
+        </div>
+      )}
 
       <Card>
         <p className="font-heading text-xs text-base-subtext tracking-widest uppercase mb-3">

@@ -3,7 +3,13 @@ import Card from '@/components/common/Card';
 import { useNudge, useUpdateNudgeStatus } from '@/hooks/useNudge';
 import { useAppStore } from '@/store/useAppStore';
 import { Zap } from 'lucide-react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+
+const CTA_PROMPTS: Record<string, string> = {
+  reflect: 'What shifted today...',
+  plan_tomorrow: 'Tomorrow I will...',
+};
 
 export default function ImproveScreen() {
   const navigate = useNavigate();
@@ -16,6 +22,14 @@ export default function ImproveScreen() {
 
   const { data: nudge, isLoading, refetch } = useNudge();
   const { mutate: updateStatus } = useUpdateNudgeStatus();
+
+  const [ctaExpanded, setCtaExpanded] = useState(false);
+
+  function handleComplete() {
+    if (!nudge) return;
+    updateStatus({ nudgeId: nudge.id, status: 'completed', xpReward: nudge.xpReward });
+    setCtaExpanded(false);
+  }
 
   return (
     <div className="px-4 pt-6 pb-4 flex flex-col gap-4">
@@ -77,12 +91,34 @@ export default function ImproveScreen() {
           </p>
           <p className="font-heading text-base font-medium text-base-text mb-1">{nudge.title}</p>
           <p className="text-base-subtext text-sm mb-4">{nudge.body}</p>
-          <Button
-            size="sm"
-            onClick={() =>
-              updateStatus({ nudgeId: nudge.id, status: 'completed', xpReward: nudge.xpReward })
-            }
-          >
+
+          {/* CTA-driven secondary action */}
+          {nudge.cta === 'check_in_now' && (
+            <div className="mb-3">
+              <Button size="sm" variant="ghost" onClick={() => navigate('/')}>
+                Go check in
+              </Button>
+            </div>
+          )}
+
+          {(nudge.cta === 'reflect' || nudge.cta === 'plan_tomorrow') && !ctaExpanded && (
+            <div className="mb-3">
+              <Button size="sm" variant="ghost" onClick={() => setCtaExpanded(true)}>
+                {nudge.cta === 'reflect' ? 'Write a reflection' : 'Plan it out'}
+              </Button>
+            </div>
+          )}
+
+          {ctaExpanded && nudge.cta && nudge.cta in CTA_PROMPTS && (
+            <textarea
+              className="input-field w-full h-20 resize-none text-sm mb-3"
+              placeholder={CTA_PROMPTS[nudge.cta]}
+              // biome-ignore lint/a11y/noAutofocus: textarea is primary focus when CTA expanded
+              autoFocus
+            />
+          )}
+
+          <Button size="sm" onClick={handleComplete}>
             Mark complete
           </Button>
           {nudge.xpReward && <p className="text-accent-green text-xs mt-3">+{nudge.xpReward} XP</p>}

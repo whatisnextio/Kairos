@@ -34,7 +34,7 @@ function PulsingDots() {
 
 export default function Day84CompletionModal({ onClose }: Props) {
   const navigate = useNavigate();
-  const { completeCycle, profile, currentCycle } = useAppStore();
+  const { completeCycle, profile, currentCycle, setNextCycleIntention } = useAppStore();
   const [step, setStep] = useState<Step>('intro');
   const [reflection, setReflection] = useState('');
   const [saving, setSaving] = useState(false);
@@ -66,11 +66,15 @@ export default function Day84CompletionModal({ onClose }: Props) {
     if (step !== 'loading' || reflectionLoading) return;
     if (aiReflection) {
       markViewed(aiReflection.id);
+      // Seed next cycle intention so NewCycleScreen can show it.
+      if (aiReflection.next_cycle_intention) {
+        setNextCycleIntention(aiReflection.next_cycle_intention);
+      }
       setStep('reflection');
     } else if (reflectionError) {
       setStep('your_words');
     }
-  }, [step, reflectionLoading, aiReflection, reflectionError, markViewed]);
+  }, [step, reflectionLoading, aiReflection, reflectionError, markViewed, setNextCycleIntention]);
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 px-4 py-6">

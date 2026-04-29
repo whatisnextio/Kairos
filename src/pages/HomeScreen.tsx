@@ -1,3 +1,4 @@
+import Button from '@/components/common/Button';
 import Card from '@/components/common/Card';
 import Day84CompletionModal from '@/components/modals/Day84CompletionModal';
 import ProgressiveDomainSetupModal from '@/components/modals/ProgressiveDomainSetupModal';
@@ -59,6 +60,8 @@ export default function HomeScreen() {
   const { data: squadMembers } = useSquadMembers();
   const celebrationPending = useAppStore((s) => s.celebrationPending);
   const setCelebrationPending = useAppStore((s) => s.setCelebrationPending);
+  const levelUpPending = useAppStore((s) => s.levelUpPending);
+  const setLevelUpPending = useAppStore((s) => s.setLevelUpPending);
   const [showVibeCheck, setShowVibeCheck] = useState(false);
   const [showDomainSetup, setShowDomainSetup] = useState(false);
 
@@ -76,7 +79,13 @@ export default function HomeScreen() {
     ) {
       vibeCheckShownThisSession = true;
       setShowVibeCheck(true);
-    } else if (!domainSetupShownThisSession && dayInCycle >= 2 && domainFocuses.length < 4) {
+    } else if (
+      !domainSetupShownThisSession &&
+      domainFocuses.length > 0 &&
+      domainFocuses.length < 4 &&
+      dayInCycle >= domainFocuses.length
+    ) {
+      // Show domain setup modal one domain at a time: Day 1 unlocks domain 2, Day 2 unlocks domain 3, etc.
       domainSetupShownThisSession = true;
       setShowDomainSetup(true);
     }
@@ -118,6 +127,22 @@ export default function HomeScreen() {
             {phaseConfig.label} Phase
           </p>
         </div>
+
+        {/* Level-up celebration */}
+        {levelUpPending && (
+          <div className="rounded-xl border border-accent-green bg-accent-green/10 px-4 py-4">
+            <p className="font-heading text-xs text-accent-green tracking-widest uppercase mb-1">
+              Level up
+            </p>
+            <p className="font-heading text-xl font-bold text-base-text tracking-wide">
+              Level {levelUpPending.level}: {levelUpPending.label}
+            </p>
+            <p className="text-base-subtext text-sm mt-1 mb-3">You earned it. Keep building.</p>
+            <Button size="sm" variant="ghost" onClick={() => setLevelUpPending(null)}>
+              Got it
+            </Button>
+          </div>
+        )}
 
         {/* Progress bars */}
         <Card>

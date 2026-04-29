@@ -11,6 +11,7 @@ import type {
   VibeCheck,
 } from '@/types';
 import { XP_PER_CHECK_IN_DONE, XP_PER_CHECK_IN_PARTIAL, XP_PER_CYCLE_COMPLETE } from '@/types';
+import { getLevelForXp } from '@/utils/gamification';
 import { computeLocalStreak } from '@/utils/streak';
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
@@ -43,6 +44,10 @@ interface AppState {
   // Set during Day 84 completion to keep the celebration modal visible while
   // the route guard would otherwise redirect to /new-cycle.
   celebrationPending: boolean;
+  // Set when XP crosses a level boundary; cleared when user dismisses the card.
+  levelUpPending: { level: number; label: string } | null;
+  // Seeded from Day 84 reflection; shown on NewCycleScreen to prompt intention.
+  nextCycleIntention: string | null;
 }
 
 // ─── Actions Shape ───────────────────────────────────────────────────────────
@@ -63,6 +68,8 @@ interface AppActions {
   ) => void;
   setOnboardingComplete: (complete: boolean) => void;
   setCelebrationPending: (pending: boolean) => void;
+  setLevelUpPending: (data: { level: number; label: string } | null) => void;
+  setNextCycleIntention: (intention: string | null) => void;
   submitVibeCheck: (rating: VibeCheck['rating']) => Promise<void>;
   completeCycle: (reflection: string) => Promise<void>;
 
@@ -86,6 +93,8 @@ const initialState: AppState = {
   lastVibeCheckDate: null,
   onboardingComplete: false,
   celebrationPending: false,
+  levelUpPending: null,
+  nextCycleIntention: null,
 };
 
 // ─── Store ───────────────────────────────────────────────────────────────────
@@ -144,13 +153,20 @@ export const useAppStore = create<AppState & AppActions>()(
             lastCheckInDate: today,
           };
 
+          const oldXp = state.profile?.xp ?? 0;
+          const newXp = Math.max(0, oldXp + xpDelta);
+          const oldLevel = getLevelForXp(oldXp);
+          const newLevel = getLevelForXp(newXp);
+
           return {
             todayCheckIns: { ...state.todayCheckIns, [domainType]: optimisticCheckIn },
             checkInHistory: history,
             streaks: { ...state.streaks, [domainType]: updatedStreak },
-            profile: state.profile
-              ? { ...state.profile, xp: Math.max(0, state.profile.xp + xpDelta) }
-              : null,
+            profile: state.profile ? { ...state.profile, xp: newXp } : null,
+            levelUpPending:
+              newLevel.level > oldLevel.level
+                ? { level: newLevel.level, label: newLevel.label }
+                : state.levelUpPending,
           };
         });
 
@@ -182,6 +198,8 @@ export const useAppStore = create<AppState & AppActions>()(
 
       setOnboardingComplete: (onboardingComplete) => set({ onboardingComplete }),
       setCelebrationPending: (celebrationPending) => set({ celebrationPending }),
+      setLevelUpPending: (levelUpPending) => set({ levelUpPending }),
+      setNextCycleIntention: (nextCycleIntention) => set({ nextCycleIntention }),
 
       submitVibeCheck: async (rating) => {
         const { profile, currentCycle } = get();
@@ -247,7 +265,13 @@ export const useAppStore = create<AppState & AppActions>()(
       // Clears per-cycle local state when a new cycle begins so streak history
       // from the previous cycle doesn't bleed into the new one.
       resetCycleLocalState: () =>
-        set({ checkInHistory: {}, todayCheckIns: {}, domainFocuses: [], streaks: {} }),
+        set({
+          checkInHistory: {},
+          todayCheckIns: {},
+          domainFocuses: [],
+          streaks: {},
+          nextCycleIntention: null,
+        }),
 
       signOut: async () => {
         // reset() before signOut so the auth listener's setAuthUser(null) call
@@ -272,6 +296,7 @@ export const useAppStore = create<AppState & AppActions>()(
         currentCycle: state.currentCycle,
         domainFocuses: state.domainFocuses,
         lastVibeCheckDate: state.lastVibeCheckDate,
+        nextCycleIntention: state.nextCycleIntention,
       }),
     },
   ),
