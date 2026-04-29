@@ -131,6 +131,7 @@ function NoteRow({ checkIn, cycleId, profileId, domainType, limit }: NoteRowProp
             placeholder="Add a note for this day..."
             value={draft}
             onChange={(e) => setDraft(e.target.value)}
+            maxLength={500}
             // biome-ignore lint/a11y/noAutofocus: inline editor should grab focus on expand
             autoFocus
           />

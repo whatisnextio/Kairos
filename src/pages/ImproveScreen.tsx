@@ -20,7 +20,7 @@ export default function ImproveScreen() {
   const isSunday = today.getDay() === 0;
   const canSeeNudge = isBrotherhood || isSunday;
 
-  const { data: nudge, isLoading, refetch } = useNudge();
+  const { data: nudge, isLoading, isError, refetch } = useNudge();
   const { mutate: updateStatus } = useUpdateNudgeStatus();
 
   const [ctaExpanded, setCtaExpanded] = useState(false);
@@ -51,6 +51,15 @@ export default function ImproveScreen() {
       {canSeeNudge && isLoading && (
         <Card>
           <p className="text-base-subtext text-sm">Generating your nudge...</p>
+        </Card>
+      )}
+
+      {/* Error state */}
+      {canSeeNudge && isError && !isLoading && (
+        <Card>
+          <p className="text-status-missed text-sm">
+            Unable to load your nudge. You may have hit the daily limit. Try again tomorrow.
+          </p>
         </Card>
       )}
 

@@ -75,7 +75,7 @@ export default function HomeScreen() {
     } else if (
       !vibeCheckShownThisSession &&
       shouldShowVibeCheck(lastVibeCheckDate, dayInCycle) &&
-      new Date().getDay() === 0
+      [0, 1].includes(new Date().getDay())
     ) {
       vibeCheckShownThisSession = true;
       setShowVibeCheck(true);
