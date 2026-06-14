@@ -1,0 +1,454 @@
+/* Kairos. Dark mode only. Orange on black, a nod to the Garmin aesthetic Liam
+   already lives in. One screen, mobile-first, WCAG 2.1 AA contrast. */
+
+:root {
+  --bg: #000000;
+  --surface: #111111;
+  --surface-2: #1a1a1a;
+  --line: #262626;
+  --text: #f5f5f5;
+  --subtext: #b5b5b5;
+  --accent: #ff5a00;
+  --accent-dim: #5a2400;
+  --good: #34c759;
+  --bad: #ff453a;
+  --radius: 16px;
+  --tap: 44px;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  line-height: 1.4;
+  min-height: 100vh;
+  padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom)
+    env(safe-area-inset-left);
+}
+
+.app {
+  max-width: 440px;
+  margin: 0 auto;
+  padding: 20px 18px 48px;
+}
+
+/* ─── Header ─────────────────────────────────────────────────────────────── */
+
+.header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: 24px;
+}
+
+.wordmark {
+  font-weight: 800;
+  letter-spacing: 0.28em;
+  font-size: 0.95rem;
+}
+
+.wordmark span {
+  color: var(--accent);
+}
+
+.date {
+  color: var(--subtext);
+  font-size: 0.8rem;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ─── Score hero ─────────────────────────────────────────────────────────── */
+
+.hero {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.gauge {
+  position: relative;
+  width: 220px;
+  height: 220px;
+}
+
+.gauge svg {
+  width: 100%;
+  height: 100%;
+  transform: rotate(-90deg);
+}
+
+.gauge__track {
+  fill: none;
+  stroke: var(--surface-2);
+  stroke-width: 14;
+}
+
+.gauge__value {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 14;
+  stroke-linecap: round;
+  transition: stroke-dashoffset 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gauge__value {
+    transition: none;
+  }
+}
+
+.gauge__center {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.score {
+  font-size: 4.6rem;
+  font-weight: 800;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+.score__label {
+  margin-top: 4px;
+  font-size: 0.72rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--subtext);
+}
+
+.delta {
+  margin-top: 10px;
+  font-size: 0.85rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--subtext);
+  min-height: 1.2em;
+}
+
+.delta--up {
+  color: var(--good);
+}
+.delta--down {
+  color: var(--bad);
+}
+
+/* ─── Stat chips ─────────────────────────────────────────────────────────── */
+
+.stats {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin: 20px 0;
+}
+
+.stat {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 14px 16px;
+}
+
+.stat__num {
+  font-size: 1.9rem;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.1;
+}
+
+.stat__num .unit {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--subtext);
+  margin-left: 4px;
+}
+
+.stat__label {
+  font-size: 0.78rem;
+  color: var(--subtext);
+  margin-top: 2px;
+}
+
+.stat__best {
+  font-size: 0.7rem;
+  color: var(--subtext);
+  margin-top: 6px;
+  opacity: 0.85;
+}
+
+/* ─── Trend ──────────────────────────────────────────────────────────────── */
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 16px;
+  margin-bottom: 16px;
+}
+
+.card__title {
+  font-size: 0.78rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--subtext);
+  margin: 0 0 12px;
+}
+
+.trend {
+  width: 100%;
+  height: 120px;
+  display: block;
+}
+
+.trend__empty {
+  color: var(--subtext);
+  font-size: 0.85rem;
+  text-align: center;
+  padding: 28px 0;
+}
+
+.trend__axis {
+  display: flex;
+  justify-content: space-between;
+  color: var(--subtext);
+  font-size: 0.68rem;
+  margin-top: 6px;
+}
+
+/* ─── Input ──────────────────────────────────────────────────────────────── */
+
+.field {
+  margin-bottom: 18px;
+}
+
+.field__label {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  font-size: 0.85rem;
+  margin-bottom: 8px;
+}
+
+.field__value {
+  font-weight: 800;
+  font-size: 1.1rem;
+  color: var(--accent);
+  font-variant-numeric: tabular-nums;
+}
+
+.field__weight {
+  color: var(--subtext);
+  font-size: 0.72rem;
+  font-weight: 600;
+  margin-left: 4px;
+}
+
+/* ─── Connect sources ────────────────────────────────────────────────────── */
+
+.sources {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.source {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: baseline;
+  gap: 2px 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.source:last-child {
+  border-bottom: none;
+}
+
+.source__name {
+  font-weight: 700;
+  font-size: 0.95rem;
+}
+
+.source__role {
+  grid-column: 1;
+  font-size: 0.74rem;
+  color: var(--subtext);
+}
+
+.source__status {
+  grid-column: 2;
+  grid-row: 1 / span 2;
+  align-self: center;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--accent);
+  border: 1px solid var(--accent-dim);
+  border-radius: 999px;
+  padding: 3px 10px;
+}
+
+.sources__note {
+  font-size: 0.74rem;
+  color: var(--subtext);
+  margin: 12px 0 0;
+}
+
+input[type='range'] {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 8px;
+  border-radius: 999px;
+  background: var(--surface-2);
+  outline-offset: 4px;
+}
+
+input[type='range']::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--accent);
+  border: 3px solid #000;
+  cursor: pointer;
+}
+
+input[type='range']::-moz-range-thumb {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--accent);
+  border: 3px solid #000;
+  cursor: pointer;
+}
+
+.toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  min-height: var(--tap);
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  color: var(--text);
+  padding: 12px 16px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.toggle[aria-pressed='true'] {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #000;
+}
+
+.toggle__state {
+  font-weight: 800;
+  font-size: 0.8rem;
+  letter-spacing: 0.08em;
+}
+
+.btn {
+  width: 100%;
+  min-height: var(--tap);
+  border: none;
+  border-radius: var(--radius);
+  background: var(--accent);
+  color: #000;
+  font-size: 1rem;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  margin-top: 4px;
+}
+
+.btn:disabled {
+  background: var(--surface-2);
+  color: var(--subtext);
+  cursor: default;
+}
+
+.btn--ghost {
+  background: transparent;
+  border: 1px solid var(--line);
+  color: var(--text);
+}
+
+.saved-flag {
+  text-align: center;
+  font-size: 0.8rem;
+  color: var(--good);
+  min-height: 1.2em;
+  margin-top: 10px;
+}
+
+/* ─── Reminders + footer ─────────────────────────────────────────────────── */
+
+.reminders {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.reminders__copy {
+  font-size: 0.85rem;
+}
+
+.reminders__status {
+  font-size: 0.74rem;
+  color: var(--subtext);
+  margin-top: 2px;
+}
+
+.footer {
+  text-align: center;
+  color: var(--subtext);
+  font-size: 0.74rem;
+  margin-top: 28px;
+  line-height: 1.6;
+}
+
+.footer em {
+  color: var(--text);
+  font-style: normal;
+}
+
+/* Visible focus for keyboard users on every interactive control. */
+:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 3px;
+  border-radius: 6px;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
