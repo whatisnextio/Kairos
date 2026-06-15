@@ -1,28 +1,29 @@
-// Kairos. One screen, one score, one tap. This controller wires the pure
-// scoring engine to the DOM and to local storage. No framework, no build step.
+// Kairos. One screen, one score, one tap.
 
 import {
   STREAK_THRESHOLD,
   alcoholFreeStreak,
   computeScore,
   computeStreak,
-  daysBetween,
   incomingStreakFor,
   isTrendingDown,
   personalBests,
   recentTrend,
 } from './score.js';
 import {
-  REMINDERS,
   isMilestone,
   milestoneMessage,
-  notify,
-  permission,
-  reminderMessage,
-  requestPermission,
   streakBrokenMessage,
   trendingDownMessage,
 } from './notifications.js';
+import {
+  cancelReminders,
+  checkPermission,
+  notify,
+  permission,
+  requestPermission,
+  scheduleReminders,
+} from './delivery.js';
 import {
   entryFor,
   exportData,
@@ -33,6 +34,10 @@ import {
   todayKey,
   upsertEntry,
 } from './storage.js';
+import { CapacitorUpdater } from '@capgo/capacitor-updater';
+
+// Tell Capgo this bundle loaded successfully — prevents rollback on OTA error.
+CapacitorUpdater.notifyAppReady();
 
 const $ = (id) => document.getElementById(id);
 
@@ -55,12 +60,10 @@ if (existing) {
 
 // ─── Derived values ──────────────────────────────────────────────────────────
 
-/** Streak built by every saved day before today. Feeds today's bonus. */
 function incomingStreak() {
   return incomingStreakFor(state.entries, state.today, STREAK_THRESHOLD);
 }
 
-/** Live preview score for the current draft. */
 function draftScore() {
   return computeScore({
     training: state.draft.training,
@@ -70,7 +73,6 @@ function draftScore() {
   });
 }
 
-/** Score for the day before today, or null. */
 function yesterdayScore() {
   const y = entryFor(yesterdayKey(), state.entries);
   return y ? y.score : null;
@@ -82,16 +84,22 @@ function yesterdayKey() {
   return todayKey(d);
 }
 
-/**
- * Entries as displayed: saved history with today overlaid by the live draft, so
- * the trend's "Today" point tracks the hero score before you even save.
- */
 function displayEntries() {
   const withoutToday = state.entries.filter((e) => e.date !== state.today);
   return [
     ...withoutToday,
     { date: state.today, score: draftScore(), alcoholFree: state.draft.alcoholFree },
   ];
+}
+
+function reminderState() {
+  const today = entryFor(state.today, state.entries);
+  return {
+    yesterdayScore: yesterdayScore(),
+    streak: computeStreak(state.entries, STREAK_THRESHOLD),
+    loggedToday: today != null,
+    alcoholConfirmedToday: today != null && today.alcoholFree === true,
+  };
 }
 
 // ─── Rendering ───────────────────────────────────────────────────────────────
@@ -148,6 +156,13 @@ function renderStats() {
   $('dry-streak').textContent = String(dry);
   $('streak-best').textContent = pb.longestStreak ? `Best ${pb.longestStreak}` : '';
   $('dry-best').textContent = pb.longestAlcoholFree ? `Best ${pb.longestAlcoholFree}` : '';
+}
+
+function renderBests() {
+  const pb = personalBests(displayEntries(), STREAK_THRESHOLD);
+  $('best-score').textContent = pb.bestScore > 0 ? String(pb.bestScore) : '—';
+  $('best-streak').textContent = pb.longestStreak > 0 ? String(pb.longestStreak) : '—';
+  $('best-dry').textContent = pb.longestAlcoholFree > 0 ? String(pb.longestAlcoholFree) : '—';
 }
 
 function renderTrend() {
@@ -214,11 +229,20 @@ function renderInputs() {
   $('alcohol-state').textContent = pressed ? 'YES' : 'NO';
 }
 
-function renderBests() {
-  const pb = personalBests(displayEntries(), STREAK_THRESHOLD);
-  $('best-score').textContent = pb.bestScore > 0 ? String(pb.bestScore) : '—';
-  $('best-streak').textContent = pb.longestStreak > 0 ? String(pb.longestStreak) : '—';
-  $('best-dry').textContent = pb.longestAlcoholFree > 0 ? String(pb.longestAlcoholFree) : '—';
+function renderReminderStatus() {
+  const status = $('rem-status');
+  const btn = $('rem-toggle');
+  const perm = permission();
+  if (state.settings.notificationsEnabled && perm === 'granted') {
+    status.textContent = 'On. 06:30, 12:30, 20:00.';
+    btn.textContent = 'Turn off';
+  } else if (perm === 'denied') {
+    status.textContent = 'Blocked in device settings.';
+    btn.textContent = 'Turn on';
+  } else {
+    status.textContent = 'Off. 06:30, 12:30, 20:00.';
+    btn.textContent = 'Turn on';
+  }
 }
 
 function renderHistory() {
@@ -241,21 +265,6 @@ function renderHistory() {
     .join('');
 }
 
-function renderReminderStatus() {
-  const status = $('rem-status');
-  const btn = $('rem-toggle');
-  if (state.settings.notificationsEnabled && permission() === 'granted') {
-    status.textContent = 'On. 06:30, 12:30, 20:00.';
-    btn.textContent = 'Turn off';
-  } else if (permission() === 'denied') {
-    status.textContent = 'Blocked in browser settings.';
-    btn.textContent = 'Turn on';
-  } else {
-    status.textContent = 'Off. 06:30, 12:30, 20:00.';
-    btn.textContent = 'Turn on';
-  }
-}
-
 // ─── Actions ─────────────────────────────────────────────────────────────────
 
 function save() {
@@ -275,98 +284,30 @@ function save() {
   flash('Saved. No excuses.');
   render();
   fireEventNotifications({ prevStreak, wasTrendingDown, score });
+
+  // Reschedule with updated state — "logged today" suppresses the midday nag.
+  if (state.settings.notificationsEnabled) {
+    scheduleReminders(reminderState());
+  }
 }
 
 function flash(message) {
   const el = $('saved-flag');
   el.textContent = message;
   clearTimeout(flash.t);
-  flash.t = setTimeout(() => {
-    el.textContent = '';
-  }, 4000);
+  flash.t = setTimeout(() => { el.textContent = ''; }, 4000);
 }
 
-/** Blunt, event-driven notifications fired the moment a condition is met. */
 function fireEventNotifications({ prevStreak, wasTrendingDown, score }) {
-  if (permission() !== 'granted') return;
   const newStreak = computeStreak(state.entries, STREAK_THRESHOLD);
-
   if (newStreak > prevStreak && isMilestone(newStreak)) {
     notify('Kairos', milestoneMessage(newStreak), 'milestone');
   } else if (prevStreak > 0 && score < STREAK_THRESHOLD) {
     notify('Kairos', streakBrokenMessage(score), 'streak-broken');
   }
-
   if (!wasTrendingDown && isTrendingDown(state.entries, 3)) {
     notify('Kairos', trendingDownMessage(), 'trending-down');
   }
-}
-
-// ─── Reminder scheduler (best effort while the app is open) ───────────────────
-
-function reminderState() {
-  const today = entryFor(state.today, state.entries);
-  return {
-    yesterdayScore: yesterdayScore(),
-    streak: computeStreak(state.entries, STREAK_THRESHOLD),
-    loggedToday: today != null,
-    alcoholConfirmedToday: today != null && today.alcoholFree === true,
-  };
-}
-
-function pruneShown() {
-  const shown = state.settings.shown || {};
-  state.settings.shown = { [state.today]: shown[state.today] || {} };
-}
-
-function runDueReminders() {
-  if (!state.settings.notificationsEnabled || permission() !== 'granted') return;
-  pruneShown();
-  const now = new Date();
-  const shownToday = state.settings.shown[state.today];
-  for (const r of REMINDERS) {
-    const due = new Date();
-    due.setHours(r.hour, r.minute, 0, 0);
-    if (now >= due && !shownToday[r.id]) {
-      const message = reminderMessage(r.id, reminderState());
-      if (message) notify('Kairos', message, `reminder-${r.id}`);
-      shownToday[r.id] = true; // mark even when skipped, so we do not re-check all day
-    }
-  }
-  state.settings = saveSettings({ shown: state.settings.shown });
-  scheduleNextReminder();
-}
-
-let reminderTimer = null;
-function scheduleNextReminder() {
-  clearTimeout(reminderTimer);
-  if (!state.settings.notificationsEnabled || permission() !== 'granted') return;
-  const now = new Date();
-  let soonest = Infinity;
-  for (const r of REMINDERS) {
-    const due = new Date();
-    due.setHours(r.hour, r.minute, 0, 0);
-    const ms = due - now;
-    if (ms > 0 && ms < soonest) soonest = ms;
-  }
-  if (soonest !== Infinity) {
-    reminderTimer = setTimeout(runDueReminders, soonest + 500);
-  }
-}
-
-async function toggleReminders() {
-  if (state.settings.notificationsEnabled) {
-    state.settings = saveSettings({ notificationsEnabled: false });
-    clearTimeout(reminderTimer);
-    renderReminderStatus();
-    return;
-  }
-  const result = await requestPermission();
-  if (result === 'granted') {
-    state.settings = saveSettings({ notificationsEnabled: true });
-    runDueReminders();
-  }
-  renderReminderStatus();
 }
 
 // ─── Export / import ─────────────────────────────────────────────────────────
@@ -393,9 +334,24 @@ async function handleImport(file) {
     render();
     if ($('history-toggle').getAttribute('aria-expanded') === 'true') renderHistory();
   }
-  setTimeout(() => {
-    status.textContent = '';
-  }, 5000);
+  setTimeout(() => { status.textContent = ''; }, 5000);
+}
+
+// ─── Reminder toggle ─────────────────────────────────────────────────────────
+
+async function toggleReminders() {
+  if (state.settings.notificationsEnabled) {
+    state.settings = saveSettings({ notificationsEnabled: false });
+    await cancelReminders();
+    renderReminderStatus();
+    return;
+  }
+  const result = await requestPermission();
+  if (result === 'granted') {
+    state.settings = saveSettings({ notificationsEnabled: true });
+    await scheduleReminders(reminderState());
+  }
+  renderReminderStatus();
 }
 
 // ─── Wiring ──────────────────────────────────────────────────────────────────
@@ -443,20 +399,25 @@ $('import-input').addEventListener('change', (e) => {
 
 document.addEventListener('visibilitychange', () => {
   if (document.visibilityState === 'visible') {
-    // A new day may have started, or a reminder may have come due while hidden.
     state.today = todayKey();
-    runDueReminders();
+    checkPermission().then((p) => {
+      renderReminderStatus();
+      if (state.settings.notificationsEnabled && p === 'granted') {
+        scheduleReminders(reminderState());
+      }
+    });
     render();
   }
 });
 
-render();
-runDueReminders();
+// ─── Init ─────────────────────────────────────────────────────────────────────
 
-if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('sw.js').catch(() => {
-      // Offline support is a nice-to-have; the app works without it.
-    });
-  });
-}
+render();
+
+// Prime the permission cache then reschedule if already enabled.
+checkPermission().then((p) => {
+  renderReminderStatus();
+  if (state.settings.notificationsEnabled && p === 'granted') {
+    scheduleReminders(reminderState());
+  }
+});

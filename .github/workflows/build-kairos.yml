@@ -1,0 +1,133 @@
+name: Kairos — Build & OTA
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'kairos/**'
+      - '.github/workflows/build-kairos.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'kairos/**'
+      - '.github/workflows/build-kairos.yml'
+  workflow_dispatch:
+
+jobs:
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: kairos
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: kairos/package-lock.json
+
+      - name: Install
+        run: npm ci
+
+      - name: Test
+        run: npm test
+
+  build-web:
+    name: Web build
+    runs-on: ubuntu-latest
+    needs: test
+    defaults:
+      run:
+        working-directory: kairos
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: kairos/package-lock.json
+
+      - name: Install
+        run: npm ci
+
+      - name: Vite build
+        run: npm run build
+
+      - name: Upload dist
+        uses: actions/upload-artifact@v4
+        with:
+          name: kairos-dist
+          path: kairos/dist/
+          retention-days: 7
+
+  build-android:
+    name: Android APK
+    runs-on: ubuntu-latest
+    needs: build-web
+    defaults:
+      run:
+        working-directory: kairos
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: kairos/package-lock.json
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Install
+        run: npm ci
+
+      - name: Vite build
+        run: npm run build
+
+      - name: Cap sync Android
+        run: npx cap sync android
+
+      - name: Gradle — build debug APK
+        working-directory: kairos/android
+        run: ./gradlew assembleDebug --no-daemon
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: kairos-debug
+          path: kairos/android/app/build/outputs/apk/debug/app-debug.apk
+          retention-days: 30
+
+  ota-deploy:
+    name: OTA deploy (Capgo)
+    runs-on: ubuntu-latest
+    needs: build-web
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    defaults:
+      run:
+        working-directory: kairos
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: kairos/package-lock.json
+
+      - name: Install
+        run: npm ci
+
+      - name: Vite build
+        run: npm run build
+
+      - name: Upload to Capgo
+        run: npx @capgo/cli@latest bundle upload --apikey ${{ secrets.CAPGO_API_KEY }} --channel production

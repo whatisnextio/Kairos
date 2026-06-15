@@ -1,0 +1,18 @@
+{
+  "appId": "io.kairos.app",
+  "appName": "Kairos",
+  "webDir": "dist",
+  "server": {
+    "androidScheme": "https"
+  },
+  "plugins": {
+    "LocalNotifications": {
+      "smallIcon": "ic_stat_kairos",
+      "iconColor": "#ff5a00",
+      "sound": null
+    },
+    "CapacitorUpdater": {
+      "autoUpdate": true
+    }
+  }
+}
