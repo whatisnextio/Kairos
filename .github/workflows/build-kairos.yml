@@ -96,11 +96,37 @@ jobs:
         working-directory: kairos/android
         run: chmod +x gradlew
 
-      - name: Gradle — build debug APK
+      - name: Decode keystore (release builds only)
+        if: secrets.KEYSTORE_FILE != ''
+        run: echo "${{ secrets.KEYSTORE_FILE }}" | base64 -d > kairos/android/app/release.jks
+        env:
+          KEYSTORE_FILE: ${{ secrets.KEYSTORE_FILE }}
+
+      - name: Gradle — build release APK (signed)
+        if: github.ref == 'refs/heads/main' && secrets.KEYSTORE_FILE != ''
+        working-directory: kairos/android
+        run: ./gradlew assembleRelease --no-daemon
+        env:
+          KEYSTORE_PATH: ${{ github.workspace }}/kairos/android/app/release.jks
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+
+      - name: Gradle — build debug APK (unsigned, PRs and forks)
+        if: github.ref != 'refs/heads/main' || secrets.KEYSTORE_FILE == ''
         working-directory: kairos/android
         run: ./gradlew assembleDebug --no-daemon
 
-      - name: Upload APK
+      - name: Upload signed release APK
+        if: github.ref == 'refs/heads/main' && secrets.KEYSTORE_FILE != ''
+        uses: actions/upload-artifact@v4
+        with:
+          name: kairos-release
+          path: kairos/android/app/build/outputs/apk/release/app-release.apk
+          retention-days: 90
+
+      - name: Upload debug APK
+        if: github.ref != 'refs/heads/main' || secrets.KEYSTORE_FILE == ''
         uses: actions/upload-artifact@v4
         with:
           name: kairos-debug

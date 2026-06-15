@@ -10,16 +10,18 @@
     "test": "vitest run",
     "cap:sync": "npm run build && cap sync",
     "cap:android": "npm run build && cap sync android",
-    "cap:ios": "npm run build && cap sync ios"
+    "cap:ios": "npm run build && cap sync ios",
+    "gen:icons": "node scripts/gen-icons.js"
   },
   "dependencies": {
-    "@capgo/capacitor-updater": "^6.0.0",
     "@capacitor/core": "^6.0.0",
     "@capacitor/local-notifications": "^6.0.0",
-    "@capacitor/preferences": "^6.0.0"
+    "@capacitor/preferences": "^6.0.0",
+    "@capgo/capacitor-updater": "^6.0.0"
   },
   "devDependencies": {
     "@capacitor/android": "^6.0.0",
+    "@capacitor/assets": "^3.0.5",
     "@capacitor/cli": "^6.0.0",
     "@capacitor/ios": "^6.0.0",
     "vite": "^5.0.0",
