@@ -1,24 +1,23 @@
-We are building 12K, a KAIROS-framework PWA for men. 84-day transformation system.
+We are building Kairos — a native mobile app (Capacitor 6 wrapping a vanilla JS PWA) that gives a single daily score 0–100: Training 40%, Recovery 30%, Alcohol-free 20%, Streak bonus 10%.
 
-Current state: Feature-complete. 52/52 tests passing. TypeScript clean. Bundle 66 kB. 25 commits not pushed.
-Last shipped: DetailScreen local history for free tier, ProgressScreen streaks, pb-safe CSS, code splitting, XP fixes, squad tiles, stale check-in clearing, AbandonCycleModal.
-Top-1 task: Credential unblock and live deployment.
+Repo: https://github.com/whatisnextio/Kairos
+Working directory: C:\Users\ldgmc\Documents\Kairos
+Branch: main — all PRs merged and deleted (PRs 1–4 done).
+Tests: 116 passing. Build: Vite, clean, no warnings.
 
-Read HANDOFF.md first, then crack on.
+Read HANDOFF.md for the full current state and remaining tasks.
 
-Stack: Vite + React + TS + Tailwind + Supabase + Stripe + Claude Haiku/Sonnet
-Repo: C:\Users\ldgmc\Documents\Kairos\
-52 unit tests passing (src/tests/kairos.test.ts + gamification.test.ts).
-Pre-commit hook: tsc + voice check + vitest on every commit.
+The next things to build (in priority order):
 
-Blocked on: Supabase URL/key, Anthropic API key, Stripe URLs/secrets, VAPID keys, real PWA icons.
+1. Android release signing in CI — update kairos/android/app/build.gradle with signingConfigs.release reading env vars (KEYSTORE_PATH, KEYSTORE_PASSWORD, KEY_ALIAS, KEY_PASSWORD), update .github/workflows/build-kairos.yml to run assembleRelease on main push, upload signed APK artifact. The Gradle signing snippet is in HANDOFF.md.
 
-Once credentials arrive:
-1. cp .env.example .env && fill in values
-2. supabase db push (5 migrations)
-3. supabase secrets set ANTHROPIC_API_KEY=... STRIPE_WEBHOOK_SECRET=... VAPID_PRIVATE_KEY=...
-4. supabase functions deploy --all
-5. npm run build && vercel --prod
-6. git push origin main (25 commits ahead of origin)
+2. App icon replacement — the current Android mipmap icons and iOS AppIcon.appiconset are default Capacitor teal. Replace with Kairos orange #ff5a00 K letterform icons at all required densities. Use a Node script or sharp/jimp to generate from a base SVG/canvas.
 
-British English. No em dashes. Ship it.
+3. Splash screen — replace default white Capacitor splash with Kairos black (#000000) + orange K. Android: all drawable-*-*/splash.png. iOS: Splash.imageset PNGs.
+
+Rules:
+- V2 mode. Sonnet model. Work autonomously.
+- All PRs merged and deleted immediately — never leave PRs open.
+- All permissions accepted.
+- Loop until done. Write HANDOFF.md + NEXT_PROMPT.md when context fills.
+- 116 tests must still pass on every commit.
