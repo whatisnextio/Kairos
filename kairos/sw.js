@@ -1,7 +1,7 @@
 // Kairos service worker. Caches the app shell so the one screen opens instantly
 // and works offline, and routes a tapped notification back to the app.
 
-const CACHE = 'kairos-v1';
+const CACHE = 'kairos-v1.1';
 const SHELL = [
   './',
   './index.html',

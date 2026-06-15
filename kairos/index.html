@@ -58,6 +58,25 @@
         </div>
       </section>
 
+      <!-- Personal bests -->
+      <section class="card" aria-labelledby="bests-title">
+        <h2 class="card__title" id="bests-title">Personal bests</h2>
+        <div class="bests">
+          <div class="best">
+            <div class="best__val" id="best-score">—</div>
+            <div class="best__label">Best score</div>
+          </div>
+          <div class="best">
+            <div class="best__val" id="best-streak">—</div>
+            <div class="best__label">Longest streak</div>
+          </div>
+          <div class="best">
+            <div class="best__val" id="best-dry">—</div>
+            <div class="best__label">Dry run</div>
+          </div>
+        </div>
+      </section>
+
       <!-- 7 day trend -->
       <section class="card" aria-labelledby="trend-title">
         <h2 class="card__title" id="trend-title">7 day trend</h2>
@@ -162,6 +181,25 @@
           <button type="button" class="btn btn--ghost" id="rem-toggle" style="width: auto; padding: 0 18px">
             Turn on
           </button>
+        </div>
+      </section>
+
+      <!-- History + data export/import -->
+      <section class="card" aria-labelledby="history-title">
+        <div class="card__header">
+          <h2 class="card__title" id="history-title">History</h2>
+          <button type="button" class="btn--link" id="history-toggle" aria-expanded="false">Show</button>
+        </div>
+        <div id="history-body" hidden>
+          <ul class="history-list" id="history-list" aria-label="Past entries, newest first"></ul>
+          <div class="data-actions">
+            <button type="button" class="btn btn--ghost" id="export-btn">Export data</button>
+            <label class="btn btn--ghost import-label">
+              Import data
+              <input type="file" id="import-input" accept=".json" class="visually-hidden" />
+            </label>
+          </div>
+          <div class="saved-flag" id="import-status" role="status" aria-live="polite"></div>
         </div>
       </section>
 

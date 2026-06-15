@@ -61,3 +61,40 @@ export function saveSettings(partial) {
   write(SETTINGS_KEY, next);
   return next;
 }
+
+/** Serialise all entries to a JSON string for download. */
+export function exportData() {
+  return JSON.stringify({ version: 1, entries: loadEntries() }, null, 2);
+}
+
+/**
+ * Import entries from a JSON export string. Imported entries win on date
+ * conflicts. Returns { ok, count, message }.
+ */
+export function importData(json) {
+  try {
+    const parsed = JSON.parse(json);
+    const rows = parsed?.entries;
+    if (!Array.isArray(rows) || rows.length === 0) {
+      return { ok: false, count: 0, message: 'No entries found in file.' };
+    }
+    const valid = rows.filter(
+      (e) =>
+        typeof e.date === 'string' &&
+        /^\d{4}-\d{2}-\d{2}$/.test(e.date) &&
+        typeof e.score === 'number',
+    );
+    if (valid.length === 0) {
+      return { ok: false, count: 0, message: 'File contains no valid entries.' };
+    }
+    const existing = loadEntries();
+    const importedDates = new Set(valid.map((e) => e.date));
+    const merged = [...existing.filter((e) => !importedDates.has(e.date)), ...valid].sort(
+      (a, b) => (a.date < b.date ? -1 : 1),
+    );
+    write(ENTRIES_KEY, merged);
+    return { ok: true, count: valid.length, message: `Imported ${valid.length} entries.` };
+  } catch {
+    return { ok: false, count: 0, message: 'Could not read file.' };
+  }
+}

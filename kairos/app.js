@@ -25,6 +25,8 @@ import {
 } from './notifications.js';
 import {
   entryFor,
+  exportData,
+  importData,
   loadEntries,
   loadSettings,
   saveSettings,
@@ -98,6 +100,7 @@ function render() {
   renderDate();
   renderHero();
   renderStats();
+  renderBests();
   renderTrend();
   renderInputs();
   renderReminderStatus();
@@ -209,6 +212,33 @@ function renderInputs() {
   const pressed = state.draft.alcoholFree;
   $('alcohol').setAttribute('aria-pressed', String(pressed));
   $('alcohol-state').textContent = pressed ? 'YES' : 'NO';
+}
+
+function renderBests() {
+  const pb = personalBests(displayEntries(), STREAK_THRESHOLD);
+  $('best-score').textContent = pb.bestScore > 0 ? String(pb.bestScore) : '—';
+  $('best-streak').textContent = pb.longestStreak > 0 ? String(pb.longestStreak) : '—';
+  $('best-dry').textContent = pb.longestAlcoholFree > 0 ? String(pb.longestAlcoholFree) : '—';
+}
+
+function renderHistory() {
+  const list = $('history-list');
+  const sorted = [...state.entries].sort((a, b) => (a.date > b.date ? -1 : 1));
+  if (sorted.length === 0) {
+    list.innerHTML = '<li class="history__empty">No entries yet. Save your first day.</li>';
+    return;
+  }
+  list.innerHTML = sorted
+    .map((entry) => {
+      const dry = entry.alcoholFree;
+      return `<li class="history-entry">
+        <span class="history-entry__date">${formatShort(entry.date)}</span>
+        <span class="history-entry__meta">Training ${entry.training ?? '—'} · Recovery ${entry.recovery ?? '—'}</span>
+        <span class="history-entry__score">${entry.score}</span>
+        <span class="history-entry__dry${dry ? '' : ' history-entry__dry--no'}" aria-label="${dry ? 'Dry' : ''}">Dry</span>
+      </li>`;
+    })
+    .join('');
 }
 
 function renderReminderStatus() {
@@ -339,6 +369,35 @@ async function toggleReminders() {
   renderReminderStatus();
 }
 
+// ─── Export / import ─────────────────────────────────────────────────────────
+
+function handleExport() {
+  const json = exportData();
+  const blob = new Blob([json], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `kairos-${state.today}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+async function handleImport(file) {
+  if (!file) return;
+  const text = await file.text();
+  const result = importData(text);
+  const status = $('import-status');
+  status.textContent = result.message;
+  if (result.ok) {
+    state.entries = loadEntries();
+    render();
+    if ($('history-toggle').getAttribute('aria-expanded') === 'true') renderHistory();
+  }
+  setTimeout(() => {
+    status.textContent = '';
+  }, 5000);
+}
+
 // ─── Wiring ──────────────────────────────────────────────────────────────────
 
 function onSlider(id, key) {
@@ -347,6 +406,7 @@ function onSlider(id, key) {
     $(`${id}-out`).textContent = String(state.draft[key]);
     renderHero();
     renderStats();
+    renderBests();
     renderTrend();
   });
 }
@@ -358,11 +418,28 @@ $('alcohol').addEventListener('click', () => {
   renderInputs();
   renderHero();
   renderStats();
+  renderBests();
   renderTrend();
 });
 
 $('save').addEventListener('click', save);
 $('rem-toggle').addEventListener('click', toggleReminders);
+
+$('history-toggle').addEventListener('click', () => {
+  const body = $('history-body');
+  const btn = $('history-toggle');
+  const expanded = btn.getAttribute('aria-expanded') === 'true';
+  body.hidden = expanded;
+  btn.setAttribute('aria-expanded', String(!expanded));
+  btn.textContent = expanded ? 'Show' : 'Hide';
+  if (!expanded) renderHistory();
+});
+
+$('export-btn').addEventListener('click', handleExport);
+$('import-input').addEventListener('change', (e) => {
+  handleImport(e.target.files[0]);
+  e.target.value = '';
+});
 
 document.addEventListener('visibilitychange', () => {
   if (document.visibilityState === 'visible') {
