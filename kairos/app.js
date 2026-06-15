@@ -19,6 +19,7 @@ import {
 import {
   cancelReminders,
   checkPermission,
+  initChannels,
   notify,
   permission,
   requestPermission,
@@ -400,12 +401,14 @@ $('import-input').addEventListener('change', (e) => {
 document.addEventListener('visibilitychange', () => {
   if (document.visibilityState === 'visible') {
     state.today = todayKey();
-    checkPermission().then((p) => {
-      renderReminderStatus();
-      if (state.settings.notificationsEnabled && p === 'granted') {
-        scheduleReminders(reminderState());
-      }
-    });
+    initChannels()
+      .then(() => checkPermission())
+      .then((p) => {
+        renderReminderStatus();
+        if (state.settings.notificationsEnabled && p === 'granted') {
+          scheduleReminders(reminderState());
+        }
+      });
     render();
   }
 });
@@ -414,8 +417,8 @@ document.addEventListener('visibilitychange', () => {
 
 render();
 
-// Prime the permission cache then reschedule if already enabled.
-checkPermission().then((p) => {
+// Init sequence: create Android channels, prime permission cache, reschedule if enabled.
+initChannels().then(() => checkPermission()).then((p) => {
   renderReminderStatus();
   if (state.settings.notificationsEnabled && p === 'granted') {
     scheduleReminders(reminderState());

@@ -13,6 +13,31 @@ export function permission() {
   return _permission;
 }
 
+// Create Android notification channels (required for Android 8+).
+// Called once on app boot before any scheduling.
+export async function initChannels() {
+  try {
+    await LocalNotifications.createChannel({
+      id: 'kairos-reminders',
+      name: 'Daily reminders',
+      description: 'Morning, midday, and evening check-in nudges',
+      importance: 4,
+      visibility: 1,
+      vibration: true,
+      sound: null,
+    });
+    await LocalNotifications.createChannel({
+      id: 'kairos-events',
+      name: 'Milestones & alerts',
+      description: 'Streak milestones, broken streaks, and trend alerts',
+      importance: 3,
+      visibility: 1,
+      vibration: false,
+      sound: null,
+    });
+  } catch { /* non-Android platforms return an error — safe to ignore */ }
+}
+
 export async function checkPermission() {
   try {
     const { display } = await LocalNotifications.checkPermissions();
