@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <!-- K letterform — white monochrome for Android status bar -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M6,4 L6,20 L9,20 L9,13.5 L15,20 L19,20 L12,12 L18.5,4 L14.5,4 L9,11 L9,4 Z" />
+</vector>
