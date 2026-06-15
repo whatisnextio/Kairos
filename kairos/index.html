@@ -1,0 +1,214 @@
+<!doctype html>
+<html lang="en-GB">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#000000" />
+    <meta name="description" content="Kairos. One daily score that tells the truth about how you are living." />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <link rel="manifest" href="manifest.webmanifest" />
+    <link rel="icon" href="icon-192.png" />
+    <link rel="apple-touch-icon" href="icon-192.png" />
+    <link rel="stylesheet" href="styles.css" />
+    <title>Kairos</title>
+  </head>
+  <body>
+    <main class="app">
+      <header class="header">
+        <div class="wordmark">KAIR<span>O</span>S</div>
+        <div class="date" id="date"></div>
+      </header>
+
+      <!-- Score hero -->
+      <section class="hero" aria-labelledby="score-label">
+        <div class="gauge">
+          <svg viewBox="0 0 120 120" aria-hidden="true">
+            <circle class="gauge__track" cx="60" cy="60" r="52" />
+            <circle
+              class="gauge__value"
+              id="gauge-value"
+              cx="60"
+              cy="60"
+              r="52"
+              pathLength="100"
+              stroke-dasharray="100"
+              stroke-dashoffset="100"
+            />
+          </svg>
+          <div class="gauge__center">
+            <div class="score" id="score" aria-live="polite">0</div>
+            <div class="score__label" id="score-label">Kairos Score</div>
+          </div>
+        </div>
+        <div class="delta" id="delta"></div>
+      </section>
+
+      <!-- Streak chips -->
+      <section class="stats">
+        <div class="stat">
+          <div class="stat__num"><span id="streak">0</span><span class="unit">days</span></div>
+          <div class="stat__label">Streak (score 60+)</div>
+          <div class="stat__best" id="streak-best"></div>
+        </div>
+        <div class="stat">
+          <div class="stat__num"><span id="dry-streak">0</span><span class="unit">days</span></div>
+          <div class="stat__label">Alcohol free</div>
+          <div class="stat__best" id="dry-best"></div>
+        </div>
+      </section>
+
+      <!-- Personal bests -->
+      <section class="card" aria-labelledby="bests-title">
+        <h2 class="card__title" id="bests-title">Personal bests</h2>
+        <div class="bests">
+          <div class="best">
+            <div class="best__val" id="best-score">—</div>
+            <div class="best__label">Best score</div>
+          </div>
+          <div class="best">
+            <div class="best__val" id="best-streak">—</div>
+            <div class="best__label">Longest streak</div>
+          </div>
+          <div class="best">
+            <div class="best__val" id="best-dry">—</div>
+            <div class="best__label">Dry run</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 7 day trend -->
+      <section class="card" aria-labelledby="trend-title">
+        <h2 class="card__title" id="trend-title">7 day trend</h2>
+        <div id="trend-wrap">
+          <svg class="trend" id="trend" viewBox="0 0 300 120" preserveAspectRatio="none" role="img"></svg>
+          <div class="trend__axis"><span id="trend-start"></span><span>Today</span></div>
+        </div>
+      </section>
+
+      <!-- Today's input -->
+      <section class="card" aria-labelledby="today-title">
+        <h2 class="card__title" id="today-title">Today</h2>
+
+        <div class="field">
+          <label class="field__label" for="training">
+            <span>Training <span class="field__weight">40%</span></span>
+            <span class="field__value" id="training-out">0</span>
+          </label>
+          <input
+            type="range"
+            id="training"
+            min="0"
+            max="100"
+            step="1"
+            value="0"
+            aria-describedby="training-help"
+          />
+          <p id="training-help" class="visually-hidden">
+            Your training load from 0 to 100. Garmin or MyZone in Phase 2.
+          </p>
+        </div>
+
+        <div class="field">
+          <label class="field__label" for="recovery">
+            <span>Recovery <span class="field__weight">30%</span></span>
+            <span class="field__value" id="recovery-out">0</span>
+          </label>
+          <input
+            type="range"
+            id="recovery"
+            min="0"
+            max="100"
+            step="1"
+            value="0"
+            aria-describedby="recovery-help"
+          />
+          <p id="recovery-help" class="visually-hidden">
+            Sleep and HRV from 0 to 100. This is the one that catches overwork and burnout. Oura or
+            Garmin in Phase 2.
+          </p>
+        </div>
+
+        <div class="field">
+          <button type="button" class="toggle" id="alcohol" aria-pressed="false">
+            <span>Alcohol free today</span>
+            <span class="toggle__state" id="alcohol-state">NO</span>
+          </button>
+        </div>
+
+        <button type="button" class="btn" id="save">Save today</button>
+        <div class="saved-flag" id="saved-flag" role="status" aria-live="polite"></div>
+      </section>
+
+      <!-- Connect (Phase 2 integrations) -->
+      <section class="card" aria-labelledby="connect-title">
+        <h2 class="card__title" id="connect-title">Connect &middot; Phase 2</h2>
+        <ul class="sources" id="sources">
+          <li class="source">
+            <span class="source__name">Garmin</span>
+            <span class="source__role">Training + recovery</span>
+            <span class="source__status">Soon</span>
+          </li>
+          <li class="source">
+            <span class="source__name">Oura</span>
+            <span class="source__role">Sleep + HRV</span>
+            <span class="source__status">Soon</span>
+          </li>
+          <li class="source">
+            <span class="source__name">MyZone</span>
+            <span class="source__role">Effort + activity</span>
+            <span class="source__status">Soon</span>
+          </li>
+          <li class="source">
+            <span class="source__name">Google</span>
+            <span class="source__role">Fit + calendar load</span>
+            <span class="source__status">Soon</span>
+          </li>
+        </ul>
+        <p class="sources__note">
+          Auto-sync needs sign-in and a server, so it lands in Phase 2. Enter the numbers by hand for
+          now. Ten seconds.
+        </p>
+      </section>
+
+      <!-- Reminders -->
+      <section class="card">
+        <div class="reminders">
+          <div>
+            <div class="reminders__copy">Reminders</div>
+            <div class="reminders__status" id="rem-status">Off. 06:30, 12:30, 20:00.</div>
+          </div>
+          <button type="button" class="btn btn--ghost" id="rem-toggle" style="width: auto; padding: 0 18px">
+            Turn on
+          </button>
+        </div>
+      </section>
+
+      <!-- History + data export/import -->
+      <section class="card" aria-labelledby="history-title">
+        <div class="card__header">
+          <h2 class="card__title" id="history-title">History</h2>
+          <button type="button" class="btn--link" id="history-toggle" aria-expanded="false">Show</button>
+        </div>
+        <div id="history-body" hidden>
+          <ul class="history-list" id="history-list" aria-label="Past entries, newest first"></ul>
+          <div class="data-actions">
+            <button type="button" class="btn btn--ghost" id="export-btn">Export data</button>
+            <label class="btn btn--ghost import-label">
+              Import data
+              <input type="file" id="import-input" accept=".json" class="visually-hidden" />
+            </label>
+          </div>
+          <div class="saved-flag" id="import-status" role="status" aria-live="polite"></div>
+        </div>
+      </section>
+
+      <footer class="footer">
+        <em>Kairos.</em> Greek for the right moment. The moment you decide.<br />
+        Phase 1. Local only. Your data stays on this device.
+      </footer>
+    </main>
+
+    <script type="module" src="app.js"></script>
+  </body>
+</html>
