@@ -1,106 +1,95 @@
-# HANDOFF.md
+# Kairos — Handoff
 
-**Last updated:** 2026-04-27
-**Branch:** main
-**Last commit:** 1ae975a — Fix Stripe webhook race condition, SW open URL, and edge function formatting
-**Next session priority:** Fill credentials in .env and Supabase Vault → deploy → soft launch
-
----
-
-## State Right Now
-
-App is feature-complete for soft launch. 66/66 unit tests passing, TypeScript clean, Biome clean, build clean. Pre-commit hook active (tsc + voice check + vitest). 15 migrations. 21 bugs fixed across three loop sessions.
+**Date:** 2026-06-15
+**Branch:** main (all PRs merged and deleted — PRs 1, 2, 3, 4)
+**Repo:** https://github.com/whatisnextio/Kairos
+**Last commit:** 0c516d6 — fix(kairos): notification channels, colors.xml, branded colours
+**Tests:** 116 passing (50 Kairos + 66 main app). Build: clean, no warnings.
 
 ---
 
-## Loop Session 2026-04-27 (session 3) Shipped
+## What is done
 
-- **Stripe webhook race condition**: checkout.session.completed now sets tier=brotherhood + status=active directly using client_reference_id=userId, eliminating the race where subscription.created fires before the customer ID is linked and silently no-ops
-- **Stripe subscription.deleted cleanup**: now also resets cancel_at_period_end + current_period_end to false/null
-- **Service worker openWindow**: notificationclick now opens /#/ instead of / to match HashRouter start_url
-- **Edge function Biome formatting**: auto-fixed formatting across all 7 edge functions; fixed template literal lint in generate-kairos-nudge fallback
+### Phase 1 — PWA (merged in PR #1)
+- `kairos/` — vanilla JS PWA, score 0–100 (Training 40% / Recovery 30% / Alcohol-free 20% / Streak bonus 10%)
+- Personal bests card, 7-day trend SVG chart, history log, data export/import (JSON)
+- Service worker with cache versioning, manifest, icons in `public/`
 
-## Loop Session 2026-04-27 (session 2) Shipped
-
-- **generate-kairos-nudge race**: Upsert with onConflict replaces insert for concurrent calls
-- **Nudge XP stale closure**: useUpdateNudgeStatus onSuccess reads store at execution time
-- **Dead code removal**: Orphaned SquadMember interface + unused 'reset' CycleStatus removed
-- **NewCycleScreen route guard**: Redirects active-cycle users to '/' to prevent orphan rows
-- **Stripe signature rotation**: verifyStripeSignature now accepts all v1= values from header
-- **useMatchToSquad stale closure**: onSuccess reads store at execution time
-- **Checkout verification flow**: localStorage flag + 3s polling spinner after Stripe redirect
-- **cancel_at_period_end + current_period_end**: Webhook saves these; YouScreen shows "Cancels on X" or "Payment failed"
-- **Migration 015**: cancel_at_period_end (bool) + current_period_end (timestamptz) on profiles
-- **PWA manifest**: Split 'any maskable' icons, start_url '/#/', orientation portrait-primary
-- **Button default type**: type="button" prevents accidental form submission
-- **DEPLOY.md + HANDOFF.md**: Updated for 15 migrations and full credential list
-
-## Loop Session 2026-04-26 Shipped
-
-- AbandonCycleModal, stale check-in clearing, Brotherhood cross-device sync
-- 7-day history grid, onboarding celebrate step, XP net delta + floor
-- Squad member tiles, NewCycleScreen cycle count from Supabase
-- Code splitting (66 kB main bundle), Vercel config, Plausible, pb-safe CSS
-- DetailScreen free tier local history, ProgressScreen streak section
-- Bootstrap ref guard, sign-out race fix, domain setup modal reappear
-- ImproveScreen nudge states, Day84 modal fixes, send-daily-push auth guard
-- Squad member count atomic RPC, stale check-in history reload, push UI sync
+### Phase 2 — Capacitor 6 + native builds (PRs #2, #3, #4)
+- `kairos/package.json` — standalone npm package, `type: "module"`, Vite build, Vitest
+- `kairos/vite.config.js` — bundles bare npm imports to `dist/`
+- `kairos/capacitor.config.json` — appId `io.kairos.app`, webDir `dist`, Capgo autoUpdate true
+- `kairos/delivery.js` — all Capacitor side-effects: `initChannels()`, `checkPermission()`, `requestPermission()`, `scheduleReminders(state)`, `cancelReminders()`, `notify(title, body, tag)`
+  - Schedules 7 days ahead at 06:30 / 12:30 / 20:00 using OS-level LocalNotifications
+  - Channel IDs: `kairos-reminders` (HIGH importance) and `kairos-events` (DEFAULT)
+  - Falls back to Web Notifications API if LocalNotifications throws (PWA web path)
+- `kairos/notifications.js` — pure message builders only, no DOM/native deps, fully unit-tested
+- `kairos/android/` — Capacitor 6 Android project: Gradle wrapper, `ic_stat_kairos.xml` icon, notification permissions in manifest (`POST_NOTIFICATIONS`, `SCHEDULE_EXACT_ALARM`, `WAKE_LOCK`, `RECEIVE_BOOT_COMPLETED`), `colors.xml` (#ff5a00 primary)
+- `kairos/ios/` — Capacitor 6 iOS project: `NSUserNotificationsUsageDescription` in Info.plist
+- `.github/workflows/build-kairos.yml` — 5-job pipeline: test → web build → Android debug APK → iOS sim build → Capgo OTA (main only)
 
 ---
 
-## Full Feature Inventory
+## What remains before full production deploy
 
-### Pages (14)
-SplashScreen, LoginPage, RegisterPage, OnboardingFlow, HomeScreen, ProgressScreen, DetailScreen, ImproveScreen, YouScreen, SubscriptionScreen, AdminMetricsPage, NewCycleScreen, PrivacyPolicyPage, TermsServicePage, HelpFAQPage
+### One-time manual steps (requires human action)
 
-### Modals (4)
-WeeklyVibeCheckModal, ProgressiveDomainSetupModal, Day84CompletionModal, AbandonCycleModal
+1. **Capgo account** — capgo.app → create app with appId `io.kairos.app` → copy API key → add as `CAPGO_API_KEY` in https://github.com/whatisnextio/Kairos/settings/secrets/actions
+2. **Android release signing** — generate keystore: `keytool -genkey -v -keystore kairos.jks -keyalg RSA -keysize 2048 -validity 10000 -alias kairos` → add `KEYSTORE_FILE` (base64), `KEYSTORE_PASSWORD`, `KEY_ALIAS`, `KEY_PASSWORD` as GitHub secrets → update Gradle signing config (below)
+3. **iOS signing** — Apple Developer account ($99/yr), provisioning profile, signing cert. Use Fastlane Match or Xcode on Mac.
+4. **Google Play listing** — create listing, upload first debug/release APK manually
+5. **App Store listing** — create listing in App Store Connect
 
-### Edge Functions (8)
-generate-kairos-nudge (Claude Haiku), match-to-squad, generate-squad-pulse (Claude Sonnet), stripe-webhook, save-push-subscription, send-daily-push, compute-weekly-metrics, delete-account
+### Automated tasks still to build (next session picks these up)
 
-### Supabase Migrations (15)
-001 initial schema, 002 streak function, 003 push subscriptions, 004 cycle reflections, 005 squad_member_status SECURITY DEFINER RPC, 006 streak trigger, 007 admin metrics RLS, 008 fix cycle reflection XP default (50 → 500), 009 squads member count constraint, 010 decrement squad member count, 011 fix streak missed same day, 012 fix squad anchor initial, 013 atomic XP increment, 014 increment squad member count, 015 subscription period
+6. **Android release build in CI** — update `build-kairos.yml`: add signing step, change `assembleDebug` → `assembleRelease`, upload signed APK as artifact
+7. **App icon** — replace default Capacitor teal icon with Kairos orange K at all densities (Android: mipmap-*, iOS: AppIcon.appiconset all sizes)
+8. **Splash screen** — replace default white with Kairos black `#000000` + orange K
 
-### Hooks
-useBootstrap, useCheckIns, useStreaks, useNudge, useUpdateNudgeStatus, useSquadPulse, useSquadMembers, useMatchToSquad, useSubscriptionVerification
+### Gradle signing config (for task 6)
 
-### Zustand Store (persisted)
-onboardingComplete, todayCheckIns, checkInHistory (90-day rolling), streaks, profile, currentCycle, domainFocuses, lastVibeCheckDate
-
----
-
-## Blocked On (Credentials Only)
-
-| Item | Where |
-|---|---|
-| Supabase URL + anon key | .env: VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY |
-| Anthropic API key | Supabase Vault: ANTHROPIC_API_KEY |
-| Stripe checkout URL | .env: VITE_STRIPE_CHECKOUT_URL |
-| Stripe portal URL | .env: VITE_STRIPE_PORTAL_URL |
-| Stripe webhook secret | Supabase Vault: STRIPE_WEBHOOK_SECRET |
-| VAPID public key | .env: VITE_VAPID_PUBLIC_KEY |
-| VAPID private key | Supabase Vault: VAPID_PRIVATE_KEY |
-| PWA icons | /public/logo192.png + logo512.png exist (verify brand quality) |
-| Plausible domain | data-domain="12k.app" in index.html — must match registered domain |
-
----
-
-## Deployment Steps (Once Credentials Available)
-
-See DEPLOY.md for full detail. In brief:
-
-1. Fill `.env` (5 VITE_ vars)
-2. `npx supabase link --project-ref YOUR_REF && npx supabase db push` (15 migrations)
-3. Set Supabase Vault: ANTHROPIC_API_KEY, STRIPE_WEBHOOK_SECRET, VAPID_PRIVATE_KEY
-4. `npx supabase functions deploy --all` (7 functions)
-5. Configure Stripe webhook (4 events) + 4 Supabase cron jobs (nudge 06:00, push 07:00, squad 08:00 Sun, metrics 22:00 Sun)
-6. `npm run build` → deploy dist/ to Vercel
+In `kairos/android/app/build.gradle`, inside `android {}`:
+```groovy
+signingConfigs {
+    release {
+        storeFile file(System.getenv("KEYSTORE_PATH") ?: "release.jks")
+        storePassword System.getenv("KEYSTORE_PASSWORD")
+        keyAlias System.getenv("KEY_ALIAS")
+        keyPassword System.getenv("KEY_PASSWORD")
+    }
+}
+buildTypes {
+    release {
+        signingConfig signingConfigs.release
+        minifyEnabled false
+        proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+    }
+}
+```
 
 ---
 
-## Test Status
+## File map
 
-66/66 unit tests passing (streak.test.ts × 14, gamification.test.ts × 20, kairos.test.ts × 32).
-TypeScript: no errors. Build: clean. Biome: clean.
-Pre-commit hook: tsc + voice check + vitest.
+```
+kairos/
+  app.js                   main UI controller
+  delivery.js              Capacitor notifications (init, schedule, cancel, notify)
+  notifications.js         pure message builders (tested in Node)
+  score.js                 score model
+  storage.js               localStorage CRUD + export/import
+  index.html               single-page shell
+  styles.css               all CSS
+  vite.config.js           Vite + Vitest config
+  postcss.config.js        empty — stops root tailwind.config.ts leaking in
+  capacitor.config.json    Capacitor + Capgo config
+  package.json             standalone npm package
+  public/                  sw.js, manifest, icons
+  android/                 Capacitor Android project
+  ios/                     Capacitor iOS project
+  tests/                   score, notifications, storage test suites
+
+.github/workflows/
+  build-kairos.yml         Kairos CI/CD (5 jobs)
+  ci.yml                   main 12K app CI
+```
