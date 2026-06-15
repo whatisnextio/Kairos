@@ -68,6 +68,8 @@ jobs:
     name: Android APK
     runs-on: ubuntu-latest
     needs: build-web
+    env:
+      KEYSTORE_B64: ${{ secrets.KEYSTORE_FILE }}
     defaults:
       run:
         working-directory: kairos
@@ -96,41 +98,33 @@ jobs:
         working-directory: kairos/android
         run: chmod +x gradlew
 
-      - name: Decode keystore (release builds only)
-        if: secrets.KEYSTORE_FILE != ''
-        run: echo "${{ secrets.KEYSTORE_FILE }}" | base64 -d > kairos/android/app/release.jks
-        env:
-          KEYSTORE_FILE: ${{ secrets.KEYSTORE_FILE }}
+      - name: Decode keystore
+        if: env.KEYSTORE_B64 != ''
+        run: echo "$KEYSTORE_B64" | base64 -d > "${{ github.workspace }}/kairos/android/app/release.jks"
 
-      - name: Gradle — build release APK (signed)
-        if: github.ref == 'refs/heads/main' && secrets.KEYSTORE_FILE != ''
+      - name: Gradle build (release when keystore present, debug otherwise)
         working-directory: kairos/android
-        run: ./gradlew assembleRelease --no-daemon
+        run: |
+          JKS="${{ github.workspace }}/kairos/android/app/release.jks"
+          if [ "${{ github.ref }}" = "refs/heads/main" ] && [ -f "$JKS" ] && [ -n "$KEYSTORE_PASSWORD" ]; then
+            ./gradlew assembleRelease --no-daemon
+          else
+            ./gradlew assembleDebug --no-daemon
+          fi
         env:
           KEYSTORE_PATH: ${{ github.workspace }}/kairos/android/app/release.jks
           KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
           KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
           KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
 
-      - name: Gradle — build debug APK (unsigned, PRs and forks)
-        if: github.ref != 'refs/heads/main' || secrets.KEYSTORE_FILE == ''
-        working-directory: kairos/android
-        run: ./gradlew assembleDebug --no-daemon
-
-      - name: Upload signed release APK
-        if: github.ref == 'refs/heads/main' && secrets.KEYSTORE_FILE != ''
+      - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: kairos-release
-          path: kairos/android/app/build/outputs/apk/release/app-release.apk
-          retention-days: 90
-
-      - name: Upload debug APK
-        if: github.ref != 'refs/heads/main' || secrets.KEYSTORE_FILE == ''
-        uses: actions/upload-artifact@v4
-        with:
-          name: kairos-debug
-          path: kairos/android/app/build/outputs/apk/debug/app-debug.apk
+          name: kairos-apk
+          path: |
+            kairos/android/app/build/outputs/apk/release/app-release.apk
+            kairos/android/app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: ignore
           retention-days: 30
 
   build-ios:
