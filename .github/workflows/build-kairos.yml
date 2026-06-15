@@ -25,7 +25,7 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22'
           cache: 'npm'
           cache-dependency-path: kairos/package-lock.json
 
@@ -47,7 +47,7 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22'
           cache: 'npm'
           cache-dependency-path: kairos/package-lock.json
 
@@ -76,7 +76,7 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22'
           cache: 'npm'
           cache-dependency-path: kairos/package-lock.json
 
@@ -145,7 +145,7 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22'
           cache: 'npm'
           cache-dependency-path: kairos/package-lock.json
 
@@ -188,7 +188,7 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22'
           cache: 'npm'
           cache-dependency-path: kairos/package-lock.json
 
@@ -199,4 +199,11 @@ jobs:
         run: npm run build
 
       - name: Upload to Capgo
-        run: npx @capgo/cli@latest bundle upload --apikey ${{ secrets.CAPGO_API_KEY }} --channel production
+        run: |
+          if [ -z "$CAPGO_API_KEY" ]; then
+            echo "CAPGO_API_KEY not configured — skipping OTA deploy"
+            exit 0
+          fi
+          npx @capgo/cli@latest bundle upload --apikey "$CAPGO_API_KEY" --channel production
+        env:
+          CAPGO_API_KEY: ${{ secrets.CAPGO_API_KEY }}
