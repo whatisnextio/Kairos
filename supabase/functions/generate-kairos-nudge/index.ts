@@ -13,7 +13,8 @@
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
-const ANTHROPIC_API_KEY = Deno.env.get('ANTHROPIC_API_KEY') ?? '';
+const MINIMAX_API_KEY = Deno.env.get('MINIMAX_API_KEY') ?? '';
+const MINIMAX_GROUP_ID = Deno.env.get('MINIMAX_GROUP_ID') ?? '';
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL') ?? '';
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
 
@@ -107,7 +108,7 @@ Last vibe check: ${vibeLines}
 Generate one ${type} for today.`;
 }
 
-async function callClaude(userPrompt: string): Promise<{
+async function callMiniMax(userPrompt: string): Promise<{
   title: string;
   body: string;
   type: string;
@@ -115,42 +116,50 @@ async function callClaude(userPrompt: string): Promise<{
   xp_reward: number | null;
   cta: string | null;
 }> {
-  const response = await fetch('https://api.anthropic.com/v1/messages', {
-    method: 'POST',
-    headers: {
-      'x-api-key': ANTHROPIC_API_KEY,
-      'anthropic-version': '2023-06-01',
-      'content-type': 'application/json',
+  const response = await fetch(
+    `https://api.minimaxi.chat/v1/text/chatcompletion_v2?GroupId=${MINIMAX_GROUP_ID}`,
+    {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${MINIMAX_API_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: 'MiniMax-M3',
+        max_tokens: 1024,
+        messages: [
+          { role: 'system', content: SYSTEM_PROMPT },
+          { role: 'user', content: userPrompt },
+        ],
+      }),
     },
-    body: JSON.stringify({
-      model: 'claude-haiku-4-5-20251001',
-      max_tokens: 256,
-      system: SYSTEM_PROMPT,
-      messages: [{ role: 'user', content: userPrompt }],
-    }),
-  });
+  );
 
   if (!response.ok) {
     const text = await response.text();
-    throw new Error(`Anthropic API error ${response.status}: ${text}`);
+    throw new Error(`MiniMax API error ${response.status}: ${text}`);
   }
 
   const data = await response.json();
-  const content = data.content?.[0]?.text ?? '';
-  const inputTokens = data.usage?.input_tokens ?? 0;
-  const outputTokens = data.usage?.output_tokens ?? 0;
 
-  // Cost tracking: Haiku ~$0.25/Mtok input, ~$1.25/Mtok output
-  // In pence: input ~0.02p/tok, output ~0.1p/tok
-  const costPence = Math.round(
-    ((inputTokens * 0.25 + outputTokens * 1.25) / 1_000_000) * 100 * 100,
-  );
+  if (data.base_resp?.status_code !== 0) {
+    throw new Error(`MiniMax error ${data.base_resp?.status_code}: ${data.base_resp?.status_msg}`);
+  }
+
+  const rawContent = data.choices?.[0]?.message?.content ?? '';
+  // Strip any <think>...</think> reasoning blocks the model may emit
+  const content = rawContent.replace(/<think>[\s\S]*?<\/think>/g, '').trim();
+
+  const totalTokens = data.usage?.total_tokens ?? 0;
+  // MiniMax M3 ~$0.40/Mtok blended estimate, in pence
+  const costPence = Math.round((totalTokens * 0.4 / 1_000_000) * 100 * 100);
 
   try {
-    const parsed = JSON.parse(content);
+    // Extract JSON if wrapped in a markdown code block
+    const jsonMatch = content.match(/```(?:json)?\s*([\s\S]*?)```/) ?? [null, content];
+    const parsed = JSON.parse(jsonMatch[1].trim());
     return { ...parsed, _costPence: costPence };
   } catch {
-    // Fallback if model returns non-JSON
     return {
       title: `Day ${new Date().getDate()}. Show up.`,
       body: "One action. That's all. Pick it and do it now.",
@@ -322,9 +331,9 @@ Deno.serve(async (req: Request) => {
       lastVibeCheck: vibeCheck ? { rating: vibeCheck.rating, date: vibeCheck.date } : undefined,
     };
 
-    // Call Claude
+    // Call MiniMax
     const userPrompt = buildUserPrompt(state, 'daily_nudge');
-    const result = (await callClaude(userPrompt)) as {
+    const result = (await callMiniMax(userPrompt)) as {
       title: string;
       body: string;
       type: string;
