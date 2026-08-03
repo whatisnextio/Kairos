@@ -2,11 +2,11 @@ import { LocalNotifications } from '@capacitor/local-notifications';
 import { Capacitor } from '@capacitor/core';
 
 const NOTIFICATION_SLOTS = [
-  { id: 1, hour: 5,  minute: 0,  title: '12K — Morning',   body: 'Start strong. Check in when you\'re ready.' },
-  { id: 2, hour: 7,  minute: 30, title: '12K — Check in',  body: 'How did the morning go?' },
-  { id: 3, hour: 12, minute: 0,  title: '12K — Midday',    body: 'Half the day done. Stay on it.' },
-  { id: 4, hour: 17, minute: 0,  title: '12K — Afternoon', body: 'End of the working day. Check in.' },
-  { id: 5, hour: 20, minute: 0,  title: '12K — Evening',   body: 'Day nearly done. Log it before you rest.' },
+  { id: 1, hour: 5,  minute: 0,  title: '12K: Morning',   body: 'Start strong. Check in when you\'re ready.' },
+  { id: 2, hour: 7,  minute: 30, title: '12K: Check in',  body: 'How did the morning go?' },
+  { id: 3, hour: 12, minute: 0,  title: '12K: Midday',    body: 'Half the day done. Stay on it.' },
+  { id: 4, hour: 17, minute: 0,  title: '12K: Afternoon', body: 'End of the working day. Check in.' },
+  { id: 5, hour: 20, minute: 0,  title: '12K: Evening',   body: 'Day nearly done. Log it before you rest.' },
 ];
 
 export async function requestNotificationPermission(): Promise<boolean> {
@@ -54,7 +54,7 @@ export async function cancelDailyNotifications(): Promise<void> {
       await LocalNotifications.cancel({ notifications: toCancel });
     }
   } catch {
-    // Ignore errors when cancelling — best effort
+    // Ignore errors when cancelling, best effort
   }
 }
 
