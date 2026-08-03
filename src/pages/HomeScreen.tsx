@@ -29,7 +29,7 @@ const STATUS_COLOURS: Record<CheckInStatus, string> = {
   Partial: 'border-status-partial text-status-partial',
   Missed: 'border-status-missed text-status-missed',
   Pending: 'border-base-border text-base-subtext hover:border-base-muted',
-  Protected: 'border-domain-spirit text-domain-spirit',
+  Protected: 'border-base-muted text-base-muted',
 };
 
 function shouldShowVibeCheck(lastVibeCheckDate: string | null, dayInCycle: number): boolean {
@@ -70,7 +70,7 @@ export default function HomeScreen() {
   // biome-ignore lint/correctness/useExhaustiveDependencies: setCelebrationPending is a stable Zustand setter; store setters never change between renders
   useEffect(() => {
     if (!profile || !currentCycle) return;
-    if (dayInCycle >= 84 && currentCycle.status === 'active') {
+    if (dayInCycle >= 365 && currentCycle.status === 'active') {
       setCelebrationPending(true);
     } else if (
       !vibeCheckShownThisSession &&
@@ -82,7 +82,7 @@ export default function HomeScreen() {
     } else if (
       !domainSetupShownThisSession &&
       domainFocuses.length > 0 &&
-      domainFocuses.length < 4 &&
+      domainFocuses.length < 8 &&
       dayInCycle >= domainFocuses.length
     ) {
       // Show domain setup modal one domain at a time: Day 1 unlocks domain 2, Day 2 unlocks domain 3, etc.
@@ -121,7 +121,7 @@ export default function HomeScreen() {
             {anchorDisplayName}
           </p>
           <h1 className="font-heading text-2xl font-bold text-base-text tracking-wide mt-0.5">
-            Day {dayInCycle} of 84
+            Day {dayInCycle} of 365
           </h1>
           <p className="text-accent-green text-sm font-heading tracking-wider uppercase mt-0.5">
             {phaseConfig.label} Phase
@@ -217,30 +217,15 @@ export default function HomeScreen() {
             {/* Anonymous member tiles */}
             {squadMembers && squadMembers.length > 0 && (
               <div className="flex gap-2 mb-3 flex-wrap">
-                {squadMembers.map((m) => {
-                  const dots = [m.bodyStatus, m.loveStatus, m.missionStatus, m.spiritStatus];
-                  return (
-                    <div key={m.memberIndex} className="flex flex-col items-center gap-1.5">
-                      <div className="w-8 h-8 rounded-full bg-base-border flex items-center justify-center">
-                        <span className="font-heading font-bold text-xs text-base-subtext">
-                          {m.anchorInitial}
-                        </span>
-                      </div>
-                      <div className="flex gap-0.5">
-                        {(['body', 'love', 'mission', 'spirit'] as const).map((domain, i) => {
-                          const status = dots[i];
-                          let dotClass = 'bg-base-border/50';
-                          if (status === 'Done') dotClass = 'bg-status-done';
-                          else if (status === 'Partial') dotClass = 'bg-status-partial';
-                          else if (status === 'Missed') dotClass = 'bg-status-missed';
-                          return (
-                            <div key={domain} className={`w-1.5 h-1.5 rounded-full ${dotClass}`} />
-                          );
-                        })}
-                      </div>
+                {squadMembers.map((m) => (
+                  <div key={m.memberIndex} className="flex flex-col items-center gap-1.5">
+                    <div className="w-8 h-8 rounded-full bg-base-border flex items-center justify-center">
+                      <span className="font-heading font-bold text-xs text-base-subtext">
+                        {m.anchorInitial}
+                      </span>
                     </div>
-                  );
-                })}
+                  </div>
+                ))}
               </div>
             )}
 

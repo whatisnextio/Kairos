@@ -27,9 +27,9 @@ describe('getDayInCycle', () => {
     expect(getDayInCycle('2024-01-01')).toBe(14);
   });
 
-  it('returns 84 on the last day', () => {
-    vi.setSystemTime(new Date('2024-03-24')); // 83 days after 2024-01-01
-    expect(getDayInCycle('2024-01-01')).toBe(84);
+  it('returns 365 on the last day', () => {
+    vi.setSystemTime(new Date('2024-12-31')); // 365 days after 2024-01-01
+    expect(getDayInCycle('2024-01-01')).toBe(366); // 2024 is a leap year; campaign ends on day 365 regardless
   });
 
   it('never returns less than 1', () => {
@@ -39,50 +39,54 @@ describe('getDayInCycle', () => {
 });
 
 describe('getCurrentPhaseConfig', () => {
-  it('returns KICKOFF for day 1', () => {
-    expect(getCurrentPhaseConfig(1).phase).toBe('KICKOFF');
+  it('returns GATE for day 1', () => {
+    expect(getCurrentPhaseConfig(1).phase).toBe('GATE');
   });
 
-  it('returns KICKOFF for day 14', () => {
-    expect(getCurrentPhaseConfig(14).phase).toBe('KICKOFF');
+  it('returns GATE for day 7', () => {
+    expect(getCurrentPhaseConfig(7).phase).toBe('GATE');
   });
 
-  it('returns ANCHOR for day 15', () => {
-    expect(getCurrentPhaseConfig(15).phase).toBe('ANCHOR');
+  it('returns STABILISE for day 8', () => {
+    expect(getCurrentPhaseConfig(8).phase).toBe('STABILISE');
   });
 
-  it('returns ANCHOR for day 28', () => {
-    expect(getCurrentPhaseConfig(28).phase).toBe('ANCHOR');
+  it('returns STABILISE for day 56', () => {
+    expect(getCurrentPhaseConfig(56).phase).toBe('STABILISE');
   });
 
-  it('returns INCREASE for day 29', () => {
-    expect(getCurrentPhaseConfig(29).phase).toBe('INCREASE');
+  it('returns BUILD for day 57', () => {
+    expect(getCurrentPhaseConfig(57).phase).toBe('BUILD');
   });
 
-  it('returns RHYTHM for day 43', () => {
-    expect(getCurrentPhaseConfig(43).phase).toBe('RHYTHM');
+  it('returns BUILD for day 151', () => {
+    expect(getCurrentPhaseConfig(151).phase).toBe('BUILD');
   });
 
-  it('returns OWN for day 57', () => {
-    expect(getCurrentPhaseConfig(57).phase).toBe('OWN');
+  it('returns PERFORM for day 152', () => {
+    expect(getCurrentPhaseConfig(152).phase).toBe('PERFORM');
   });
 
-  it('returns SUSTAIN for day 71', () => {
-    expect(getCurrentPhaseConfig(71).phase).toBe('SUSTAIN');
+  it('returns PERFORM for day 217', () => {
+    expect(getCurrentPhaseConfig(217).phase).toBe('PERFORM');
   });
 
-  it('returns SUSTAIN for day 84', () => {
-    expect(getCurrentPhaseConfig(84).phase).toBe('SUSTAIN');
+  it('returns ELITE for day 218', () => {
+    expect(getCurrentPhaseConfig(218).phase).toBe('ELITE');
   });
 
-  it('returns SUSTAIN for day > 84 (overflow)', () => {
-    expect(getCurrentPhaseConfig(90).phase).toBe('SUSTAIN');
+  it('returns ELITE for day 365', () => {
+    expect(getCurrentPhaseConfig(365).phase).toBe('ELITE');
   });
 
-  it('returns a config with correct day ranges', () => {
-    const config = getCurrentPhaseConfig(43);
-    expect(config.days[0]).toBe(43);
-    expect(config.days[1]).toBe(56);
+  it('returns ELITE for day > 365 (overflow)', () => {
+    expect(getCurrentPhaseConfig(400).phase).toBe('ELITE');
+  });
+
+  it('returns a config with correct day ranges for GATE', () => {
+    const config = getCurrentPhaseConfig(1);
+    expect(config.days[0]).toBe(1);
+    expect(config.days[1]).toBe(7);
   });
 });
 
@@ -94,14 +98,14 @@ describe('getCurrentPhase', () => {
     vi.useRealTimers();
   });
 
-  it('returns KICKOFF on day 1', () => {
+  it('returns GATE on day 1', () => {
     vi.setSystemTime(new Date('2024-01-01'));
-    expect(getCurrentPhase('2024-01-01')).toBe('KICKOFF');
+    expect(getCurrentPhase('2024-01-01')).toBe('GATE');
   });
 
-  it('returns SUSTAIN on day 84', () => {
-    vi.setSystemTime(new Date('2024-03-24'));
-    expect(getCurrentPhase('2024-01-01')).toBe('SUSTAIN');
+  it('returns ELITE on day 218+', () => {
+    vi.setSystemTime(new Date('2024-08-06')); // 218 days after 2024-01-01
+    expect(getCurrentPhase('2024-01-01')).toBe('ELITE');
   });
 });
 
@@ -110,67 +114,67 @@ describe('getCycleProgressPct', () => {
     expect(getCycleProgressPct(0)).toBe(0);
   });
 
-  it('returns ~1 for day 1', () => {
-    expect(getCycleProgressPct(1)).toBe(1);
+  it('returns ~0 for day 1', () => {
+    expect(getCycleProgressPct(1)).toBe(0);
   });
 
-  it('returns 50 for day 42', () => {
-    expect(getCycleProgressPct(42)).toBe(50);
+  it('returns ~50 for day 183', () => {
+    expect(getCycleProgressPct(183)).toBe(50);
   });
 
-  it('returns 100 for day 84', () => {
-    expect(getCycleProgressPct(84)).toBe(100);
+  it('returns 100 for day 365', () => {
+    expect(getCycleProgressPct(365)).toBe(100);
   });
 
-  it('caps at 100 for day > 84', () => {
-    expect(getCycleProgressPct(100)).toBe(100);
+  it('caps at 100 for day > 365', () => {
+    expect(getCycleProgressPct(400)).toBe(100);
   });
 });
 
 describe('getPhaseProgressPct', () => {
-  it('returns ~7 on day 1 of KICKOFF (1/14 days)', () => {
-    expect(getPhaseProgressPct(1)).toBe(7);
+  it('returns ~14 on day 1 of GATE (1/7 days)', () => {
+    expect(getPhaseProgressPct(1)).toBe(14);
   });
 
-  it('returns 100 on last day of KICKOFF (day 14)', () => {
-    expect(getPhaseProgressPct(14)).toBe(100);
+  it('returns 100 on last day of GATE (day 7)', () => {
+    expect(getPhaseProgressPct(7)).toBe(100);
   });
 
-  it('returns ~7 on first day of ANCHOR (day 15)', () => {
-    expect(getPhaseProgressPct(15)).toBe(7);
+  it('returns ~2 on first day of STABILISE (day 8)', () => {
+    expect(getPhaseProgressPct(8)).toBe(2);
   });
 
-  it('returns 100 at phase end', () => {
-    expect(getPhaseProgressPct(84)).toBe(100);
+  it('returns 100 at campaign end', () => {
+    expect(getPhaseProgressPct(365)).toBe(100);
   });
 });
 
 describe('isCycleComplete', () => {
-  it('returns false before day 84', () => {
-    expect(isCycleComplete(83)).toBe(false);
+  it('returns false before day 365', () => {
+    expect(isCycleComplete(364)).toBe(false);
   });
 
-  it('returns true on day 84', () => {
-    expect(isCycleComplete(84)).toBe(true);
+  it('returns true on day 365', () => {
+    expect(isCycleComplete(365)).toBe(true);
   });
 
-  it('returns true beyond day 84', () => {
-    expect(isCycleComplete(90)).toBe(true);
+  it('returns true beyond day 365', () => {
+    expect(isCycleComplete(400)).toBe(true);
   });
 });
 
 describe('KAIROS_PHASES', () => {
-  it('has exactly 6 phases', () => {
-    expect(KAIROS_PHASES).toHaveLength(6);
+  it('has exactly 5 phases', () => {
+    expect(KAIROS_PHASES).toHaveLength(5);
   });
 
-  it('covers days 1 through 84 contiguously', () => {
+  it('covers days 1 through 365 contiguously', () => {
     let expectedStart = 1;
     for (const phase of KAIROS_PHASES) {
       expect(phase.days[0]).toBe(expectedStart);
       expectedStart = phase.days[1] + 1;
     }
-    expect(expectedStart - 1).toBe(84);
+    expect(expectedStart - 1).toBe(365);
   });
 
   it('each phase has label and tagline', () => {

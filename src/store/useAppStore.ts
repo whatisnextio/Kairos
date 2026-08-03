@@ -138,7 +138,7 @@ export const useAppStore = create<AppState & AppActions>()(
           // Update history (keep 90 days)
           const history = { ...state.checkInHistory };
           history[today] = { ...(history[today] ?? {}), [domainType]: status };
-          const cutoff = new Date(Date.now() - 90 * 86_400_000).toISOString().split('T')[0];
+          const cutoff = new Date(Date.now() - 400 * 86_400_000).toISOString().split('T')[0];
           for (const date of Object.keys(history)) {
             if (date < cutoff) delete history[date];
           }

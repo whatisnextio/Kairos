@@ -20,7 +20,7 @@ export function getCurrentPhase(cycleStartDate: string): KairosPhase {
 }
 
 export function getCycleProgressPct(dayInCycle: number): number {
-  return Math.min(100, Math.round((dayInCycle / 84) * 100));
+  return Math.min(100, Math.round((dayInCycle / 365) * 100));
 }
 
 export function getPhaseProgressPct(dayInCycle: number): number {
@@ -31,5 +31,5 @@ export function getPhaseProgressPct(dayInCycle: number): number {
 }
 
 export function isCycleComplete(dayInCycle: number): boolean {
-  return dayInCycle >= 84;
+  return dayInCycle >= 365;
 }

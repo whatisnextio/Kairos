@@ -113,23 +113,33 @@ function _buildSchedule(state) {
   for (let d = 0; d < SCHEDULE_DAYS; d++) {
     const isToday = d === 0;
 
-    const morning = _dayAt(d, 6, 30);
+    const earlybird = _dayAt(d, 5, 0);
+    if (earlybird > now) {
+      out.push(_notif(id++, '5am. Water. Supplements. Move. Back to bed after.', earlybird));
+    }
+
+    const morning = _dayAt(d, 7, 30);
     if (morning > now) {
       out.push(_notif(id++,
         isToday
           ? morningBrief(state.yesterdayScore, state.streak)
-          : 'Make today count.',
+          : 'Floor holds today.',
         morning));
     }
 
-    const midday = _dayAt(d, 12, 30);
-    if (midday > now && (!isToday || !state.loggedToday)) {
-      out.push(_notif(id++, 'Nothing logged yet. You know what to do.', midday));
+    const midday = _dayAt(d, 12, 0);
+    if (midday > now) {
+      out.push(_notif(id++, 'Midday check. Floor holding? Log it.', midday));
+    }
+
+    const afternoon = _dayAt(d, 17, 0);
+    if (afternoon > now) {
+      out.push(_notif(id++, 'Three hours left. What still needs doing today?', afternoon));
     }
 
     const evening = _dayAt(d, 20, 0);
-    if (evening > now && (!isToday || !state.alcoholConfirmedToday)) {
-      out.push(_notif(id++, 'One tap. Did you stay clean today?', evening));
+    if (evening > now) {
+      out.push(_notif(id++, 'Evening floor. Affection. Lockbox at 9. Log the day.', evening));
     }
   }
 

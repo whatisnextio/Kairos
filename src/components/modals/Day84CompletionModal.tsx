@@ -11,12 +11,9 @@ interface Props {
 
 type Step = 'intro' | 'loading' | 'reflection' | 'your_words' | 'celebrate';
 
-const DOMAIN_COLOURS: Record<string, string> = {
-  BODY: 'text-domain-body',
-  LOVE: 'text-domain-love',
-  MISSION: 'text-domain-mission',
-  SPIRIT: 'text-domain-spirit',
-};
+const DOMAIN_COLOURS: Record<string, string> = Object.fromEntries(
+  DOMAINS.map((d) => [d.type, d.colour]),
+);
 
 function PulsingDots() {
   return (
@@ -89,26 +86,26 @@ export default function Day84CompletionModal({ onClose }: Props) {
         {step === 'intro' && (
           <div className="px-6 py-8">
             <p className="font-heading text-xs text-accent-green tracking-widest uppercase mb-4">
-              Day 84 Complete
+              Campaign Complete
             </p>
             <h2
               id="day84-modal-title"
               className="font-heading text-4xl font-bold text-base-text mb-4 tracking-wide leading-none"
             >
-              84 days.
+              365 days.
               <br />
               You showed up.
             </h2>
             <p className="text-base-subtext text-sm leading-relaxed mb-4">
               That's{' '}
               {currentCycle?.totalXpEarned ? `${currentCycle.totalXpEarned} XP earned and` : ''} one
-              full cycle of the KAIROS framework completed. Most men never finish what they start.
+              full campaign of the KAIROS framework completed. Most men never finish what they start.
               You did.
             </p>
             {isBrotherhood ? (
               <>
                 <p className="text-base-subtext text-sm leading-relaxed mb-8">
-                  We've built your cycle reflection from 84 days of data. It's ready.
+                  We've built your campaign reflection from 365 days of data. It's ready.
                 </p>
                 <Button onClick={handleGetReflection} className="w-full mb-3">
                   See my reflection
@@ -137,7 +134,7 @@ export default function Day84CompletionModal({ onClose }: Props) {
               Building your reflection
             </p>
             <p className="text-base-subtext text-sm mb-2">
-              84 days of data. Four domains. Six phases.
+              365 days of data. Eight domains. Five phases.
             </p>
             <p className="text-base-muted text-xs mb-4">This takes a few seconds.</p>
             <PulsingDots />
@@ -227,7 +224,7 @@ export default function Day84CompletionModal({ onClose }: Props) {
               What shifted in you?
             </h2>
             <p className="text-base-subtext text-sm mb-4">
-              The man who started 84 days ago. The man who just finished. What's the gap?
+              The man who started 365 days ago. The man who just finished. What's the gap?
             </p>
             <textarea
               className="input-field h-36 resize-none w-full mb-2 text-sm"
