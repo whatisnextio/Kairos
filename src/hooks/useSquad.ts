@@ -54,9 +54,13 @@ export interface SquadMemberStatus {
   memberIndex: number;
   anchorInitial: string;
   bodyStatus: string | null;
-  loveStatus: string | null;
-  missionStatus: string | null;
-  spiritStatus: string | null;
+  fuelStatus: string | null;
+  metimeStatus: string | null;
+  ustimeStatus: string | null;
+  shotStatus: string | null;
+  lensStatus: string | null;
+  nestStatus: string | null;
+  rootsStatus: string | null;
 }
 
 export function useSquadMembers() {
@@ -72,9 +76,13 @@ export function useSquadMembers() {
         memberIndex: row.member_index as number,
         anchorInitial: row.anchor_initial as string,
         bodyStatus: row.body_status as string | null,
-        loveStatus: row.love_status as string | null,
-        missionStatus: row.mission_status as string | null,
-        spiritStatus: row.spirit_status as string | null,
+        fuelStatus: row.fuel_status as string | null,
+        metimeStatus: row.metime_status as string | null,
+        ustimeStatus: row.ustime_status as string | null,
+        shotStatus: row.shot_status as string | null,
+        lensStatus: row.lens_status as string | null,
+        nestStatus: row.nest_status as string | null,
+        rootsStatus: row.roots_status as string | null,
       })) as SquadMemberStatus[];
     },
     enabled,

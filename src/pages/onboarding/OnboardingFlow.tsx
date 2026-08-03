@@ -182,7 +182,7 @@ export default function OnboardingFlow() {
           <h1 className="font-heading text-5xl font-bold text-base-text mb-4 tracking-widest">
             12K
           </h1>
-          <p className="text-base-subtext mb-2">12 weeks.</p>
+          <p className="text-base-subtext mb-2">365 days.</p>
           <p className="text-base-subtext mb-2">One transformation.</p>
           <p className="text-base-subtext mb-10">No excuses.</p>
           <Input
@@ -254,7 +254,7 @@ export default function OnboardingFlow() {
             Where do you start?
           </h2>
           <p className="text-base-subtext text-sm mb-6">
-            Pick one domain. You'll add the others over the next three days.
+            Pick one domain. You'll add the others over the next 7 days.
           </p>
           <div className="flex flex-col gap-3">
             {DOMAINS.map((d) => (

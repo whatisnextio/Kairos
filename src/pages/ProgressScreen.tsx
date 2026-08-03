@@ -67,7 +67,7 @@ export default function ProgressScreen() {
               Cycle complete
             </p>
             <h2 className="font-heading text-xl font-bold text-base-text tracking-wide mb-3">
-              84 days done.
+              365 days done.
             </h2>
             <div className="flex gap-4 mb-4">
               <div>

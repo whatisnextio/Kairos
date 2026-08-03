@@ -17,6 +17,10 @@
     "prepare": "git config core.hooksPath .githooks || true"
   },
   "dependencies": {
+    "@capacitor/android": "^8.5.0",
+    "@capacitor/cli": "^8.5.0",
+    "@capacitor/core": "^8.5.0",
+    "@capacitor/local-notifications": "^8.2.1",
     "@sentry/react": "^10.50.0",
     "@supabase/supabase-js": "^2.45.0",
     "@tanstack/react-query": "^5.56.0",

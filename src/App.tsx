@@ -1,5 +1,6 @@
 import { useBootstrap } from '@/hooks/useBootstrap';
 import { useSubscriptionVerification } from '@/hooks/useSubscriptionVerification';
+import { scheduleDailyNotifications } from '@/services/localNotifications';
 import { supabase } from '@/services/supabaseClient';
 import { useAppStore } from '@/store/useAppStore';
 import { Suspense, lazy, useEffect } from 'react';
@@ -58,6 +59,13 @@ export default function App() {
 
     return () => listener.subscription.unsubscribe();
   }, [setAuthUser]);
+
+  // Schedule native notifications once the user is authenticated
+  useEffect(() => {
+    if (authUser) {
+      scheduleDailyNotifications().catch(() => {});
+    }
+  }, [authUser]);
 
   if (isAuthLoading || isBootstrapLoading) return <SplashScreen />;
 
