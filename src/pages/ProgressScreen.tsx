@@ -16,7 +16,7 @@ const STATUS_DOT: Record<string, string> = {
   Partial: 'bg-status-partial',
   Missed: 'bg-status-missed',
   Pending: 'bg-base-border',
-  Protected: 'bg-domain-spirit',
+  Protected: 'bg-base-muted',
 };
 
 function getLast7Days(): string[] {
@@ -42,7 +42,7 @@ export default function ProgressScreen() {
 
   // Compute before early return so hooks are never called conditionally.
   const dayInCycle = profile && currentCycle ? getDayInCycle(currentCycle.startDate) : 0;
-  const cycleComplete = dayInCycle >= 84;
+  const cycleComplete = dayInCycle >= 365;
   const { data: aiReflection } = useCycleReflection(
     cycleComplete && profile?.tier === 'brotherhood',
   );
@@ -67,7 +67,7 @@ export default function ProgressScreen() {
               Cycle complete
             </p>
             <h2 className="font-heading text-xl font-bold text-base-text tracking-wide mb-3">
-              84 days done.
+              365 days done.
             </h2>
             <div className="flex gap-4 mb-4">
               <div>

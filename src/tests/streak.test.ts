@@ -110,13 +110,13 @@ describe('computeLocalStreak', () => {
 
   it('does not bleed across domains', () => {
     const history: History = {
-      [TODAY]: { LOVE: 'Done' }, // BODY is absent
+      [TODAY]: { FUEL: 'Done' }, // BODY is absent
     };
     expect(computeLocalStreak(history, 'BODY', TODAY)).toEqual({
       currentStreak: 0,
       longestStreak: 0,
     });
-    expect(computeLocalStreak(history, 'LOVE', TODAY)).toEqual({
+    expect(computeLocalStreak(history, 'FUEL', TODAY)).toEqual({
       currentStreak: 1,
       longestStreak: 1,
     });
@@ -124,8 +124,8 @@ describe('computeLocalStreak', () => {
 
   it('returns 0 longest when all days are empty', () => {
     const history: History = {
-      [TODAY]: { LOVE: 'Done' }, // BODY absent
-      [dayBefore(TODAY, 1)]: { LOVE: 'Done' },
+      [TODAY]: { FUEL: 'Done' }, // BODY absent
+      [dayBefore(TODAY, 1)]: { FUEL: 'Done' },
     };
     expect(computeLocalStreak(history, 'BODY', TODAY)).toEqual({
       currentStreak: 0,

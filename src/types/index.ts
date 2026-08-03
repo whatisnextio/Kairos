@@ -1,6 +1,6 @@
 // ─── KAIROS Phases ───────────────────────────────────────────────────────────
 
-export type KairosPhase = 'KICKOFF' | 'ANCHOR' | 'INCREASE' | 'RHYTHM' | 'OWN' | 'SUSTAIN';
+export type KairosPhase = 'GATE' | 'STABILISE' | 'BUILD' | 'PERFORM' | 'ELITE';
 
 export interface KairosPhaseConfig {
   phase: KairosPhase;
@@ -11,46 +11,40 @@ export interface KairosPhaseConfig {
 
 export const KAIROS_PHASES: KairosPhaseConfig[] = [
   {
-    phase: 'KICKOFF',
-    label: 'Kickoff',
-    days: [1, 14],
-    tagline: 'Build the base. Consistency over perfection.',
+    phase: 'GATE',
+    label: 'Gate',
+    days: [1, 7],
+    tagline: 'Phase 0. Foundations set. Nothing else starts until this closes.',
   },
   {
-    phase: 'ANCHOR',
-    label: 'Anchor',
-    days: [15, 28],
-    tagline: 'Lock in habits. Streak matters now.',
+    phase: 'STABILISE',
+    label: 'Stabilise',
+    days: [8, 56],
+    tagline: 'Floor unbroken. Weight trending. First month banked.',
   },
   {
-    phase: 'INCREASE',
-    label: 'Increase',
-    days: [29, 42],
-    tagline: 'Step up intensity. 10-15% more.',
+    phase: 'BUILD',
+    label: 'Build',
+    days: [57, 151],
+    tagline: 'Strength proper. Running back. December gate.',
   },
   {
-    phase: 'RHYTHM',
-    label: 'Rhythm',
-    days: [43, 56],
-    tagline: 'Find natural flow. Variability welcome.',
+    phase: 'PERFORM',
+    label: 'Perform',
+    days: [152, 217],
+    tagline: 'Cambridge Half peaks. Tom Hardy mode approaching.',
   },
   {
-    phase: 'OWN',
-    label: 'Own',
-    days: [57, 70],
-    tagline: 'Identity crystallisation. You are this now.',
-  },
-  {
-    phase: 'SUSTAIN',
-    label: 'Sustain',
-    days: [71, 84],
-    tagline: 'Plan the long game. Beyond the cycle.',
+    phase: 'ELITE',
+    label: 'Elite',
+    days: [218, 365],
+    tagline: 'The campaign ends or Liam 43 gets bigger targets.',
   },
 ];
 
 // ─── Domains ─────────────────────────────────────────────────────────────────
 
-export type DomainType = 'BODY' | 'LOVE' | 'MISSION' | 'SPIRIT';
+export type DomainType = 'BODY' | 'FUEL' | 'METIME' | 'USTIME' | 'SHOT' | 'LENS' | 'NEST' | 'ROOTS';
 
 export interface DomainConfig {
   type: DomainType;
@@ -64,25 +58,49 @@ export const DOMAINS: DomainConfig[] = [
     type: 'BODY',
     label: 'Body',
     colour: 'text-domain-body',
-    focusPrompt: 'e.g. Train 4x per week. Walk 10k steps daily.',
+    focusPrompt: 'Walk daily. Train 4x week. Knee first, then run.',
   },
   {
-    type: 'LOVE',
-    label: 'Love',
-    colour: 'text-domain-love',
-    focusPrompt: 'e.g. Date night every Friday. No phone at dinner.',
+    type: 'FUEL',
+    label: 'Fuel',
+    colour: 'text-domain-fuel',
+    focusPrompt: 'Supplements AM. No alcohol. No bread. Water first.',
   },
   {
-    type: 'MISSION',
-    label: 'Mission',
-    colour: 'text-domain-mission',
-    focusPrompt: 'e.g. Ship one feature per week. Write for 30 min daily.',
+    type: 'METIME',
+    label: 'Me Time',
+    colour: 'text-domain-metime',
+    focusPrompt: 'Scheduled. Private. Non-negotiable.',
   },
   {
-    type: 'SPIRIT',
-    label: 'Spirit',
-    colour: 'text-domain-spirit',
-    focusPrompt: 'e.g. Meditate for 10 min. Journal each morning.',
+    type: 'USTIME',
+    label: 'Us Time',
+    colour: 'text-domain-ustime',
+    focusPrompt: 'Morning warmth. Intentional. Her pace.',
+  },
+  {
+    type: 'SHOT',
+    label: 'Shot',
+    colour: 'text-domain-shot',
+    focusPrompt: '10–3 model. Pipeline. Salary by December.',
+  },
+  {
+    type: 'LENS',
+    label: 'Lens',
+    colour: 'text-domain-lens',
+    focusPrompt: 'Dawn shoot monthly. Weekly out. Competition entered.',
+  },
+  {
+    type: 'NEST',
+    label: 'Nest',
+    colour: 'text-domain-nest',
+    focusPrompt: 'Eldest shoulder-to-shoulder. Youngest football or games.',
+  },
+  {
+    type: 'ROOTS',
+    label: 'Roots',
+    colour: 'text-domain-roots',
+    focusPrompt: 'Debt clear. Capital building. Portugal fund.',
   },
 ];
 

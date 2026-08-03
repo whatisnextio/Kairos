@@ -29,7 +29,7 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen bg-base-black flex flex-col items-center justify-center px-6 py-12">
       <h1 className="font-heading text-4xl font-bold text-base-text mb-2 tracking-widest">12K</h1>
-      <p className="text-base-subtext text-sm mb-10">12 weeks. One transformation.</p>
+      <p className="text-base-subtext text-sm mb-10">365 days. One transformation.</p>
 
       {sent ? (
         <div className="text-center">

@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">12K</string>
+    <string name="title_activity_main">12K</string>
+    <string name="package_name">io.whatisnext.kairos</string>
+    <string name="custom_url_scheme">io.whatisnext.kairos</string>
+</resources>

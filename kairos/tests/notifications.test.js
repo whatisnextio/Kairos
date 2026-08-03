@@ -10,12 +10,10 @@ import {
 
 describe('morningBrief', () => {
   it('states yesterday score and streak', () => {
-    expect(morningBrief(47, 12)).toBe('Kairos Score yesterday: 47. Streak: 12 days. Make today count.');
+    expect(morningBrief(47, 12)).toBe('Yesterday: 47. Streak: 12 days. Floor holds today.');
   });
   it('handles a missing yesterday score', () => {
-    expect(morningBrief(null, 0)).toBe(
-      'Kairos Score yesterday: not logged. Streak: 0 days. Make today count.',
-    );
+    expect(morningBrief(null, 0)).toBe('Yesterday: not logged. Streak: 0 days. Floor holds today.');
   });
 });
 
@@ -24,18 +22,26 @@ describe('reminderMessage', () => {
     expect(reminderMessage('morning', { yesterdayScore: 30, streak: 2 })).toContain('30');
   });
 
-  it('nags at midday only when nothing is logged', () => {
-    expect(reminderMessage('midday', { loggedToday: false })).toBe(
-      'Nothing logged yet. You know what to do.',
-    );
-    expect(reminderMessage('midday', { loggedToday: true })).toBeNull();
+  it('returns earlybird message', () => {
+    expect(reminderMessage('earlybird', {})).toBe('5am. Water. Supplements. Move. Back to bed after.');
   });
 
-  it('nags in the evening only when alcohol is unconfirmed', () => {
+  it('always nags at midday regardless of logged state', () => {
+    expect(reminderMessage('midday', { loggedToday: false })).toBe('Midday check. Floor holding? Log it.');
+    expect(reminderMessage('midday', { loggedToday: true })).toBe('Midday check. Floor holding? Log it.');
+  });
+
+  it('always nags in the evening regardless of alcohol state', () => {
     expect(reminderMessage('evening', { alcoholConfirmedToday: false })).toBe(
-      'One tap. Did you stay clean today?',
+      'Evening floor. Affection. Lockbox at 9. Log the day.',
     );
-    expect(reminderMessage('evening', { alcoholConfirmedToday: true })).toBeNull();
+    expect(reminderMessage('evening', { alcoholConfirmedToday: true })).toBe(
+      'Evening floor. Affection. Lockbox at 9. Log the day.',
+    );
+  });
+
+  it('returns afternoon message', () => {
+    expect(reminderMessage('afternoon', {})).toBe('Three hours left. What still needs doing today?');
   });
 });
 
@@ -45,18 +51,24 @@ describe('milestones', () => {
     expect(isMilestone(30)).toBe(true);
     expect(isMilestone(8)).toBe(false);
   });
+  it('recognises extended milestones', () => {
+    expect(isMilestone(21)).toBe(true);
+    expect(isMilestone(90)).toBe(true);
+    expect(isMilestone(180)).toBe(true);
+    expect(isMilestone(365)).toBe(true);
+  });
   it('builds milestone copy', () => {
-    expect(milestoneMessage(14)).toBe("14 days. Don't stop now.");
+    expect(milestoneMessage(14)).toBe('14 days straight. The campaign is real.');
   });
 });
 
 describe('event copy', () => {
   it('builds the streak-broken message', () => {
-    expect(streakBrokenMessage(22)).toBe('Streak reset. Score: 22. Start again today. No drama.');
+    expect(streakBrokenMessage(22)).toBe('Bad day. Score: 22. Campaign intact. Back to zero tomorrow.');
   });
   it('builds the trending-down message', () => {
     expect(trendingDownMessage()).toBe(
-      "Three days dropping. This is where it turns around or doesn't.",
+      "Three days slipping. This is where it turns around or doesn't.",
     );
   });
 });

@@ -177,7 +177,7 @@ export default function NewCycleScreen() {
       </Button>
 
       <p className="text-base-muted text-xs text-center">
-        Your domain focuses will be set progressively over the first 4 days.
+        Your domain focuses will be set progressively over the first 7 days.
       </p>
     </div>
   );

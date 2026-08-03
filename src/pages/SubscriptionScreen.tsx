@@ -56,7 +56,7 @@ export default function SubscriptionScreen() {
             'Silent squad, 4-8 men, same phase, anonymous',
             'Cloud sync across devices',
             'Weekly squad pulse',
-            'Day 84 cycle reflection',
+            '365-day cycle reflection',
             'Full XP and streak tracking',
             'Push notifications',
           ].map((feature) => (
@@ -82,7 +82,7 @@ export default function SubscriptionScreen() {
         </p>
         <ul className="flex flex-col gap-2">
           {[
-            'Track 4 domains',
+            'Track 8 domains',
             'Basic progress rings',
             'Weekly Vibe Check',
             'Sunday AI nudge',
