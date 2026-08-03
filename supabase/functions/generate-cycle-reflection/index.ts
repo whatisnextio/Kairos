@@ -1,6 +1,6 @@
 // generate-cycle-reflection
 // Supabase Edge Function (Deno runtime)
-// Called once per cycle when the user reaches Day 84.
+// Called once per cycle when the user reaches Day 365.
 //
 // Flow:
 //   1. Auth: verify JWT, extract user_id
@@ -16,14 +16,14 @@ const ANTHROPIC_API_KEY = Deno.env.get('ANTHROPIC_API_KEY') ?? '';
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL') ?? '';
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
 
-const SYSTEM_PROMPT = `You are the KAIROS cycle reflection engine. You write one deeply personal summary for a man who has just completed an 84-day behavioural transformation cycle.
+const SYSTEM_PROMPT = `You are the KAIROS cycle reflection engine. You write one deeply personal summary for a man who has just completed a 365-day behavioural transformation campaign.
 
 Voice rules:
 - South UK British English. No em dashes, use commas or full stops.
 - No corporate language. No wellness jargon. No "embrace your authentic journey."
 - No emojis.
 - Direct, honest, data-driven. Reference the actual numbers you are given.
-- Sound like a trusted mentor who has been watching all 84 days. Not a chatbot. Not a coach running a script.
+- Sound like a trusted mentor who has been watching all 365 days. Not a chatbot. Not a coach running a script.
 - Acknowledge the hard parts. Don't just celebrate. Real growth has friction.
 
 This is a once-per-cycle moment. It should feel earned.
@@ -34,9 +34,13 @@ Output format: JSON only, no markdown, no explanation.
   "body": "string (2-3 sentences, 300 chars max, must reference at least 2 specific stats: XP, streak, completion rate, or vibe trend)",
   "domain_callouts": {
     "BODY": "string (one sharp line about their body domain performance, 80 chars max)",
-    "LOVE": "string (one sharp line, 80 chars max)",
-    "MISSION": "string (one sharp line, 80 chars max)",
-    "SPIRIT": "string (one sharp line, 80 chars max)"
+    "FUEL": "string (one sharp line, 80 chars max)",
+    "METIME": "string (one sharp line, 80 chars max)",
+    "USTIME": "string (one sharp line, 80 chars max)",
+    "SHOT": "string (one sharp line, 80 chars max)",
+    "LENS": "string (one sharp line, 80 chars max)",
+    "NEST": "string (one sharp line, 80 chars max)",
+    "ROOTS": "string (one sharp line, 80 chars max)"
   },
   "next_cycle_intention": "string (one sharp line to seed Cycle 2, under 80 chars)"
 }`;
@@ -84,7 +88,7 @@ function buildPrompt(stats: CycleStats): string {
 Cycle: ${stats.cycleNumber} of their journey
 Total days tracked: ${stats.totalDays}
 Total XP earned: ${stats.totalXp}
-Overall check-in completion: ${Math.round(stats.overallCompletionRate * 100)}% (${stats.totalCheckIns} check-ins from a possible ${stats.totalDays * 4})
+Overall check-in completion: ${Math.round(stats.overallCompletionRate * 100)}% (${stats.totalCheckIns} check-ins from a possible ${stats.totalDays * 8})
 Strongest domain: ${stats.strongestDomain}
 Weakest domain: ${stats.weakestDomain}
 ${vibeLine}
@@ -111,7 +115,7 @@ async function callSonnet(prompt: string): Promise<{
     },
     body: JSON.stringify({
       model: 'claude-sonnet-4-6',
-      max_tokens: 512,
+      max_tokens: 768,
       system: SYSTEM_PROMPT,
       messages: [{ role: 'user', content: prompt }],
     }),
@@ -135,13 +139,17 @@ async function callSonnet(prompt: string): Promise<{
     return { ...parsed, _costPence: costPence };
   } catch {
     return {
-      headline: '84 days. Done.',
+      headline: '365 days. Done.',
       body: 'You showed up. That counts for more than you know right now.',
       domain_callouts: {
         BODY: 'The physical work is banked.',
-        LOVE: 'Presence is a practice.',
-        MISSION: 'The work continues.',
-        SPIRIT: 'The inner work is never wasted.',
+        FUEL: 'What you put in shaped what you got out.',
+        METIME: 'The private work mattered.',
+        USTIME: 'Presence is a practice.',
+        SHOT: 'The professional push continues.',
+        LENS: 'The eye keeps sharpening.',
+        NEST: 'The family work is never wasted.',
+        ROOTS: 'The foundation gets stronger.',
       },
       next_cycle_intention: 'Cycle 2 starts with everything you learned here.',
       _costPence: costPence,
@@ -270,12 +278,12 @@ Deno.serve(async (req: Request) => {
       .eq('cycle_id', cycle.id)
       .order('date', { ascending: true });
 
-    // Compute domain stats
-    const DOMAIN_TYPES = ['BODY', 'LOVE', 'MISSION', 'SPIRIT'];
+    // Compute domain stats across all 8 domains
+    const DOMAIN_TYPES = ['BODY', 'FUEL', 'METIME', 'USTIME', 'SHOT', 'LENS', 'NEST', 'ROOTS'];
     const cycleStart = new Date(cycle.start_date);
     const today = new Date();
     const dayCount = Math.min(
-      84,
+      365,
       Math.max(1, Math.floor((today.getTime() - cycleStart.getTime()) / 86_400_000) + 1),
     );
 
@@ -306,12 +314,12 @@ Deno.serve(async (req: Request) => {
     });
 
     const totalCheckIns = domainStats.reduce((s, d) => s + d.doneCount + d.partialCount, 0);
-    const overallCompletionRate = dayCount > 0 ? totalCheckIns / (dayCount * 4) : 0;
+    const overallCompletionRate = dayCount > 0 ? totalCheckIns / (dayCount * 8) : 0;
 
     const strongestDomain =
       [...domainStats].sort((a, b) => b.completionRate - a.completionRate)[0]?.domain ?? 'BODY';
     const weakestDomain =
-      [...domainStats].sort((a, b) => a.completionRate - b.completionRate)[0]?.domain ?? 'SPIRIT';
+      [...domainStats].sort((a, b) => a.completionRate - b.completionRate)[0]?.domain ?? 'ROOTS';
 
     // Vibe trend
     let vibeStart: number | null = null;

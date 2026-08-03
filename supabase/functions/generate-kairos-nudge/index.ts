@@ -17,7 +17,7 @@ const ANTHROPIC_API_KEY = Deno.env.get('ANTHROPIC_API_KEY') ?? '';
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL') ?? '';
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
 
-const SYSTEM_PROMPT = `You are the KAIROS nudge engine. You write short, sharp, personal daily messages to men in a 12-week behavioural transformation programme.
+const SYSTEM_PROMPT = `You are the KAIROS nudge engine. You write short, sharp, personal daily messages to men in a 365-day behavioural transformation campaign.
 
 Voice rules:
 - South UK British English. No em dashes, use commas or full stops.
@@ -34,30 +34,28 @@ Personalisation:
 You will be given the user's identity anchor, current KAIROS phase, recent check-ins, current streaks, and last vibe check. Reference at least one of these in the nudge to make it feel personal.
 
 KAIROS phase contexts:
-- KICKOFF (Days 1-14): Build the base. Consistency over perfection.
-- ANCHOR (Days 15-28): Lock in habits. Streak matters now.
-- INCREASE (Days 29-42): Step up intensity. 10-15% more.
-- RHYTHM (Days 43-56): Find natural flow. Variability welcome.
-- OWN (Days 57-70): Identity crystallisation. You are this now.
-- SUSTAIN (Days 71-84): Plan the long game. Beyond the cycle.
+- GATE (Days 1-7): Foundations only. Nothing new starts until this closes.
+- STABILISE (Days 8-56): Floor unbroken. Weight trending. First month banked.
+- BUILD (Days 57-151): Strength proper. Running back. Habits compounding.
+- PERFORM (Days 152-217): Cambridge Half peaks. Performance mode.
+- ELITE (Days 218-365): The campaign ends or bigger targets get set.
 
 Output format: JSON only, no markdown, no explanation.
 {
   "title": "string",
   "body": "string",
   "type": "daily_nudge",
-  "domain": "BODY" | "LOVE" | "MISSION" | "SPIRIT" | null,
+  "domain": "BODY" | "FUEL" | "METIME" | "USTIME" | "SHOT" | "LENS" | "NEST" | "ROOTS" | null,
   "xp_reward": number | null,
   "cta": "check_in_now" | "reflect" | "plan_tomorrow" | null
 }`;
 
 const PHASE_CONTEXTS: Record<string, string> = {
-  KICKOFF: 'KICKOFF — Days 1-14. Build the base. Consistency over perfection.',
-  ANCHOR: 'ANCHOR — Days 15-28. Lock in habits. Streak matters now.',
-  INCREASE: 'INCREASE — Days 29-42. Step up intensity. 10-15% more.',
-  RHYTHM: 'RHYTHM — Days 43-56. Find natural flow. Variability welcome.',
-  OWN: 'OWN — Days 57-70. Identity crystallisation. You are this now.',
-  SUSTAIN: 'SUSTAIN — Days 71-84. Plan the long game. Beyond the cycle.',
+  GATE: 'GATE — Days 1-7. Foundations only. Nothing new starts until this closes.',
+  STABILISE: 'STABILISE — Days 8-56. Floor unbroken. Weight trending. First month banked.',
+  BUILD: 'BUILD — Days 57-151. Strength proper. Running back. Habits compounding.',
+  PERFORM: 'PERFORM — Days 152-217. Cambridge Half peaks. Performance mode.',
+  ELITE: 'ELITE — Days 218-365. The campaign ends or bigger targets get set.',
 };
 
 interface UserState {
@@ -93,7 +91,7 @@ function buildUserPrompt(state: UserState, type: 'daily_nudge' | 'weekly_challen
     : 'No vibe check yet.';
 
   return `Identity anchor: ${anchor}
-Current phase: ${phaseCtx} (Day ${state.dayInCycle} of 84)
+Current phase: ${phaseCtx} (Day ${state.dayInCycle} of 365)
 
 Domain focuses:
 ${focusLines}
@@ -252,12 +250,11 @@ Deno.serve(async (req: Request) => {
 
     // Determine KAIROS phase
     const PHASE_DAYS = [
-      { phase: 'KICKOFF', start: 1, end: 14 },
-      { phase: 'ANCHOR', start: 15, end: 28 },
-      { phase: 'INCREASE', start: 29, end: 42 },
-      { phase: 'RHYTHM', start: 43, end: 56 },
-      { phase: 'OWN', start: 57, end: 70 },
-      { phase: 'SUSTAIN', start: 71, end: 84 },
+      { phase: 'GATE',      start: 1,   end: 7   },
+      { phase: 'STABILISE', start: 8,   end: 56  },
+      { phase: 'BUILD',     start: 57,  end: 151 },
+      { phase: 'PERFORM',   start: 152, end: 217 },
+      { phase: 'ELITE',     start: 218, end: 365 },
     ];
     const phaseConfig =
       PHASE_DAYS.find((p) => dayInCycle >= p.start && dayInCycle <= p.end) ??
