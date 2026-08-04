@@ -81,18 +81,19 @@ export function useUpdateNudgeStatus() {
       status: NudgeStatus;
       xpReward?: number | null;
     }) => {
+      const previous = queryClient.getQueryData<AiNudge>(['nudge', profile?.id, today]);
       const { error } = await supabase.from('ai_nudges').update({ status }).eq('id', nudgeId);
       if (error) throw new Error(error.message);
-      return { nudgeId, status, xpReward };
+      return { nudgeId, status, xpReward, previousStatus: previous?.status };
     },
-    onSuccess: async ({ status, xpReward }) => {
+    onSuccess: async ({ status, xpReward, previousStatus }) => {
       queryClient.setQueryData(['nudge', profile?.id, today], (old: AiNudge | undefined) =>
         old ? { ...old, status } : old,
       );
 
       // Award XP when the nudge is marked complete and carries a reward.
       // Applies to all tiers: optimistic update + Supabase sync for paid users.
-      if (status === 'completed' && xpReward && xpReward > 0) {
+      if (status === 'completed' && previousStatus !== 'completed' && xpReward && xpReward > 0) {
         const currentProfile = useAppStore.getState().profile;
         if (currentProfile) {
           const oldXp = currentProfile.xp;
