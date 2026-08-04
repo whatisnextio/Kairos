@@ -2,6 +2,7 @@ import Button from '@/components/common/Button';
 import Card from '@/components/common/Card';
 import { useNudge, useUpdateNudgeStatus } from '@/hooks/useNudge';
 import { useAppStore } from '@/store/useAppStore';
+import { buildFrameworkRecommendations } from '@/utils/frameworkRecommendations';
 import { Zap } from 'lucide-react';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -14,6 +15,10 @@ const CTA_PROMPTS: Record<string, string> = {
 export default function ImproveScreen() {
   const navigate = useNavigate();
   const profile = useAppStore((s) => s.profile);
+  const authUser = useAppStore((s) => s.authUser);
+  const domainFocuses = useAppStore((s) => s.domainFocuses);
+  const todayCheckIns = useAppStore((s) => s.todayCheckIns);
+  const setDailyCheckIn = useAppStore((s) => s.setDailyCheckIn);
 
   const isBrotherhood = profile?.tier === 'brotherhood';
   const today = new Date();
@@ -24,6 +29,12 @@ export default function ImproveScreen() {
   const { mutate: updateStatus } = useUpdateNudgeStatus();
 
   const [ctaExpanded, setCtaExpanded] = useState(false);
+  const [activeFrameworkId, setActiveFrameworkId] = useState<string | null>(null);
+  const frameworkRecommendations = buildFrameworkRecommendations({
+    email: authUser?.email,
+    domainFocuses,
+    todayCheckIns,
+  });
 
   function handleComplete() {
     if (!nudge) return;
@@ -165,6 +176,66 @@ export default function ImproveScreen() {
           </Button>
         </Card>
       )}
+
+      <div>
+        <h2 className="font-heading text-xs font-medium text-base-subtext tracking-widest uppercase mb-3">
+          Framework options
+        </h2>
+        <div className="flex flex-col gap-3">
+          {frameworkRecommendations.map((recommendation) => (
+            <Card key={recommendation.id}>
+              <div className="flex items-start justify-between gap-3 mb-2">
+                <div>
+                  <p className="text-accent-green text-xs font-heading tracking-widest uppercase mb-1">
+                    {recommendation.lens}
+                  </p>
+                  <p className="font-heading text-base font-medium text-base-text">
+                    {recommendation.title}
+                  </p>
+                </div>
+                <span className="text-base-muted text-xs font-heading">
+                  {recommendation.domainLabel}
+                </span>
+              </div>
+              <p className="text-base-subtext text-sm mb-3">{recommendation.body}</p>
+              <p className="text-base-text text-sm mb-4">{recommendation.actionText}</p>
+
+              {activeFrameworkId === recommendation.id && (
+                <textarea
+                  className="input-field w-full h-20 resize-none text-sm mb-3"
+                  placeholder="Write one honest line..."
+                  // biome-ignore lint/a11y/noAutofocus: textarea is primary focus after opening reflection
+                  autoFocus
+                />
+              )}
+
+              <div className="flex gap-2">
+                <Button
+                  size="sm"
+                  onClick={() => {
+                    if (recommendation.lens === 'Reflect') {
+                      setActiveFrameworkId((current) =>
+                        current === recommendation.id ? null : recommendation.id,
+                      );
+                      return;
+                    }
+                    void setDailyCheckIn(recommendation.domainType, 'Done');
+                  }}
+                >
+                  {recommendation.lens === 'Reflect' ? 'Write' : 'Mark done'}
+                </Button>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => navigate(`/detail/${recommendation.domainType.toLowerCase()}`)}
+                >
+                  Open domain
+                </Button>
+              </div>
+            </Card>
+          ))}
+        </div>
+      </div>
 
       {/* Free tier gate */}
       {!isBrotherhood && !isSunday && (

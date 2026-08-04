@@ -1,6 +1,6 @@
 // generate-cycle-reflection
 // Supabase Edge Function (Deno runtime)
-// Called once per cycle when the user reaches Day 365.
+// Called once per cycle when the user reaches Day 84.
 //
 // Flow:
 //   1. Auth: verify JWT, extract user_id
@@ -17,14 +17,14 @@ const MINIMAX_GROUP_ID = Deno.env.get('MINIMAX_GROUP_ID') ?? '';
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL') ?? '';
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
 
-const SYSTEM_PROMPT = `You are the KAIROS cycle reflection engine. You write one deeply personal summary for a man who has just completed a 365-day behavioural transformation campaign.
+const SYSTEM_PROMPT = `You are the KAIROS cycle reflection engine. You write one deeply personal summary for someone who has just completed a 12-week behavioural action framework.
 
 Voice rules:
 - South UK British English. No em dashes, use commas or full stops.
 - No corporate language. No wellness jargon. No "embrace your authentic journey."
 - No emojis.
 - Direct, honest, data-driven. Reference the actual numbers you are given.
-- Sound like a trusted mentor who has been watching all 365 days. Not a chatbot. Not a coach running a script.
+- Sound like a trusted mentor who has been watching all 84 days. Not a chatbot. Not a coach running a script.
 - Acknowledge the hard parts. Don't just celebrate. Real growth has friction.
 
 This is a once-per-cycle moment. It should feel earned.
@@ -63,6 +63,7 @@ interface CycleStats {
   totalXp: number;
   overallCompletionRate: number;
   totalCheckIns: number;
+  domainCount: number;
   vibeStart: number | null;
   vibeEnd: number | null;
   vibeTrend: 'improved' | 'declined' | 'stable' | 'unknown';
@@ -89,7 +90,7 @@ function buildPrompt(stats: CycleStats): string {
 Cycle: ${stats.cycleNumber} of their journey
 Total days tracked: ${stats.totalDays}
 Total XP earned: ${stats.totalXp}
-Overall check-in completion: ${Math.round(stats.overallCompletionRate * 100)}% (${stats.totalCheckIns} check-ins from a possible ${stats.totalDays * 8})
+Overall check-in completion: ${Math.round(stats.overallCompletionRate * 100)}% (${stats.totalCheckIns} check-ins from a possible ${stats.totalDays * stats.domainCount})
 Strongest domain: ${stats.strongestDomain}
 Weakest domain: ${stats.weakestDomain}
 ${vibeLine}
@@ -149,7 +150,7 @@ async function callMiniMax(prompt: string): Promise<{
     return { ...parsed, _costPence: costPence };
   } catch {
     return {
-      headline: '365 days. Done.',
+      headline: '84 days. Done.',
       body: 'You showed up. That counts for more than you know right now.',
       domain_callouts: {
         BODY: 'The physical work is banked.',
@@ -194,6 +195,7 @@ Deno.serve(async (req: Request) => {
   }
 
   const userId = user.id;
+  const isOwner = user.email?.trim().toLowerCase() === 'ldgmcdowell@gmail.com';
 
   try {
     // Load profile + identity anchor
@@ -288,12 +290,14 @@ Deno.serve(async (req: Request) => {
       .eq('cycle_id', cycle.id)
       .order('date', { ascending: true });
 
-    // Compute domain stats across all 8 domains
-    const DOMAIN_TYPES = ['BODY', 'FUEL', 'METIME', 'USTIME', 'SHOT', 'LENS', 'NEST', 'ROOTS'];
+    // Compute domain stats across the public framework, with Liam-only custom routes for the owner account.
+    const DOMAIN_TYPES = isOwner
+      ? ['BODY', 'FUEL', 'METIME', 'USTIME', 'SHOT', 'LENS', 'NEST', 'ROOTS']
+      : ['BODY', 'FUEL', 'METIME', 'USTIME'];
     const cycleStart = new Date(cycle.start_date);
     const today = new Date();
     const dayCount = Math.min(
-      365,
+      84,
       Math.max(1, Math.floor((today.getTime() - cycleStart.getTime()) / 86_400_000) + 1),
     );
 
@@ -324,7 +328,7 @@ Deno.serve(async (req: Request) => {
     });
 
     const totalCheckIns = domainStats.reduce((s, d) => s + d.doneCount + d.partialCount, 0);
-    const overallCompletionRate = dayCount > 0 ? totalCheckIns / (dayCount * 8) : 0;
+    const overallCompletionRate = dayCount > 0 ? totalCheckIns / (dayCount * DOMAIN_TYPES.length) : 0;
 
     const strongestDomain =
       [...domainStats].sort((a, b) => b.completionRate - a.completionRate)[0]?.domain ?? 'BODY';
@@ -363,6 +367,7 @@ Deno.serve(async (req: Request) => {
       totalXp: cycle.total_xp_earned ?? 0,
       overallCompletionRate,
       totalCheckIns,
+      domainCount: DOMAIN_TYPES.length,
       vibeStart,
       vibeEnd,
       vibeTrend,

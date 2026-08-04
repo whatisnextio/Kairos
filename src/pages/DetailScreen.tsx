@@ -3,7 +3,7 @@ import { useDomainCheckIns } from '@/hooks/useCheckIns';
 import { useStreaks } from '@/hooks/useStreaks';
 import { supabase } from '@/services/supabaseClient';
 import { useAppStore } from '@/store/useAppStore';
-import { type CheckInStatus, DOMAINS, type DailyCheckIn, type DomainType } from '@/types';
+import { type CheckInStatus, type DailyCheckIn, type DomainType, getDomainConfig } from '@/types';
 import { useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
@@ -168,6 +168,7 @@ export default function DetailScreen() {
   const { domain } = useParams<{ domain: string }>();
   const {
     profile,
+    authUser,
     currentCycle,
     domainFocuses,
     streaks: localStreaks,
@@ -177,7 +178,7 @@ export default function DetailScreen() {
 
   const today = new Date().toISOString().split('T')[0];
   const domainType = domain?.toUpperCase() as DomainType;
-  const domainConfig = DOMAINS.find((d) => d.type === domainType);
+  const domainConfig = getDomainConfig(domainType, authUser?.email);
   const focus = domainFocuses.find((f) => f.domainType === domainType);
 
   const { data: remoteStreaks } = useStreaks();
@@ -243,6 +244,20 @@ export default function DetailScreen() {
           <p className="text-base-text">{focus.focusDescription}</p>
         </Card>
       )}
+
+      <Card>
+        <p className="text-base-subtext text-xs font-heading tracking-widest uppercase mb-2">
+          Framework
+        </p>
+        <p className="text-base-text text-sm mb-3">{domainConfig.question}</p>
+        <div className="flex flex-col gap-2">
+          {domainConfig.prepOptions.map((option) => (
+            <p key={option} className="text-base-subtext text-xs">
+              {option}
+            </p>
+          ))}
+        </div>
+      </Card>
 
       {/* Streak */}
       <Card>

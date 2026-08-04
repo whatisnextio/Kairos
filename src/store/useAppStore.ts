@@ -51,6 +51,7 @@ interface AppState {
   // Tracks the last KAIROS phase the user was shown a milestone banner for.
   // null = first load, phase not yet recorded.
   lastCelebrationPhase: string | null;
+  profileImageDataUrl: string | null;
 }
 
 // ─── Actions Shape ───────────────────────────────────────────────────────────
@@ -74,6 +75,7 @@ interface AppActions {
   setLevelUpPending: (data: { level: number; label: string } | null) => void;
   setNextCycleIntention: (intention: string | null) => void;
   setLastCelebrationPhase: (phase: string | null) => void;
+  setProfileImageDataUrl: (dataUrl: string | null) => void;
   submitVibeCheck: (rating: VibeCheck['rating']) => Promise<void>;
   completeCycle: (reflection: string) => Promise<void>;
 
@@ -100,6 +102,7 @@ const initialState: AppState = {
   levelUpPending: null,
   nextCycleIntention: null,
   lastCelebrationPhase: null,
+  profileImageDataUrl: null,
 };
 
 // ─── Store ───────────────────────────────────────────────────────────────────
@@ -206,6 +209,7 @@ export const useAppStore = create<AppState & AppActions>()(
       setLevelUpPending: (levelUpPending) => set({ levelUpPending }),
       setNextCycleIntention: (nextCycleIntention) => set({ nextCycleIntention }),
       setLastCelebrationPhase: (lastCelebrationPhase) => set({ lastCelebrationPhase }),
+      setProfileImageDataUrl: (profileImageDataUrl) => set({ profileImageDataUrl }),
 
       submitVibeCheck: async (rating) => {
         const { profile, currentCycle } = get();
@@ -304,6 +308,7 @@ export const useAppStore = create<AppState & AppActions>()(
         lastVibeCheckDate: state.lastVibeCheckDate,
         nextCycleIntention: state.nextCycleIntention,
         lastCelebrationPhase: state.lastCelebrationPhase,
+        profileImageDataUrl: state.profileImageDataUrl,
       }),
     },
   ),

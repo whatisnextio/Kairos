@@ -2,7 +2,7 @@ import Button from '@/components/common/Button';
 import { supabase } from '@/services/supabaseClient';
 import { useAppStore } from '@/store/useAppStore';
 import type { DailyCheckIn, DomainType, IdentityAnchorId, Profile } from '@/types';
-import { DOMAINS, IDENTITY_ANCHORS } from '@/types';
+import { IDENTITY_ANCHORS, KAIROS_CYCLE_LENGTH_DAYS, getAvailableDomains } from '@/types';
 import { getComplimentaryProfileFields } from '@/utils/entitlements';
 import { useState } from 'react';
 
@@ -27,6 +27,8 @@ export default function OnboardingFlow() {
   const [displayName, setDisplayName] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const availableDomains = getAvailableDomains(authUser?.email);
+  const selectedDomain = availableDomains.find((d) => d.type === domain);
 
   const handleWin = async () => {
     if (!authUser || !anchorId || !domain || !microAction) return;
@@ -185,9 +187,9 @@ export default function OnboardingFlow() {
           <h1 className="font-heading text-5xl font-bold text-base-text mb-4 tracking-widest">
             12K
           </h1>
-          <p className="text-base-subtext mb-2">365 days.</p>
-          <p className="text-base-subtext mb-2">One transformation.</p>
-          <p className="text-base-subtext mb-10">No excuses.</p>
+          <p className="text-base-subtext mb-2">12 weeks.</p>
+          <p className="text-base-subtext mb-2">One repeatable framework.</p>
+          <p className="text-base-subtext mb-10">Small actions. Daily proof.</p>
           <Input
             id="name"
             label="What do people call you?"
@@ -257,14 +259,18 @@ export default function OnboardingFlow() {
             Where do you start?
           </h2>
           <p className="text-base-subtext text-sm mb-6">
-            Pick one domain. You'll add the others over the next 7 days.
+            Pick one domain. You'll build out the rest of your {KAIROS_CYCLE_LENGTH_DAYS}-day cycle
+            one route at a time.
           </p>
           <div className="flex flex-col gap-3">
-            {DOMAINS.map((d) => (
+            {availableDomains.map((d) => (
               <button
                 type="button"
                 key={d.type}
-                onClick={() => setDomain(d.type)}
+                onClick={() => {
+                  setDomain(d.type);
+                  setMicroAction('');
+                }}
                 className={`w-full text-left p-4 rounded border transition-colors ${
                   domain === d.type
                     ? 'border-accent-green bg-accent-green/10'
@@ -272,6 +278,7 @@ export default function OnboardingFlow() {
                 }`}
               >
                 <p className={`font-heading font-medium tracking-wide ${d.colour}`}>{d.label}</p>
+                <p className="text-base-subtext text-xs mt-1">{d.description}</p>
               </button>
             ))}
           </div>
@@ -288,11 +295,29 @@ export default function OnboardingFlow() {
           </h2>
           <p className="text-base-subtext text-sm mb-6">
             The smallest useful thing you can do right now for{' '}
-            <span className="text-base-text font-medium">{domain?.toLowerCase()}</span>.
+            <span className="text-base-text font-medium">{selectedDomain?.label ?? 'this'}</span>.
           </p>
+          {selectedDomain && (
+            <div className="grid grid-cols-1 gap-2 mb-4">
+              {selectedDomain.focusOptions.map((option) => (
+                <button
+                  type="button"
+                  key={option}
+                  onClick={() => setMicroAction(option)}
+                  className={`text-left rounded border px-3 py-2 text-sm transition-colors ${
+                    microAction === option
+                      ? 'border-accent-green bg-accent-green/10 text-base-text'
+                      : 'border-base-border bg-base-surface text-base-subtext hover:border-base-muted'
+                  }`}
+                >
+                  {option}
+                </button>
+              ))}
+            </div>
+          )}
           <textarea
             className="input-field h-28 resize-none"
-            placeholder="e.g. 10 press-ups. Call my mum. Write one paragraph."
+            placeholder={selectedDomain?.focusPrompt ?? 'Write your own 5-minute action.'}
             value={microAction}
             onChange={(e) => setMicroAction(e.target.value)}
           />

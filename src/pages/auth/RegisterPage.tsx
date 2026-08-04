@@ -46,17 +46,12 @@ export default function RegisterPage() {
 
   return (
     <div className="min-h-screen bg-base-black flex flex-col items-center justify-center px-6 py-12">
-      <img
-        src="/kairos-12k-logo.svg"
-        alt="Kairos 12K"
-        className="w-48 mb-4"
-        draggable={false}
-      />
+      <img src="/kairos-12k-logo.svg" alt="Kairos 12K" className="w-48 mb-4" draggable={false} />
       <p className="text-base-text font-heading font-bold text-lg tracking-wide mb-1">
-        365 days. Eight domains. One man.
+        12 weeks. Four domains. Daily proof.
       </p>
       <p className="text-base-subtext text-sm text-center max-w-xs mb-10">
-        Build the body, the focus, the relationships, and the life. All at once. No shortcuts.
+        Build body, fuel, mind, and connection through small actions that repeat.
       </p>
 
       {sent ? (
