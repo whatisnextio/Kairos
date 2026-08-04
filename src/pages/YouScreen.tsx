@@ -72,8 +72,10 @@ export default function YouScreen() {
     journeyArchive,
     profileImageDataUrl,
     notificationPreferences,
+    sharePrivacyPreferences,
     setProfileImageDataUrl,
     setNotificationPreferences,
+    setSharePrivacyPreferences,
     addCustomRoute,
     archiveCustomRoute,
     signOut,
@@ -205,6 +207,7 @@ export default function YouScreen() {
         earnedBadges,
         streakProtectionHistory,
         awardedWeeklyBonuses,
+        sharePrivacyPreferences,
         checkIns: checkIns ?? [],
         customRouteCheckIns: customRouteCheckIns ?? [],
         vibeChecks: vibeChecks ?? [],
@@ -225,6 +228,7 @@ export default function YouScreen() {
         customRoutes,
         journeyArchive,
         earnedBadges,
+        sharePrivacyPreferences,
         checkInHistory,
         customRouteCheckInHistory,
       };
@@ -250,6 +254,7 @@ export default function YouScreen() {
     rewardedImproveCards,
     streakProtectionHistory,
     awardedWeeklyBonuses,
+    sharePrivacyPreferences,
   ]);
 
   const handleDeleteAccount = useCallback(async () => {
@@ -700,6 +705,42 @@ export default function YouScreen() {
               </div>
             </>
           )}
+        </Card>
+      )}
+
+      {hasPaidAccess && (
+        <Card>
+          <p className="text-base-subtext text-xs font-heading tracking-widest uppercase mb-2">
+            Sharing privacy
+          </p>
+          <p className="text-base-subtext text-sm mb-4">
+            Defaults for controlled progress shares. You still preview before anything leaves the
+            app.
+          </p>
+          <div className="flex flex-col gap-3">
+            {[
+              ['includeName', 'Include display name'],
+              ['includePhoto', 'Include profile photo in preview'],
+              ['includeDomainDetail', 'Show core domain scores'],
+              ['includeStats', 'Show level and XP'],
+            ].map(([key, label]) => (
+              <label
+                key={key}
+                className="flex items-center justify-between gap-3 text-sm text-base-subtext"
+              >
+                <span>{label}</span>
+                <input
+                  type="checkbox"
+                  checked={sharePrivacyPreferences[key as keyof typeof sharePrivacyPreferences]}
+                  onChange={(e) =>
+                    setSharePrivacyPreferences({
+                      [key]: e.target.checked,
+                    })
+                  }
+                />
+              </label>
+            ))}
+          </div>
         </Card>
       )}
 

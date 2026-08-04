@@ -36,6 +36,7 @@ import {
   shouldAwardWeeklyBonus,
 } from '@/utils/gamification';
 import { DEV_CYCLE_ID, clearLocalDevSession } from '@/utils/localDevSession';
+import { DEFAULT_SHARE_PRIVACY, type SharePrivacyPreferences } from '@/utils/shareProgress';
 import { computeLocalStreak } from '@/utils/streak';
 import { toLocalIsoDate } from '@/utils/v1Framework';
 import { create } from 'zustand';
@@ -199,6 +200,7 @@ interface AppState {
   improveCardSnapshots: Record<string, ImproveCardSnapshot>;
   rewardedImproveCards: Record<string, true>;
   notificationPreferences: NotificationPreferences;
+  sharePrivacyPreferences: SharePrivacyPreferences;
   offlineSyncStatus: OfflineSyncStatus;
   offlineQueueCount: number;
   offlineSyncLastError: string | null;
@@ -252,6 +254,7 @@ interface AppActions {
   setLastCelebrationPhase: (phase: string | null) => void;
   setProfileImageDataUrl: (dataUrl: string | null) => void;
   setNotificationPreferences: (preferences: Partial<NotificationPreferences>) => void;
+  setSharePrivacyPreferences: (preferences: Partial<SharePrivacyPreferences>) => void;
   setImproveCardStatus: (
     cardId: string,
     status: 'accepted' | 'completed' | 'dismissed',
@@ -296,6 +299,7 @@ const initialState: AppState = {
   improveCardSnapshots: {},
   rewardedImproveCards: {},
   notificationPreferences: DEFAULT_NOTIFICATION_PREFERENCES,
+  sharePrivacyPreferences: DEFAULT_SHARE_PRIVACY,
   offlineSyncStatus: 'idle',
   offlineQueueCount: 0,
   offlineSyncLastError: null,
@@ -967,6 +971,10 @@ export const useAppStore = create<AppState & AppActions>()(
         set((state) => ({
           notificationPreferences: { ...state.notificationPreferences, ...preferences },
         })),
+      setSharePrivacyPreferences: (preferences) =>
+        set((state) => ({
+          sharePrivacyPreferences: { ...state.sharePrivacyPreferences, ...preferences },
+        })),
       setImproveCardStatus: async (cardId, status, xpReward, snapshot) => {
         const reward = xpReward ?? 0;
         let shouldSyncXp = false;
@@ -1132,6 +1140,7 @@ export const useAppStore = create<AppState & AppActions>()(
         improveCardSnapshots: state.improveCardSnapshots,
         rewardedImproveCards: state.rewardedImproveCards,
         notificationPreferences: state.notificationPreferences,
+        sharePrivacyPreferences: state.sharePrivacyPreferences,
         streakProtectionHistory: state.streakProtectionHistory,
         awardedWeeklyBonuses: state.awardedWeeklyBonuses,
         offlineSyncStatus: state.offlineSyncStatus,
