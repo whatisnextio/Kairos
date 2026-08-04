@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 360" role="img" aria-labelledby="title desc">
+  <title id="title">Kairos 12K logo</title>
+  <desc id="desc">The Kairos 12K horizontal logo, combining the 12K mark with the Kairos wordmark.</desc>
+  <rect width="1280" height="360" fill="none"/>
+  <g transform="translate(26 54)">
+    <rect width="252" height="252" rx="48" fill="#0B0B0B"/>
+    <rect x="9" y="9" width="234" height="234" rx="41" fill="none" stroke="#2A2A2A" stroke-width="6"/>
+    <g
+      font-family="Oswald, 'Agency FB', 'Arial Narrow', Arial, sans-serif"
+      font-size="116"
+      font-weight="700"
+      letter-spacing="-3"
+    >
+      <text x="28" y="164" fill="#F0F0F0">12</text>
+      <text x="145" y="164" fill="#22C55E">K</text>
+    </g>
+  </g>
+  <rect x="336" y="76" width="3" height="208" rx="1.5" fill="#22C55E"/>
+  <text
+    x="386"
+    y="222"
+    fill="#F0F0F0"
+    font-family="Oswald, 'Agency FB', 'Arial Narrow', Arial, sans-serif"
+    font-size="154"
+    font-weight="700"
+    letter-spacing="20"
+  >KAIROS</text>
+  <rect x="386" y="250" width="244" height="6" rx="3" fill="#22C55E"/>
+</svg>

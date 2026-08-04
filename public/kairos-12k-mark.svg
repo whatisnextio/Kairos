@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-labelledby="title desc">
+  <title id="title">Kairos 12K mark</title>
+  <desc id="desc">A compact 12K monogram on a black rounded square, with a green K stroke.</desc>
+  <rect width="512" height="512" rx="96" fill="#0B0B0B"/>
+  <rect x="18" y="18" width="476" height="476" rx="82" fill="none" stroke="#2A2A2A" stroke-width="12"/>
+  <g
+    font-family="Oswald, 'Agency FB', 'Arial Narrow', Arial, sans-serif"
+    font-size="236"
+    font-weight="700"
+    letter-spacing="-6"
+  >
+    <text x="58" y="335" fill="#F0F0F0">12</text>
+    <text x="298" y="335" fill="#22C55E">K</text>
+  </g>
+</svg>
