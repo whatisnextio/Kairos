@@ -38,7 +38,7 @@ export default function LoginPage() {
         365 days. Eight domains. One man.
       </p>
       <p className="text-base-subtext text-sm text-center max-w-xs mb-10">
-        Build the body, the focus, the relationships, and the life — all at once. No shortcuts.
+        Build the body, the focus, the relationships, and the life. All at once. No shortcuts.
       </p>
 
       {sent ? (
