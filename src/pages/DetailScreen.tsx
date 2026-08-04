@@ -4,6 +4,11 @@ import { useStreaks } from '@/hooks/useStreaks';
 import { supabase } from '@/services/supabaseClient';
 import { useAppStore } from '@/store/useAppStore';
 import { type CheckInStatus, type DailyCheckIn, type DomainType, getDomainConfig } from '@/types';
+import {
+  CONNECTION_SUPPORT_OPTIONS,
+  getDiscreetDomainLabel,
+  toLocalIsoDate,
+} from '@/utils/v1Framework';
 import { useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
@@ -26,7 +31,7 @@ const STATUS_LABEL: Record<string, string> = {
 function getLast7Days(): string[] {
   const days: string[] = [];
   for (let i = 6; i >= 0; i--) {
-    days.push(new Date(Date.now() - i * 86_400_000).toISOString().split('T')[0]);
+    days.push(toLocalIsoDate(new Date(Date.now() - i * 86_400_000)));
   }
   return days;
 }
@@ -176,10 +181,11 @@ export default function DetailScreen() {
     checkInHistory,
   } = useAppStore();
 
-  const today = new Date().toISOString().split('T')[0];
+  const today = toLocalIsoDate(new Date());
   const domainType = domain?.toUpperCase() as DomainType;
   const domainConfig = getDomainConfig(domainType, authUser?.email);
   const focus = domainFocuses.find((f) => f.domainType === domainType);
+  const displayLabel = domainConfig ? getDiscreetDomainLabel(domainConfig, authUser?.email) : '';
 
   const { data: remoteStreaks } = useStreaks();
   const HISTORY_LIMIT = 28;
@@ -203,7 +209,7 @@ export default function DetailScreen() {
     if (profile?.tier !== 'brotherhood' || !history) return [];
     const days: string[] = [];
     for (let i = HISTORY_LIMIT - 1; i >= 0; i--) {
-      days.push(new Date(Date.now() - i * 86_400_000).toISOString().split('T')[0]);
+      days.push(toLocalIsoDate(new Date(Date.now() - i * 86_400_000)));
     }
     const byDate = new Map(history.map((c) => [c.date, c.status]));
     return days.map((d) => (d === today ? todayCheckIns[domainType]?.status : byDate.get(d)));
@@ -233,7 +239,7 @@ export default function DetailScreen() {
         Back
       </button>
       <h1 className={`font-heading text-2xl font-bold tracking-wide ${domainConfig.colour}`}>
-        {domainConfig.label}
+        {displayLabel}
       </h1>
 
       {focus && (
@@ -250,14 +256,48 @@ export default function DetailScreen() {
           Framework
         </p>
         <p className="text-base-text text-sm mb-3">{domainConfig.question}</p>
-        <div className="flex flex-col gap-2">
-          {domainConfig.prepOptions.map((option) => (
-            <p key={option} className="text-base-subtext text-xs">
-              {option}
+        <div className="grid grid-cols-2 gap-2">
+          <div className="rounded border border-base-border p-2">
+            <p className="font-heading text-[11px] text-base-muted uppercase tracking-widest">
+              Prep
             </p>
-          ))}
+            <p className="text-base-subtext text-xs mt-1">{domainConfig.prepOptions[0]}</p>
+          </div>
+          <div className="rounded border border-base-border p-2">
+            <p className="font-heading text-[11px] text-base-muted uppercase tracking-widest">
+              Coach
+            </p>
+            <p className="text-base-subtext text-xs mt-1">{domainConfig.coachPrompt}</p>
+          </div>
+          <div className="rounded border border-base-border p-2">
+            <p className="font-heading text-[11px] text-base-muted uppercase tracking-widest">
+              Reflect
+            </p>
+            <p className="text-base-subtext text-xs mt-1">{domainConfig.reflectPrompt}</p>
+          </div>
+          <div className="rounded border border-base-border p-2">
+            <p className="font-heading text-[11px] text-base-muted uppercase tracking-widest">
+              Feedback
+            </p>
+            <p className="text-base-subtext text-xs mt-1">{domainConfig.feedbackPrompt}</p>
+          </div>
         </div>
       </Card>
+
+      {domainType === 'USTIME' && (
+        <Card>
+          <p className="text-base-subtext text-xs font-heading tracking-widest uppercase mb-2">
+            Connection modes
+          </p>
+          <div className="flex flex-col gap-2">
+            {CONNECTION_SUPPORT_OPTIONS.map((option) => (
+              <p key={option} className="text-base-subtext text-xs">
+                {option}
+              </p>
+            ))}
+          </div>
+        </Card>
+      )}
 
       {/* Streak */}
       <Card>

@@ -19,6 +19,12 @@ import {
   getDayInCycle,
   getPhaseProgressPct,
 } from '@/utils/kairos';
+import {
+  buildAccountabilityPrompt,
+  buildCatchUpPath,
+  getDiscreetDomainLabel,
+  getEarlyWakeProtocol,
+} from '@/utils/v1Framework';
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
@@ -96,6 +102,16 @@ export default function HomeScreen() {
   const configuredDomainCount = domainFocuses.filter((focus) =>
     availableDomainTypes.has(focus.domainType),
   ).length;
+  const earlyWakeProtocol = getEarlyWakeProtocol();
+  const catchUpPath = buildCatchUpPath(availableDomains, todayCheckIns);
+  const openDomainCount = availableDomains.filter((domain) => {
+    const status = todayCheckIns[domain.type]?.status;
+    return status === 'Missed' || status === 'Pending' || !status;
+  }).length;
+  const accountabilityPrompt =
+    new Date().getHours() >= 12 && openDomainCount > 0
+      ? buildAccountabilityPrompt(Math.min(2, Math.max(0, openDomainCount - 1)))
+      : null;
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: Zustand setters are stable; lastCelebrationPhase intentionally excluded to avoid re-triggering after the silent first-load set
   useEffect(() => {
@@ -255,6 +271,78 @@ export default function HomeScreen() {
           <p className="text-base-subtext text-xs mt-3 italic">{phaseConfig.tagline}</p>
         </Card>
 
+        {earlyWakeProtocol && (
+          <Card className="border-accent-green/40 bg-accent-green/5">
+            <p className="font-heading text-xs text-accent-green tracking-widest uppercase mb-1">
+              {earlyWakeProtocol.title}
+            </p>
+            <p className="text-base-text text-sm leading-snug">{earlyWakeProtocol.body}</p>
+            <div className="grid grid-cols-2 gap-2 mt-3">
+              {earlyWakeProtocol.steps.map((step) => (
+                <div key={step} className="rounded border border-base-border bg-base-black/20 p-2">
+                  <p className="text-base-subtext text-xs leading-snug">{step}</p>
+                </div>
+              ))}
+            </div>
+          </Card>
+        )}
+
+        {catchUpPath && (
+          <Card className="border-status-partial/50 bg-status-partial/5">
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0">
+                <p className="font-heading text-xs text-status-partial tracking-widest uppercase mb-1">
+                  {catchUpPath.title}
+                </p>
+                <p className="text-base-text text-sm leading-snug">{catchUpPath.body}</p>
+                <p className="text-base-muted text-xs mt-2">
+                  Start with{' '}
+                  {getDiscreetDomainLabel(
+                    availableDomains.find((d) => d.type === catchUpPath.domainType) ??
+                      availableDomains[0],
+                    authUser?.email,
+                  )}
+                  .
+                </p>
+              </div>
+              <Button
+                size="sm"
+                variant="ghost"
+                className="shrink-0"
+                onClick={() => setDailyCheckIn(catchUpPath.domainType, 'Partial')}
+              >
+                Partial
+              </Button>
+            </div>
+            <div className="flex flex-col gap-1.5 mt-3">
+              {catchUpPath.steps.map((step) => (
+                <p key={step} className="text-base-subtext text-xs">
+                  {step}
+                </p>
+              ))}
+            </div>
+          </Card>
+        )}
+
+        {accountabilityPrompt && (
+          <Card>
+            <p className="font-heading text-xs text-base-subtext tracking-widest uppercase mb-1">
+              {accountabilityPrompt.title}
+            </p>
+            <p className="text-base-text text-sm leading-snug">{accountabilityPrompt.body}</p>
+            <div className="flex gap-2 mt-3 overflow-x-auto pb-1">
+              {accountabilityPrompt.steps.map((step) => (
+                <span
+                  key={step}
+                  className="shrink-0 rounded border border-base-border px-3 py-2 text-xs text-base-subtext"
+                >
+                  {step}
+                </span>
+              ))}
+            </div>
+          </Card>
+        )}
+
         {/* Today's nudge preview */}
         {nudge && nudge.status === 'new' && (
           <button type="button" className="w-full text-left" onClick={() => navigate('/improve')}>
@@ -328,6 +416,7 @@ export default function HomeScreen() {
               const focus = domainFocuses.find((f) => f.domainType === d.type);
               const checkIn = todayCheckIns[d.type];
               const status: CheckInStatus = checkIn?.status ?? 'Pending';
+              const displayLabel = getDiscreetDomainLabel(d, authUser?.email);
 
               return (
                 <div
@@ -338,11 +427,11 @@ export default function HomeScreen() {
                     type="button"
                     className="flex-1 text-left p-4"
                     onClick={() => handleCheckIn(d.type, checkIn?.status)}
-                    aria-label={`Check in ${d.label}`}
+                    aria-label={`Check in ${displayLabel}`}
                   >
                     <div className="flex items-center justify-between">
                       <span className={`font-heading font-medium tracking-wide ${d.colour}`}>
-                        {d.label}
+                        {displayLabel}
                       </span>
                       <span className="text-xs">{STATUS_LABELS[status]}</span>
                     </div>
@@ -359,7 +448,7 @@ export default function HomeScreen() {
                     type="button"
                     className="px-3 flex items-center text-base-muted hover:text-base-subtext transition-colors border-l border-current/20"
                     onClick={() => navigate(`/detail/${d.type.toLowerCase()}`)}
-                    aria-label={`View ${d.label} detail`}
+                    aria-label={`View ${displayLabel} detail`}
                   >
                     <svg
                       aria-hidden="true"

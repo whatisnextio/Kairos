@@ -8,6 +8,7 @@ import type { KairosPhaseConfig } from '@/types';
 import { KAIROS_CYCLE_LENGTH_DAYS, getAvailableDomains } from '@/types';
 import { getLevelForXp, getXpProgressInLevel } from '@/utils/gamification';
 import { KAIROS_PHASES, getCurrentPhaseConfig, getDayInCycle } from '@/utils/kairos';
+import { buildWeeklyFlywheel, getDiscreetDomainLabel, toLocalIsoDate } from '@/utils/v1Framework';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
@@ -23,7 +24,7 @@ function getLast7Days(): string[] {
   const days: string[] = [];
   for (let i = 6; i >= 0; i--) {
     const d = new Date(Date.now() - i * 86_400_000);
-    days.push(d.toISOString().split('T')[0]);
+    days.push(toLocalIsoDate(d));
   }
   return days;
 }
@@ -54,7 +55,12 @@ export default function ProgressScreen() {
   const level = getLevelForXp(profile.xp);
   const xpProgress = getXpProgressInLevel(profile.xp);
   const last7 = getLast7Days();
-  const today = new Date().toISOString().split('T')[0];
+  const today = toLocalIsoDate(new Date());
+  const flywheel = buildWeeklyFlywheel({
+    email: authUser?.email,
+    checkInHistory,
+    todayCheckIns,
+  });
 
   return (
     <>
@@ -131,6 +137,54 @@ export default function ProgressScreen() {
           </p>
         </Card>
 
+        <Card>
+          <h2 className="font-heading text-xs font-medium text-base-subtext tracking-widest uppercase mb-3">
+            {flywheel.title}
+          </h2>
+          <div className="grid grid-cols-2 gap-2">
+            {flywheel.entries.map((entry) => (
+              <button
+                key={entry.domainType}
+                type="button"
+                onClick={() => navigate(`/detail/${entry.domainType.toLowerCase()}`)}
+                className="rounded border border-base-border bg-base-black/20 p-3 text-left hover:border-base-muted transition-colors"
+              >
+                <div className="flex items-start justify-between gap-2">
+                  <p className="font-heading text-xs font-medium text-base-text truncate">
+                    {entry.label}
+                  </p>
+                  <p
+                    className={`font-heading text-sm font-bold ${
+                      entry.state === 'steady'
+                        ? 'text-status-done'
+                        : entry.state === 'thin'
+                          ? 'text-status-partial'
+                          : 'text-status-missed'
+                    }`}
+                  >
+                    {entry.score}%
+                  </p>
+                </div>
+                <div className="mt-2 h-1.5 bg-base-border rounded-full overflow-hidden">
+                  <div
+                    className={`h-full rounded-full ${
+                      entry.state === 'steady'
+                        ? 'bg-status-done'
+                        : entry.state === 'thin'
+                          ? 'bg-status-partial'
+                          : 'bg-status-missed'
+                    }`}
+                    style={{ width: `${entry.score}%` }}
+                  />
+                </div>
+                <p className="text-base-muted text-[11px] mt-2">
+                  {entry.done} done - {entry.partial} partial - {entry.missed} missed
+                </p>
+              </button>
+            ))}
+          </div>
+        </Card>
+
         {/* 7-day domain grid */}
         <Card>
           <h2 className="font-heading text-xs font-medium text-base-subtext tracking-widest uppercase mb-3">
@@ -162,7 +216,9 @@ export default function ProgressScreen() {
               key={d.type}
               className="grid grid-cols-[80px_repeat(7,1fr)] gap-1 mb-1.5 items-center"
             >
-              <span className={`text-xs font-heading font-medium ${d.colour}`}>{d.label}</span>
+              <span className={`text-xs font-heading font-medium ${d.colour}`}>
+                {getDiscreetDomainLabel(d, authUser?.email)}
+              </span>
               {last7.map((date) => {
                 const status =
                   date === today
@@ -196,7 +252,9 @@ export default function ProgressScreen() {
                   : localStreaks[d.type];
               return (
                 <div key={d.type} className="flex items-center justify-between">
-                  <span className={`text-xs font-heading font-medium ${d.colour}`}>{d.label}</span>
+                  <span className={`text-xs font-heading font-medium ${d.colour}`}>
+                    {getDiscreetDomainLabel(d, authUser?.email)}
+                  </span>
                   <div className="flex items-center gap-3">
                     <div className="text-right">
                       <p className="font-heading font-bold text-base-text text-sm">
