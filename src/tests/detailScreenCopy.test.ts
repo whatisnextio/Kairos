@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { getDomainConfig } from '@/types';
-import { getDailyDomainLabel, getDiscreetDomainLabel } from '@/utils/v1Framework';
+import { getDailyDomainLabel } from '@/utils/v1Framework';
 import { describe, expect, it } from 'vitest';
 
 const OWNER_EMAIL = 'ldgmcdowell@gmail.com';
@@ -15,8 +15,6 @@ describe('Detail screen domain labels', () => {
 
     expect(self?.label).toBe('Self');
     expect(getDailyDomainLabel(self)).toBe('Self');
-    expect(getDiscreetDomainLabel(self, OWNER_EMAIL)).toBe('MT');
     expect(source).toContain('getDailyDomainLabel(domainConfig)');
-    expect(source).not.toContain('getDiscreetDomainLabel(domainConfig');
   });
 });

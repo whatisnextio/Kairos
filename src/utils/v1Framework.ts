@@ -1,5 +1,5 @@
 import type { CheckInStatus, DailyCheckIn, DomainConfig, DomainType } from '@/types';
-import { getAvailableDomains, isOwnerAccount } from '@/types';
+import { getAvailableDomains } from '@/types';
 
 export interface EarlyWakeProtocol {
   title: string;
@@ -45,26 +45,12 @@ export const CORE_FLYWHEEL: Array<{ domainType: DomainType; label: string }> = [
   { domainType: 'USTIME', label: 'Connection' },
 ];
 
-const OWNER_DISCREET_LABELS: Partial<Record<DomainType, string>> = {
-  METIME: 'MT',
-  USTIME: 'UT',
-  SHOT: 'S1',
-  LENS: 'L1',
-  NEST: 'N1',
-  ROOTS: 'R1',
-};
-
 export const CONNECTION_SUPPORT_OPTIONS = [
   'Low-energy day: make warmth easier and ask less of them.',
   'Body-care day: comfort, tea, heat, chores, no pressure.',
   'No-mood day: affection stays available without an agenda.',
   'Pain day: reduce load first, then offer closeness if it helps.',
 ];
-
-export function getDiscreetDomainLabel(domain: DomainConfig, email?: string | null): string {
-  if (!isOwnerAccount(email)) return domain.label;
-  return OWNER_DISCREET_LABELS[domain.type] ?? domain.label;
-}
 
 export function getDailyDomainLabel(domain: DomainConfig): string {
   return domain.label;

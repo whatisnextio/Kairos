@@ -16,7 +16,7 @@ import {
 } from '@/utils/gamification';
 import { KAIROS_PHASES, getCurrentPhaseConfig, getDayInCycle } from '@/utils/kairos';
 import { buildProgressSharePreview, shareOrCopyProgress } from '@/utils/shareProgress';
-import { buildWeeklyFlywheel, getDiscreetDomainLabel, toLocalIsoDate } from '@/utils/v1Framework';
+import { buildWeeklyFlywheel, getDailyDomainLabel, toLocalIsoDate } from '@/utils/v1Framework';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
@@ -458,7 +458,7 @@ export default function ProgressScreen() {
               className="grid grid-cols-[80px_repeat(7,1fr)] gap-1 mb-1.5 items-center"
             >
               <span className={`text-xs font-heading font-medium ${d.colour}`}>
-                {getDiscreetDomainLabel(d, authUser?.email)}
+                {getDailyDomainLabel(d)}
               </span>
               {last7.map((date) => {
                 const status =
@@ -493,7 +493,7 @@ export default function ProgressScreen() {
               return (
                 <div key={d.type} className="flex items-center justify-between">
                   <span className={`text-xs font-heading font-medium ${d.colour}`}>
-                    {getDiscreetDomainLabel(d, authUser?.email)}
+                    {getDailyDomainLabel(d)}
                   </span>
                   <div className="flex items-center gap-3">
                     <div className="text-right">
