@@ -1,6 +1,6 @@
 // generate-kairos-nudge
 // Supabase Edge Function (Deno runtime)
-// Called by: daily cron (06:00 user-local) or user-triggered refresh (max 3/day)
+// Called by: daily cron (06:00 UTC) or user-triggered refresh (max 3/day)
 //
 // Flow:
 //   1. Auth: verify JWT, extract user_id
@@ -13,8 +13,7 @@
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
-const MINIMAX_API_KEY = Deno.env.get('MINIMAX_API_KEY') ?? '';
-const MINIMAX_GROUP_ID = Deno.env.get('MINIMAX_GROUP_ID') ?? '';
+const ANTHROPIC_API_KEY = Deno.env.get('ANTHROPIC_API_KEY') ?? '';
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL') ?? '';
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
 
@@ -108,56 +107,49 @@ Last vibe check: ${vibeLines}
 Generate one ${type} for today.`;
 }
 
-async function callMiniMax(userPrompt: string): Promise<{
+async function callClaude(userPrompt: string): Promise<{
   title: string;
   body: string;
   type: string;
   domain: string | null;
   xp_reward: number | null;
   cta: string | null;
+  _costPence: number;
 }> {
-  const response = await fetch(
-    `https://api.minimaxi.chat/v1/text/chatcompletion_v2?GroupId=${MINIMAX_GROUP_ID}`,
-    {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${MINIMAX_API_KEY}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: 'MiniMax-M3',
-        max_tokens: 1024,
-        messages: [
-          { role: 'system', content: SYSTEM_PROMPT },
-          { role: 'user', content: userPrompt },
-        ],
-      }),
+  if (!ANTHROPIC_API_KEY) {
+    throw new Error('ANTHROPIC_API_KEY not configured');
+  }
+
+  const response = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: {
+      'x-api-key': ANTHROPIC_API_KEY,
+      'anthropic-version': '2023-06-01',
+      'content-type': 'application/json',
     },
-  );
+    body: JSON.stringify({
+      model: 'claude-haiku-4-5-20251001',
+      max_tokens: 300,
+      system: SYSTEM_PROMPT,
+      messages: [{ role: 'user', content: userPrompt }],
+    }),
+  });
 
   if (!response.ok) {
     const text = await response.text();
-    throw new Error(`MiniMax API error ${response.status}: ${text}`);
+    throw new Error(`Anthropic API error ${response.status}: ${text}`);
   }
 
   const data = await response.json();
-
-  if (data.base_resp?.status_code !== 0) {
-    throw new Error(`MiniMax error ${data.base_resp?.status_code}: ${data.base_resp?.status_msg}`);
-  }
-
-  const rawContent = data.choices?.[0]?.message?.content ?? '';
-  // Strip any <think>...</think> reasoning blocks the model may emit
-  const content = rawContent.replace(/<think>[\s\S]*?<\/think>/g, '').trim();
-
-  const totalTokens = data.usage?.total_tokens ?? 0;
-  // MiniMax M3 ~$0.40/Mtok blended estimate, in pence
-  const costPence = Math.round((totalTokens * 0.4 / 1_000_000) * 100 * 100);
+  const content: string = data.content?.[0]?.text ?? '';
+  const inputTokens: number = data.usage?.input_tokens ?? 0;
+  const outputTokens: number = data.usage?.output_tokens ?? 0;
+  // Claude Haiku 4.5: ~$0.80/Mtok input, ~$4/Mtok output, converted to pence
+  const costPence = Math.round(((inputTokens * 0.8 + outputTokens * 4) / 1_000_000) * 100 * 100);
 
   try {
-    // Extract JSON if wrapped in a markdown code block
     const jsonMatch = content.match(/```(?:json)?\s*([\s\S]*?)```/) ?? [null, content];
-    const parsed = JSON.parse(jsonMatch[1].trim());
+    const parsed = JSON.parse((jsonMatch[1] ?? content).trim());
     return { ...parsed, _costPence: costPence };
   } catch {
     return {
@@ -168,7 +160,7 @@ async function callMiniMax(userPrompt: string): Promise<{
       xp_reward: null,
       cta: 'check_in_now',
       _costPence: costPence,
-    } as never;
+    };
   }
 }
 
@@ -189,7 +181,6 @@ Deno.serve(async (req: Request) => {
 
   const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
-  // Verify JWT and get user
   const {
     data: { user },
     error: authError,
@@ -204,7 +195,6 @@ Deno.serve(async (req: Request) => {
   const isSunday = new Date().getDay() === 0;
 
   try {
-    // Load profile
     const { data: profile, error: profileErr } = await supabase
       .from('profiles')
       .select('*, identity_anchors(name)')
@@ -215,7 +205,7 @@ Deno.serve(async (req: Request) => {
       return new Response(JSON.stringify({ error: 'Profile not found' }), { status: 404 });
     }
 
-    // Tier check
+    // Free tier: nudges on Sundays only
     if (profile.tier === 'free' && !isSunday) {
       return new Response(
         JSON.stringify({ error: 'Free tier gets nudges on Sundays only', tier_gate: true }),
@@ -238,7 +228,6 @@ Deno.serve(async (req: Request) => {
       });
     }
 
-    // Load cycle
     const { data: cycle } = await supabase
       .from('kairos_cycles')
       .select('*')
@@ -249,7 +238,6 @@ Deno.serve(async (req: Request) => {
       return new Response(JSON.stringify({ error: 'No active cycle' }), { status: 400 });
     }
 
-    // Compute day in cycle
     const startDate = new Date(cycle.start_date);
     const todayDate = new Date(today);
     const dayInCycle = Math.max(
@@ -257,7 +245,6 @@ Deno.serve(async (req: Request) => {
       Math.floor((todayDate.getTime() - startDate.getTime()) / 86_400_000) + 1,
     );
 
-    // Determine KAIROS phase
     const PHASE_DAYS = [
       { phase: 'GATE',      start: 1,   end: 7   },
       { phase: 'STABILISE', start: 8,   end: 56  },
@@ -269,14 +256,12 @@ Deno.serve(async (req: Request) => {
       PHASE_DAYS.find((p) => dayInCycle >= p.start && dayInCycle <= p.end) ??
       PHASE_DAYS[PHASE_DAYS.length - 1];
 
-    // Load domain focuses
     const { data: focuses } = await supabase
       .from('user_domain_focuses')
       .select('domain_type, focus_description')
       .eq('user_id', userId)
       .eq('cycle_id', cycle.id);
 
-    // Load recent check-ins (last 7 days)
     const sevenDaysAgo = new Date(todayDate.getTime() - 7 * 86_400_000).toISOString().split('T')[0];
 
     const { data: checkIns } = await supabase
@@ -286,13 +271,11 @@ Deno.serve(async (req: Request) => {
       .gte('date', sevenDaysAgo)
       .order('date', { ascending: true });
 
-    // Load streaks
     const { data: streaks } = await supabase
       .from('user_streaks')
       .select('domain_type, current_streak, longest_streak')
       .eq('user_id', userId);
 
-    // Load last vibe check
     const { data: vibeCheck } = await supabase
       .from('vibe_checks')
       .select('rating, date')
@@ -301,10 +284,9 @@ Deno.serve(async (req: Request) => {
       .limit(1)
       .maybeSingle();
 
-    // Build user state for prompt
     const state: UserState = {
       identityAnchorName:
-        (profile.identity_anchors as { name: string })?.name ?? profile.identity_anchor_id,
+        (profile.identity_anchors as { name: string } | null)?.name ?? profile.identity_anchor_id,
       customAnchorName: profile.custom_anchor_name ?? undefined,
       phase: phaseConfig.phase,
       dayInCycle,
@@ -331,20 +313,9 @@ Deno.serve(async (req: Request) => {
       lastVibeCheck: vibeCheck ? { rating: vibeCheck.rating, date: vibeCheck.date } : undefined,
     };
 
-    // Call MiniMax
     const userPrompt = buildUserPrompt(state, 'daily_nudge');
-    const result = (await callMiniMax(userPrompt)) as {
-      title: string;
-      body: string;
-      type: string;
-      domain: string | null;
-      xp_reward: number | null;
-      cta: string | null;
-      _costPence?: number;
-    };
+    const result = await callClaude(userPrompt);
 
-    // Store nudge — upsert so concurrent cron + user-refresh can't both slip past
-    // the cache check and then collide on the unique (user_id, date, type) constraint.
     const { data: nudge, error: insertErr } = await supabase
       .from('ai_nudges')
       .upsert(

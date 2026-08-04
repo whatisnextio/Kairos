@@ -1,5 +1,5 @@
 import Button from '@/components/common/Button';
-import { requestPushPermission } from '@/services/pushNotifications';
+import { subscribeToPush } from '@/services/pushNotifications';
 import { supabase } from '@/services/supabaseClient';
 import { useAppStore } from '@/store/useAppStore';
 import type { DailyCheckIn, DomainType, IdentityAnchorId } from '@/types';
@@ -7,6 +7,57 @@ import { DOMAINS, IDENTITY_ANCHORS } from '@/types';
 import { useState } from 'react';
 
 type Step = 'welcome' | 'anchor' | 'domain' | 'action' | 'win' | 'celebrate' | 'notifications';
+
+const DOMAIN_PRESETS: Record<string, string[]> = {
+  BODY: [
+    'Walk for 20 minutes today',
+    'Complete a training session',
+    'Do 10 press-ups right now',
+    'Track sleep and recovery today',
+  ],
+  FUEL: [
+    'Take all morning supplements',
+    'Hit 2L water before 6pm',
+    'No alcohol today',
+    'Prep a proper meal from scratch',
+  ],
+  METIME: [
+    'Block 30 focused minutes, no interruptions',
+    'Do one thing only you know about',
+    'Protect your solo time today',
+    'Read for 20 minutes undisturbed',
+  ],
+  USTIME: [
+    'Give her 20 minutes of full attention',
+    'Plan something just for the two of you',
+    'No phone during your time together',
+    'Be fully present at the end of the day',
+  ],
+  SHOT: [
+    'Work the pipeline for 30 minutes',
+    'Send one follow-up or proposal',
+    'Complete one billable piece of work',
+    'Clear the backlog for 30 minutes',
+  ],
+  LENS: [
+    'Get outside with the camera today',
+    'Edit and post one image',
+    'Plan or book a dawn shoot',
+    'Research and enter a competition',
+  ],
+  NEST: [
+    'One focused hour with the family',
+    'Sort one household task',
+    'Be fully present at dinner',
+    'Spend shoulder-to-shoulder time with the kids',
+  ],
+  ROOTS: [
+    'Review what went out this month',
+    'Make a payment toward debt',
+    'Move money to savings',
+    'Set aside 30 minutes for financial planning',
+  ],
+};
 
 const PROGRESS_STEPS: Step[] = ['welcome', 'anchor', 'domain', 'action', 'win'];
 
@@ -34,6 +85,8 @@ export default function OnboardingFlow() {
   const [customAnchor, setCustomAnchor] = useState('');
   const [domain, setDomain] = useState<DomainType | null>(null);
   const [microAction, setMicroAction] = useState('');
+  const [selectedPreset, setSelectedPreset] = useState<string | null>(null);
+  const [showCustomAction, setShowCustomAction] = useState(false);
   const [displayName, setDisplayName] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
@@ -362,21 +415,62 @@ export default function OnboardingFlow() {
         )}
 
         {/* ── Action ──────────────────────────────────────────────── */}
-        {step === 'action' && (
+        {step === 'action' && domain && (
           <div className="w-full max-w-sm">
             <h2 className="font-heading text-2xl font-bold text-base-text mb-1 tracking-wide">
-              What's today's 5-minute action?
+              What's today's action?
             </h2>
             <p className="text-base-subtext text-sm mb-6">
-              The smallest useful thing you can do right now for{' '}
-              <span className="text-base-text font-medium">{domain?.toLowerCase()}</span>.
+              Pick one thing to do right now for{' '}
+              <span className="text-base-text font-medium">
+                {DOMAINS.find((d) => d.type === domain)?.label}
+              </span>
+              .
             </p>
-            <textarea
-              className="input-field h-28 resize-none"
-              placeholder="e.g. 10 press-ups. Call my mum. Write one paragraph."
-              value={microAction}
-              onChange={(e) => setMicroAction(e.target.value)}
-            />
+            <div className="flex flex-col gap-2">
+              {(DOMAIN_PRESETS[domain] ?? []).map((preset) => (
+                <button
+                  key={preset}
+                  type="button"
+                  onClick={() => {
+                    setSelectedPreset(preset);
+                    setMicroAction(preset);
+                    setShowCustomAction(false);
+                  }}
+                  className={`w-full text-left px-4 py-3 rounded border text-sm transition-colors ${
+                    selectedPreset === preset && !showCustomAction
+                      ? 'border-accent-green bg-accent-green/10 text-base-text'
+                      : 'border-base-border bg-base-surface text-base-subtext hover:border-base-muted hover:text-base-text'
+                  }`}
+                >
+                  {preset}
+                </button>
+              ))}
+              <button
+                type="button"
+                onClick={() => {
+                  setShowCustomAction(true);
+                  setSelectedPreset(null);
+                  setMicroAction('');
+                }}
+                className={`w-full text-left px-4 py-3 rounded border text-sm transition-colors ${
+                  showCustomAction
+                    ? 'border-accent-green bg-accent-green/10 text-base-text'
+                    : 'border-base-border bg-base-surface text-base-muted hover:border-base-muted hover:text-base-text'
+                }`}
+              >
+                Write your own...
+              </button>
+            </div>
+            {showCustomAction && (
+              <textarea
+                className="input-field h-20 resize-none mt-3"
+                placeholder="Describe your action in one line."
+                value={microAction}
+                autoFocus
+                onChange={(e) => setMicroAction(e.target.value)}
+              />
+            )}
             <div className="flex gap-3 mt-4">
               <Button variant="ghost" onClick={handleBack} className="flex-1">
                 Back
@@ -468,7 +562,21 @@ export default function OnboardingFlow() {
             </p>
             <Button
               onClick={async () => {
-                await requestPushPermission();
+                try {
+                  const sub = await subscribeToPush();
+                  if (sub) {
+                    const {
+                      data: { session },
+                    } = await supabase.auth.getSession();
+                    if (session?.access_token) {
+                      await supabase.functions.invoke('save-push-subscription', {
+                        body: { subscription: sub.toJSON() },
+                      });
+                    }
+                  }
+                } catch {
+                  // Permission denied or push not supported — continue anyway
+                }
                 setOnboardingComplete(true);
               }}
               className="w-full mb-4"
