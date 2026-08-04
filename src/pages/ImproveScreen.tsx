@@ -2,6 +2,7 @@ import Button from '@/components/common/Button';
 import Card from '@/components/common/Card';
 import { useNudge, useUpdateNudgeStatus } from '@/hooks/useNudge';
 import { useAppStore } from '@/store/useAppStore';
+import { hasBrotherhoodAccess } from '@/utils/entitlements';
 import { buildFrameworkRecommendations } from '@/utils/frameworkRecommendations';
 import { Zap } from 'lucide-react';
 import { useState } from 'react';
@@ -20,10 +21,10 @@ export default function ImproveScreen() {
   const todayCheckIns = useAppStore((s) => s.todayCheckIns);
   const setDailyCheckIn = useAppStore((s) => s.setDailyCheckIn);
 
-  const isBrotherhood = profile?.tier === 'brotherhood';
+  const isPaidTier = hasBrotherhoodAccess(profile?.tier);
   const today = new Date();
   const isSunday = today.getDay() === 0;
-  const canSeeNudge = isBrotherhood || isSunday;
+  const canSeeNudge = isPaidTier || isSunday;
 
   const { data: nudge, isLoading, isError, refetch } = useNudge();
   const { mutate: updateStatus } = useUpdateNudgeStatus();
@@ -238,7 +239,7 @@ export default function ImproveScreen() {
       </div>
 
       {/* Free tier gate */}
-      {!isBrotherhood && !isSunday && (
+      {!isPaidTier && !isSunday && (
         <Card className="relative overflow-hidden">
           <div className="blur-sm pointer-events-none select-none">
             <p className="font-heading text-base font-medium text-base-text mb-1">

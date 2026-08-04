@@ -14,6 +14,7 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL') ?? '';
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
+const PAID_TIERS = new Set(['brotherhood', 'lifechanger']);
 
 const PHASE_DAYS: Array<{ phase: string; start: number; end: number }> = [
   { phase: 'KICKOFF', start: 1, end: 14 },
@@ -71,10 +72,10 @@ Deno.serve(async (req: Request) => {
       return new Response(JSON.stringify({ error: 'Profile not found' }), { status: 404 });
     }
 
-    // Only brotherhood gets squads
-    if (profile.tier !== 'brotherhood') {
+    // Paid V1 tiers get squads.
+    if (!PAID_TIERS.has(profile.tier)) {
       return new Response(
-        JSON.stringify({ error: 'Squads require Brotherhood tier', tier_gate: true }),
+        JSON.stringify({ error: 'Squads require paid access', tier_gate: true }),
         { status: 403 },
       );
     }

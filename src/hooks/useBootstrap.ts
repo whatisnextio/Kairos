@@ -11,6 +11,7 @@ import type {
 import {
   applyComplimentaryBrotherhood,
   getComplimentaryProfileFields,
+  hasBrotherhoodAccess,
   hasComplimentaryBrotherhood,
 } from '@/utils/entitlements';
 import { isLocalDevUser } from '@/utils/localDevSession';
@@ -131,7 +132,7 @@ export function useBootstrap() {
       let mapped = mapProfile(profileRow as Record<string, unknown>);
       if (
         hasComplimentaryBrotherhood(authUser?.email) &&
-        (mapped.tier !== 'brotherhood' || mapped.subscriptionStatus !== 'active')
+        (!hasBrotherhoodAccess(mapped.tier) || mapped.subscriptionStatus !== 'active')
       ) {
         const { data: updatedProfileRow, error: entitlementErr } = await supabase
           .from('profiles')
@@ -182,8 +183,8 @@ export function useBootstrap() {
         setDomainFocuses(focuses.map((f) => mapFocus(f as Record<string, unknown>)));
       }
 
-      // Brotherhood: reload recent check-ins from Supabase (cross-device sync + history backfill)
-      if (profile.tier === 'brotherhood') {
+      // Paid tiers: reload recent check-ins from Supabase (cross-device sync + history backfill)
+      if (hasBrotherhoodAccess(profile.tier)) {
         const sevenDaysAgo = new Date(Date.now() - 6 * 86_400_000).toISOString().split('T')[0];
         const { data: checkIns } = await supabase
           .from('daily_check_ins')

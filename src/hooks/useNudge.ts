@@ -1,6 +1,7 @@
 import { supabase } from '@/services/supabaseClient';
 import { useAppStore } from '@/store/useAppStore';
 import type { AiNudge, DomainType, KairosPhase, NudgeCta, NudgeStatus, NudgeType } from '@/types';
+import { hasBrotherhoodAccess } from '@/utils/entitlements';
 import { getLevelForXp } from '@/utils/gamification';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
@@ -47,7 +48,7 @@ export function useNudge() {
 
   const today = new Date().toISOString().split('T')[0];
   const isSunday = new Date().getDay() === 0;
-  const enabled = !!authUser && !!profile && (profile.tier === 'brotherhood' || isSunday);
+  const enabled = !!authUser && !!profile && (hasBrotherhoodAccess(profile.tier) || isSunday);
 
   return useQuery({
     queryKey: ['nudge', profile?.id, today],
@@ -90,7 +91,7 @@ export function useUpdateNudgeStatus() {
       );
 
       // Award XP when the nudge is marked complete and carries a reward.
-      // Applies to all tiers: optimistic update + Supabase sync for brotherhood.
+      // Applies to all tiers: optimistic update + Supabase sync for paid users.
       if (status === 'completed' && xpReward && xpReward > 0) {
         const currentProfile = useAppStore.getState().profile;
         if (currentProfile) {
@@ -106,7 +107,7 @@ export function useUpdateNudgeStatus() {
               .setLevelUpPending({ level: newLevel.level, label: newLevel.label });
           }
 
-          if (currentProfile.tier === 'brotherhood') {
+          if (hasBrotherhoodAccess(currentProfile.tier)) {
             await supabase.rpc('increment_profile_xp', {
               p_user_id: currentProfile.id,
               p_delta: xpReward,

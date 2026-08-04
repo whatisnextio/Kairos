@@ -6,6 +6,7 @@ import { useStreaks } from '@/hooks/useStreaks';
 import { useAppStore } from '@/store/useAppStore';
 import type { KairosPhaseConfig } from '@/types';
 import { KAIROS_CYCLE_LENGTH_DAYS, getAvailableDomains } from '@/types';
+import { hasBrotherhoodAccess } from '@/utils/entitlements';
 import { getLevelForXp, getXpProgressInLevel } from '@/utils/gamification';
 import { KAIROS_PHASES, getCurrentPhaseConfig, getDayInCycle } from '@/utils/kairos';
 import { buildWeeklyFlywheel, getDiscreetDomainLabel, toLocalIsoDate } from '@/utils/v1Framework';
@@ -46,7 +47,7 @@ export default function ProgressScreen() {
   const dayInCycle = profile && currentCycle ? getDayInCycle(currentCycle.startDate) : 0;
   const cycleComplete = dayInCycle >= KAIROS_CYCLE_LENGTH_DAYS;
   const { data: aiReflection } = useCycleReflection(
-    cycleComplete && profile?.tier === 'brotherhood',
+    cycleComplete && hasBrotherhoodAccess(profile?.tier),
   );
 
   if (!profile || !currentCycle) return null;
@@ -102,7 +103,7 @@ export default function ProgressScreen() {
               )}
             </div>
             <div className="flex gap-2">
-              {profile.tier === 'brotherhood' && (
+              {hasBrotherhoodAccess(profile.tier) && (
                 <Button
                   size="sm"
                   variant="ghost"
@@ -246,10 +247,9 @@ export default function ProgressScreen() {
           </h2>
           <div className="flex flex-col gap-2">
             {availableDomains.map((d) => {
-              const streak =
-                profile.tier === 'brotherhood'
-                  ? remoteStreaks?.find((s) => s.domainType === d.type)
-                  : localStreaks[d.type];
+              const streak = hasBrotherhoodAccess(profile.tier)
+                ? remoteStreaks?.find((s) => s.domainType === d.type)
+                : localStreaks[d.type];
               return (
                 <div key={d.type} className="flex items-center justify-between">
                   <span className={`text-xs font-heading font-medium ${d.colour}`}>

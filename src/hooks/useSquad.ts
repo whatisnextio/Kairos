@@ -1,6 +1,7 @@
 import { supabase } from '@/services/supabaseClient';
 import { useAppStore } from '@/store/useAppStore';
 import type { SquadPulse } from '@/types';
+import { hasBrotherhoodAccess } from '@/utils/entitlements';
 import { useMutation, useQuery } from '@tanstack/react-query';
 
 const SQUAD_MATCH_ENDPOINT = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/match-to-squad`;
@@ -25,7 +26,7 @@ function toSquadPulse(raw: RawSquadPulse): SquadPulse {
 
 export function useSquadPulse() {
   const profile = useAppStore((s) => s.profile);
-  const enabled = !!profile && profile.tier === 'brotherhood' && !!profile.squadId;
+  const enabled = !!profile && hasBrotherhoodAccess(profile.tier) && !!profile.squadId;
 
   return useQuery({
     queryKey: ['squad-pulse', profile?.squadId],
@@ -65,7 +66,7 @@ export interface SquadMemberStatus {
 
 export function useSquadMembers() {
   const profile = useAppStore((s) => s.profile);
-  const enabled = !!profile && profile.tier === 'brotherhood' && !!profile.squadId;
+  const enabled = !!profile && hasBrotherhoodAccess(profile.tier) && !!profile.squadId;
 
   return useQuery({
     queryKey: ['squad-members', profile?.squadId],

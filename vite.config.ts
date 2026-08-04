@@ -12,9 +12,9 @@ export default defineConfig({
       filename: 'sw.ts',
       includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'logo192.png', 'logo512.png'],
       manifest: {
-        name: '12K - Your 365-Day Transformation',
+        name: '12K - Your 12-Week Transformation',
         short_name: '12K',
-        description: '12K: Your 365-day transformation. Powered by Kairos.',
+        description: '12K: Your 12-week transformation. Powered by Kairos.',
         theme_color: '#0B0B0B',
         background_color: '#0B0B0B',
         display: 'standalone',

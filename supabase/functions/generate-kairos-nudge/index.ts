@@ -5,7 +5,7 @@
 // Flow:
 //   1. Auth: verify JWT, extract user_id
 //   2. Load user state from Postgres (profile, cycle, recent check-ins, streaks, vibe check)
-//   3. Tier check: free users only get Sunday nudges; brotherhood get daily
+//   3. Tier check: free users only get Sunday nudges; paid users get daily
 //   4. Cache check: if ai_nudges row exists for today, return it
 //   5. Call Claude Haiku via Anthropic API
 //   6. Write result to ai_nudges table
@@ -16,6 +16,7 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 const ANTHROPIC_API_KEY = Deno.env.get('ANTHROPIC_API_KEY') ?? '';
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL') ?? '';
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
+const PAID_TIERS = new Set(['brotherhood', 'lifechanger']);
 
 const SYSTEM_PROMPT = `You are the KAIROS nudge engine. You write short, sharp, personal daily messages to people in a 12-week behavioural action framework.
 
@@ -207,8 +208,8 @@ Deno.serve(async (req: Request) => {
       return new Response(JSON.stringify({ error: 'Profile not found' }), { status: 404 });
     }
 
-    // Free tier: nudges on Sundays only
-    if (profile.tier === 'free' && !isSunday) {
+    // Free tier: nudges on Sundays only. Paid V1 tiers get daily nudges.
+    if (!PAID_TIERS.has(profile.tier) && !isSunday) {
       return new Response(
         JSON.stringify({ error: 'Free tier gets nudges on Sundays only', tier_gate: true }),
         { status: 403 },

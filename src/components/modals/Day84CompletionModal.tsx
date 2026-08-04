@@ -2,6 +2,7 @@ import Button from '@/components/common/Button';
 import { useCycleReflection, useMarkReflectionViewed } from '@/hooks/useCycleReflection';
 import { useAppStore } from '@/store/useAppStore';
 import { KAIROS_CYCLE_LENGTH_DAYS, getAvailableDomains } from '@/types';
+import { hasBrotherhoodAccess } from '@/utils/entitlements';
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
@@ -40,7 +41,7 @@ export default function Day84CompletionModal({ onClose }: Props) {
   } = useCycleReflection(fetchReflection);
   const { mutate: markViewed } = useMarkReflectionViewed();
 
-  const isBrotherhood = profile?.tier === 'brotherhood';
+  const isPaidTier = hasBrotherhoodAccess(profile?.tier);
   const availableDomains = getAvailableDomains(authUser?.email);
   const domainColours: Record<string, string> = Object.fromEntries(
     availableDomains.map((d) => [d.type, d.colour]),
@@ -102,7 +103,7 @@ export default function Day84CompletionModal({ onClose }: Props) {
               full campaign of the KAIROS framework completed. Most men never finish what they
               start. You did.
             </p>
-            {isBrotherhood ? (
+            {isPaidTier ? (
               <>
                 <p className="text-base-subtext text-sm leading-relaxed mb-8">
                   We've built your campaign reflection from {KAIROS_CYCLE_LENGTH_DAYS} days of data.
@@ -239,7 +240,7 @@ export default function Day84CompletionModal({ onClose }: Props) {
             />
             <p className="text-base-muted text-xs mb-6">Optional, but it matters.</p>
             <div className="flex gap-3">
-              {isBrotherhood && (
+              {isPaidTier && (
                 <Button
                   variant="ghost"
                   onClick={() => setStep('reflection')}

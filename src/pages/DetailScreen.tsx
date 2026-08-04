@@ -5,6 +5,7 @@ import { useStreaks } from '@/hooks/useStreaks';
 import { supabase } from '@/services/supabaseClient';
 import { useAppStore } from '@/store/useAppStore';
 import { type CheckInStatus, type DailyCheckIn, type DomainType, getDomainConfig } from '@/types';
+import { hasBrotherhoodAccess } from '@/utils/entitlements';
 import {
   CONNECTION_SUPPORT_OPTIONS,
   getDiscreetDomainLabel,
@@ -196,10 +197,9 @@ export default function DetailScreen() {
   const HISTORY_LIMIT = 28;
   const { data: history } = useDomainCheckIns(domainType, HISTORY_LIMIT);
 
-  const streak =
-    profile?.tier === 'brotherhood'
-      ? remoteStreaks?.find((s) => s.domainType === domainType)
-      : localStreaks[domainType];
+  const streak = hasBrotherhoodAccess(profile?.tier)
+    ? remoteStreaks?.find((s) => s.domainType === domainType)
+    : localStreaks[domainType];
 
   if (!domainConfig) {
     return (
@@ -211,7 +211,7 @@ export default function DetailScreen() {
 
   // Build sparkline data for Brotherhood (28 days oldest → newest)
   const sparklineData: SparkStatus[] = (() => {
-    if (profile?.tier !== 'brotherhood' || !history) return [];
+    if (!hasBrotherhoodAccess(profile?.tier) || !history) return [];
     const days: string[] = [];
     for (let i = HISTORY_LIMIT - 1; i >= 0; i--) {
       days.push(toLocalIsoDate(new Date(Date.now() - i * 86_400_000)));
@@ -399,7 +399,7 @@ export default function DetailScreen() {
       </Card>
 
       {/* Brotherhood: sparkline + notes history */}
-      {profile?.tier === 'brotherhood' && (
+      {profile && hasBrotherhoodAccess(profile.tier) && (
         <Card>
           <p className="text-base-subtext text-xs font-heading tracking-widest uppercase mb-3">
             Last 28 days

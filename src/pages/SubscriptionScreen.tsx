@@ -2,6 +2,7 @@ import Button from '@/components/common/Button';
 import Card from '@/components/common/Card';
 import { useAppStore } from '@/store/useAppStore';
 import { buildStripeCheckoutUrl } from '@/utils/billing';
+import { hasBrotherhoodAccess } from '@/utils/entitlements';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
@@ -11,6 +12,7 @@ export default function SubscriptionScreen() {
   const navigate = useNavigate();
   const { profile } = useAppStore();
   const [checkoutError, setCheckoutError] = useState<string | null>(null);
+  const hasPaidAccess = hasBrotherhoodAccess(profile?.tier);
 
   const handleUpgrade = () => {
     setCheckoutError(null);
@@ -78,12 +80,8 @@ export default function SubscriptionScreen() {
           ))}
         </ul>
 
-        <Button
-          onClick={handleUpgrade}
-          className="w-full mt-6"
-          disabled={profile?.tier === 'brotherhood'}
-        >
-          {profile?.tier === 'brotherhood' ? 'Already active' : 'Unlock Brotherhood'}
+        <Button onClick={handleUpgrade} className="w-full mt-6" disabled={hasPaidAccess}>
+          {hasPaidAccess ? 'Already active' : 'Unlock Brotherhood'}
         </Button>
         {checkoutError && (
           <p role="alert" className="text-status-missed text-xs mt-3">

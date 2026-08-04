@@ -14,6 +14,7 @@ import {
   KAIROS_CYCLE_LENGTH_DAYS,
   getAvailableDomains,
 } from '@/types';
+import { hasBrotherhoodAccess } from '@/utils/entitlements';
 import {
   getCurrentPhaseConfig,
   getCycleProgressPct,
@@ -379,8 +380,8 @@ export default function HomeScreen() {
           </button>
         )}
 
-        {/* Squad: Brotherhood only */}
-        {profile.tier === 'brotherhood' && profile.squadId && (
+        {/* Squad: paid tiers only */}
+        {hasBrotherhoodAccess(profile.tier) && profile.squadId && (
           <Card>
             <p className="font-heading text-xs text-base-subtext tracking-widest uppercase mb-3">
               Squad

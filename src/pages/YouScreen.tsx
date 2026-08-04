@@ -7,6 +7,7 @@ import { isPushSupported, subscribeToPush } from '@/services/pushNotifications';
 import { supabase } from '@/services/supabaseClient';
 import { useAppStore } from '@/store/useAppStore';
 import { IDENTITY_ANCHORS } from '@/types';
+import { getSubscriptionTierLabel, hasBrotherhoodAccess } from '@/utils/entitlements';
 import { getLevelForXp } from '@/utils/gamification';
 import { type ChangeEvent, useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
@@ -74,6 +75,7 @@ export default function YouScreen() {
   const [isExporting, setIsExporting] = useState(false);
   const [routeLabel, setRouteLabel] = useState('');
   const [routeFocus, setRouteFocus] = useState('');
+  const hasPaidAccess = hasBrotherhoodAccess(profile?.tier);
 
   const checkInHistory = useAppStore((s) => s.checkInHistory);
   const domainFocuses = useAppStore((s) => s.domainFocuses);
@@ -83,7 +85,7 @@ export default function YouScreen() {
     setIsExporting(true);
     let payload: Record<string, unknown>;
 
-    if (profile?.tier === 'brotherhood') {
+    if (profile && hasBrotherhoodAccess(profile.tier)) {
       const { data: checkIns } = await supabase
         .from('daily_check_ins')
         .select('date,domain_type,status,notes,xp_awarded')
@@ -328,8 +330,8 @@ export default function YouScreen() {
         </Card>
       )}
 
-      {/* Squad: brotherhood only */}
-      {profile.tier === 'brotherhood' && (
+      {/* Squad: paid tiers only */}
+      {hasPaidAccess && (
         <Card>
           <p className="text-base-subtext text-xs font-heading tracking-widest uppercase mb-2">
             Squad
@@ -365,7 +367,9 @@ export default function YouScreen() {
         <p className="text-base-subtext text-xs font-heading tracking-widest uppercase mb-2">
           Subscription
         </p>
-        <p className="font-heading font-medium text-base-text capitalize">{profile.tier}</p>
+        <p className="font-heading font-medium text-base-text">
+          {getSubscriptionTierLabel(profile.tier)}
+        </p>
         {profile.tier === 'free' && (
           <>
             <div className="rounded border border-status-partial/40 bg-status-partial/5 p-3 mt-3">
@@ -384,11 +388,11 @@ export default function YouScreen() {
             </Link>
           </>
         )}
-        {profile.tier === 'brotherhood' && (
+        {hasPaidAccess && (
           <>
             {profile.subscriptionStatus === 'past_due' ? (
               <p className="text-status-missed text-xs mt-1 font-medium">
-                Payment failed. Update your payment method to keep Brotherhood access.
+                Payment failed. Update your payment method to keep paid access.
               </p>
             ) : profile.cancelAtPeriodEnd && profile.currentPeriodEnd ? (
               <p className="text-base-subtext text-xs mt-1">
@@ -401,7 +405,9 @@ export default function YouScreen() {
                 .
               </p>
             ) : (
-              <p className="text-base-subtext text-xs mt-1">Brotherhood active.</p>
+              <p className="text-base-subtext text-xs mt-1">
+                {getSubscriptionTierLabel(profile.tier)} active.
+              </p>
             )}
             {STRIPE_PORTAL_URL ? (
               <a
@@ -437,8 +443,8 @@ export default function YouScreen() {
         </Button>
       </Card>
 
-      {/* Notifications: brotherhood only */}
-      {profile.tier === 'brotherhood' && isPushSupported() && (
+      {/* Notifications: paid tiers only */}
+      {hasPaidAccess && isPushSupported() && (
         <Card>
           <p className="text-base-subtext text-xs font-heading tracking-widest uppercase mb-2">
             Notifications
