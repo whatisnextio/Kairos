@@ -83,6 +83,7 @@ export default function HomeScreen() {
     offlineQueueCount,
     offlineSyncLastError,
     lastVibeCheckDate,
+    profileImageDataUrl,
     setDailyCheckIn,
     setCustomRouteCheckIn,
   } = useAppStore();
@@ -183,11 +184,15 @@ export default function HomeScreen() {
 
   const cyclePct = getCycleProgressPct(dayInCycle);
   const phasePct = getPhaseProgressPct(dayInCycle);
+  const phaseLength = phaseConfig.days[1] - phaseConfig.days[0] + 1;
+  const phaseDay = Math.min(Math.max(dayInCycle - phaseConfig.days[0] + 1, 1), phaseLength);
   const anchor = IDENTITY_ANCHORS.find((a) => a.id === profile.identityAnchorId);
   const anchorDisplayName =
     profile.identityAnchorId === 'custom'
       ? (profile.customAnchorName ?? 'Custom')
       : (anchor?.name ?? 'Your identity');
+  const firstName = profile.displayName.trim().split(/\s+/)[0] || 'You';
+  const avatarInitial = firstName.charAt(0).toUpperCase() || 'K';
 
   const handleCustomRouteCheckIn = (routeId: string, current: CheckInStatus | undefined) => {
     if (current === 'Done') {
@@ -203,15 +208,44 @@ export default function HomeScreen() {
     <>
       <div className="px-4 pt-6 pb-4 flex flex-col gap-4">
         {/* Header */}
-        <div>
-          <p className="text-base-subtext text-xs font-heading tracking-widest uppercase">
-            {anchorDisplayName}
-          </p>
-          <h1 className="font-heading text-2xl font-bold text-base-text tracking-wide mt-0.5">
-            Day {displayDay} of {KAIROS_CYCLE_LENGTH_DAYS}
-          </h1>
-          <p className="text-accent-green text-sm font-heading tracking-wider uppercase mt-0.5">
-            {phaseConfig.label} Phase
+        <div className="flex items-center gap-3">
+          <div className="h-16 w-16 shrink-0 overflow-hidden rounded-full border border-accent-green/50 bg-base-surface flex items-center justify-center">
+            {profileImageDataUrl ? (
+              <img
+                src={profileImageDataUrl}
+                alt={`${profile.displayName} profile`}
+                className="h-full w-full object-cover"
+              />
+            ) : (
+              <span className="font-heading text-2xl font-bold text-accent-green">
+                {avatarInitial}
+              </span>
+            )}
+          </div>
+          <div className="min-w-0">
+            <p className="text-base-subtext text-xs font-heading tracking-widest uppercase">
+              12-week reset for {firstName}
+            </p>
+            <h1 className="font-heading text-2xl font-bold text-base-text tracking-wide mt-0.5 truncate">
+              Day {displayDay} of {KAIROS_CYCLE_LENGTH_DAYS}
+            </h1>
+            <p className="text-accent-green text-sm font-heading tracking-wider uppercase mt-0.5">
+              {phaseConfig.label} phase
+            </p>
+          </div>
+        </div>
+
+        <div className="rounded border border-base-border bg-base-surface px-3 py-2">
+          <div className="flex items-center justify-between gap-3">
+            <p className="font-heading text-sm text-base-text tracking-wide">
+              Today's Kairos proof
+            </p>
+            <p className="text-base-subtext text-xs whitespace-nowrap">
+              Day {phaseDay} of {phaseLength}
+            </p>
+          </div>
+          <p className="text-base-muted text-xs mt-1">
+            {anchorDisplayName} mode. One useful proof moves today forward.
           </p>
         </div>
 
@@ -362,11 +396,15 @@ export default function HomeScreen() {
                 size="sm"
                 variant="ghost"
                 className="shrink-0"
+                aria-label={`Mark ${catchUpPath.domainLabel} Partial`}
                 onClick={() => setDailyCheckIn(catchUpPath.domainType, 'Partial')}
               >
-                Partial
+                Mark Partial
               </Button>
             </div>
+            <p className="text-base-muted text-xs mt-3">
+              Partial means the smallest useful version was completed.
+            </p>
             <div className="flex flex-col gap-1.5 mt-3">
               {catchUpPath.steps.map((step) => (
                 <p key={step} className="text-base-subtext text-xs">

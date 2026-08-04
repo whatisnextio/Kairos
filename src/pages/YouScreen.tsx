@@ -695,7 +695,7 @@ export default function YouScreen() {
             : 'No weekly check-in saved yet.'}
         </p>
         <Button size="sm" variant="secondary" onClick={() => setShowVibeCheck(true)}>
-          Open check-in
+          Open weekly check-in
         </Button>
       </Card>
 
