@@ -21,6 +21,53 @@ const VAPID_PUBLIC_KEY = Deno.env.get('VAPID_PUBLIC_KEY') ?? '';
 const VAPID_PRIVATE_KEY = Deno.env.get('VAPID_PRIVATE_KEY') ?? '';
 const PAID_TIERS = ['brotherhood', 'lifechanger'];
 
+type NotificationPreferences = {
+  enabled?: boolean;
+  intensity?: 'light' | 'standard' | 'high';
+  startHour?: number;
+  endHour?: number;
+  earlyProtocol?: boolean;
+  webPushEnabled?: boolean;
+};
+
+type DailyNudge = {
+  user_id: string;
+  domain_type: string | null;
+  kairos_phase: string | null;
+  cta: string | null;
+};
+
+function notificationsEnabled(preferences: unknown): boolean {
+  if (!preferences || typeof preferences !== 'object') return true;
+  const prefs = preferences as NotificationPreferences;
+  return prefs.enabled !== false && prefs.webPushEnabled !== false;
+}
+
+function domainLabel(domainType: string | null | undefined): string {
+  switch (domainType) {
+    case 'BODY':
+      return 'Body';
+    case 'FUEL':
+      return 'Fuel';
+    case 'METIME':
+      return 'Self';
+    case 'USTIME':
+      return 'Connection';
+    default:
+      return 'Kairos';
+  }
+}
+
+function buildPushPayload(nudge: DailyNudge): string {
+  const label = domainLabel(nudge.domain_type);
+  const url = nudge.cta === 'check_in_now' ? '/#/' : '/#/improve';
+  return JSON.stringify({
+    title: '12K: today is live',
+    body: `${label} action waiting. Open 12K.`,
+    url,
+  });
+}
+
 // ─── Base64url helpers ────────────────────────────────────────────────────────
 
 function b64urlEncode(data: Uint8Array): string {
@@ -235,7 +282,7 @@ Deno.serve(async (req: Request) => {
   // ai_nudges has no FK to push_subscriptions so we use two separate queries.
   const { data: subscriptions, error: subErr } = await supabase
     .from('push_subscriptions')
-    .select('user_id, subscription, profiles!inner(tier)')
+    .select('user_id, subscription, preferences, profiles!inner(tier)')
     .in('profiles.tier', PAID_TIERS);
 
   if (subErr) {
@@ -254,13 +301,13 @@ Deno.serve(async (req: Request) => {
   // 2. Fetch today's nudges for those users.
   const { data: nudges } = await supabase
     .from('ai_nudges')
-    .select('user_id, title, body')
+    .select('user_id, domain_type, kairos_phase, cta')
     .in('user_id', userIds)
     .eq('date', today)
     .eq('type', 'daily_nudge');
 
   const nudgeMap = new Map(
-    (nudges ?? []).map((n: { user_id: string; title: string; body: string }) => [n.user_id, n]),
+    (nudges ?? []).map((n: DailyNudge) => [n.user_id, n]),
   );
 
   let sent = 0;
@@ -274,10 +321,12 @@ Deno.serve(async (req: Request) => {
       keys: { p256dh: string; auth: string };
     };
 
+    if (!notificationsEnabled(row.preferences)) continue;
+
     const nudge = nudgeMap.get(userId);
     if (!nudge) continue; // No nudge generated yet for this user today; skip
 
-    const message = JSON.stringify({ title: nudge.title, body: nudge.body });
+    const message = buildPushPayload(nudge);
 
     try {
       const { ok, stale } = await sendPush(sub.endpoint, sub.keys, message);

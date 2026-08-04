@@ -1,6 +1,9 @@
 import { useBootstrap } from '@/hooks/useBootstrap';
 import { useSubscriptionVerification } from '@/hooks/useSubscriptionVerification';
-import { scheduleDailyNotifications } from '@/services/localNotifications';
+import {
+  cancelDailyNotifications,
+  scheduleDailyNotifications,
+} from '@/services/localNotifications';
 import { supabase } from '@/services/supabaseClient';
 import { useAppStore } from '@/store/useAppStore';
 import { DEV_EMAIL, DEV_USER_ID, hasLocalDevSession } from '@/utils/localDevSession';
@@ -42,6 +45,7 @@ export default function App() {
     isBootstrapLoading,
     currentCycle,
     celebrationPending,
+    notificationPreferences,
   } = useAppStore();
 
   useBootstrap();
@@ -73,10 +77,13 @@ export default function App() {
 
   // Schedule native notifications once the user is authenticated
   useEffect(() => {
-    if (authUser) {
-      scheduleDailyNotifications().catch(() => {});
+    if (!authUser || !notificationPreferences.enabled) {
+      cancelDailyNotifications().catch(() => {});
+      return;
     }
-  }, [authUser]);
+
+    scheduleDailyNotifications(notificationPreferences).catch(() => {});
+  }, [authUser, notificationPreferences]);
 
   if (isAuthLoading || isBootstrapLoading) return <SplashScreen />;
 

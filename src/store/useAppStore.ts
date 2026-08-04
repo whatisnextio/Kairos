@@ -1,3 +1,7 @@
+import {
+  DEFAULT_NOTIFICATION_PREFERENCES,
+  type NotificationPreferences,
+} from '@/services/localNotifications';
 import { supabase } from '@/services/supabaseClient';
 import type {
   AuthUser,
@@ -66,6 +70,7 @@ interface AppState {
   improveCardStatuses: Record<string, CheckInStatus | 'accepted' | 'completed' | 'dismissed'>;
   improveCardSnapshots: Record<string, ImproveCardSnapshot>;
   rewardedImproveCards: Record<string, true>;
+  notificationPreferences: NotificationPreferences;
 }
 
 // ─── Actions Shape ───────────────────────────────────────────────────────────
@@ -112,6 +117,7 @@ interface AppActions {
   setNextCycleIntention: (intention: string | null) => void;
   setLastCelebrationPhase: (phase: string | null) => void;
   setProfileImageDataUrl: (dataUrl: string | null) => void;
+  setNotificationPreferences: (preferences: Partial<NotificationPreferences>) => void;
   setImproveCardStatus: (
     cardId: string,
     status: 'accepted' | 'completed' | 'dismissed',
@@ -152,6 +158,7 @@ const initialState: AppState = {
   improveCardStatuses: {},
   improveCardSnapshots: {},
   rewardedImproveCards: {},
+  notificationPreferences: DEFAULT_NOTIFICATION_PREFERENCES,
 };
 
 // ─── Store ───────────────────────────────────────────────────────────────────
@@ -594,6 +601,10 @@ export const useAppStore = create<AppState & AppActions>()(
       setNextCycleIntention: (nextCycleIntention) => set({ nextCycleIntention }),
       setLastCelebrationPhase: (lastCelebrationPhase) => set({ lastCelebrationPhase }),
       setProfileImageDataUrl: (profileImageDataUrl) => set({ profileImageDataUrl }),
+      setNotificationPreferences: (preferences) =>
+        set((state) => ({
+          notificationPreferences: { ...state.notificationPreferences, ...preferences },
+        })),
       setImproveCardStatus: async (cardId, status, xpReward, snapshot) => {
         const reward = xpReward ?? 0;
         let shouldSyncXp = false;
@@ -751,6 +762,7 @@ export const useAppStore = create<AppState & AppActions>()(
         improveCardStatuses: state.improveCardStatuses,
         improveCardSnapshots: state.improveCardSnapshots,
         rewardedImproveCards: state.rewardedImproveCards,
+        notificationPreferences: state.notificationPreferences,
       }),
     },
   ),

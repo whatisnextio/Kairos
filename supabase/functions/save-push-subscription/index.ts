@@ -4,7 +4,7 @@
 // Saves the PushSubscription JSON to a push_subscriptions table so the
 // server can send web push notifications via the Web Push protocol.
 //
-// Body: { subscription: PushSubscription JSON }
+// Body: { subscription?: PushSubscription JSON, preferences?: notification preferences JSON }
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
@@ -41,29 +41,49 @@ Deno.serve(async (req: Request) => {
     return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 });
   }
 
-  let body: { subscription: unknown };
+  let body: { subscription?: unknown; preferences?: unknown };
   try {
     body = await req.json();
   } catch {
     return new Response(JSON.stringify({ error: 'Invalid JSON body' }), { status: 400 });
   }
 
-  if (!body.subscription) {
-    return new Response(JSON.stringify({ error: 'Missing subscription' }), { status: 400 });
+  if (!body.subscription && !body.preferences) {
+    return new Response(JSON.stringify({ error: 'Missing subscription or preferences' }), {
+      status: 400,
+    });
   }
 
-  const { error: upsertErr } = await supabase.from('push_subscriptions').upsert(
-    {
+  const now = new Date().toISOString();
+  const payload: Record<string, unknown> = { updated_at: now };
+
+  if (body.subscription) {
+    const upsertPayload: Record<string, unknown> = {
       user_id: user.id,
       subscription: body.subscription,
-      updated_at: new Date().toISOString(),
-    },
-    { onConflict: 'user_id' },
-  );
+      updated_at: now,
+    };
+    if (body.preferences) upsertPayload.preferences = body.preferences;
 
-  if (upsertErr) {
-    console.error('save-push-subscription error:', upsertErr.message);
-    return new Response(JSON.stringify({ error: upsertErr.message }), { status: 500 });
+    const { error: upsertErr } = await supabase
+      .from('push_subscriptions')
+      .upsert(upsertPayload, { onConflict: 'user_id' });
+
+    if (upsertErr) {
+      console.error('save-push-subscription error:', upsertErr.message);
+      return new Response(JSON.stringify({ error: upsertErr.message }), { status: 500 });
+    }
+  } else {
+    payload.preferences = body.preferences;
+    const { error: updateErr } = await supabase
+      .from('push_subscriptions')
+      .update(payload)
+      .eq('user_id', user.id);
+
+    if (updateErr) {
+      console.error('save-push-subscription preferences error:', updateErr.message);
+      return new Response(JSON.stringify({ error: updateErr.message }), { status: 500 });
+    }
   }
 
   return new Response(JSON.stringify({ saved: true }), {
