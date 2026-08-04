@@ -7,7 +7,7 @@ import { type CheckInStatus, type DailyCheckIn, type DomainType, getDomainConfig
 import { hasBrotherhoodAccess } from '@/utils/entitlements';
 import {
   CONNECTION_SUPPORT_OPTIONS,
-  getDiscreetDomainLabel,
+  getDailyDomainLabel,
   toLocalIsoDate,
 } from '@/utils/v1Framework';
 import { useQueryClient } from '@tanstack/react-query';
@@ -197,7 +197,7 @@ export default function DetailScreen() {
   const domainType = domain?.toUpperCase() as DomainType;
   const domainConfig = getDomainConfig(domainType, authUser?.email);
   const focus = domainFocuses.find((f) => f.domainType === domainType);
-  const displayLabel = domainConfig ? getDiscreetDomainLabel(domainConfig, authUser?.email) : '';
+  const displayLabel = domainConfig ? getDailyDomainLabel(domainConfig) : '';
   const [editingFocus, setEditingFocus] = useState(false);
   const [focusDraft, setFocusDraft] = useState('');
   const [focusSaving, setFocusSaving] = useState(false);
