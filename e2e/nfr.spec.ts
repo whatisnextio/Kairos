@@ -42,10 +42,10 @@ test.describe('NFR smoke gates', () => {
   test('daily dashboard stays within a 3-tap check-in path', async ({ page }) => {
     await loginAsLocalLiam(page);
 
-    await page.getByRole('button', { name: /set body status/i }).click();
+    await page.getByRole('button', { name: /check in body/i }).click();
     await page.getByRole('button', { name: /done full action completed/i }).click();
 
-    await expect(page.getByRole('button', { name: /set body status/i })).toContainText('Done');
+    await expect(page.getByRole('button', { name: /check in body/i })).toContainText('Done');
     await expectNoHorizontalOverflow(page);
   });
 
@@ -55,18 +55,18 @@ test.describe('NFR smoke gates', () => {
   }) => {
     await loginAsLocalLiam(page);
 
-    await page.getByRole('button', { name: /set body status/i }).click();
+    await page.getByRole('button', { name: /check in body/i }).click();
     await page.getByRole('button', { name: /done full action completed/i }).click();
     await page.reload();
-    await expect(page.getByRole('button', { name: /set body status/i })).toContainText('Done');
+    await expect(page.getByRole('button', { name: /check in body/i })).toContainText('Done');
 
     await context.setOffline(true);
-    await page.getByRole('button', { name: /set fuel status/i }).click();
+    await page.getByRole('button', { name: /check in fuel/i }).click();
     await page
       .getByRole('dialog')
       .getByRole('button', { name: /partial smaller version/i })
       .click();
-    await expect(page.getByRole('button', { name: /set fuel status/i })).toContainText('Partial');
+    await expect(page.getByRole('button', { name: /check in fuel/i })).toContainText('Partial');
     await context.setOffline(false);
 
     await expectNoHorizontalOverflow(page);

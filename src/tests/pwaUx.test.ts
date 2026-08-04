@@ -31,4 +31,15 @@ describe('PWA UX shell', () => {
     expect(splash).toContain('animate-pulse');
     expect(splash).not.toMatch(/>\s*12K\s*</);
   });
+
+  it('uses clear check-in language on the daily action rows', () => {
+    const home = readFileSync('src/pages/HomeScreen.tsx', 'utf8');
+    const recommendations = readFileSync('src/utils/frameworkRecommendations.ts', 'utf8');
+
+    expect(home).toContain("Pending: 'Check in'");
+    expect(home).toContain('aria-label={`Check in ${displayLabel}`}');
+    expect(home).toContain('Check in now, or open details to set tomorrow.');
+    expect(recommendations).toContain('getDailyDomainLabel(domain)');
+    expect(recommendations).not.toContain('getDiscreetDomainLabel(domain, email)');
+  });
 });

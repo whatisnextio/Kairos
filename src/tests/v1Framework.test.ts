@@ -12,6 +12,7 @@ import {
   buildAccountabilityPrompt,
   buildCatchUpPath,
   buildWeeklyFlywheel,
+  getDailyDomainLabel,
   getDiscreetDomainLabel,
   getEarlyWakeProtocol,
 } from '@/utils/v1Framework';
@@ -66,6 +67,8 @@ describe('V1 acceptance framework', () => {
 
     expect(meTime && getDiscreetDomainLabel(meTime, OWNER_EMAIL)).toBe('MT');
     expect(usTime && getDiscreetDomainLabel(usTime, OWNER_EMAIL)).toBe('UT');
+    expect(meTime && getDailyDomainLabel(meTime)).toBe('Self');
+    expect(usTime && getDailyDomainLabel(usTime)).toBe('Connection');
     expect(publicSelf?.label).toBe('Self');
     expect(publicSelf && getDiscreetDomainLabel(publicSelf, 'user@example.com')).toBe('Self');
     expect(publicSelf?.description).toContain('identity');
@@ -110,7 +113,7 @@ describe('V1 acceptance framework', () => {
     expect(PRODUCT_POSITIONING.categoryIntro).toContain('Body, Fuel, Self, and Connection');
   });
 
-  it('uses discreet owner labels in framework recommendation cards', () => {
+  it('uses clear category labels in framework recommendation cards', () => {
     const recommendations = buildFrameworkRecommendations({
       email: OWNER_EMAIL,
       domainFocuses: [],
@@ -119,8 +122,8 @@ describe('V1 acceptance framework', () => {
       },
     });
 
-    expect(recommendations[0].title).toBe('Prep MT');
-    expect(recommendations[0].domainLabel).toBe('MT');
+    expect(recommendations[0].title).toBe('Prep Self');
+    expect(recommendations[0].domainLabel).toBe('Self');
   });
 
   it('keeps Us Time connection-first when physical or mood barriers exist', () => {
@@ -134,17 +137,20 @@ describe('V1 acceptance framework', () => {
     expect(buildAccountabilityPrompt(0).level).toBe(1);
     expect(buildAccountabilityPrompt(1).level).toBe(2);
     expect(buildAccountabilityPrompt(2).level).toBe(3);
-    expect(buildAccountabilityPrompt(2).body).toContain('not another task');
-    expect(buildAccountabilityPrompt(2).steps).toContain('Choose Done, Partial, or Missed.');
+    expect(buildAccountabilityPrompt(1).body.toLowerCase()).not.toContain('ignored');
+    expect(buildAccountabilityPrompt(2).title).toBe('Evening reset');
+    expect(buildAccountabilityPrompt(2).body).toContain('Partial counts');
+    expect(buildAccountabilityPrompt(2).body).not.toContain('not another task');
+    expect(buildAccountabilityPrompt(2).steps).toContain('Mark Done, Partial, or Missed.');
   });
 
   it('schedules repeated structured notification prompts', () => {
     expect(NOTIFICATION_SLOTS).toHaveLength(6);
     expect(NOTIFICATION_SLOTS.map((slot) => slot.title)).toEqual([
       'Kairos: early protocol',
-      'First prompt',
-      'Second prompt',
-      'Accountability check',
+      'Still open',
+      'Quick reset',
+      'Evening reset',
       'Kairos: catch-up',
       'Kairos: shutdown',
     ]);

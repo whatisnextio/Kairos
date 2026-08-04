@@ -66,6 +66,10 @@ export function getDiscreetDomainLabel(domain: DomainConfig, email?: string | nu
   return OWNER_DISCREET_LABELS[domain.type] ?? domain.label;
 }
 
+export function getDailyDomainLabel(domain: DomainConfig): string {
+  return domain.label;
+}
+
 export function getEarlyWakeProtocol(now = new Date()): EarlyWakeProtocol | null {
   const hour = now.getHours();
   if (hour < 4 || hour >= 7) return null;
@@ -120,12 +124,12 @@ export function buildAccountabilityPrompt(ignoredCount: number): AccountabilityP
   if (ignoredCount >= 2) {
     return {
       level: 3,
-      title: 'Accountability check',
-      body: 'This is a prompt, not another task. Log the honest status below, then rescue one small action.',
+      title: 'Evening reset',
+      body: 'Pick one open item and choose the honest status. Partial counts when you rescued a smaller version.',
       steps: [
-        'Tap the open Today domain.',
-        'Choose Done, Partial, or Missed.',
-        'Use Partial if you rescued a small version.',
+        'Choose one open item.',
+        'Mark Done, Partial, or Missed.',
+        'Leave the rest for tomorrow if needed.',
       ],
     };
   }
@@ -133,17 +137,17 @@ export function buildAccountabilityPrompt(ignoredCount: number): AccountabilityP
   if (ignoredCount === 1) {
     return {
       level: 2,
-      title: 'Second prompt',
-      body: 'You ignored the first cue. Use Today below, shrink the task, and close one loop now.',
-      steps: ['Tap one open domain.', 'Do two minutes.', 'Log the truth.'],
+      title: 'Quick reset',
+      body: 'One small mark keeps the day live. Choose the easiest open item.',
+      steps: ['Choose one open item.', 'Do two minutes.', 'Mark the truth.'],
     };
   }
 
   return {
     level: 1,
-    title: 'First prompt',
-    body: 'Choose the next action before the day chooses for you. Start from Today below.',
-    steps: ['Pick the easiest domain.', 'Make the first mark.', 'Keep moving.'],
+    title: 'Still open',
+    body: 'One item is still open. Choose the honest status when you are ready.',
+    steps: ['Pick the easiest item.', 'Make the first mark.', 'Keep moving.'],
   };
 }
 

@@ -24,7 +24,7 @@ import {
 import {
   buildAccountabilityPrompt,
   buildCatchUpPath,
-  getDiscreetDomainLabel,
+  getDailyDomainLabel,
   getEarlyWakeProtocol,
 } from '@/utils/v1Framework';
 import { useEffect, useState } from 'react';
@@ -34,7 +34,7 @@ const STATUS_LABELS: Record<CheckInStatus, string> = {
   Done: 'Done',
   Partial: 'Partial',
   Missed: 'Missed',
-  Pending: 'Choose status',
+  Pending: 'Check in',
   Protected: 'Protected',
 };
 
@@ -115,10 +115,12 @@ export default function HomeScreen() {
     const status = todayCheckIns[domain.type]?.status;
     return status === 'Missed' || status === 'Pending' || !status;
   }).length;
-  const accountabilityPrompt =
-    new Date().getHours() >= 12 && openDomainCount > 0
-      ? buildAccountabilityPrompt(Math.min(2, Math.max(0, openDomainCount - 1)))
-      : null;
+  const currentHour = new Date().getHours();
+  const shouldShowAccountability =
+    (currentHour >= 15 && openDomainCount >= 2) || (currentHour >= 18 && openDomainCount > 0);
+  const accountabilityPrompt = shouldShowAccountability
+    ? buildAccountabilityPrompt(Math.min(2, Math.max(0, openDomainCount - 1)))
+    : null;
   const accountabilityTarget = accountabilityPrompt
     ? availableDomains.find((domain) => {
         const status = todayCheckIns[domain.type]?.status;
@@ -338,10 +340,9 @@ export default function HomeScreen() {
                 <p className="text-base-text text-sm leading-snug">{catchUpPath.body}</p>
                 <p className="text-base-muted text-xs mt-2">
                   Start with{' '}
-                  {getDiscreetDomainLabel(
+                  {getDailyDomainLabel(
                     availableDomains.find((d) => d.type === catchUpPath.domainType) ??
                       availableDomains[0],
-                    authUser?.email,
                   )}
                   .
                 </p>
@@ -370,12 +371,13 @@ export default function HomeScreen() {
             <p className="font-heading text-xs text-base-subtext tracking-widest uppercase mb-1">
               {accountabilityPrompt.title}
             </p>
-            <p className="text-base-text text-sm leading-snug">{accountabilityPrompt.body}</p>
-            <ol className="mt-3 flex flex-col gap-1.5 text-xs text-base-subtext list-decimal list-inside">
-              {accountabilityPrompt.steps.map((step) => (
-                <li key={step}>{step}</li>
-              ))}
-            </ol>
+            <p className="text-base-text text-sm leading-snug">
+              {accountabilityTarget
+                ? `${getDailyDomainLabel(
+                    accountabilityTarget,
+                  )} is still open. Choose the honest status. Partial is fine for a smaller version.`
+                : accountabilityPrompt.body}
+            </p>
             {accountabilityTarget && (
               <Button
                 size="sm"
@@ -383,7 +385,7 @@ export default function HomeScreen() {
                 className="mt-3"
                 onClick={() => setSelectedDomainType(accountabilityTarget.type)}
               >
-                Log {getDiscreetDomainLabel(accountabilityTarget, authUser?.email)} now
+                Check in {getDailyDomainLabel(accountabilityTarget)}
               </Button>
             )}
           </Card>
@@ -462,7 +464,7 @@ export default function HomeScreen() {
               const focus = domainFocuses.find((f) => f.domainType === d.type);
               const checkIn = todayCheckIns[d.type];
               const status: CheckInStatus = checkIn?.status ?? 'Pending';
-              const displayLabel = getDiscreetDomainLabel(d, authUser?.email);
+              const displayLabel = getDailyDomainLabel(d);
 
               return (
                 <div
@@ -473,13 +475,15 @@ export default function HomeScreen() {
                     type="button"
                     className="flex-1 text-left p-4"
                     onClick={() => setSelectedDomainType(d.type)}
-                    aria-label={`Set ${displayLabel} status`}
+                    aria-label={`Check in ${displayLabel}`}
                   >
-                    <div className="flex items-center justify-between">
+                    <div className="flex items-center justify-between gap-3">
                       <span className={`font-heading font-medium tracking-wide ${d.colour}`}>
                         {displayLabel}
                       </span>
-                      <span className="text-xs">{STATUS_LABELS[status]}</span>
+                      <span className="shrink-0 rounded border border-current/30 px-2 py-1 text-[11px] font-heading uppercase tracking-wider">
+                        {STATUS_LABELS[status]}
+                      </span>
                     </div>
                     {focus && (
                       <p className="text-base-subtext text-xs mt-1 truncate">
@@ -487,14 +491,16 @@ export default function HomeScreen() {
                       </p>
                     )}
                     {!focus && (
-                      <p className="text-base-muted text-xs mt-1">Set your focus for tomorrow.</p>
+                      <p className="text-base-muted text-xs mt-1">
+                        Check in now, or open details to set tomorrow.
+                      </p>
                     )}
                   </button>
                   <button
                     type="button"
                     className="px-3 flex items-center text-base-muted hover:text-base-subtext transition-colors border-l border-current/20"
                     onClick={() => navigate(`/detail/${d.type.toLowerCase()}`)}
-                    aria-label={`View ${displayLabel} detail`}
+                    aria-label={`Open ${displayLabel} detail`}
                   >
                     <svg
                       aria-hidden="true"
@@ -560,7 +566,7 @@ export default function HomeScreen() {
           if (!domain) return null;
           return (
             <CheckInStatusModal
-              label={getDiscreetDomainLabel(domain, authUser?.email)}
+              label={getDailyDomainLabel(domain)}
               currentStatus={todayCheckIns[selectedDomainType]?.status}
               onSelect={(status) => {
                 void setDailyCheckIn(selectedDomainType, status);
