@@ -18,9 +18,15 @@ import type {
   UserStreak,
   VibeCheck,
 } from '@/types';
-import { XP_PER_CHECK_IN_DONE, XP_PER_CHECK_IN_PARTIAL, XP_PER_CYCLE_COMPLETE } from '@/types';
+import { XP_PER_CYCLE_COMPLETE, XP_PER_WEEK_COMPLETE } from '@/types';
 import { hasBrotherhoodAccess } from '@/utils/entitlements';
-import { getLevelForXp } from '@/utils/gamification';
+import {
+  getFortnightBlockKey,
+  getLevelForXp,
+  getWeekKey,
+  getXpForCheckInStatus,
+  shouldAwardWeeklyBonus,
+} from '@/utils/gamification';
 import { DEV_CYCLE_ID, clearLocalDevSession } from '@/utils/localDevSession';
 import { computeLocalStreak } from '@/utils/streak';
 import { toLocalIsoDate } from '@/utils/v1Framework';
@@ -50,6 +56,8 @@ interface AppState {
   // Key: ISO date string. Kept to 90 days max.
   checkInHistory: Record<string, Partial<Record<DomainType, CheckInStatus>>>;
   customRouteCheckInHistory: Record<string, Record<string, CheckInStatus>>;
+  streakProtectionHistory: Record<string, true>;
+  awardedWeeklyBonuses: Record<string, true>;
 
   // Vibe check
   lastVibeCheckDate: string | null;
@@ -147,6 +155,8 @@ const initialState: AppState = {
   todayCustomRouteCheckIns: {},
   checkInHistory: {},
   customRouteCheckInHistory: {},
+  streakProtectionHistory: {},
+  awardedWeeklyBonuses: {},
   streaks: {},
   lastVibeCheckDate: null,
   onboardingComplete: false,
@@ -244,10 +254,22 @@ export const useAppStore = create<AppState & AppActions>()(
         if (!profile || !currentCycle) return;
 
         const today = toLocalIsoDate(new Date());
-        const xpForStatus = (s: CheckInStatus | undefined): number =>
-          s === 'Done' ? XP_PER_CHECK_IN_DONE : s === 'Partial' ? XP_PER_CHECK_IN_PARTIAL : 0;
+        const paid = hasBrotherhoodAccess(profile.tier);
         const previousStatus = todayCheckIns[domainType]?.status;
-        const xpDelta = xpForStatus(status) - xpForStatus(previousStatus);
+        let nextStatus = status;
+        let protectionApplied = false;
+        let weeklyBonusAwardedNow = false;
+
+        if (paid && status === 'Missed') {
+          const protectionKey = `${domainType}-${getFortnightBlockKey(today)}`;
+          if (!get().streakProtectionHistory[protectionKey]) {
+            nextStatus = 'Protected';
+            protectionApplied = true;
+          }
+        }
+
+        const xpDelta =
+          getXpForCheckInStatus(nextStatus, paid) - getXpForCheckInStatus(previousStatus, paid);
 
         // Optimistic update
         const optimisticCheckIn: DailyCheckIn = {
@@ -256,7 +278,7 @@ export const useAppStore = create<AppState & AppActions>()(
           cycleId: currentCycle.id,
           date: today,
           domainType,
-          status,
+          status: nextStatus,
           notes: notes ?? null,
           xpAwarded: xpDelta,
           createdAt: new Date().toISOString(),
@@ -266,11 +288,27 @@ export const useAppStore = create<AppState & AppActions>()(
         set((state) => {
           // Update history (keep 90 days)
           const history = { ...state.checkInHistory };
-          history[today] = { ...(history[today] ?? {}), [domainType]: status };
+          history[today] = { ...(history[today] ?? {}), [domainType]: nextStatus };
           const cutoff = toLocalIsoDate(new Date(Date.now() - 400 * 86_400_000));
           for (const date of Object.keys(history)) {
             if (date < cutoff) delete history[date];
           }
+
+          const weekDates = Array.from({ length: 7 }, (_, index) => {
+            const date = new Date(`${today}T00:00:00`);
+            date.setDate(date.getDate() - ((date.getDay() || 7) - 1) + index);
+            return toLocalIsoDate(date);
+          });
+          const weekKey = getWeekKey(today);
+          const awardWeeklyBonus = shouldAwardWeeklyBonus({
+            weekDates,
+            history,
+            paid,
+            alreadyAwarded: !!state.awardedWeeklyBonuses[weekKey],
+          });
+          weeklyBonusAwardedNow = awardWeeklyBonus;
+          const totalXpDelta = xpDelta + (awardWeeklyBonus ? XP_PER_WEEK_COMPLETE : 0);
+          const protectionKey = `${domainType}-${getFortnightBlockKey(today)}`;
 
           const { currentStreak, longestStreak } = computeLocalStreak(history, domainType, today);
 
@@ -283,7 +321,7 @@ export const useAppStore = create<AppState & AppActions>()(
           };
 
           const oldXp = state.profile?.xp ?? 0;
-          const newXp = Math.max(0, oldXp + xpDelta);
+          const newXp = Math.max(0, oldXp + totalXpDelta);
           const oldLevel = getLevelForXp(oldXp);
           const newLevel = getLevelForXp(newXp);
 
@@ -294,10 +332,16 @@ export const useAppStore = create<AppState & AppActions>()(
             currentCycle: state.currentCycle
               ? {
                   ...state.currentCycle,
-                  totalXpEarned: Math.max(0, state.currentCycle.totalXpEarned + xpDelta),
+                  totalXpEarned: Math.max(0, state.currentCycle.totalXpEarned + totalXpDelta),
                 }
               : null,
             profile: state.profile ? { ...state.profile, xp: newXp } : null,
+            streakProtectionHistory: protectionApplied
+              ? { ...state.streakProtectionHistory, [protectionKey]: true }
+              : state.streakProtectionHistory,
+            awardedWeeklyBonuses: awardWeeklyBonus
+              ? { ...state.awardedWeeklyBonuses, [weekKey]: true }
+              : state.awardedWeeklyBonuses,
             levelUpPending:
               newLevel.level > oldLevel.level
                 ? { level: newLevel.level, label: newLevel.label }
@@ -314,7 +358,7 @@ export const useAppStore = create<AppState & AppActions>()(
             cycle_id: currentCycle.id,
             date: today,
             domain_type: domainType,
-            status,
+            status: nextStatus,
             notes: notes ?? null,
             xp_awarded: xpDelta,
           },
@@ -323,8 +367,14 @@ export const useAppStore = create<AppState & AppActions>()(
 
         if (error) {
           console.error('Check-in sync failed:', error.message);
-        } else if (xpDelta !== 0) {
-          await supabase.rpc('increment_profile_xp', { p_user_id: profile.id, p_delta: xpDelta });
+        } else {
+          const totalSyncDelta = xpDelta + (weeklyBonusAwardedNow ? XP_PER_WEEK_COMPLETE : 0);
+          if (totalSyncDelta !== 0) {
+            await supabase.rpc('increment_profile_xp', {
+              p_user_id: profile.id,
+              p_delta: totalSyncDelta,
+            });
+          }
         }
       },
 
@@ -463,11 +513,11 @@ export const useAppStore = create<AppState & AppActions>()(
 
         const today = toLocalIsoDate(new Date());
         const now = new Date().toISOString();
-        const xpForStatus = (s: CheckInStatus | undefined): number =>
-          s === 'Done' ? XP_PER_CHECK_IN_DONE : s === 'Partial' ? XP_PER_CHECK_IN_PARTIAL : 0;
+        const paid = hasBrotherhoodAccess(profile.tier);
         const previous = todayCustomRouteCheckIns[routeId];
         const previousStatus = previous?.date === today ? previous.status : undefined;
-        const xpDelta = xpForStatus(status) - xpForStatus(previousStatus);
+        const xpDelta =
+          getXpForCheckInStatus(status, paid) - getXpForCheckInStatus(previousStatus, paid);
         const oldXp = profile.xp;
         const newXp = Math.max(0, oldXp + xpDelta);
         const oldLevel = getLevelForXp(oldXp);
@@ -583,6 +633,8 @@ export const useAppStore = create<AppState & AppActions>()(
             })),
             checkInHistory: state.checkInHistory,
             customRouteCheckInHistory: state.customRouteCheckInHistory,
+            streakProtectionHistory: state.streakProtectionHistory,
+            awardedWeeklyBonuses: state.awardedWeeklyBonuses,
           };
 
           return { journeyArchive: [entry, ...state.journeyArchive].slice(0, 12) };
@@ -726,6 +778,8 @@ export const useAppStore = create<AppState & AppActions>()(
           improveCardStatuses: {},
           improveCardSnapshots: {},
           rewardedImproveCards: {},
+          streakProtectionHistory: {},
+          awardedWeeklyBonuses: {},
         }),
 
       signOut: async () => {
@@ -763,6 +817,8 @@ export const useAppStore = create<AppState & AppActions>()(
         improveCardSnapshots: state.improveCardSnapshots,
         rewardedImproveCards: state.rewardedImproveCards,
         notificationPreferences: state.notificationPreferences,
+        streakProtectionHistory: state.streakProtectionHistory,
+        awardedWeeklyBonuses: state.awardedWeeklyBonuses,
       }),
     },
   ),

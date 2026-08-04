@@ -7,7 +7,7 @@ import { useAppStore } from '@/store/useAppStore';
 import type { KairosPhaseConfig } from '@/types';
 import { KAIROS_CYCLE_LENGTH_DAYS, getAvailableDomains } from '@/types';
 import { hasBrotherhoodAccess } from '@/utils/entitlements';
-import { getLevelForXp, getXpProgressInLevel } from '@/utils/gamification';
+import { deriveEarnedBadges, getLevelForXp, getXpProgressInLevel } from '@/utils/gamification';
 import { KAIROS_PHASES, getCurrentPhaseConfig, getDayInCycle } from '@/utils/kairos';
 import { buildWeeklyFlywheel, getDiscreetDomainLabel, toLocalIsoDate } from '@/utils/v1Framework';
 import { useState } from 'react';
@@ -42,6 +42,9 @@ export default function ProgressScreen() {
     checkInHistory,
     customRoutes,
     customRouteCheckInHistory,
+    rewardedImproveCards,
+    streakProtectionHistory,
+    awardedWeeklyBonuses,
     streaks: localStreaks,
   } = useAppStore();
   const { data: remoteStreaks } = useStreaks();
@@ -60,6 +63,7 @@ export default function ProgressScreen() {
   const activeCustomRoutes = customRoutes.filter((route) => !route.archivedAt);
   const level = getLevelForXp(profile.xp);
   const xpProgress = getXpProgressInLevel(profile.xp);
+  const hasPaidAccess = hasBrotherhoodAccess(profile.tier);
   const last7 = getLast7Days();
   const today = toLocalIsoDate(new Date());
   const flywheel = buildWeeklyFlywheel({
@@ -67,6 +71,17 @@ export default function ProgressScreen() {
     checkInHistory,
     todayCheckIns,
   });
+  const badges = deriveEarnedBadges({
+    profile,
+    checkInHistory,
+    todayCheckIns,
+    rewardedImproveCards,
+    streakProtectionHistory,
+    awardedWeeklyBonuses,
+    dayInCycle,
+  });
+  const earnedBadges = badges.filter((badge) => badge.earned);
+  const unearnedBadges = badges.filter((badge) => !badge.earned);
 
   return (
     <>
@@ -125,23 +140,53 @@ export default function ProgressScreen() {
           </div>
         )}
 
-        {/* XP / Level */}
-        <Card>
-          <p className="text-base-subtext text-xs font-heading tracking-widest uppercase mb-1">
-            Level {level.level}
-          </p>
-          <p className="font-heading text-xl font-bold text-base-text">{level.label}</p>
-          <p className="text-base-subtext text-xs mt-1">{profile.xp} XP total</p>
-          <div className="mt-3 h-1.5 bg-base-border rounded-full overflow-hidden">
-            <div
-              className="h-full bg-accent-green rounded-full transition-all"
-              style={{ width: `${xpProgress}%` }}
-            />
-          </div>
-          <p className="text-base-muted text-xs mt-1">
-            {level.level < 10 ? `${xpProgress}% to Level ${level.level + 1}` : 'Max level reached'}
-          </p>
-        </Card>
+        {hasPaidAccess ? (
+          <Card>
+            <p className="text-base-subtext text-xs font-heading tracking-widest uppercase mb-1">
+              Status
+            </p>
+            <p className="font-heading text-xl font-bold text-base-text">
+              Level {level.level}: {level.label}
+            </p>
+            <p className="text-base-subtext text-xs mt-1">{profile.xp} XP total</p>
+            <div className="mt-3 h-1.5 bg-base-border rounded-full overflow-hidden">
+              <div
+                className="h-full bg-accent-green rounded-full transition-all"
+                style={{ width: `${xpProgress}%` }}
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-2 mt-4">
+              <div className="rounded border border-base-border p-2">
+                <p className="font-heading text-base-text text-sm">
+                  {Object.keys(streakProtectionHistory).length}
+                </p>
+                <p className="text-base-muted text-[11px]">protection used</p>
+              </div>
+              <div className="rounded border border-base-border p-2">
+                <p className="font-heading text-base-text text-sm">
+                  {Object.keys(awardedWeeklyBonuses).length}
+                </p>
+                <p className="text-base-muted text-[11px]">weekly bonuses</p>
+              </div>
+            </div>
+            <p className="text-base-muted text-xs mt-2">
+              {level.level < 10
+                ? `${xpProgress}% to Level ${level.level + 1}`
+                : 'Max level reached'}
+            </p>
+          </Card>
+        ) : (
+          <Card>
+            <p className="text-base-subtext text-xs font-heading tracking-widest uppercase mb-1">
+              Basic progress
+            </p>
+            <p className="font-heading text-xl font-bold text-base-text">No XP on Free</p>
+            <p className="text-base-subtext text-xs mt-1">
+              Free keeps your visual check-in history on this device. Status, XP, streak protection,
+              weekly bonuses, and badges unlock with Brotherhood.
+            </p>
+          </Card>
+        )}
 
         {activeCustomRoutes.length > 0 && (
           <Card>
@@ -267,6 +312,29 @@ export default function ProgressScreen() {
           </div>
         </Card>
 
+        {hasPaidAccess && (
+          <Card>
+            <h2 className="font-heading text-xs font-medium text-base-subtext tracking-widest uppercase mb-3">
+              Badges
+            </h2>
+            <div className="grid grid-cols-2 gap-2">
+              {[...earnedBadges, ...unearnedBadges].map((badge) => (
+                <div
+                  key={badge.id}
+                  className={`rounded border p-3 ${
+                    badge.earned
+                      ? 'border-accent-green/50 bg-accent-green/5'
+                      : 'border-base-border bg-base-black/20 opacity-70'
+                  }`}
+                >
+                  <p className="font-heading text-sm font-medium text-base-text">{badge.label}</p>
+                  <p className="text-base-muted text-[11px] mt-1">{badge.description}</p>
+                </div>
+              ))}
+            </div>
+          </Card>
+        )}
+
         {/* 7-day domain grid */}
         <Card>
           <h2 className="font-heading text-xs font-medium text-base-subtext tracking-widest uppercase mb-3">
@@ -328,7 +396,7 @@ export default function ProgressScreen() {
           </h2>
           <div className="flex flex-col gap-2">
             {availableDomains.map((d) => {
-              const streak = hasBrotherhoodAccess(profile.tier)
+              const streak = hasPaidAccess
                 ? remoteStreaks?.find((s) => s.domainType === d.type)
                 : localStreaks[d.type];
               return (
