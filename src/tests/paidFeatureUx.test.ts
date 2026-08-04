@@ -2,10 +2,13 @@ import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 
 describe('paid feature UX copy', () => {
-  it('uses clear Personal routes and Squad explanations in You', () => {
+  it('uses clear Personal sub-routes and Squad explanations in You', () => {
     const source = readFileSync('src/pages/YouScreen.tsx', 'utf8');
+    const oldOwnerSetupTitle = ['Liam', 'Transformation'].join(' ');
 
-    expect(source).toContain('Personal routes');
+    expect(source).toContain('Personal sub-routes');
+    expect(source).toContain('normal Kairos categories');
+    expect(source).not.toContain(oldOwnerSetupTitle);
     expect(source).toContain('FEATURE_EXPLANATIONS.personalRoutes');
     expect(source).toContain('FEATURE_EXPLANATIONS.personalRoutesAction');
     expect(source).toContain('FEATURE_EXPLANATIONS.squad');

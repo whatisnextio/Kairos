@@ -56,7 +56,7 @@ describe('brand and help copy contract', () => {
     expect(SUBSCRIPTION_COPY.paidFeatures).toEqual(
       expect.arrayContaining([
         'Daily AI nudge, based on your 12K context',
-        'Personal routes under Body, Fuel, Self, or Connection',
+        'Personal sub-routes under Body, Fuel, Self, or Connection',
         'Cloud sync for daily actions and notes',
         'High-accountability PWA reminders',
         'Anonymous squad matching and weekly pulse when matched',
@@ -93,7 +93,7 @@ describe('brand and help copy contract', () => {
   it('explains paid features without vague coming-soon language', () => {
     const featureCopy = Object.values(FEATURE_EXPLANATIONS).join(' ');
 
-    expect(FEATURE_EXPLANATIONS.personalRoutes).toContain('under one core domain');
+    expect(FEATURE_EXPLANATIONS.personalRoutes).toContain('sub-route under one core domain');
     expect(FEATURE_EXPLANATIONS.personalRoutesAction).toContain('Home, Progress, and Improve');
     expect(FEATURE_EXPLANATIONS.squad).toContain('anonymous accountability');
     expect(FEATURE_EXPLANATIONS.notifications).toContain('opt-in PWA prompts');

@@ -27,6 +27,7 @@ import {
   buildCatchUpPath,
   getDailyDomainLabel,
   getEarlyWakeProtocol,
+  toLocalIsoDate,
 } from '@/utils/v1Framework';
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -108,7 +109,7 @@ export default function HomeScreen() {
   const phaseConfig = getCurrentPhaseConfig(dayInCycle);
   const availableDomains = getAvailableDomains(authUser?.email);
   const activeCustomRoutes = customRoutes.filter((route) => !route.archivedAt);
-  const domainLabels = new Map(availableDomains.map((domain) => [domain.type, domain.label]));
+  const todayIso = toLocalIsoDate(new Date());
   const availableDomainTypes = new Set(availableDomains.map((domain) => domain.type));
   const configuredDomainCount = domainFocuses.filter((focus) =>
     availableDomainTypes.has(focus.domainType),
@@ -540,94 +541,98 @@ export default function HomeScreen() {
             Today
           </h2>
           <div className="flex flex-col gap-2">
-            {availableDomains.map((d) => {
-              const focus = domainFocuses.find((f) => f.domainType === d.type);
-              const checkIn = todayCheckIns[d.type];
+            {availableDomains.map((domain) => {
+              const focus = domainFocuses.find((f) => f.domainType === domain.type);
+              const checkIn = todayCheckIns[domain.type];
               const status: CheckInStatus = checkIn?.status ?? 'Pending';
-              const displayLabel = getDailyDomainLabel(d);
-
-              return (
-                <div
-                  key={d.type}
-                  className={`w-full flex rounded border transition-colors ${STATUS_COLOURS[status]} bg-base-surface`}
-                >
-                  <button
-                    type="button"
-                    className="flex-1 text-left p-4"
-                    onClick={() => setSelectedDomainType(d.type)}
-                    aria-label={`Check in ${displayLabel}`}
-                  >
-                    <div className="flex items-center justify-between gap-3">
-                      <span className={`font-heading font-medium tracking-wide ${d.colour}`}>
-                        {displayLabel}
-                      </span>
-                      <span className="shrink-0 rounded border border-current/30 px-2 py-1 text-[11px] font-heading uppercase tracking-wider">
-                        {STATUS_LABELS[status]}
-                      </span>
-                    </div>
-                    {focus && (
-                      <p className="text-base-subtext text-xs mt-1 truncate">
-                        {focus.focusDescription}
-                      </p>
-                    )}
-                    {!focus && (
-                      <p className="text-base-muted text-xs mt-1">
-                        Check in now, or open details to set tomorrow.
-                      </p>
-                    )}
-                  </button>
-                  <button
-                    type="button"
-                    className="px-3 flex items-center text-base-muted hover:text-base-subtext transition-colors border-l border-current/20"
-                    onClick={() => navigate(`/detail/${getDomainRouteSlug(d.type)}`)}
-                    aria-label={`Open ${displayLabel} detail`}
-                  >
-                    <svg
-                      aria-hidden="true"
-                      width="14"
-                      height="14"
-                      viewBox="0 0 14 14"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="1.5"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    >
-                      <path d="M5 2l5 5-5 5" />
-                    </svg>
-                  </button>
-                </div>
+              const displayLabel = getDailyDomainLabel(domain);
+              const routesForDomain = activeCustomRoutes.filter(
+                (route) => route.parentDomainType === domain.type,
               );
-            })}
-            {activeCustomRoutes.map((route) => {
-              const checkIn = todayCustomRouteCheckIns[route.id];
-              const today = new Date().toISOString().split('T')[0];
-              const status: CheckInStatus = checkIn?.date === today ? checkIn.status : 'Pending';
 
               return (
-                <div
-                  key={route.id}
-                  className={`w-full flex rounded border transition-colors ${STATUS_COLOURS[status]} bg-base-surface`}
-                >
-                  <button
-                    type="button"
-                    className="flex-1 text-left p-4"
-                    onClick={() => handleCustomRouteCheckIn(route.id, status)}
-                    aria-label={`Check in ${route.label}`}
+                <div key={domain.type} className="flex flex-col gap-1.5">
+                  <div
+                    className={`w-full flex rounded border transition-colors ${STATUS_COLOURS[status]} bg-base-surface`}
                   >
-                    <div className="flex items-center justify-between gap-3">
-                      <span className="font-heading font-medium tracking-wide text-base-text truncate">
-                        {route.label}
-                      </span>
-                      <span className="text-xs shrink-0">{STATUS_LABELS[status]}</span>
+                    <button
+                      type="button"
+                      className="flex-1 text-left p-4"
+                      onClick={() => setSelectedDomainType(domain.type)}
+                      aria-label={`Check in ${displayLabel}`}
+                    >
+                      <div className="flex items-center justify-between gap-3">
+                        <span className={`font-heading font-medium tracking-wide ${domain.colour}`}>
+                          {displayLabel}
+                        </span>
+                        <span className="shrink-0 rounded border border-current/30 px-2 py-1 text-[11px] font-heading uppercase tracking-wider">
+                          {STATUS_LABELS[status]}
+                        </span>
+                      </div>
+                      {focus && (
+                        <p className="text-base-subtext text-xs mt-1 truncate">
+                          {focus.focusDescription}
+                        </p>
+                      )}
+                      {!focus && (
+                        <p className="text-base-muted text-xs mt-1">
+                          Check in now, or open details to set tomorrow.
+                        </p>
+                      )}
+                    </button>
+                    <button
+                      type="button"
+                      className="px-3 flex items-center text-base-muted hover:text-base-subtext transition-colors border-l border-current/20"
+                      onClick={() => navigate(`/detail/${getDomainRouteSlug(domain.type)}`)}
+                      aria-label={`Open ${displayLabel} detail`}
+                    >
+                      <svg
+                        aria-hidden="true"
+                        width="14"
+                        height="14"
+                        viewBox="0 0 14 14"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="1.5"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
+                        <path d="M5 2l5 5-5 5" />
+                      </svg>
+                    </button>
+                  </div>
+                  {routesForDomain.length > 0 && (
+                    <div className="ml-3 flex flex-col gap-1.5 border-l border-base-border pl-3">
+                      {routesForDomain.map((route) => {
+                        const checkIn = todayCustomRouteCheckIns[route.id];
+                        const routeStatus: CheckInStatus =
+                          checkIn?.date === todayIso ? checkIn.status : 'Pending';
+
+                        return (
+                          <button
+                            key={route.id}
+                            type="button"
+                            className={`w-full rounded border px-3 py-2 text-left transition-colors ${STATUS_COLOURS[routeStatus]} bg-base-black/20`}
+                            onClick={() => handleCustomRouteCheckIn(route.id, routeStatus)}
+                            aria-label={`Check in ${route.label}`}
+                          >
+                            <div className="flex items-center justify-between gap-3">
+                              <span className="font-heading text-sm font-medium tracking-wide text-base-text truncate">
+                                {route.label}
+                              </span>
+                              <span className="shrink-0 text-[11px]">
+                                {STATUS_LABELS[routeStatus]}
+                              </span>
+                            </div>
+                            <p className="text-base-subtext text-xs mt-1 truncate">
+                              {route.focusDescription}
+                            </p>
+                            <p className="text-base-muted text-[11px] mt-0.5">Sub-route</p>
+                          </button>
+                        );
+                      })}
                     </div>
-                    <p className="text-base-subtext text-xs mt-1 truncate">
-                      {route.focusDescription}
-                    </p>
-                    <p className="text-base-muted text-[11px] mt-0.5">
-                      {domainLabels.get(route.parentDomainType) ?? 'Kairos'} route
-                    </p>
-                  </button>
+                  )}
                 </div>
               );
             })}
