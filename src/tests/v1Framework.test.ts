@@ -90,6 +90,19 @@ describe('V1 acceptance framework', () => {
     ]);
   });
 
+  it('keeps Liam setup route focuses coded and action-shaped', () => {
+    const combinedFocusCopy = PRIVATE_ROUTE_TEMPLATES.map((route) => route.focusDescription)
+      .join(' ')
+      .toLowerCase();
+
+    expect(PRIVATE_ROUTE_TEMPLATES.every((route) => route.focusDescription)).toBe(true);
+    expect(combinedFocusCopy).toContain('one visible move');
+    expect(combinedFocusCopy).toContain('one photo action');
+    expect(combinedFocusCopy).toContain('one present husband or dad action');
+    expect(combinedFocusCopy).not.toContain('sex');
+    expect(combinedFocusCopy).not.toContain('masturb');
+  });
+
   it('keeps onboarding and help positioning aligned to the category contract', () => {
     expect(PRODUCT_POSITIONING.headline).toContain('12-week transformation');
     expect(PRODUCT_POSITIONING.what).toContain('guided 84-day operating system');
@@ -121,7 +134,8 @@ describe('V1 acceptance framework', () => {
     expect(buildAccountabilityPrompt(0).level).toBe(1);
     expect(buildAccountabilityPrompt(1).level).toBe(2);
     expect(buildAccountabilityPrompt(2).level).toBe(3);
-    expect(buildAccountabilityPrompt(2).steps).toContain('Mark Done, Partial, or Missed.');
+    expect(buildAccountabilityPrompt(2).body).toContain('not another task');
+    expect(buildAccountabilityPrompt(2).steps).toContain('Choose Done, Partial, or Missed.');
   });
 
   it('schedules repeated structured notification prompts', () => {

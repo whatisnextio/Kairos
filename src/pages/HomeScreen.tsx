@@ -119,6 +119,12 @@ export default function HomeScreen() {
     new Date().getHours() >= 12 && openDomainCount > 0
       ? buildAccountabilityPrompt(Math.min(2, Math.max(0, openDomainCount - 1)))
       : null;
+  const accountabilityTarget = accountabilityPrompt
+    ? availableDomains.find((domain) => {
+        const status = todayCheckIns[domain.type]?.status;
+        return status === 'Missed' || status === 'Pending' || !status;
+      })
+    : null;
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: Zustand setters are stable; lastCelebrationPhase intentionally excluded to avoid re-triggering after the silent first-load set
   useEffect(() => {
@@ -365,16 +371,21 @@ export default function HomeScreen() {
               {accountabilityPrompt.title}
             </p>
             <p className="text-base-text text-sm leading-snug">{accountabilityPrompt.body}</p>
-            <div className="flex flex-wrap gap-2 mt-3">
+            <ol className="mt-3 flex flex-col gap-1.5 text-xs text-base-subtext list-decimal list-inside">
               {accountabilityPrompt.steps.map((step) => (
-                <span
-                  key={step}
-                  className="rounded border border-base-border px-3 py-2 text-xs text-base-subtext"
-                >
-                  {step}
-                </span>
+                <li key={step}>{step}</li>
               ))}
-            </div>
+            </ol>
+            {accountabilityTarget && (
+              <Button
+                size="sm"
+                variant="ghost"
+                className="mt-3"
+                onClick={() => setSelectedDomainType(accountabilityTarget.type)}
+              >
+                Log {getDiscreetDomainLabel(accountabilityTarget, authUser?.email)} now
+              </Button>
+            )}
           </Card>
         )}
 

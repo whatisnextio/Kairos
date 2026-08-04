@@ -61,6 +61,7 @@ export interface PrivateRouteTemplate {
   label: string;
   parentDomainType: DomainType;
   description: string;
+  focusDescription: string;
 }
 
 export const PRIVATE_ROUTE_TEMPLATES: PrivateRouteTemplate[] = [
@@ -69,24 +70,28 @@ export const PRIVATE_ROUTE_TEMPLATES: PrivateRouteTemplate[] = [
     label: 'SHOT',
     parentDomainType: 'USTIME',
     description: 'Mission/work execution that must support connection rather than replace it.',
+    focusDescription: 'One visible move towards profit, salary, or delivery.',
   },
   {
     type: 'LENS',
     label: 'Lens',
     parentDomainType: 'METIME',
     description: 'Creative practice, photography outings, edits, exports, and submissions.',
+    focusDescription: 'One photo action: go out, edit, share, or submit.',
   },
   {
     type: 'NEST',
     label: 'Nest',
     parentDomainType: 'USTIME',
     description: 'Home rhythm, fatherhood, family presence, and practical support.',
+    focusDescription: 'One present husband or dad action that makes home easier.',
   },
   {
     type: 'ROOTS',
     label: 'Roots',
     parentDomainType: 'FUEL',
     description: 'Money, debt, salary, wealth, and long-range optionality foundations.',
+    focusDescription: 'One money action that lowers drag or builds optionality.',
   },
 ];
 

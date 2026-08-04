@@ -22,4 +22,13 @@ describe('PWA UX shell', () => {
     expect(html).not.toContain('365-day transformation');
     expect(viteConfig).not.toMatch(/365[- ]day/i);
   });
+
+  it('uses the Kairos mark on the reload splash screen', () => {
+    const splash = readFileSync('src/pages/SplashScreen.tsx', 'utf8');
+
+    expect(splash).toContain('/kairos-12k-mark.svg');
+    expect(splash).toContain('aria-label="Loading 12K"');
+    expect(splash).toContain('animate-pulse');
+    expect(splash).not.toMatch(/>\s*12K\s*</);
+  });
 });
