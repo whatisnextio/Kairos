@@ -89,7 +89,7 @@ export function buildCatchUpPath(
   )[0];
   const status = target ? todayCheckIns[target.type]?.status : undefined;
   // Only prompt when the domain is still unmarked. A deliberate Missed mark means the user
-  // has already acknowledged the domain — showing a catch-up card at that point is nagging.
+  // has already acknowledged the domain; showing a catch-up card at that point is nagging.
   if (!target || (status !== 'Pending' && status !== undefined)) return null;
 
   return {
