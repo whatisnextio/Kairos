@@ -5,7 +5,7 @@ import { useCycleReflection } from '@/hooks/useCycleReflection';
 import { useStreaks } from '@/hooks/useStreaks';
 import { useAppStore } from '@/store/useAppStore';
 import type { KairosPhaseConfig } from '@/types';
-import { KAIROS_CYCLE_LENGTH_DAYS, getAvailableDomains } from '@/types';
+import { KAIROS_CYCLE_LENGTH_DAYS, getAvailableDomains, getDomainRouteSlug } from '@/types';
 import { hasBrotherhoodAccess } from '@/utils/entitlements';
 import {
   POINTS_FULL_LABEL,
@@ -307,7 +307,7 @@ export default function ProgressScreen() {
               <button
                 key={entry.domainType}
                 type="button"
-                onClick={() => navigate(`/detail/${entry.domainType.toLowerCase()}`)}
+                onClick={() => navigate(`/detail/${getDomainRouteSlug(entry.domainType)}`)}
                 className="rounded border border-base-border bg-base-black/20 p-3 text-left hover:border-base-muted transition-colors"
               >
                 <div className="flex items-start justify-between gap-2">

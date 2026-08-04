@@ -3,7 +3,14 @@ import Card from '@/components/common/Card';
 import { useDomainCheckIns } from '@/hooks/useCheckIns';
 import { useStreaks } from '@/hooks/useStreaks';
 import { useAppStore } from '@/store/useAppStore';
-import { type CheckInStatus, type DailyCheckIn, type DomainType, getDomainConfig } from '@/types';
+import {
+  type CheckInStatus,
+  type DailyCheckIn,
+  type DomainType,
+  getDomainConfig,
+  getDomainRouteSlug,
+  getDomainTypeFromRouteSlug,
+} from '@/types';
 import { hasBrotherhoodAccess } from '@/utils/entitlements';
 import {
   CONNECTION_SUPPORT_OPTIONS,
@@ -11,7 +18,7 @@ import {
   toLocalIsoDate,
 } from '@/utils/v1Framework';
 import { useQueryClient } from '@tanstack/react-query';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 
 const STATUS_DOT: Record<string, string> = {
@@ -194,9 +201,10 @@ export default function DetailScreen() {
   } = useAppStore();
 
   const today = toLocalIsoDate(new Date());
-  const domainType = domain?.toUpperCase() as DomainType;
-  const domainConfig = getDomainConfig(domainType, authUser?.email);
-  const focus = domainFocuses.find((f) => f.domainType === domainType);
+  const domainType = getDomainTypeFromRouteSlug(domain);
+  const queryDomainType = domainType ?? 'BODY';
+  const domainConfig = domainType ? getDomainConfig(domainType, authUser?.email) : undefined;
+  const focus = domainType ? domainFocuses.find((f) => f.domainType === domainType) : undefined;
   const displayLabel = domainConfig ? getDailyDomainLabel(domainConfig) : '';
   const [editingFocus, setEditingFocus] = useState(false);
   const [focusDraft, setFocusDraft] = useState('');
@@ -204,13 +212,22 @@ export default function DetailScreen() {
 
   const { data: remoteStreaks } = useStreaks();
   const HISTORY_LIMIT = 28;
-  const { data: history } = useDomainCheckIns(domainType, HISTORY_LIMIT);
+  const { data: history } = useDomainCheckIns(queryDomainType, HISTORY_LIMIT);
 
   const streak = hasBrotherhoodAccess(profile?.tier)
     ? remoteStreaks?.find((s) => s.domainType === domainType)
-    : localStreaks[domainType];
+    : domainType
+      ? localStreaks[domainType]
+      : undefined;
 
-  if (!domainConfig) {
+  useEffect(() => {
+    if (!domainType) return;
+    const canonicalSlug = getDomainRouteSlug(domainType);
+    if (domain?.trim().toLowerCase() === canonicalSlug) return;
+    navigate(`/detail/${canonicalSlug}`, { replace: true });
+  }, [domain, domainType, navigate]);
+
+  if (!domainType || !domainConfig) {
     return (
       <div className="px-4 pt-6">
         <p className="text-base-subtext">Domain not found.</p>

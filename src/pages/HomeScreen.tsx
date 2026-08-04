@@ -13,6 +13,7 @@ import {
   IDENTITY_ANCHORS,
   KAIROS_CYCLE_LENGTH_DAYS,
   getAvailableDomains,
+  getDomainRouteSlug,
 } from '@/types';
 import { hasBrotherhoodAccess } from '@/utils/entitlements';
 import {
@@ -578,7 +579,7 @@ export default function HomeScreen() {
                   <button
                     type="button"
                     className="px-3 flex items-center text-base-muted hover:text-base-subtext transition-colors border-l border-current/20"
-                    onClick={() => navigate(`/detail/${d.type.toLowerCase()}`)}
+                    onClick={() => navigate(`/detail/${getDomainRouteSlug(d.type)}`)}
                     aria-label={`Open ${displayLabel} detail`}
                   >
                     <svg
