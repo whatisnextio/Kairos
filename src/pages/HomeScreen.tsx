@@ -627,7 +627,7 @@ export default function HomeScreen() {
                       )}
                       {status === 'Protected' && (
                         <p className="text-base-muted text-xs mt-1">
-                          Streak protected — counts as a recovery day.
+                          Streak protected. Counts as a recovery day.
                         </p>
                       )}
                     </button>
