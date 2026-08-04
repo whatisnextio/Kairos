@@ -10,7 +10,13 @@ import {
 } from '@/services/pushNotifications';
 import { supabase } from '@/services/supabaseClient';
 import { useAppStore } from '@/store/useAppStore';
-import { type DomainType, IDENTITY_ANCHORS, getAvailableDomains } from '@/types';
+import {
+  type DomainType,
+  IDENTITY_ANCHORS,
+  PRIVATE_ROUTE_TEMPLATES,
+  getAvailableDomains,
+  isOwnerAccount,
+} from '@/types';
 import { getSubscriptionTierLabel, hasBrotherhoodAccess } from '@/utils/entitlements';
 import { deriveEarnedBadges, getLevelForXp } from '@/utils/gamification';
 import { getDayInCycle } from '@/utils/kairos';
@@ -146,9 +152,21 @@ export default function YouScreen() {
   const [routeParent, setRouteParent] = useState<DomainType>('METIME');
   const [routeError, setRouteError] = useState<string | null>(null);
   const [isAddingRoute, setIsAddingRoute] = useState(false);
+  const [isApplyingPersonalSetup, setIsApplyingPersonalSetup] = useState(false);
+  const [personalSetupError, setPersonalSetupError] = useState<string | null>(null);
   const hasPaidAccess = hasBrotherhoodAccess(profile?.tier);
   const availableDomains = getAvailableDomains(authUser?.email);
   const domainLabels = new Map(availableDomains.map((domain) => [domain.type, domain.label]));
+  const ownerAccount = isOwnerAccount(authUser?.email);
+  const activeCustomRoutes = customRoutes.filter((route) => !route.archivedAt);
+  const activeRouteLabels = new Set(
+    activeCustomRoutes.map((route) => route.label.trim().toLowerCase()),
+  );
+  const missingPersonalRoutes = ownerAccount
+    ? PRIVATE_ROUTE_TEMPLATES.filter(
+        (template) => !activeRouteLabels.has(template.label.toLowerCase()),
+      )
+    : [];
 
   const checkInHistory = useAppStore((s) => s.checkInHistory);
   const customRouteCheckInHistory = useAppStore((s) => s.customRouteCheckInHistory);
@@ -316,6 +334,39 @@ export default function YouScreen() {
     setRouteFocus('');
   }, [addCustomRoute, routeFocus, routeLabel, routeParent]);
 
+  const handleApplyPersonalSetup = useCallback(async () => {
+    if (!ownerAccount || missingPersonalRoutes.length === 0) return;
+    setPersonalSetupError(null);
+    setIsApplyingPersonalSetup(true);
+
+    for (const template of missingPersonalRoutes) {
+      const result = await addCustomRoute({
+        parentDomainType: template.parentDomainType,
+        label: template.label,
+        description: template.description,
+        focusDescription: template.focusDescription,
+      });
+
+      if (!result.ok) {
+        setPersonalSetupError(
+          result.reason === 'upgrade'
+            ? 'Personal setup needs Brotherhood or Lifechanger access.'
+            : 'Personal setup could not be saved. Try again from this screen.',
+        );
+        setIsApplyingPersonalSetup(false);
+        return;
+      }
+    }
+
+    setNotificationPreferences({
+      intensity: 'high',
+      startHour: 5,
+      endHour: 21,
+      earlyProtocol: true,
+    });
+    setIsApplyingPersonalSetup(false);
+  }, [addCustomRoute, missingPersonalRoutes, ownerAccount, setNotificationPreferences]);
+
   if (!profile) return null;
 
   const anchor = IDENTITY_ANCHORS.find((a) => a.id === profile.identityAnchorId);
@@ -378,35 +429,66 @@ export default function YouScreen() {
         <p className="text-base-subtext text-xs font-heading tracking-widest uppercase mb-3">
           Custom routes
         </p>
+        {ownerAccount && hasPaidAccess && (
+          <div className="rounded border border-accent-green/30 bg-accent-green/5 p-3 mb-4">
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0">
+                <p className="font-heading text-sm font-medium text-base-text">
+                  Liam Transformation
+                </p>
+                <p className="text-base-subtext text-xs mt-1">
+                  Adds SHOT, Lens, Nest, and Roots under the core framework, then sets high
+                  accountability prompts.
+                </p>
+              </div>
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={() => void handleApplyPersonalSetup()}
+                disabled={missingPersonalRoutes.length === 0 || isApplyingPersonalSetup}
+                className="shrink-0"
+              >
+                {missingPersonalRoutes.length === 0
+                  ? 'Setup complete'
+                  : isApplyingPersonalSetup
+                    ? 'Applying...'
+                    : 'Apply'}
+              </Button>
+            </div>
+            {personalSetupError && (
+              <p role="alert" className="text-status-missed text-xs mt-2">
+                {personalSetupError}
+              </p>
+            )}
+          </div>
+        )}
         <div className="flex flex-col gap-2 mb-4">
-          {customRoutes.filter((route) => !route.archivedAt).length === 0 ? (
+          {activeCustomRoutes.length === 0 ? (
             <p className="text-base-muted text-sm">No custom routes active.</p>
           ) : (
-            customRoutes
-              .filter((route) => !route.archivedAt)
-              .map((route) => (
-                <div
-                  key={route.id}
-                  className="flex items-start justify-between gap-3 border-b border-base-border pb-2 last:border-b-0 last:pb-0"
-                >
-                  <div className="min-w-0">
-                    <p className="font-heading text-sm font-medium text-base-text truncate">
-                      {route.label}
-                    </p>
-                    <p className="text-base-subtext text-xs truncate">{route.focusDescription}</p>
-                    <p className="text-base-muted text-[11px] mt-0.5">
-                      Under {domainLabels.get(route.parentDomainType) ?? 'Kairos'}
-                    </p>
-                  </div>
-                  <button
-                    type="button"
-                    className="text-base-muted text-xs underline shrink-0"
-                    onClick={() => void archiveCustomRoute(route.id)}
-                  >
-                    Remove
-                  </button>
+            activeCustomRoutes.map((route) => (
+              <div
+                key={route.id}
+                className="flex items-start justify-between gap-3 border-b border-base-border pb-2 last:border-b-0 last:pb-0"
+              >
+                <div className="min-w-0">
+                  <p className="font-heading text-sm font-medium text-base-text truncate">
+                    {route.label}
+                  </p>
+                  <p className="text-base-subtext text-xs truncate">{route.focusDescription}</p>
+                  <p className="text-base-muted text-[11px] mt-0.5">
+                    Under {domainLabels.get(route.parentDomainType) ?? 'Kairos'}
+                  </p>
                 </div>
-              ))
+                <button
+                  type="button"
+                  className="text-base-muted text-xs underline shrink-0"
+                  onClick={() => void archiveCustomRoute(route.id)}
+                >
+                  Remove
+                </button>
+              </div>
+            ))
           )}
         </div>
         {!hasPaidAccess ? (

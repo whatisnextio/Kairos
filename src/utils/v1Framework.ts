@@ -121,11 +121,11 @@ export function buildAccountabilityPrompt(ignoredCount: number): AccountabilityP
     return {
       level: 3,
       title: 'Accountability check',
-      body: 'Stop negotiating. Report one honest status and choose the next visible action.',
+      body: 'This is a prompt, not another task. Log the honest status below, then rescue one small action.',
       steps: [
-        'Name what slipped.',
-        'Mark Done, Partial, or Missed.',
-        'Set the next 10-minute action.',
+        'Tap the open Today domain.',
+        'Choose Done, Partial, or Missed.',
+        'Use Partial if you rescued a small version.',
       ],
     };
   }
@@ -134,16 +134,16 @@ export function buildAccountabilityPrompt(ignoredCount: number): AccountabilityP
     return {
       level: 2,
       title: 'Second prompt',
-      body: 'You ignored the first cue. Shrink the task and close one loop now.',
-      steps: ['Open Today.', 'Pick one domain.', 'Do two minutes or log the truth.'],
+      body: 'You ignored the first cue. Use Today below, shrink the task, and close one loop now.',
+      steps: ['Tap one open domain.', 'Do two minutes.', 'Log the truth.'],
     };
   }
 
   return {
     level: 1,
     title: 'First prompt',
-    body: 'Choose the next action before the day chooses for you.',
-    steps: ['Open the app.', 'Pick the easiest domain.', 'Make the first mark.'],
+    body: 'Choose the next action before the day chooses for you. Start from Today below.',
+    steps: ['Pick the easiest domain.', 'Make the first mark.', 'Keep moving.'],
   };
 }
 
