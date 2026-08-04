@@ -364,25 +364,37 @@ export interface IdentityAnchor {
 }
 
 export const IDENTITY_ANCHORS: IdentityAnchor[] = [
-  { id: 'provider', name: 'The Provider', description: 'You show up. Every day. No excuses.' },
+  {
+    id: 'provider',
+    name: 'The Provider',
+    description: 'You create stability through money, energy, and daily presence.',
+  },
   {
     id: 'builder',
     name: 'The Builder',
-    description: 'You make things real that others only imagine.',
+    description: 'You turn plans into systems, shipped work, and visible progress.',
   },
   {
     id: 'guardian',
     name: 'The Guardian',
-    description: 'You protect what matters. Family, health, standards.',
+    description: 'You protect health, family, boundaries, and the standards that hold.',
   },
-  { id: 'leader', name: 'The Leader', description: 'Others follow because you go first.' },
+  {
+    id: 'leader',
+    name: 'The Leader',
+    description: 'You set direction, make decisions, and bring others with you.',
+  },
   {
     id: 'mentor',
     name: 'The Mentor',
-    description: "Your hard-won lessons become someone else's shortcut.",
+    description: 'You use earned lessons to guide, teach, and steady someone else.',
   },
-  { id: 'creator', name: 'The Creator', description: 'You build worlds with your hands or mind.' },
-  { id: 'custom', name: 'Custom', description: 'Define your own.' },
+  {
+    id: 'creator',
+    name: 'The Creator',
+    description: 'You make art, stories, photos, or content that carries meaning.',
+  },
+  { id: 'custom', name: 'Custom', description: 'Use your own words if none of these fit.' },
 ];
 
 // ─── Profile ─────────────────────────────────────────────────────────────────

@@ -393,6 +393,10 @@ export default function OnboardingFlow() {
             <p className="text-base-subtext text-xs font-heading tracking-widest uppercase mb-2">
               Identity anchor
             </p>
+            <p className="text-base-subtext text-xs leading-relaxed mb-3">
+              Pick the role that pulls you forward. This shapes the tone of your nudges; it is not a
+              personality test.
+            </p>
             <div className="grid grid-cols-1 gap-2">
               {IDENTITY_ANCHORS.map((anchor) => (
                 <button
