@@ -1,6 +1,8 @@
 import Button from '@/components/common/Button';
 import Card from '@/components/common/Card';
 import { useAppStore } from '@/store/useAppStore';
+import { buildStripeCheckoutUrl } from '@/utils/billing';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 const STRIPE_CHECKOUT_URL = import.meta.env.VITE_STRIPE_CHECKOUT_URL as string;
@@ -8,14 +10,23 @@ const STRIPE_CHECKOUT_URL = import.meta.env.VITE_STRIPE_CHECKOUT_URL as string;
 export default function SubscriptionScreen() {
   const navigate = useNavigate();
   const { profile } = useAppStore();
+  const [checkoutError, setCheckoutError] = useState<string | null>(null);
 
   const handleUpgrade = () => {
-    if (!STRIPE_CHECKOUT_URL || !profile) return;
-    const url = new URL(STRIPE_CHECKOUT_URL);
-    url.searchParams.set('client_reference_id', profile.id);
+    setCheckoutError(null);
+    const url = buildStripeCheckoutUrl({
+      checkoutUrl: STRIPE_CHECKOUT_URL,
+      profileId: profile?.id,
+    });
+
+    if (!url) {
+      setCheckoutError('Checkout is not available yet. Try again later or contact support.');
+      return;
+    }
+
     // Set flag so the app polls for tier upgrade when Stripe redirects back.
     localStorage.setItem('kairos_checkout_pending', String(Date.now()));
-    window.location.href = url.toString();
+    window.location.href = url;
   };
 
   return (
@@ -74,6 +85,11 @@ export default function SubscriptionScreen() {
         >
           {profile?.tier === 'brotherhood' ? 'Already active' : 'Unlock Brotherhood'}
         </Button>
+        {checkoutError && (
+          <p role="alert" className="text-status-missed text-xs mt-3">
+            {checkoutError}
+          </p>
+        )}
       </Card>
 
       <Card>

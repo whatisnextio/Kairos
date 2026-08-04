@@ -15,8 +15,9 @@ import type {
 } from '@/types';
 import { XP_PER_CHECK_IN_DONE, XP_PER_CHECK_IN_PARTIAL, XP_PER_CYCLE_COMPLETE } from '@/types';
 import { getLevelForXp } from '@/utils/gamification';
-import { clearLocalDevSession } from '@/utils/localDevSession';
+import { DEV_CYCLE_ID, clearLocalDevSession } from '@/utils/localDevSession';
 import { computeLocalStreak } from '@/utils/streak';
+import { toLocalIsoDate } from '@/utils/v1Framework';
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
@@ -69,6 +70,7 @@ interface AppActions {
   setIsBootstrapLoading: (loading: boolean) => void;
   setCurrentCycle: (cycle: KairosCycle | null) => void;
   setDomainFocuses: (focuses: UserDomainFocus[]) => void;
+  updateDomainFocus: (domainType: DomainType, focusDescription: string) => Promise<void>;
 
   setDailyCheckIn: (domainType: DomainType, status: CheckInStatus, notes?: string) => Promise<void>;
   setCustomRouteCheckIn: (routeId: string, status: CheckInStatus, notes?: string) => void;
@@ -140,13 +142,76 @@ export const useAppStore = create<AppState & AppActions>()(
       setIsBootstrapLoading: (isBootstrapLoading) => set({ isBootstrapLoading }),
       setCurrentCycle: (currentCycle) => set({ currentCycle }),
       setDomainFocuses: (domainFocuses) => set({ domainFocuses }),
+      updateDomainFocus: async (domainType, focusDescription) => {
+        const trimmed = focusDescription.trim();
+        const { authUser, profile, currentCycle, domainFocuses } = get();
+        if (!trimmed || !authUser || !profile || !currentCycle) return;
+
+        const existing = domainFocuses.find((focus) => focus.domainType === domainType);
+        const now = new Date().toISOString();
+        const optimisticFocus: UserDomainFocus = existing
+          ? { ...existing, focusDescription: trimmed }
+          : {
+              id: crypto.randomUUID(),
+              userId: authUser.id,
+              cycleId: currentCycle.id,
+              domainType,
+              focusDescription: trimmed,
+              setAt: now,
+            };
+
+        set((state) => ({
+          domainFocuses: existing
+            ? state.domainFocuses.map((focus) =>
+                focus.domainType === domainType ? optimisticFocus : focus,
+              )
+            : [...state.domainFocuses, optimisticFocus],
+        }));
+
+        if (profile.tier === 'free' || currentCycle.id === DEV_CYCLE_ID) return;
+
+        const { data, error } = await supabase
+          .from('user_domain_focuses')
+          .upsert(
+            {
+              id: existing?.id,
+              user_id: authUser.id,
+              cycle_id: currentCycle.id,
+              domain_type: domainType,
+              focus_description: trimmed,
+            },
+            { onConflict: 'user_id,cycle_id,domain_type' },
+          )
+          .select()
+          .single();
+
+        if (error || !data) {
+          console.error('Domain focus sync failed:', error?.message ?? 'No row returned');
+          return;
+        }
+
+        set((state) => ({
+          domainFocuses: state.domainFocuses.map((focus) =>
+            focus.domainType === domainType
+              ? {
+                  id: data.id,
+                  userId: authUser.id,
+                  cycleId: currentCycle.id,
+                  domainType,
+                  focusDescription: trimmed,
+                  setAt: data.set_at,
+                }
+              : focus,
+          ),
+        }));
+      },
       setTodayCheckIns: (todayCheckIns) => set({ todayCheckIns }),
       setTodayCustomRouteCheckIns: (todayCustomRouteCheckIns) => set({ todayCustomRouteCheckIns }),
       setDailyCheckIn: async (domainType, status, notes) => {
         const { profile, currentCycle, todayCheckIns } = get();
         if (!profile || !currentCycle) return;
 
-        const today = new Date().toISOString().split('T')[0];
+        const today = toLocalIsoDate(new Date());
         const xpForStatus = (s: CheckInStatus | undefined): number =>
           s === 'Done' ? XP_PER_CHECK_IN_DONE : s === 'Partial' ? XP_PER_CHECK_IN_PARTIAL : 0;
         const previousStatus = todayCheckIns[domainType]?.status;
@@ -170,7 +235,7 @@ export const useAppStore = create<AppState & AppActions>()(
           // Update history (keep 90 days)
           const history = { ...state.checkInHistory };
           history[today] = { ...(history[today] ?? {}), [domainType]: status };
-          const cutoff = new Date(Date.now() - 400 * 86_400_000).toISOString().split('T')[0];
+          const cutoff = toLocalIsoDate(new Date(Date.now() - 400 * 86_400_000));
           for (const date of Object.keys(history)) {
             if (date < cutoff) delete history[date];
           }
@@ -208,7 +273,7 @@ export const useAppStore = create<AppState & AppActions>()(
           };
         });
 
-        if (profile.tier === 'free') return;
+        if (profile.tier === 'free' || currentCycle.id === DEV_CYCLE_ID) return;
 
         // Sync to Supabase for Brotherhood tier
         const { error } = await supabase.from('daily_check_ins').upsert(
@@ -282,7 +347,7 @@ export const useAppStore = create<AppState & AppActions>()(
         const route = customRoutes.find((r) => r.id === routeId && !r.archivedAt);
         if (!route) return;
 
-        const today = new Date().toISOString().split('T')[0];
+        const today = toLocalIsoDate(new Date());
         const now = new Date().toISOString();
         const xpForStatus = (s: CheckInStatus | undefined): number =>
           s === 'Done' ? XP_PER_CHECK_IN_DONE : s === 'Partial' ? XP_PER_CHECK_IN_PARTIAL : 0;
@@ -329,7 +394,7 @@ export const useAppStore = create<AppState & AppActions>()(
       archiveCurrentJourney: (reason) =>
         set((state) => {
           if (!state.currentCycle) return state;
-          const today = new Date().toISOString().split('T')[0];
+          const today = toLocalIsoDate(new Date());
           const archivedAt = new Date().toISOString();
           const entry: JourneyArchiveEntry = {
             id: crypto.randomUUID(),
@@ -368,10 +433,10 @@ export const useAppStore = create<AppState & AppActions>()(
         const { profile, currentCycle } = get();
         if (!profile || !currentCycle) return;
 
-        const today = new Date().toISOString().split('T')[0];
+        const today = toLocalIsoDate(new Date());
         set({ lastVibeCheckDate: today });
 
-        if (profile.tier === 'free') return;
+        if (profile.tier === 'free' || currentCycle.id === DEV_CYCLE_ID) return;
 
         const { error } = await supabase.from('vibe_checks').insert({
           user_id: profile.id,
@@ -389,7 +454,7 @@ export const useAppStore = create<AppState & AppActions>()(
         const { profile, currentCycle } = get();
         if (!profile || !currentCycle) return;
 
-        const today = new Date().toISOString().split('T')[0];
+        const today = toLocalIsoDate(new Date());
         const completionXp = XP_PER_CYCLE_COMPLETE;
 
         set((state) => ({
@@ -399,6 +464,8 @@ export const useAppStore = create<AppState & AppActions>()(
           profile: state.profile ? { ...state.profile, xp: state.profile.xp + completionXp } : null,
           celebrationPending: true,
         }));
+
+        if (currentCycle.id === DEV_CYCLE_ID) return;
 
         // All tiers: persist cycle status so bootstrap doesn't reload it as 'active' on next login.
         await supabase

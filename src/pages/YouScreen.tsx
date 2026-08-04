@@ -1,6 +1,7 @@
 import Button from '@/components/common/Button';
 import Card from '@/components/common/Card';
 import AbandonCycleModal from '@/components/modals/AbandonCycleModal';
+import WeeklyVibeCheckModal from '@/components/modals/WeeklyVibeCheckModal';
 import { useMatchToSquad, useSquadPulse } from '@/hooks/useSquad';
 import { isPushSupported, subscribeToPush } from '@/services/pushNotifications';
 import { supabase } from '@/services/supabaseClient';
@@ -12,6 +13,7 @@ import { Link } from 'react-router-dom';
 
 const SAVE_PUSH_ENDPOINT = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/save-push-subscription`;
 const DELETE_ACCOUNT_ENDPOINT = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/delete-account`;
+const STRIPE_PORTAL_URL = import.meta.env.VITE_STRIPE_PORTAL_URL;
 
 async function registerPush(): Promise<boolean> {
   try {
@@ -68,12 +70,14 @@ export default function YouScreen() {
   const [isDeleting, setIsDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const [showAbandon, setShowAbandon] = useState(false);
+  const [showVibeCheck, setShowVibeCheck] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
   const [routeLabel, setRouteLabel] = useState('');
   const [routeFocus, setRouteFocus] = useState('');
 
   const checkInHistory = useAppStore((s) => s.checkInHistory);
   const domainFocuses = useAppStore((s) => s.domainFocuses);
+  const lastVibeCheckDate = useAppStore((s) => s.lastVibeCheckDate);
 
   const handleExportData = useCallback(async () => {
     setIsExporting(true);
@@ -363,11 +367,22 @@ export default function YouScreen() {
         </p>
         <p className="font-heading font-medium text-base-text capitalize">{profile.tier}</p>
         {profile.tier === 'free' && (
-          <Link to="/subscription">
-            <Button size="sm" className="mt-3">
-              Upgrade to Brotherhood
-            </Button>
-          </Link>
+          <>
+            <div className="rounded border border-status-partial/40 bg-status-partial/5 p-3 mt-3">
+              <p className="font-heading text-xs text-status-partial tracking-widest uppercase mb-1">
+                Local data
+              </p>
+              <p className="text-base-subtext text-xs">
+                Free progress lives on this device. Export before clearing browser data or changing
+                phone.
+              </p>
+            </div>
+            <Link to="/subscription">
+              <Button size="sm" className="mt-3">
+                Upgrade to Brotherhood
+              </Button>
+            </Link>
+          </>
         )}
         {profile.tier === 'brotherhood' && (
           <>
@@ -388,16 +403,38 @@ export default function YouScreen() {
             ) : (
               <p className="text-base-subtext text-xs mt-1">Brotherhood active.</p>
             )}
-            <a
-              href={`${import.meta.env.VITE_STRIPE_PORTAL_URL}?prefilled_email=${encodeURIComponent(authUser?.email ?? '')}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-xs text-base-muted hover:text-base-subtext underline mt-2 inline-block"
-            >
-              Manage billing
-            </a>
+            {STRIPE_PORTAL_URL ? (
+              <a
+                href={`${STRIPE_PORTAL_URL}?prefilled_email=${encodeURIComponent(authUser?.email ?? '')}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-xs text-base-muted hover:text-base-subtext underline mt-2 inline-block"
+              >
+                Manage billing
+              </a>
+            ) : (
+              <p className="text-base-muted text-xs mt-2">Billing portal is not configured yet.</p>
+            )}
           </>
         )}
+      </Card>
+
+      {/* Vibe check */}
+      <Card>
+        <p className="text-base-subtext text-xs font-heading tracking-widest uppercase mb-2">
+          Weekly check-in
+        </p>
+        <p className="text-base-subtext text-sm mb-3">
+          {lastVibeCheckDate
+            ? `Last saved ${new Date(`${lastVibeCheckDate}T00:00:00`).toLocaleDateString('en-GB', {
+                day: 'numeric',
+                month: 'short',
+              })}.`
+            : 'No weekly check-in saved yet.'}
+        </p>
+        <Button size="sm" variant="secondary" onClick={() => setShowVibeCheck(true)}>
+          Open check-in
+        </Button>
       </Card>
 
       {/* Notifications: brotherhood only */}
@@ -465,11 +502,11 @@ export default function YouScreen() {
       </Button>
 
       {/* Cycle reset */}
-      <div>
+      <div className="pt-2 border-t border-base-border">
         <button
           type="button"
           onClick={() => setShowAbandon(true)}
-          className="text-base-muted text-xs underline w-full text-center"
+          className="text-status-partial text-xs font-heading tracking-wider uppercase w-full text-center"
         >
           Reset 12K journey
         </button>
@@ -493,7 +530,7 @@ export default function YouScreen() {
           <button
             type="button"
             onClick={() => setDeleteConfirm(true)}
-            className="text-base-muted text-xs underline w-full text-center"
+            className="text-status-missed text-xs font-heading tracking-wider uppercase w-full text-center"
           >
             Delete my account
           </button>
@@ -535,6 +572,7 @@ export default function YouScreen() {
       </div>
 
       {showAbandon && <AbandonCycleModal onClose={() => setShowAbandon(false)} />}
+      {showVibeCheck && <WeeklyVibeCheckModal onClose={() => setShowVibeCheck(false)} />}
     </div>
   );
 }

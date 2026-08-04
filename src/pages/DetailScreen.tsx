@@ -1,3 +1,4 @@
+import Button from '@/components/common/Button';
 import Card from '@/components/common/Card';
 import { useDomainCheckIns } from '@/hooks/useCheckIns';
 import { useStreaks } from '@/hooks/useStreaks';
@@ -176,6 +177,7 @@ export default function DetailScreen() {
     authUser,
     currentCycle,
     domainFocuses,
+    updateDomainFocus,
     streaks: localStreaks,
     todayCheckIns,
     checkInHistory,
@@ -186,6 +188,9 @@ export default function DetailScreen() {
   const domainConfig = getDomainConfig(domainType, authUser?.email);
   const focus = domainFocuses.find((f) => f.domainType === domainType);
   const displayLabel = domainConfig ? getDiscreetDomainLabel(domainConfig, authUser?.email) : '';
+  const [editingFocus, setEditingFocus] = useState(false);
+  const [focusDraft, setFocusDraft] = useState('');
+  const [focusSaving, setFocusSaving] = useState(false);
 
   const { data: remoteStreaks } = useStreaks();
   const HISTORY_LIMIT = 28;
@@ -242,14 +247,78 @@ export default function DetailScreen() {
         {displayLabel}
       </h1>
 
-      {focus && (
-        <Card>
-          <p className="text-base-subtext text-xs font-heading tracking-widest uppercase mb-1">
-            This cycle's focus
-          </p>
-          <p className="text-base-text">{focus.focusDescription}</p>
-        </Card>
-      )}
+      <Card>
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0">
+            <p className="text-base-subtext text-xs font-heading tracking-widest uppercase mb-1">
+              This cycle's focus
+            </p>
+            <p className="text-base-text text-sm">
+              {focus?.focusDescription ?? 'No focus set yet.'}
+            </p>
+          </div>
+          <Button
+            size="sm"
+            variant="ghost"
+            onClick={() => {
+              setFocusDraft(focus?.focusDescription ?? domainConfig.focusOptions[0]);
+              setEditingFocus((value) => !value);
+            }}
+            className="shrink-0"
+          >
+            {focus ? 'Edit' : 'Set'}
+          </Button>
+        </div>
+        {editingFocus && (
+          <div className="mt-4 border-t border-base-border pt-4">
+            <div className="grid grid-cols-1 gap-2 mb-3">
+              {domainConfig.focusOptions.map((option) => (
+                <button
+                  type="button"
+                  key={option}
+                  onClick={() => setFocusDraft(option)}
+                  className={`text-left rounded border px-3 py-2 text-sm transition-colors ${
+                    focusDraft === option
+                      ? 'border-accent-green bg-accent-green/10 text-base-text'
+                      : 'border-base-border bg-base-black/20 text-base-subtext hover:border-base-muted'
+                  }`}
+                >
+                  {option}
+                </button>
+              ))}
+            </div>
+            <textarea
+              className="input-field h-20 resize-none text-sm mb-3"
+              placeholder={domainConfig.focusPrompt}
+              value={focusDraft}
+              onChange={(e) => setFocusDraft(e.target.value)}
+            />
+            <div className="flex gap-2">
+              <Button
+                size="sm"
+                onClick={async () => {
+                  setFocusSaving(true);
+                  await updateDomainFocus(domainType, focusDraft);
+                  setFocusSaving(false);
+                  setEditingFocus(false);
+                }}
+                disabled={!focusDraft.trim() || focusSaving}
+                className="flex-1"
+              >
+                {focusSaving ? 'Saving...' : 'Save focus'}
+              </Button>
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={() => setEditingFocus(false)}
+                className="flex-1"
+              >
+                Cancel
+              </Button>
+            </div>
+          </div>
+        )}
+      </Card>
 
       <Card>
         <p className="text-base-subtext text-xs font-heading tracking-widest uppercase mb-2">

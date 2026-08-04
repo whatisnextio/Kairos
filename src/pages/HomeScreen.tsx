@@ -1,5 +1,6 @@
 import Button from '@/components/common/Button';
 import Card from '@/components/common/Card';
+import CheckInStatusModal from '@/components/modals/CheckInStatusModal';
 import Day84CompletionModal from '@/components/modals/Day84CompletionModal';
 import ProgressiveDomainSetupModal from '@/components/modals/ProgressiveDomainSetupModal';
 import WeeklyVibeCheckModal from '@/components/modals/WeeklyVibeCheckModal';
@@ -32,7 +33,7 @@ const STATUS_LABELS: Record<CheckInStatus, string> = {
   Done: 'Done',
   Partial: 'Partial',
   Missed: 'Missed',
-  Pending: 'Tap to check in',
+  Pending: 'Choose status',
   Protected: 'Protected',
 };
 
@@ -92,6 +93,7 @@ export default function HomeScreen() {
   const [showVibeCheck, setShowVibeCheck] = useState(false);
   const [showDomainSetup, setShowDomainSetup] = useState(false);
   const [showPhaseTransition, setShowPhaseTransition] = useState(false);
+  const [selectedDomainType, setSelectedDomainType] = useState<DomainType | null>(null);
 
   const dayInCycle = profile && currentCycle ? getDayInCycle(currentCycle.startDate) : 1;
   const displayDay = Math.min(dayInCycle, KAIROS_CYCLE_LENGTH_DAYS);
@@ -162,16 +164,6 @@ export default function HomeScreen() {
     profile.identityAnchorId === 'custom'
       ? (profile.customAnchorName ?? 'Custom')
       : (anchor?.name ?? 'Your identity');
-
-  const handleCheckIn = (domain: DomainType, current: CheckInStatus | undefined) => {
-    if (current === 'Done') {
-      setDailyCheckIn(domain, 'Partial');
-    } else if (current === 'Partial') {
-      setDailyCheckIn(domain, 'Missed');
-    } else {
-      setDailyCheckIn(domain, 'Done');
-    }
-  };
 
   const handleCustomRouteCheckIn = (routeId: string, current: CheckInStatus | undefined) => {
     if (current === 'Done') {
@@ -270,6 +262,18 @@ export default function HomeScreen() {
           </div>
           <p className="text-base-subtext text-xs mt-3 italic">{phaseConfig.tagline}</p>
         </Card>
+
+        {profile.tier === 'free' && (
+          <Card className="border-status-partial/40 bg-status-partial/5">
+            <p className="font-heading text-xs text-status-partial tracking-widest uppercase mb-1">
+              Local data
+            </p>
+            <p className="text-base-subtext text-xs leading-snug">
+              Free progress lives on this device. Export before clearing browser data or changing
+              phone.
+            </p>
+          </Card>
+        )}
 
         {earlyWakeProtocol && (
           <Card className="border-accent-green/40 bg-accent-green/5">
@@ -426,8 +430,8 @@ export default function HomeScreen() {
                   <button
                     type="button"
                     className="flex-1 text-left p-4"
-                    onClick={() => handleCheckIn(d.type, checkIn?.status)}
-                    aria-label={`Check in ${displayLabel}`}
+                    onClick={() => setSelectedDomainType(d.type)}
+                    aria-label={`Set ${displayLabel} status`}
                   >
                     <div className="flex items-center justify-between">
                       <span className={`font-heading font-medium tracking-wide ${d.colour}`}>
@@ -505,6 +509,22 @@ export default function HomeScreen() {
         <ProgressiveDomainSetupModal onClose={() => setShowDomainSetup(false)} />
       )}
       {showVibeCheck && <WeeklyVibeCheckModal onClose={() => setShowVibeCheck(false)} />}
+      {selectedDomainType &&
+        (() => {
+          const domain = availableDomains.find((d) => d.type === selectedDomainType);
+          if (!domain) return null;
+          return (
+            <CheckInStatusModal
+              label={getDiscreetDomainLabel(domain, authUser?.email)}
+              currentStatus={todayCheckIns[selectedDomainType]?.status}
+              onSelect={(status) => {
+                void setDailyCheckIn(selectedDomainType, status);
+                setSelectedDomainType(null);
+              }}
+              onClose={() => setSelectedDomainType(null)}
+            />
+          );
+        })()}
     </>
   );
 }
