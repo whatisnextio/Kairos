@@ -426,7 +426,7 @@ export default function HomeScreen() {
                   {accountabilityTarget
                     ? `${getDailyDomainLabel(
                         accountabilityTarget,
-                      )} is still open. Choose the honest status. Partial is fine for a smaller version.`
+                      )} still needs a check-in. Mark what actually happened. A smaller version still counts.`
                     : accountabilityPrompt.body}
                 </p>
               </div>
