@@ -109,6 +109,9 @@ describe('V1 acceptance framework', () => {
   it('keeps onboarding and help positioning aligned to the category contract', () => {
     expect(PRODUCT_POSITIONING.headline).toContain('12-week transformation');
     expect(PRODUCT_POSITIONING.what).toContain('guided 84-day operating system');
+    expect(PRODUCT_POSITIONING.kairosMeaning).toContain('Greek');
+    expect(PRODUCT_POSITIONING.kairosMeaning).toContain('opportune moment');
+    expect(PRODUCT_POSITIONING.kairosMeaning).not.toMatch(/latin|implement/i);
     expect(PRODUCT_POSITIONING.why).toContain('recovery path');
     expect(PRODUCT_POSITIONING.categoryIntro).toContain('Body, Fuel, Self, and Connection');
   });

@@ -4,6 +4,7 @@ import { describe, expect, it } from 'vitest';
 describe('brand and help copy contract', () => {
   it('covers the expected product-support topics in Help and FAQ', () => {
     const questions = HELP_FAQS.map((item) => item.q);
+    const kairosAnswer = HELP_FAQS.find((item) => item.q === 'What is the Kairos system?')?.a;
 
     expect(questions).toEqual(
       expect.arrayContaining([
@@ -19,6 +20,9 @@ describe('brand and help copy contract', () => {
         'Why can I not open checkout?',
       ]),
     );
+    expect(kairosAnswer).toContain('Greek');
+    expect(kairosAnswer).toContain('Kickoff, Anchor, Increase, Rhythm, Own, and Sustain');
+    expect(kairosAnswer).not.toMatch(/latin|implement/i);
   });
 
   it('keeps subscription copy aligned with current V1 capability', () => {

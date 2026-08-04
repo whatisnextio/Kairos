@@ -34,7 +34,11 @@ test.describe('NFR smoke gates', () => {
     await page.goto('/');
 
     await expect(page.getByRole('heading', { name: /start your 12-week reset/i })).toBeVisible();
-    await expect(page.getByText('1 of 3')).toBeVisible();
+    await expect(page.getByText('1 of 4')).toBeVisible();
+    await expect(page.getByText(/kairos is greek/i)).toBeVisible();
+    await expect(page.getByText(/six phases/i)).toBeVisible();
+    await page.getByRole('button', { name: /start setup/i }).click();
+    await expect(page.getByRole('heading', { name: /choose who you are becoming/i })).toBeVisible();
     await expectNoHorizontalOverflow(page);
     await expectNoA11yViolations(page);
   });
