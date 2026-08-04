@@ -3,7 +3,7 @@ import { subscribeToPush } from '@/services/pushNotifications';
 import { supabase } from '@/services/supabaseClient';
 import { useAppStore } from '@/store/useAppStore';
 import type { DailyCheckIn, DomainType, IdentityAnchorId, Profile } from '@/types';
-import { IDENTITY_ANCHORS, KAIROS_CYCLE_LENGTH_DAYS, getAvailableDomains } from '@/types';
+import { IDENTITY_ANCHORS, PRODUCT_POSITIONING, getAvailableDomains } from '@/types';
 import { getComplimentaryProfileFields } from '@/utils/entitlements';
 import { DEV_CYCLE_ID, isLocalDevUser } from '@/utils/localDevSession';
 import { useState } from 'react';
@@ -247,13 +247,40 @@ export default function OnboardingFlow() {
   return (
     <div className="min-h-screen bg-base-black flex flex-col items-center justify-center px-6 py-12">
       {step === 'welcome' && (
-        <div className="text-center max-w-sm">
+        <div className="text-center max-w-md">
           <h1 className="font-heading text-5xl font-bold text-base-text mb-4 tracking-widest">
             12K
           </h1>
-          <p className="text-base-subtext mb-2">12 weeks.</p>
-          <p className="text-base-subtext mb-2">One repeatable framework.</p>
-          <p className="text-base-subtext mb-10">Small actions. Daily proof.</p>
+          <p className="text-base-text font-heading text-base mb-2 tracking-wide">
+            {PRODUCT_POSITIONING.headline}
+          </p>
+          <p className="text-base-subtext text-sm mb-5 leading-relaxed">
+            {PRODUCT_POSITIONING.what}
+          </p>
+          <div className="grid grid-cols-1 gap-2 mb-8 text-left">
+            <div className="rounded border border-base-border bg-base-surface px-3 py-3">
+              <p className="font-heading text-[11px] text-base-muted uppercase tracking-widest mb-1">
+                Why it helps
+              </p>
+              <p className="text-base-subtext text-xs leading-relaxed">{PRODUCT_POSITIONING.why}</p>
+            </div>
+            <div className="rounded border border-base-border bg-base-surface px-3 py-3">
+              <p className="font-heading text-[11px] text-base-muted uppercase tracking-widest mb-1">
+                Designed for
+              </p>
+              <p className="text-base-subtext text-xs leading-relaxed">
+                {PRODUCT_POSITIONING.designedFor}
+              </p>
+            </div>
+            <div className="rounded border border-base-border bg-base-surface px-3 py-3">
+              <p className="font-heading text-[11px] text-base-muted uppercase tracking-widest mb-1">
+                Framework
+              </p>
+              <p className="text-base-subtext text-xs leading-relaxed">
+                {PRODUCT_POSITIONING.categoryIntro}
+              </p>
+            </div>
+          </div>
           <Input
             id="name"
             label="What do people call you?"
@@ -323,8 +350,8 @@ export default function OnboardingFlow() {
             Where do you start?
           </h2>
           <p className="text-base-subtext text-sm mb-6">
-            Pick one domain. You'll build out the rest of your {KAIROS_CYCLE_LENGTH_DAYS}-day cycle
-            one route at a time.
+            Pick one starting point. The core 12K framework is Body, Fuel, Self, and Connection.
+            Private sub-routes can be added later when your life needs them.
           </p>
           <div className="flex flex-col gap-3">
             {availableDomains.map((d) => (

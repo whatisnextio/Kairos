@@ -1,5 +1,6 @@
 import type { CheckInStatus, DailyCheckIn, DomainType, UserDomainFocus } from '@/types';
 import { getAvailableDomains } from '@/types';
+import { getDiscreetDomainLabel } from '@/utils/v1Framework';
 
 export type FrameworkLens = 'Prep' | 'Reflect' | 'Coach' | 'Feedback';
 
@@ -41,24 +42,26 @@ export function buildFrameworkRecommendations({
   const secondaryFocus = domainFocuses.find((item) => item.domainType === secondaryDomain.type);
   const primaryAction = focus?.focusDescription ?? primaryDomain.focusOptions[0];
   const secondaryAction = secondaryFocus?.focusDescription ?? secondaryDomain.focusOptions[0];
+  const primaryLabel = getDiscreetDomainLabel(primaryDomain, email);
+  const secondaryLabel = getDiscreetDomainLabel(secondaryDomain, email);
 
   return [
     {
       id: `${primaryDomain.type}-prep`,
       lens: 'Prep',
-      title: `Prep ${primaryDomain.label}`,
+      title: `Prep ${primaryLabel}`,
       body: primaryDomain.prepOptions[0],
       domainType: primaryDomain.type,
-      domainLabel: primaryDomain.label,
+      domainLabel: primaryLabel,
       actionText: primaryAction,
     },
     {
       id: `${secondaryDomain.type}-coach`,
       lens: 'Coach',
-      title: `Choose ${secondaryDomain.label}`,
+      title: `Choose ${secondaryLabel}`,
       body: secondaryDomain.coachPrompt,
       domainType: secondaryDomain.type,
-      domainLabel: secondaryDomain.label,
+      domainLabel: secondaryLabel,
       actionText: secondaryAction,
     },
     {
@@ -67,16 +70,16 @@ export function buildFrameworkRecommendations({
       title: 'Quick reflection',
       body: primaryDomain.reflectPrompt,
       domainType: primaryDomain.type,
-      domainLabel: primaryDomain.label,
+      domainLabel: primaryLabel,
       actionText: 'Write one honest line',
     },
     {
       id: `${secondaryDomain.type}-feedback`,
       lens: 'Feedback',
-      title: `${secondaryDomain.label} signal`,
+      title: `${secondaryLabel} signal`,
       body: secondaryDomain.feedbackPrompt,
       domainType: secondaryDomain.type,
-      domainLabel: secondaryDomain.label,
+      domainLabel: secondaryLabel,
       actionText: secondaryAction,
     },
   ];
