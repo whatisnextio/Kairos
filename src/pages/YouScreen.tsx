@@ -6,7 +6,7 @@ import { useMatchToSquad, useSquadPulse } from '@/hooks/useSquad';
 import { isPushSupported, subscribeToPush } from '@/services/pushNotifications';
 import { supabase } from '@/services/supabaseClient';
 import { useAppStore } from '@/store/useAppStore';
-import { IDENTITY_ANCHORS } from '@/types';
+import { type DomainType, IDENTITY_ANCHORS, getAvailableDomains } from '@/types';
 import { getSubscriptionTierLabel, hasBrotherhoodAccess } from '@/utils/entitlements';
 import { getLevelForXp } from '@/utils/gamification';
 import { type ChangeEvent, useCallback, useEffect, useState } from 'react';
@@ -75,9 +75,15 @@ export default function YouScreen() {
   const [isExporting, setIsExporting] = useState(false);
   const [routeLabel, setRouteLabel] = useState('');
   const [routeFocus, setRouteFocus] = useState('');
+  const [routeParent, setRouteParent] = useState<DomainType>('METIME');
+  const [routeError, setRouteError] = useState<string | null>(null);
+  const [isAddingRoute, setIsAddingRoute] = useState(false);
   const hasPaidAccess = hasBrotherhoodAccess(profile?.tier);
+  const availableDomains = getAvailableDomains(authUser?.email);
+  const domainLabels = new Map(availableDomains.map((domain) => [domain.type, domain.label]));
 
   const checkInHistory = useAppStore((s) => s.checkInHistory);
+  const customRouteCheckInHistory = useAppStore((s) => s.customRouteCheckInHistory);
   const domainFocuses = useAppStore((s) => s.domainFocuses);
   const lastVibeCheckDate = useAppStore((s) => s.lastVibeCheckDate);
 
@@ -96,6 +102,11 @@ export default function YouScreen() {
         .select('date,rating')
         .eq('user_id', profile.id)
         .order('date', { ascending: true });
+      const { data: customRouteCheckIns } = await supabase
+        .from('custom_route_check_ins')
+        .select('route_id,date,status,notes,xp_awarded')
+        .eq('user_id', profile.id)
+        .order('date', { ascending: true });
       payload = {
         exportedAt: new Date().toISOString(),
         profile: {
@@ -111,6 +122,7 @@ export default function YouScreen() {
         customRoutes,
         journeyArchive,
         checkIns: checkIns ?? [],
+        customRouteCheckIns: customRouteCheckIns ?? [],
         vibeChecks: vibeChecks ?? [],
       };
     } else {
@@ -129,6 +141,7 @@ export default function YouScreen() {
         customRoutes,
         journeyArchive,
         checkInHistory,
+        customRouteCheckInHistory,
       };
     }
 
@@ -140,7 +153,14 @@ export default function YouScreen() {
     a.click();
     URL.revokeObjectURL(url);
     setIsExporting(false);
-  }, [profile, domainFocuses, customRoutes, journeyArchive, checkInHistory]);
+  }, [
+    profile,
+    domainFocuses,
+    customRoutes,
+    journeyArchive,
+    checkInHistory,
+    customRouteCheckInHistory,
+  ]);
 
   const handleDeleteAccount = useCallback(async () => {
     setIsDeleting(true);
@@ -178,14 +198,28 @@ export default function YouScreen() {
     [setProfileImageDataUrl],
   );
 
-  const handleAddCustomRoute = useCallback(() => {
-    addCustomRoute({
+  const handleAddCustomRoute = useCallback(async () => {
+    setRouteError(null);
+    setIsAddingRoute(true);
+    const result = await addCustomRoute({
+      parentDomainType: routeParent,
       label: routeLabel,
       focusDescription: routeFocus,
     });
+    setIsAddingRoute(false);
+
+    if (!result.ok) {
+      setRouteError(
+        result.reason === 'upgrade'
+          ? 'Personal routes are included in Brotherhood and Lifechanger.'
+          : 'Route could not be saved. Check the name and focus, then try again.',
+      );
+      return;
+    }
+
     setRouteLabel('');
     setRouteFocus('');
-  }, [addCustomRoute, routeFocus, routeLabel]);
+  }, [addCustomRoute, routeFocus, routeLabel, routeParent]);
 
   if (!profile) return null;
 
@@ -265,11 +299,14 @@ export default function YouScreen() {
                       {route.label}
                     </p>
                     <p className="text-base-subtext text-xs truncate">{route.focusDescription}</p>
+                    <p className="text-base-muted text-[11px] mt-0.5">
+                      Under {domainLabels.get(route.parentDomainType) ?? 'Kairos'}
+                    </p>
                   </div>
                   <button
                     type="button"
                     className="text-base-muted text-xs underline shrink-0"
-                    onClick={() => archiveCustomRoute(route.id)}
+                    onClick={() => void archiveCustomRoute(route.id)}
                   >
                     Remove
                   </button>
@@ -277,27 +314,57 @@ export default function YouScreen() {
               ))
           )}
         </div>
-        <div className="flex flex-col gap-2">
-          <input
-            className="input-field"
-            placeholder="Route name, e.g. Nest"
-            value={routeLabel}
-            onChange={(e) => setRouteLabel(e.target.value)}
-          />
-          <textarea
-            className="input-field h-20 resize-none"
-            placeholder="What does a small win look like?"
-            value={routeFocus}
-            onChange={(e) => setRouteFocus(e.target.value)}
-          />
-          <Button
-            size="sm"
-            onClick={handleAddCustomRoute}
-            disabled={!routeLabel.trim() || !routeFocus.trim()}
-          >
-            Add route
-          </Button>
-        </div>
+        {!hasPaidAccess ? (
+          <div className="rounded border border-status-partial/40 bg-status-partial/5 p-3">
+            <p className="text-base-subtext text-sm mb-3">
+              Personal routes sit under the core framework and sync across devices on paid plans.
+            </p>
+            <Link to="/subscription">
+              <Button size="sm">Unlock personal routes</Button>
+            </Link>
+          </div>
+        ) : (
+          <div className="flex flex-col gap-2">
+            <label className="text-base-subtext text-xs font-heading tracking-widest uppercase">
+              Core category
+              <select
+                className="input-field mt-1"
+                value={routeParent}
+                onChange={(e) => setRouteParent(e.target.value as DomainType)}
+              >
+                {availableDomains.map((domain) => (
+                  <option key={domain.type} value={domain.type}>
+                    {domain.label}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <input
+              className="input-field"
+              placeholder="Route name, e.g. Lens"
+              value={routeLabel}
+              onChange={(e) => setRouteLabel(e.target.value)}
+            />
+            <textarea
+              className="input-field h-20 resize-none"
+              placeholder="What does a small win look like?"
+              value={routeFocus}
+              onChange={(e) => setRouteFocus(e.target.value)}
+            />
+            {routeError && (
+              <p role="alert" className="text-status-missed text-xs">
+                {routeError}
+              </p>
+            )}
+            <Button
+              size="sm"
+              onClick={() => void handleAddCustomRoute()}
+              disabled={!routeLabel.trim() || !routeFocus.trim() || isAddingRoute}
+            >
+              {isAddingRoute ? 'Adding...' : 'Add route'}
+            </Button>
+          </div>
+        )}
       </Card>
 
       {/* Journey history */}

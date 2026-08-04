@@ -429,10 +429,12 @@ export interface CustomRoute {
   id: string;
   userId: string;
   cycleId: string;
+  parentDomainType: DomainType;
   label: string;
   description: string;
   focusDescription: string;
   createdAt: string;
+  updatedAt: string;
   archivedAt: string | null;
 }
 
@@ -462,11 +464,13 @@ export interface JourneyArchiveEntry {
     focusDescription: string;
   }>;
   customRoutes: Array<{
+    parentDomainType: DomainType;
     label: string;
     description: string;
     focusDescription: string;
   }>;
   checkInHistory: Record<string, Partial<Record<DomainType, CheckInStatus>>>;
+  customRouteCheckInHistory: Record<string, Record<string, CheckInStatus>>;
 }
 
 // ─── Check-in ────────────────────────────────────────────────────────────────

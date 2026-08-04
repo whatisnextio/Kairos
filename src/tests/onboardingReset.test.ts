@@ -77,6 +77,7 @@ describe('onboarding and reset contract', () => {
       checkInHistory: { '2026-08-04': { BODY: 'Done' } },
       todayCheckIns: {},
       todayCustomRouteCheckIns: {},
+      customRouteCheckInHistory: {},
       customRoutes: [],
       journeyArchive: [],
       onboardingComplete: true,

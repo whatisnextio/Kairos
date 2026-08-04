@@ -44,6 +44,7 @@ interface AppState {
   // Persisted history for local streak computation (free tier)
   // Key: ISO date string. Kept to 90 days max.
   checkInHistory: Record<string, Partial<Record<DomainType, CheckInStatus>>>;
+  customRouteCheckInHistory: Record<string, Record<string, CheckInStatus>>;
 
   // Vibe check
   lastVibeCheckDate: string | null;
@@ -74,25 +75,33 @@ interface AppActions {
   updateDomainFocus: (domainType: DomainType, focusDescription: string) => Promise<void>;
 
   setDailyCheckIn: (domainType: DomainType, status: CheckInStatus, notes?: string) => Promise<void>;
-  setCustomRouteCheckIn: (routeId: string, status: CheckInStatus, notes?: string) => void;
+  setCustomRouteCheckIn: (routeId: string, status: CheckInStatus, notes?: string) => Promise<void>;
 
   setTodayCheckIns: (checkIns: Partial<Record<DomainType, DailyCheckIn>>) => void;
   setTodayCustomRouteCheckIns: (checkIns: Record<string, CustomRouteCheckIn>) => void;
+  setCustomRoutes: (routes: CustomRoute[]) => void;
   addCustomRoute: (route: {
+    parentDomainType: DomainType;
     label: string;
     description?: string;
     focusDescription: string;
-  }) => void;
+  }) => Promise<{
+    ok: boolean;
+    reason?: 'upgrade' | 'invalid' | 'missing-context' | 'sync-failed';
+  }>;
   updateCustomRoute: (
     routeId: string,
-    route: Partial<Pick<CustomRoute, 'label' | 'description' | 'focusDescription'>>,
-  ) => void;
-  archiveCustomRoute: (routeId: string) => void;
+    route: Partial<
+      Pick<CustomRoute, 'parentDomainType' | 'label' | 'description' | 'focusDescription'>
+    >,
+  ) => Promise<void>;
+  archiveCustomRoute: (routeId: string) => Promise<void>;
   archiveCurrentJourney: (reason: JourneyArchiveEntry['reason']) => void;
 
   mergeCheckInHistory: (
     entries: Record<string, Partial<Record<DomainType, CheckInStatus>>>,
   ) => void;
+  mergeCustomRouteCheckInHistory: (entries: Record<string, Record<string, CheckInStatus>>) => void;
   setOnboardingComplete: (complete: boolean) => void;
   setCelebrationPending: (pending: boolean) => void;
   setLevelUpPending: (data: { level: number; label: string } | null) => void;
@@ -121,6 +130,7 @@ const initialState: AppState = {
   todayCheckIns: {},
   todayCustomRouteCheckIns: {},
   checkInHistory: {},
+  customRouteCheckInHistory: {},
   streaks: {},
   lastVibeCheckDate: null,
   onboardingComplete: false,
@@ -208,6 +218,7 @@ export const useAppStore = create<AppState & AppActions>()(
       },
       setTodayCheckIns: (todayCheckIns) => set({ todayCheckIns }),
       setTodayCustomRouteCheckIns: (todayCustomRouteCheckIns) => set({ todayCustomRouteCheckIns }),
+      setCustomRoutes: (customRoutes) => set({ customRoutes }),
       setDailyCheckIn: async (domainType, status, notes) => {
         const { profile, currentCycle, todayCheckIns } = get();
         if (!profile || !currentCycle) return;
@@ -297,27 +308,75 @@ export const useAppStore = create<AppState & AppActions>()(
         }
       },
 
-      addCustomRoute: ({ label, description, focusDescription }) => {
+      addCustomRoute: async ({ parentDomainType, label, description, focusDescription }) => {
         const { profile, currentCycle } = get();
-        if (!profile || !currentCycle) return;
+        if (!profile || !currentCycle) return { ok: false, reason: 'missing-context' };
+        if (!hasBrotherhoodAccess(profile.tier)) return { ok: false, reason: 'upgrade' };
 
         const now = new Date().toISOString();
         const route: CustomRoute = {
           id: crypto.randomUUID(),
           userId: profile.id,
           cycleId: currentCycle.id,
+          parentDomainType,
           label: label.trim(),
           description: description?.trim() ?? '',
           focusDescription: focusDescription.trim(),
           createdAt: now,
+          updatedAt: now,
           archivedAt: null,
         };
 
-        if (!route.label || !route.focusDescription) return;
+        if (!route.label || !route.focusDescription) return { ok: false, reason: 'invalid' };
         set((state) => ({ customRoutes: [...state.customRoutes, route] }));
+
+        if (currentCycle.id === DEV_CYCLE_ID) return { ok: true };
+
+        const { data, error } = await supabase
+          .from('custom_routes')
+          .insert({
+            id: route.id,
+            user_id: profile.id,
+            cycle_id: currentCycle.id,
+            parent_domain_type: parentDomainType,
+            label: route.label,
+            description: route.description,
+            focus_description: route.focusDescription,
+          })
+          .select()
+          .single();
+
+        if (error || !data) {
+          console.error('Custom route sync failed:', error?.message ?? 'No row returned');
+          set((state) => ({
+            customRoutes: state.customRoutes.filter((existing) => existing.id !== route.id),
+          }));
+          return { ok: false, reason: 'sync-failed' };
+        }
+
+        set((state) => ({
+          customRoutes: state.customRoutes.map((existing) =>
+            existing.id === route.id
+              ? {
+                  ...existing,
+                  parentDomainType: data.parent_domain_type as DomainType,
+                  label: data.label,
+                  description: data.description ?? '',
+                  focusDescription: data.focus_description,
+                  createdAt: data.created_at,
+                  updatedAt: data.updated_at,
+                  archivedAt: data.archived_at,
+                }
+              : existing,
+          ),
+        }));
+        return { ok: true };
       },
 
-      updateCustomRoute: (routeId, route) =>
+      updateCustomRoute: async (routeId, route) => {
+        const { profile, currentCycle } = get();
+        if (!profile || !currentCycle || !hasBrotherhoodAccess(profile.tier)) return;
+        const now = new Date().toISOString();
         set((state) => ({
           customRoutes: state.customRoutes.map((existing) =>
             existing.id === routeId
@@ -327,24 +386,58 @@ export const useAppStore = create<AppState & AppActions>()(
                   label: route.label?.trim() ?? existing.label,
                   description: route.description?.trim() ?? existing.description,
                   focusDescription: route.focusDescription?.trim() ?? existing.focusDescription,
+                  updatedAt: now,
                 }
               : existing,
           ),
-        })),
+        }));
 
-      archiveCustomRoute: (routeId) =>
+        if (currentCycle.id === DEV_CYCLE_ID) return;
+
+        const payload: Record<string, string> = { updated_at: now };
+        if (route.parentDomainType) payload.parent_domain_type = route.parentDomainType;
+        if (route.label !== undefined) payload.label = route.label.trim();
+        if (route.description !== undefined) payload.description = route.description.trim();
+        if (route.focusDescription !== undefined) {
+          payload.focus_description = route.focusDescription.trim();
+        }
+
+        const { error } = await supabase
+          .from('custom_routes')
+          .update(payload)
+          .eq('id', routeId)
+          .eq('user_id', profile.id);
+
+        if (error) console.error('Custom route update sync failed:', error.message);
+      },
+
+      archiveCustomRoute: async (routeId) => {
+        const { profile, currentCycle } = get();
+        if (!profile || !currentCycle) return;
+        const archivedAt = new Date().toISOString();
         set((state) => {
-          const archivedAt = new Date().toISOString();
           return {
             customRoutes: state.customRoutes.map((route) =>
-              route.id === routeId ? { ...route, archivedAt } : route,
+              route.id === routeId ? { ...route, archivedAt, updatedAt: archivedAt } : route,
             ),
           };
-        }),
+        });
 
-      setCustomRouteCheckIn: (routeId, status, notes) => {
+        if (!hasBrotherhoodAccess(profile.tier) || currentCycle.id === DEV_CYCLE_ID) return;
+
+        const { error } = await supabase
+          .from('custom_routes')
+          .update({ archived_at: archivedAt, updated_at: archivedAt })
+          .eq('id', routeId)
+          .eq('user_id', profile.id);
+
+        if (error) console.error('Custom route archive sync failed:', error.message);
+      },
+
+      setCustomRouteCheckIn: async (routeId, status, notes) => {
         const { profile, currentCycle, customRoutes, todayCustomRouteCheckIns } = get();
         if (!profile || !currentCycle) return;
+        if (!hasBrotherhoodAccess(profile.tier)) return;
         const route = customRoutes.find((r) => r.id === routeId && !r.archivedAt);
         if (!route) return;
 
@@ -378,6 +471,13 @@ export const useAppStore = create<AppState & AppActions>()(
             ...state.todayCustomRouteCheckIns,
             [routeId]: checkIn,
           },
+          customRouteCheckInHistory: {
+            ...state.customRouteCheckInHistory,
+            [today]: {
+              ...(state.customRouteCheckInHistory[today] ?? {}),
+              [routeId]: status,
+            },
+          },
           currentCycle: state.currentCycle
             ? {
                 ...state.currentCycle,
@@ -390,6 +490,52 @@ export const useAppStore = create<AppState & AppActions>()(
               ? { level: newLevel.level, label: newLevel.label }
               : state.levelUpPending,
         }));
+
+        if (currentCycle.id === DEV_CYCLE_ID) return;
+
+        const { data, error } = await supabase
+          .from('custom_route_check_ins')
+          .upsert(
+            {
+              id: checkIn.id,
+              user_id: profile.id,
+              cycle_id: currentCycle.id,
+              route_id: routeId,
+              date: today,
+              status,
+              notes: notes ?? null,
+              xp_awarded: xpDelta,
+            },
+            { onConflict: 'user_id,cycle_id,date,route_id' },
+          )
+          .select()
+          .single();
+
+        if (error || !data) {
+          console.error('Custom route check-in sync failed:', error?.message ?? 'No row returned');
+        } else {
+          set((state) => ({
+            todayCustomRouteCheckIns: {
+              ...state.todayCustomRouteCheckIns,
+              [routeId]: {
+                id: data.id,
+                userId: data.user_id,
+                cycleId: data.cycle_id,
+                routeId: data.route_id,
+                date: data.date,
+                status: data.status,
+                notes: data.notes,
+                xpAwarded: data.xp_awarded,
+                createdAt: data.created_at,
+                updatedAt: data.updated_at,
+              },
+            },
+          }));
+        }
+
+        if (xpDelta !== 0) {
+          await supabase.rpc('increment_profile_xp', { p_user_id: profile.id, p_delta: xpDelta });
+        }
       },
 
       archiveCurrentJourney: (reason) =>
@@ -410,11 +556,13 @@ export const useAppStore = create<AppState & AppActions>()(
               focusDescription: focus.focusDescription,
             })),
             customRoutes: state.customRoutes.map((route) => ({
+              parentDomainType: route.parentDomainType,
               label: route.label,
               description: route.description,
               focusDescription: route.focusDescription,
             })),
             checkInHistory: state.checkInHistory,
+            customRouteCheckInHistory: state.customRouteCheckInHistory,
           };
 
           return { journeyArchive: [entry, ...state.journeyArchive].slice(0, 12) };
@@ -422,6 +570,10 @@ export const useAppStore = create<AppState & AppActions>()(
 
       mergeCheckInHistory: (entries) =>
         set((state) => ({ checkInHistory: { ...state.checkInHistory, ...entries } })),
+      mergeCustomRouteCheckInHistory: (entries) =>
+        set((state) => ({
+          customRouteCheckInHistory: { ...state.customRouteCheckInHistory, ...entries },
+        })),
 
       setOnboardingComplete: (onboardingComplete) => set({ onboardingComplete }),
       setCelebrationPending: (celebrationPending) => set({ celebrationPending }),
@@ -498,6 +650,7 @@ export const useAppStore = create<AppState & AppActions>()(
       resetCycleLocalState: () =>
         set({
           checkInHistory: {},
+          customRouteCheckInHistory: {},
           todayCheckIns: {},
           todayCustomRouteCheckIns: {},
           domainFocuses: [],
@@ -526,6 +679,7 @@ export const useAppStore = create<AppState & AppActions>()(
         todayCheckIns: state.todayCheckIns,
         todayCustomRouteCheckIns: state.todayCustomRouteCheckIns,
         checkInHistory: state.checkInHistory,
+        customRouteCheckInHistory: state.customRouteCheckInHistory,
         streaks: state.streaks,
         profile: state.profile,
         currentCycle: state.currentCycle,

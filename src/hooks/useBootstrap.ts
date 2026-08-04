@@ -2,6 +2,8 @@ import { supabase } from '@/services/supabaseClient';
 import { useAppStore } from '@/store/useAppStore';
 import type {
   CheckInStatus,
+  CustomRoute,
+  CustomRouteCheckIn,
   DailyCheckIn,
   DomainType,
   KairosCycle,
@@ -77,6 +79,36 @@ function mapCheckIn(row: Record<string, unknown>): DailyCheckIn {
   };
 }
 
+function mapCustomRoute(row: Record<string, unknown>): CustomRoute {
+  return {
+    id: row.id as string,
+    userId: row.user_id as string,
+    cycleId: row.cycle_id as string,
+    parentDomainType: row.parent_domain_type as DomainType,
+    label: row.label as string,
+    description: (row.description as string | null) ?? '',
+    focusDescription: row.focus_description as string,
+    createdAt: row.created_at as string,
+    updatedAt: row.updated_at as string,
+    archivedAt: row.archived_at as string | null,
+  };
+}
+
+function mapCustomRouteCheckIn(row: Record<string, unknown>): CustomRouteCheckIn {
+  return {
+    id: row.id as string,
+    userId: row.user_id as string,
+    cycleId: row.cycle_id as string,
+    routeId: row.route_id as string,
+    date: row.date as string,
+    status: row.status as CheckInStatus,
+    notes: row.notes as string | null,
+    xpAwarded: row.xp_awarded as number,
+    createdAt: row.created_at as string,
+    updatedAt: row.updated_at as string,
+  };
+}
+
 export function useBootstrap() {
   const {
     authUser,
@@ -85,10 +117,12 @@ export function useBootstrap() {
     setProfile,
     setCurrentCycle,
     setDomainFocuses,
+    setCustomRoutes,
     setOnboardingComplete,
     setTodayCheckIns,
     setTodayCustomRouteCheckIns,
     mergeCheckInHistory,
+    mergeCustomRouteCheckInHistory,
     setIsBootstrapLoading,
   } = useAppStore();
   const bootstrapped = useRef<string | null>(null);
@@ -185,6 +219,17 @@ export function useBootstrap() {
 
       // Paid tiers: reload recent check-ins from Supabase (cross-device sync + history backfill)
       if (hasBrotherhoodAccess(profile.tier)) {
+        const { data: routeRows } = await supabase
+          .from('custom_routes')
+          .select('*')
+          .eq('user_id', authUser?.id)
+          .eq('cycle_id', profile.currentKairosCycleId)
+          .order('created_at', { ascending: true });
+
+        if (routeRows) {
+          setCustomRoutes(routeRows.map((row) => mapCustomRoute(row as Record<string, unknown>)));
+        }
+
         const sevenDaysAgo = new Date(Date.now() - 6 * 86_400_000).toISOString().split('T')[0];
         const { data: checkIns } = await supabase
           .from('daily_check_ins')
@@ -211,6 +256,33 @@ export function useBootstrap() {
             historyEntries[ci.date][ci.domainType] = ci.status;
           }
           mergeCheckInHistory(historyEntries);
+        }
+
+        const { data: customCheckIns } = await supabase
+          .from('custom_route_check_ins')
+          .select('*')
+          .eq('user_id', authUser?.id)
+          .eq('cycle_id', profile.currentKairosCycleId)
+          .gte('date', sevenDaysAgo)
+          .lte('date', today);
+
+        if (customCheckIns && customCheckIns.length > 0) {
+          const mapped = customCheckIns.map((c) =>
+            mapCustomRouteCheckIn(c as Record<string, unknown>),
+          );
+          const todayOnly: Record<string, CustomRouteCheckIn> = {};
+          const historyEntries: Record<string, Record<string, CheckInStatus>> = {};
+
+          for (const ci of mapped) {
+            if (ci.date === today) todayOnly[ci.routeId] = ci;
+            historyEntries[ci.date] = {
+              ...(historyEntries[ci.date] ?? {}),
+              [ci.routeId]: ci.status,
+            };
+          }
+
+          if (Object.keys(todayOnly).length > 0) setTodayCustomRouteCheckIns(todayOnly);
+          mergeCustomRouteCheckInHistory(historyEntries);
         }
       }
     }

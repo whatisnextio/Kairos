@@ -38,7 +38,10 @@ export default function ProgressScreen() {
     authUser,
     currentCycle,
     todayCheckIns,
+    todayCustomRouteCheckIns,
     checkInHistory,
+    customRoutes,
+    customRouteCheckInHistory,
     streaks: localStreaks,
   } = useAppStore();
   const { data: remoteStreaks } = useStreaks();
@@ -53,6 +56,8 @@ export default function ProgressScreen() {
   if (!profile || !currentCycle) return null;
   const currentPhase = getCurrentPhaseConfig(dayInCycle);
   const availableDomains = getAvailableDomains(authUser?.email);
+  const domainLabels = new Map(availableDomains.map((domain) => [domain.type, domain.label]));
+  const activeCustomRoutes = customRoutes.filter((route) => !route.archivedAt);
   const level = getLevelForXp(profile.xp);
   const xpProgress = getXpProgressInLevel(profile.xp);
   const last7 = getLast7Days();
@@ -137,6 +142,82 @@ export default function ProgressScreen() {
             {level.level < 10 ? `${xpProgress}% to Level ${level.level + 1}` : 'Max level reached'}
           </p>
         </Card>
+
+        {activeCustomRoutes.length > 0 && (
+          <Card>
+            <h2 className="font-heading text-xs font-medium text-base-subtext tracking-widest uppercase mb-3">
+              Personal routes
+            </h2>
+            <div className="flex flex-col gap-3">
+              {activeCustomRoutes.map((route) => {
+                let done = 0;
+                let partial = 0;
+                let missed = 0;
+                let score = 0;
+
+                for (const date of last7) {
+                  const status =
+                    date === today
+                      ? (todayCustomRouteCheckIns[route.id]?.status ??
+                        customRouteCheckInHistory[date]?.[route.id])
+                      : customRouteCheckInHistory[date]?.[route.id];
+                  if (status === 'Done') done += 1;
+                  if (status === 'Partial' || status === 'Protected') partial += 1;
+                  if (status === 'Missed') missed += 1;
+                  if (status === 'Done') score += 1;
+                  if (status === 'Partial' || status === 'Protected') score += 0.5;
+                }
+
+                const pct = Math.round((score / last7.length) * 100);
+                return (
+                  <div key={route.id} className="border-b border-base-border pb-3 last:border-b-0">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <p className="font-heading text-sm font-medium text-base-text truncate">
+                          {route.label}
+                        </p>
+                        <p className="text-base-muted text-[11px] mt-0.5">
+                          Under {domainLabels.get(route.parentDomainType) ?? 'Kairos'}
+                        </p>
+                      </div>
+                      <p
+                        className={`font-heading text-sm font-bold ${
+                          pct >= 70
+                            ? 'text-status-done'
+                            : pct >= 40
+                              ? 'text-status-partial'
+                              : 'text-status-missed'
+                        }`}
+                      >
+                        {pct}%
+                      </p>
+                    </div>
+                    <div className="mt-3 grid grid-cols-7 gap-1">
+                      {last7.map((date) => {
+                        const status =
+                          date === today
+                            ? (todayCustomRouteCheckIns[route.id]?.status ??
+                              customRouteCheckInHistory[date]?.[route.id])
+                            : customRouteCheckInHistory[date]?.[route.id];
+                        const dotClass = status
+                          ? (STATUS_DOT[status] ?? 'bg-base-border')
+                          : 'bg-base-border/40';
+                        return (
+                          <div key={date} className="flex justify-center">
+                            <div className={`w-2 h-2 rounded-full ${dotClass}`} />
+                          </div>
+                        );
+                      })}
+                    </div>
+                    <p className="text-base-muted text-[11px] mt-2">
+                      {done} done - {partial} partial - {missed} missed
+                    </p>
+                  </div>
+                );
+              })}
+            </div>
+          </Card>
+        )}
 
         <Card>
           <h2 className="font-heading text-xs font-medium text-base-subtext tracking-widest uppercase mb-3">
