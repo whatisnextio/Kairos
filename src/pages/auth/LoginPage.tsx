@@ -28,8 +28,18 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen bg-base-black flex flex-col items-center justify-center px-6 py-12">
-      <h1 className="font-heading text-4xl font-bold text-base-text mb-2 tracking-widest">12K</h1>
-      <p className="text-base-subtext text-sm mb-10">365 days. One transformation.</p>
+      <img
+        src="/kairos-12k-logo.svg"
+        alt="Kairos 12K"
+        className="w-48 mb-4"
+        draggable={false}
+      />
+      <p className="text-base-text font-heading font-bold text-lg tracking-wide mb-1">
+        365 days. Eight domains. One man.
+      </p>
+      <p className="text-base-subtext text-sm text-center max-w-xs mb-10">
+        Build the body, the focus, the relationships, and the life. All at once. No shortcuts.
+      </p>
 
       {sent ? (
         <div className="text-center">
