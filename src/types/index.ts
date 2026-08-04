@@ -345,6 +345,39 @@ export function getDomainConfig(type: DomainType, email?: string | null): Domain
   return getAvailableDomains(email).find((domain) => domain.type === type);
 }
 
+const DOMAIN_ROUTE_SLUGS: Record<DomainType, string> = {
+  BODY: 'body',
+  FUEL: 'fuel',
+  METIME: 'self',
+  USTIME: 'connection',
+  SHOT: 'shot',
+  LENS: 'lens',
+  NEST: 'nest',
+  ROOTS: 'roots',
+};
+
+const DOMAIN_TYPES_BY_ROUTE_SLUG: Record<string, DomainType> = {
+  body: 'BODY',
+  fuel: 'FUEL',
+  self: 'METIME',
+  connection: 'USTIME',
+  metime: 'METIME',
+  ustime: 'USTIME',
+  shot: 'SHOT',
+  lens: 'LENS',
+  nest: 'NEST',
+  roots: 'ROOTS',
+};
+
+export function getDomainRouteSlug(type: DomainType): string {
+  return DOMAIN_ROUTE_SLUGS[type];
+}
+
+export function getDomainTypeFromRouteSlug(slug?: string | null): DomainType | undefined {
+  if (!slug) return undefined;
+  return DOMAIN_TYPES_BY_ROUTE_SLUG[slug.trim().toLowerCase()];
+}
+
 // ─── Identity Anchor ─────────────────────────────────────────────────────────
 
 export type IdentityAnchorId =
