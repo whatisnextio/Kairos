@@ -12,8 +12,7 @@
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
-const MINIMAX_API_KEY = Deno.env.get('MINIMAX_API_KEY') ?? '';
-const MINIMAX_GROUP_ID = Deno.env.get('MINIMAX_GROUP_ID') ?? '';
+const ANTHROPIC_API_KEY = Deno.env.get('ANTHROPIC_API_KEY') ?? '';
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL') ?? '';
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
 
@@ -101,52 +100,47 @@ ${domainLines}
 Write their cycle reflection.`;
 }
 
-async function callMiniMax(prompt: string): Promise<{
+async function callClaude(prompt: string): Promise<{
   headline: string;
   body: string;
   domain_callouts: Record<string, string>;
   next_cycle_intention: string;
   _costPence: number;
 }> {
-  const response = await fetch(
-    `https://api.minimaxi.chat/v1/text/chatcompletion_v2?GroupId=${MINIMAX_GROUP_ID}`,
-    {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${MINIMAX_API_KEY}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: 'MiniMax-M3',
-        max_tokens: 2048,
-        messages: [
-          { role: 'system', content: SYSTEM_PROMPT },
-          { role: 'user', content: prompt },
-        ],
-      }),
+  if (!ANTHROPIC_API_KEY) {
+    throw new Error('ANTHROPIC_API_KEY not configured');
+  }
+
+  const response = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: {
+      'x-api-key': ANTHROPIC_API_KEY,
+      'anthropic-version': '2023-06-01',
+      'content-type': 'application/json',
     },
-  );
+    body: JSON.stringify({
+      model: 'claude-sonnet-4-6',
+      max_tokens: 2048,
+      system: SYSTEM_PROMPT,
+      messages: [{ role: 'user', content: prompt }],
+    }),
+  });
 
   if (!response.ok) {
     const text = await response.text();
-    throw new Error(`MiniMax API error ${response.status}: ${text}`);
+    throw new Error(`Anthropic API error ${response.status}: ${text}`);
   }
 
   const data = await response.json();
-
-  if (data.base_resp?.status_code !== 0) {
-    throw new Error(`MiniMax error ${data.base_resp?.status_code}: ${data.base_resp?.status_msg}`);
-  }
-
-  const rawContent = data.choices?.[0]?.message?.content ?? '';
-  const content = rawContent.replace(/<think>[\s\S]*?<\/think>/g, '').trim();
-
-  const totalTokens = data.usage?.total_tokens ?? 0;
-  const costPence = Math.round((totalTokens * 0.4 / 1_000_000) * 100 * 100);
+  const content: string = data.content?.[0]?.text ?? '';
+  const inputTokens: number = data.usage?.input_tokens ?? 0;
+  const outputTokens: number = data.usage?.output_tokens ?? 0;
+  // Claude Sonnet: ~$3/Mtok input, ~$15/Mtok output, converted to pence
+  const costPence = Math.round(((inputTokens * 3 + outputTokens * 15) / 1_000_000) * 100 * 100);
 
   try {
     const jsonMatch = content.match(/```(?:json)?\s*([\s\S]*?)```/) ?? [null, content];
-    const parsed = JSON.parse(jsonMatch[1].trim());
+    const parsed = JSON.parse((jsonMatch[1] ?? content).trim());
     return { ...parsed, _costPence: costPence };
   } catch {
     return {
@@ -377,7 +371,7 @@ Deno.serve(async (req: Request) => {
     };
 
     const prompt = buildPrompt(stats);
-    const result = await callMiniMax(prompt);
+    const result = await callClaude(prompt);
 
     const reflectionStats = {
       totalXp: stats.totalXp,

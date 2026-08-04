@@ -1,4 +1,5 @@
 import Button from '@/components/common/Button';
+import { subscribeToPush } from '@/services/pushNotifications';
 import { supabase } from '@/services/supabaseClient';
 import { useAppStore } from '@/store/useAppStore';
 import type { DailyCheckIn, DomainType, IdentityAnchorId, Profile } from '@/types';
@@ -7,7 +8,7 @@ import { getComplimentaryProfileFields } from '@/utils/entitlements';
 import { DEV_CYCLE_ID, isLocalDevUser } from '@/utils/localDevSession';
 import { useState } from 'react';
 
-type Step = 'welcome' | 'anchor' | 'domain' | 'action' | 'win' | 'celebrate';
+type Step = 'welcome' | 'anchor' | 'domain' | 'action' | 'win' | 'celebrate' | 'notifications';
 
 export default function OnboardingFlow() {
   const {
@@ -427,9 +428,68 @@ export default function OnboardingFlow() {
           <p className="text-base-subtext text-sm mb-10">
             Day 1 begins tomorrow. Same time. Same commitment.
           </p>
-          <Button onClick={() => setOnboardingComplete(true)} className="w-full">
-            Go to dashboard
+          <Button onClick={() => setStep('notifications')} className="w-full">
+            Continue
           </Button>
+        </div>
+      )}
+
+      {step === 'notifications' && (
+        <div className="w-full max-w-sm text-center">
+          <div className="w-14 h-14 rounded-full bg-accent-green/10 border border-accent-green/30 flex items-center justify-center mx-auto mb-6">
+            <svg
+              aria-hidden="true"
+              width="24"
+              height="24"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              className="text-accent-green"
+            >
+              <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
+              <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+            </svg>
+          </div>
+          <h2 className="font-heading text-2xl font-bold text-base-text mb-2 tracking-wide">
+            Stay on track.
+          </h2>
+          <p className="text-base-subtext text-sm mb-10 leading-relaxed">
+            Enable daily reminders so you never miss a check-in. You can turn these off any time in
+            settings.
+          </p>
+          <Button
+            onClick={async () => {
+              try {
+                const sub = await subscribeToPush();
+                if (sub) {
+                  const {
+                    data: { session },
+                  } = await supabase.auth.getSession();
+                  if (session?.access_token) {
+                    await supabase.functions.invoke('save-push-subscription', {
+                      body: { subscription: sub.toJSON() },
+                    });
+                  }
+                }
+              } catch {
+                // Permission denied or push not supported, continue anyway
+              }
+              setOnboardingComplete(true);
+            }}
+            className="w-full mb-4"
+          >
+            Enable reminders
+          </Button>
+          <button
+            type="button"
+            onClick={() => setOnboardingComplete(true)}
+            className="text-base-muted text-sm hover:text-base-subtext transition-colors"
+          >
+            Skip for now
+          </button>
         </div>
       )}
     </div>
