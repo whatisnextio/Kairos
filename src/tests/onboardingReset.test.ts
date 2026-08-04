@@ -67,7 +67,9 @@ describe('onboarding and reset contract', () => {
       "const ONBOARDING_STEPS: Step[] = ['framework', 'identity', 'focus', 'accountability', 'commit'];",
     );
     expect(source).toContain('{stepNumber} of {stepCount}');
-    expect(source).toContain('12K is an 84-day reset powered by Kairos.');
+    expect(source).toContain('12K means 12 weeks powered by Kairos.');
+    expect(source).toContain('It is not 12 steps.');
+    expect(source).toContain('PRODUCT_POSITIONING.proofLoop');
     expect(source).toContain('Six phases');
     expect(source).toContain('Set accountability intensity.');
     expect(source).toContain('not diagnosis');
