@@ -1,0 +1,10 @@
+Welcome to Kairos.
+
+Kairos means the right moment. 12K uses that idea as an 84-day reset: four core domains, one daily proof loop, and a clear path through Kickoff, Anchor, Increase, Rhythm, Own, and Sustain.
+
+Open Kairos:
+{{ .ConfirmationURL }}
+
+This link is for {{ .Email }} and expires shortly.
+
+If you did not request this email, you can ignore it. Your account cannot be accessed without this link.
