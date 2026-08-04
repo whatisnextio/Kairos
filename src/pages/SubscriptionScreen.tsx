@@ -2,6 +2,7 @@ import Button from '@/components/common/Button';
 import Card from '@/components/common/Card';
 import { useAppStore } from '@/store/useAppStore';
 import { buildStripeCheckoutUrl } from '@/utils/billing';
+import { SUBSCRIPTION_COPY } from '@/utils/brandCopy';
 import { hasBrotherhoodAccess } from '@/utils/entitlements';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -54,25 +55,17 @@ export default function SubscriptionScreen() {
         </svg>
         Back
       </button>
-      <h1 className="font-heading text-2xl font-bold text-base-text tracking-wide">Brotherhood</h1>
-      <p className="text-base-subtext text-sm">
-        The full 12K system. Daily AI nudges. Silent squad accountability. Cloud sync.
-      </p>
+      <h1 className="font-heading text-2xl font-bold text-base-text tracking-wide">
+        {SUBSCRIPTION_COPY.title}
+      </h1>
+      <p className="text-base-subtext text-sm">{SUBSCRIPTION_COPY.intro}</p>
 
       <Card className="border-accent-green/40">
-        <p className="font-heading text-3xl font-bold text-base-text">£7.99</p>
-        <p className="text-base-subtext text-sm">per month. Cancel anytime.</p>
+        <p className="font-heading text-3xl font-bold text-base-text">{SUBSCRIPTION_COPY.price}</p>
+        <p className="text-base-subtext text-sm">{SUBSCRIPTION_COPY.priceSuffix}</p>
 
         <ul className="mt-4 flex flex-col gap-2">
-          {[
-            'Daily AI nudge, personal not generic',
-            'Silent squad, 4-8 men, same phase, anonymous',
-            'Cloud sync across devices',
-            'Weekly squad pulse',
-            '84-day cycle reflection',
-            'Full XP and streak tracking',
-            'Push notifications',
-          ].map((feature) => (
+          {SUBSCRIPTION_COPY.paidFeatures.map((feature) => (
             <li key={feature} className="flex items-center gap-2 text-sm text-base-text">
               <span className="text-accent-green font-bold">+</span>
               {feature}
@@ -95,13 +88,7 @@ export default function SubscriptionScreen() {
           Free tier
         </p>
         <ul className="flex flex-col gap-2">
-          {[
-            'Track 4 core domains',
-            'Basic progress rings',
-            'Weekly Vibe Check',
-            'Sunday AI nudge',
-            'Local device only',
-          ].map((feature) => (
+          {SUBSCRIPTION_COPY.freeFeatures.map((feature) => (
             <li key={feature} className="flex items-center gap-2 text-sm text-base-subtext">
               <span className="text-base-muted">-</span>
               {feature}
@@ -110,8 +97,15 @@ export default function SubscriptionScreen() {
         </ul>
       </Card>
 
+      <Card>
+        <p className="text-base-subtext text-xs font-heading tracking-widest uppercase mb-2">
+          Lifechanger
+        </p>
+        <p className="text-base-subtext text-sm">{SUBSCRIPTION_COPY.lifechanger}</p>
+      </Card>
+
       <p className="text-base-muted text-xs text-center">
-        7-day refund if it's not for you. No questions.
+        Payment and cancellation details are handled by Stripe when checkout is available.
       </p>
     </div>
   );

@@ -1,60 +1,5 @@
-import { PRODUCT_POSITIONING } from '@/types';
+import { HELP_FAQS } from '@/utils/brandCopy';
 import { useNavigate } from 'react-router-dom';
-
-const FAQS = [
-  {
-    q: 'What is 12K?',
-    a: PRODUCT_POSITIONING.what,
-  },
-  {
-    q: 'Why will it help me?',
-    a: PRODUCT_POSITIONING.why,
-  },
-  {
-    q: 'What is it designed for?',
-    a: PRODUCT_POSITIONING.designedFor,
-  },
-  {
-    q: 'What is the KAIROS system?',
-    a: 'KAIROS is the six-phase arc behind the 84 days: Kickoff, Anchor, Increase, Rhythm, Own, and Sustain. Each phase lasts 14 days and changes the coaching emphasis.',
-  },
-  {
-    q: 'What are the core domains?',
-    a: PRODUCT_POSITIONING.categoryIntro,
-  },
-  {
-    q: 'Why Self, not Mind?',
-    a: 'Self is broader than mindset. It covers attention, recovery, reflection, identity, mood, confidence, emotional regulation, and private coded check-ins.',
-  },
-  {
-    q: 'What is the Brotherhood squad?',
-    a: "A group of 4-8 men matched to you by phase and cycle start date. You see each other's daily check-in status as coloured dots. No names, no chat, no leaderboards. Silent accountability.",
-  },
-  {
-    q: 'How does the AI nudge work?',
-    a: 'Every day, a short personalised message is generated based on your identity anchor, current phase, recent check-ins, and streaks. Brotherhood members get one daily. Free users get one on Sundays.',
-  },
-  {
-    q: 'What is the free tier?',
-    a: 'Free users can track the four core domains, see basic progress, do weekly Vibe Checks, use framework recommendations, and get a Sunday AI nudge. All data is stored on your device.',
-  },
-  {
-    q: 'What is Brotherhood?',
-    a: '£7.99/month. Daily AI nudges, silent squad access, cloud sync, push notifications, weekly squad pulse, and a full 84-day cycle reflection when you finish.',
-  },
-  {
-    q: 'Can I cancel?',
-    a: 'Yes. Cancel any time from the Stripe portal. No penalty. 7-day refund for new subscribers, contact liam@whatisnext.io.',
-  },
-  {
-    q: 'What happens at Day 84?',
-    a: 'You receive a cycle reflection summarising your 12 weeks across the domains you used. Then you can start a new cycle or take a break.',
-  },
-  {
-    q: 'Is my data private?',
-    a: 'Yes. We do not sell your data. EU data residency. No tracking pixels. See Privacy Policy for full details.',
-  },
-];
 
 export default function HelpFAQPage() {
   const navigate = useNavigate();
@@ -86,7 +31,7 @@ export default function HelpFAQPage() {
         Help and FAQ
       </h1>
       <div className="flex flex-col gap-4">
-        {FAQS.map(({ q, a }) => (
+        {HELP_FAQS.map(({ q, a }) => (
           <div key={q}>
             <p className="font-heading font-medium text-base-text text-sm tracking-wide mb-1">
               {q}

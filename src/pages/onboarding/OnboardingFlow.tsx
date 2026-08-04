@@ -8,6 +8,7 @@ import {
   XP_PER_CHECK_IN_DONE,
   getAvailableDomains,
 } from '@/types';
+import { AUTH_COPY } from '@/utils/brandCopy';
 import { getComplimentaryProfileFields } from '@/utils/entitlements';
 import { DEV_CYCLE_ID, isLocalDevUser } from '@/utils/localDevSession';
 import { useRef, useState } from 'react';
@@ -298,8 +299,8 @@ export default function OnboardingFlow() {
               Start your 12-week reset.
             </h1>
             <p className="text-base-subtext text-sm leading-relaxed mb-5">
-              {PRODUCT_POSITIONING.what} It gives you the next move, a daily check-in, and a
-              recovery path when the day slips.
+              {AUTH_COPY.body} It gives you the next useful move, a check-in, and a recovery path
+              when the day slips.
             </p>
 
             <Input
@@ -360,8 +361,8 @@ export default function OnboardingFlow() {
               Choose the first lever.
             </h1>
             <p className="text-base-subtext text-sm leading-relaxed mb-5">
-              The public framework is Body, Fuel, Self, and Connection. Private routes can be added
-              later without changing the system.
+              {PRODUCT_POSITIONING.categoryIntro} Routes such as work, money, family, or creative
+              practice sit underneath the same four-domain frame.
             </p>
             <div className="grid grid-cols-1 gap-2">
               {availableDomains.map((d) => (

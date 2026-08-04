@@ -1,3 +1,4 @@
+import { PRIVACY_COPY } from '@/utils/brandCopy';
 import { useNavigate } from 'react-router-dom';
 
 export default function PrivacyPolicyPage() {
@@ -30,30 +31,19 @@ export default function PrivacyPolicyPage() {
         Privacy Policy
       </h1>
       <div className="flex flex-col gap-4 text-base-subtext text-sm leading-relaxed">
-        <p>12K takes your privacy seriously. Here is what we collect, why, and what we don't do.</p>
+        <p>{PRIVACY_COPY.intro}</p>
         <h2 className="font-heading font-medium text-base-text tracking-wide text-base">
           What we collect
         </h2>
-        <p>
-          Your email address. Your date of birth (to verify you are 18 or over). Your check-in data,
-          domain focuses, XP, and cycle state. Nothing else.
-        </p>
+        <p>{PRIVACY_COPY.collected}</p>
         <h2 className="font-heading font-medium text-base-text tracking-wide text-base">
           What we don't do
         </h2>
-        <p>
-          We do not sell your data. We do not share it with third parties except Supabase (our
-          database, hosted in the EU) and Stripe (payment processing). We do not use tracking pixels
-          or advertising networks. Analytics are handled by Plausible, which is privacy-first and
-          cookieless.
-        </p>
+        <p>{PRIVACY_COPY.notDone}</p>
         <h2 className="font-heading font-medium text-base-text tracking-wide text-base">
           Your rights
         </h2>
-        <p>
-          You can export or delete your data at any time from the You screen. We will action
-          deletion requests within 30 days. GDPR compliant. EU data residency.
-        </p>
+        <p>{PRIVACY_COPY.rights}</p>
         <h2 className="font-heading font-medium text-base-text tracking-wide text-base">Contact</h2>
         <p>Privacy questions: liam@whatisnext.io</p>
       </div>
