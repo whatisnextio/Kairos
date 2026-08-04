@@ -1,6 +1,5 @@
 import { supabase } from '@/services/supabaseClient';
 import { useAppStore } from '@/store/useAppStore';
-import { toLocalIsoDate } from '@/utils/v1Framework';
 import type {
   CheckInStatus,
   CustomRoute,
@@ -17,6 +16,7 @@ import {
   hasComplimentaryBrotherhood,
 } from '@/utils/entitlements';
 import { isLocalDevUser } from '@/utils/localDevSession';
+import { toLocalIsoDate } from '@/utils/v1Framework';
 import { useEffect, useRef } from 'react';
 
 function mapProfile(row: Record<string, unknown>): Profile {
