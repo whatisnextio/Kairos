@@ -2,71 +2,12 @@ import Button from '@/components/common/Button';
 import { subscribeToPush } from '@/services/pushNotifications';
 import { supabase } from '@/services/supabaseClient';
 import { useAppStore } from '@/store/useAppStore';
-import type { DailyCheckIn, DomainType, IdentityAnchorId } from '@/types';
-import { DOMAINS, IDENTITY_ANCHORS } from '@/types';
+import type { DailyCheckIn, DomainType, IdentityAnchorId, Profile } from '@/types';
+import { IDENTITY_ANCHORS, KAIROS_CYCLE_LENGTH_DAYS, getAvailableDomains } from '@/types';
+import { getComplimentaryProfileFields } from '@/utils/entitlements';
 import { useState } from 'react';
 
 type Step = 'welcome' | 'anchor' | 'domain' | 'action' | 'win' | 'celebrate' | 'notifications';
-
-const DOMAIN_PRESETS: Record<string, string[]> = {
-  BODY: [
-    'Walk for 20 minutes today',
-    'Complete a training session',
-    'Do 10 press-ups right now',
-    'Track sleep and recovery today',
-  ],
-  FUEL: [
-    'Take all morning supplements',
-    'Hit 2L water before 6pm',
-    'No alcohol today',
-    'Prep a proper meal from scratch',
-  ],
-  METIME: [
-    'Block 30 focused minutes, no interruptions',
-    'Do one thing only you know about',
-    'Protect your solo time today',
-    'Read for 20 minutes undisturbed',
-  ],
-  USTIME: [
-    'Give her 20 minutes of full attention',
-    'Plan something just for the two of you',
-    'No phone during your time together',
-    'Be fully present at the end of the day',
-  ],
-  SHOT: [
-    'Work the pipeline for 30 minutes',
-    'Send one follow-up or proposal',
-    'Complete one billable piece of work',
-    'Clear the backlog for 30 minutes',
-  ],
-  LENS: [
-    'Get outside with the camera today',
-    'Edit and post one image',
-    'Plan or book a dawn shoot',
-    'Research and enter a competition',
-  ],
-  NEST: [
-    'One focused hour with the family',
-    'Sort one household task',
-    'Be fully present at dinner',
-    'Spend shoulder-to-shoulder time with the kids',
-  ],
-  ROOTS: [
-    'Review what went out this month',
-    'Make a payment toward debt',
-    'Move money to savings',
-    'Set aside 30 minutes for financial planning',
-  ],
-};
-
-const PROGRESS_STEPS: Step[] = ['welcome', 'anchor', 'domain', 'action', 'win'];
-
-const PREV_STEP: Partial<Record<Step, Step>> = {
-  anchor: 'welcome',
-  domain: 'anchor',
-  action: 'domain',
-  win: 'action',
-};
 
 export default function OnboardingFlow() {
   const {
@@ -81,23 +22,14 @@ export default function OnboardingFlow() {
 
   const [step, setStep] = useState<Step>('welcome');
   const [anchorId, setAnchorId] = useState<IdentityAnchorId | null>(null);
-  const [expandedTooltip, setExpandedTooltip] = useState<IdentityAnchorId | null>(null);
   const [customAnchor, setCustomAnchor] = useState('');
   const [domain, setDomain] = useState<DomainType | null>(null);
   const [microAction, setMicroAction] = useState('');
-  const [selectedPreset, setSelectedPreset] = useState<string | null>(null);
-  const [showCustomAction, setShowCustomAction] = useState(false);
   const [displayName, setDisplayName] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
-
-  const progressIndex = PROGRESS_STEPS.indexOf(step);
-  const showProgress = progressIndex >= 0;
-
-  const handleBack = () => {
-    const prev = PREV_STEP[step];
-    if (prev) setStep(prev);
-  };
+  const availableDomains = getAvailableDomains(authUser?.email);
+  const selectedDomain = availableDomains.find((d) => d.type === domain);
 
   const handleWin = async () => {
     if (!authUser || !anchorId || !domain || !microAction) return;
@@ -106,11 +38,13 @@ export default function OnboardingFlow() {
 
     const today = new Date().toISOString().split('T')[0];
 
+    // Prefer the DOB the user provided at registration; fall back to today
     const {
       data: { user: fullUser },
     } = await supabase.auth.getUser();
     const dobFromAuth: string = fullUser?.user_metadata?.date_of_birth ?? today;
 
+    const complimentaryFields = getComplimentaryProfileFields(authUser.email);
     const { data: profile, error: profileErr } = await supabase
       .from('profiles')
       .upsert({
@@ -121,6 +55,7 @@ export default function OnboardingFlow() {
         tier: 'free',
         xp: 10,
         date_of_birth: dobFromAuth,
+        ...complimentaryFields,
       })
       .select()
       .single();
@@ -181,6 +116,7 @@ export default function OnboardingFlow() {
         updatedAt: checkInRow.updated_at,
       };
       setTodayCheckIns({ [domain]: ci });
+      // Seed checkInHistory so computeLocalStreak counts day 0 from day 1 onwards.
       mergeCheckInHistory({ [today]: { [domain]: 'Done' } });
     }
 
@@ -200,16 +136,16 @@ export default function OnboardingFlow() {
       displayName: displayName || 'Anonymous',
       identityAnchorId: anchorId,
       customAnchorName: anchorId === 'custom' ? customAnchor : undefined,
-      tier: 'free',
+      tier: profile.tier as Profile['tier'],
       xp: 10,
       currentKairosCycleId: cycle.id,
       dateOfBirth: dobFromAuth,
       squadId: null,
-      stripeCustomerId: null,
-      stripeSubscriptionId: null,
-      subscriptionStatus: null,
-      cancelAtPeriodEnd: false,
-      currentPeriodEnd: null,
+      stripeCustomerId: profile.stripe_customer_id as string | null,
+      stripeSubscriptionId: profile.stripe_subscription_id as string | null,
+      subscriptionStatus: profile.subscription_status as string | null,
+      cancelAtPeriodEnd: (profile.cancel_at_period_end as boolean | null) ?? false,
+      currentPeriodEnd: profile.current_period_end as string | null,
       createdAt: profile.created_at,
       updatedAt: profile.updated_at,
     });
@@ -238,361 +174,262 @@ export default function OnboardingFlow() {
       ]);
     }
 
+    // Do NOT call setOnboardingComplete here. It would cause App.tsx to switch to the
+    // main router immediately, unmounting OnboardingFlow before the celebrate step renders.
+    // setOnboardingComplete(true) is called by the celebrate step's CTA button instead.
     setStep('celebrate');
     setSubmitting(false);
   };
 
   return (
-    <div className="min-h-screen bg-base-black flex flex-col px-6 py-12">
-      {/* Progress dots */}
-      {showProgress && (
-        <div className="flex justify-center gap-2 mb-8">
-          {PROGRESS_STEPS.map((s, i) => (
-            <div
-              key={s}
-              className={`h-1.5 rounded-full transition-all ${
-                i < progressIndex
-                  ? 'w-6 bg-accent-green'
-                  : i === progressIndex
-                    ? 'w-6 bg-accent-green'
-                    : 'w-3 bg-base-border'
-              }`}
-            />
-          ))}
+    <div className="min-h-screen bg-base-black flex flex-col items-center justify-center px-6 py-12">
+      {step === 'welcome' && (
+        <div className="text-center max-w-sm">
+          <h1 className="font-heading text-5xl font-bold text-base-text mb-4 tracking-widest">
+            12K
+          </h1>
+          <p className="text-base-subtext mb-2">12 weeks.</p>
+          <p className="text-base-subtext mb-2">One repeatable framework.</p>
+          <p className="text-base-subtext mb-10">Small actions. Daily proof.</p>
+          <Input
+            id="name"
+            label="What do people call you?"
+            placeholder="First name or nickname"
+            value={displayName}
+            onChange={(e) => setDisplayName(e.target.value)}
+            className="mb-6 text-left"
+          />
+          <Button
+            onClick={() => setStep('anchor')}
+            disabled={!displayName.trim()}
+            className="w-full"
+          >
+            Start
+          </Button>
         </div>
       )}
 
-      <div className="flex-1 flex flex-col items-center justify-center">
-        {/* ── Welcome ─────────────────────────────────────────────── */}
-        {step === 'welcome' && (
-          <div className="w-full max-w-sm flex flex-col items-center text-center">
-            <img
-              src="/kairos-12k-logo.svg"
-              alt="Kairos 12K"
-              className="w-48 mb-8"
-              draggable={false}
-            />
-            <h1 className="font-heading text-3xl font-bold text-base-text mb-3 tracking-wide">
-              365 days. Eight domains. One man.
-            </h1>
-            <p className="text-base-subtext text-sm mb-10 leading-relaxed">
-              Build the body, the focus, the relationships, and the life. All at once. No shortcuts.
-            </p>
-            <Input
-              id="name"
-              label="What do people call you?"
-              placeholder="First name or nickname"
-              value={displayName}
-              onChange={(e) => setDisplayName(e.target.value)}
-              className="mb-6 text-left w-full"
-            />
-            <Button
-              onClick={() => setStep('anchor')}
-              disabled={!displayName.trim()}
-              className="w-full"
-            >
-              Start
-            </Button>
-          </div>
-        )}
-
-        {/* ── Identity Anchor ──────────────────────────────────────── */}
-        {step === 'anchor' && (
-          <div className="w-full max-w-sm">
-            <h2 className="font-heading text-2xl font-bold text-base-text mb-1 tracking-wide">
-              Who do you want to become?
-            </h2>
-            <p className="text-base-subtext text-sm mb-6">
-              Choose your identity anchor for this cycle.
-            </p>
-            <div className="flex flex-col gap-3">
-              {IDENTITY_ANCHORS.map((anchor) => {
-                const isSelected = anchorId === anchor.id;
-                const tooltipOpen = expandedTooltip === anchor.id;
-                return (
-                  <div
-                    key={anchor.id}
-                    className={`w-full rounded border transition-colors ${
-                      isSelected
-                        ? 'border-accent-green bg-accent-green/10'
-                        : 'border-base-border bg-base-surface hover:border-base-muted'
-                    }`}
-                  >
-                    <div className="flex items-start p-4">
-                      <button
-                        type="button"
-                        className="flex-1 text-left"
-                        onClick={() => setAnchorId(anchor.id)}
-                      >
-                        <p className="font-heading font-medium text-base-text tracking-wide">
-                          {anchor.name}
-                        </p>
-                        <p className="text-base-subtext text-xs mt-0.5">{anchor.description}</p>
-                      </button>
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setExpandedTooltip(tooltipOpen ? null : anchor.id);
-                        }}
-                        aria-label={`More about ${anchor.name}`}
-                        className={`ml-3 mt-0.5 w-5 h-5 rounded-full border text-xs flex items-center justify-center shrink-0 transition-colors ${
-                          tooltipOpen
-                            ? 'border-accent-green text-accent-green'
-                            : 'border-base-border text-base-muted hover:border-base-subtext hover:text-base-subtext'
-                        }`}
-                      >
-                        i
-                      </button>
-                    </div>
-                    {tooltipOpen && (
-                      <p className="px-4 pb-4 text-xs text-base-subtext border-t border-base-border/40 pt-3 leading-relaxed">
-                        {anchor.tooltip}
-                      </p>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-            {anchorId === 'custom' && (
-              <input
-                className="input-field mt-3"
-                placeholder="Name your identity"
-                value={customAnchor}
-                onChange={(e) => setCustomAnchor(e.target.value)}
-              />
-            )}
-            <div className="flex gap-3 mt-6">
-              <Button variant="ghost" onClick={handleBack} className="flex-1">
-                Back
-              </Button>
-              <Button
-                onClick={() => setStep('domain')}
-                disabled={!anchorId || (anchorId === 'custom' && !customAnchor.trim())}
-                className="flex-1"
-              >
-                Lock it in
-              </Button>
-            </div>
-          </div>
-        )}
-
-        {/* ── Domain ──────────────────────────────────────────────── */}
-        {step === 'domain' && (
-          <div className="w-full max-w-sm">
-            <h2 className="font-heading text-2xl font-bold text-base-text mb-1 tracking-wide">
-              Where do you start?
-            </h2>
-            <p className="text-base-subtext text-sm mb-6">
-              Pick one domain. You'll add the others over the next 7 days.
-            </p>
-            <div className="flex flex-col gap-3">
-              {DOMAINS.map((d) => (
-                <button
-                  type="button"
-                  key={d.type}
-                  onClick={() => setDomain(d.type)}
-                  className={`w-full text-left p-4 rounded border transition-colors ${
-                    domain === d.type
-                      ? 'border-accent-green bg-accent-green/10'
-                      : 'border-base-border bg-base-surface hover:border-base-muted'
-                  }`}
-                >
-                  <p className={`font-heading font-medium tracking-wide ${d.colour}`}>{d.label}</p>
-                  <p className="text-base-subtext text-xs mt-0.5">{d.description}</p>
-                </button>
-              ))}
-            </div>
-            <div className="flex gap-3 mt-6">
-              <Button variant="ghost" onClick={handleBack} className="flex-1">
-                Back
-              </Button>
-              <Button onClick={() => setStep('action')} disabled={!domain} className="flex-1">
-                Choose
-              </Button>
-            </div>
-          </div>
-        )}
-
-        {/* ── Action ──────────────────────────────────────────────── */}
-        {step === 'action' && domain && (
-          <div className="w-full max-w-sm">
-            <h2 className="font-heading text-2xl font-bold text-base-text mb-1 tracking-wide">
-              What's today's action?
-            </h2>
-            <p className="text-base-subtext text-sm mb-6">
-              Pick one thing to do right now for{' '}
-              <span className="text-base-text font-medium">
-                {DOMAINS.find((d) => d.type === domain)?.label}
-              </span>
-              .
-            </p>
-            <div className="flex flex-col gap-2">
-              {(DOMAIN_PRESETS[domain] ?? []).map((preset) => (
-                <button
-                  key={preset}
-                  type="button"
-                  onClick={() => {
-                    setSelectedPreset(preset);
-                    setMicroAction(preset);
-                    setShowCustomAction(false);
-                  }}
-                  className={`w-full text-left px-4 py-3 rounded border text-sm transition-colors ${
-                    selectedPreset === preset && !showCustomAction
-                      ? 'border-accent-green bg-accent-green/10 text-base-text'
-                      : 'border-base-border bg-base-surface text-base-subtext hover:border-base-muted hover:text-base-text'
-                  }`}
-                >
-                  {preset}
-                </button>
-              ))}
+      {step === 'anchor' && (
+        <div className="w-full max-w-sm">
+          <h2 className="font-heading text-2xl font-bold text-base-text mb-2 tracking-wide">
+            Who do you want to become?
+          </h2>
+          <p className="text-base-subtext text-sm mb-6">
+            Choose your identity anchor for this cycle.
+          </p>
+          <div className="flex flex-col gap-3">
+            {IDENTITY_ANCHORS.map((anchor) => (
               <button
                 type="button"
-                onClick={() => {
-                  setShowCustomAction(true);
-                  setSelectedPreset(null);
-                  setMicroAction('');
-                }}
-                className={`w-full text-left px-4 py-3 rounded border text-sm transition-colors ${
-                  showCustomAction
-                    ? 'border-accent-green bg-accent-green/10 text-base-text'
-                    : 'border-base-border bg-base-surface text-base-muted hover:border-base-muted hover:text-base-text'
+                key={anchor.id}
+                onClick={() => setAnchorId(anchor.id)}
+                className={`w-full text-left p-4 rounded border transition-colors ${
+                  anchorId === anchor.id
+                    ? 'border-accent-green bg-accent-green/10'
+                    : 'border-base-border bg-base-surface hover:border-base-muted'
                 }`}
               >
-                Write your own...
+                <p className="font-heading font-medium text-base-text tracking-wide">
+                  {anchor.name}
+                </p>
+                <p className="text-base-subtext text-xs mt-0.5">{anchor.description}</p>
               </button>
-            </div>
-            {showCustomAction && (
-              <textarea
-                className="input-field h-20 resize-none mt-3"
-                placeholder="Describe your action in one line."
-                value={microAction}
-                autoFocus
-                onChange={(e) => setMicroAction(e.target.value)}
-              />
-            )}
-            <div className="flex gap-3 mt-4">
-              <Button variant="ghost" onClick={handleBack} className="flex-1">
-                Back
-              </Button>
-              <Button
-                onClick={() => setStep('win')}
-                disabled={!microAction.trim()}
-                className="flex-1"
+            ))}
+          </div>
+          {anchorId === 'custom' && (
+            <input
+              className="input-field mt-3"
+              placeholder="Name your identity"
+              value={customAnchor}
+              onChange={(e) => setCustomAnchor(e.target.value)}
+            />
+          )}
+          <Button
+            onClick={() => setStep('domain')}
+            disabled={!anchorId || (anchorId === 'custom' && !customAnchor.trim())}
+            className="w-full mt-6"
+          >
+            Lock it in
+          </Button>
+        </div>
+      )}
+
+      {step === 'domain' && (
+        <div className="w-full max-w-sm">
+          <h2 className="font-heading text-2xl font-bold text-base-text mb-2 tracking-wide">
+            Where do you start?
+          </h2>
+          <p className="text-base-subtext text-sm mb-6">
+            Pick one domain. You'll build out the rest of your {KAIROS_CYCLE_LENGTH_DAYS}-day cycle
+            one route at a time.
+          </p>
+          <div className="flex flex-col gap-3">
+            {availableDomains.map((d) => (
+              <button
+                type="button"
+                key={d.type}
+                onClick={() => {
+                  setDomain(d.type);
+                  setMicroAction('');
+                }}
+                className={`w-full text-left p-4 rounded border transition-colors ${
+                  domain === d.type
+                    ? 'border-accent-green bg-accent-green/10'
+                    : 'border-base-border bg-base-surface hover:border-base-muted'
+                }`}
               >
-                Lock it in
-              </Button>
+                <p className={`font-heading font-medium tracking-wide ${d.colour}`}>{d.label}</p>
+                <p className="text-base-subtext text-xs mt-1">{d.description}</p>
+              </button>
+            ))}
+          </div>
+          <Button onClick={() => setStep('action')} disabled={!domain} className="w-full mt-6">
+            Choose
+          </Button>
+        </div>
+      )}
+
+      {step === 'action' && (
+        <div className="w-full max-w-sm">
+          <h2 className="font-heading text-2xl font-bold text-base-text mb-2 tracking-wide">
+            What's today's 5-minute action?
+          </h2>
+          <p className="text-base-subtext text-sm mb-6">
+            The smallest useful thing you can do right now for{' '}
+            <span className="text-base-text font-medium">{selectedDomain?.label ?? 'this'}</span>.
+          </p>
+          {selectedDomain && (
+            <div className="grid grid-cols-1 gap-2 mb-4">
+              {selectedDomain.focusOptions.map((option) => (
+                <button
+                  type="button"
+                  key={option}
+                  onClick={() => setMicroAction(option)}
+                  className={`text-left rounded border px-3 py-2 text-sm transition-colors ${
+                    microAction === option
+                      ? 'border-accent-green bg-accent-green/10 text-base-text'
+                      : 'border-base-border bg-base-surface text-base-subtext hover:border-base-muted'
+                  }`}
+                >
+                  {option}
+                </button>
+              ))}
             </div>
+          )}
+          <textarea
+            className="input-field h-28 resize-none"
+            placeholder={selectedDomain?.focusPrompt ?? 'Write your own 5-minute action.'}
+            value={microAction}
+            onChange={(e) => setMicroAction(e.target.value)}
+          />
+          <Button
+            onClick={() => setStep('win')}
+            disabled={!microAction.trim()}
+            className="w-full mt-4"
+          >
+            Lock it in
+          </Button>
+        </div>
+      )}
+
+      {step === 'win' && !submitting && (
+        <div className="w-full max-w-sm">
+          <h2 className="font-heading text-2xl font-bold text-base-text mb-2 tracking-wide">
+            Do it now. We'll wait.
+          </h2>
+          <p className="text-base-subtext text-sm mb-6">{microAction}</p>
+          <p className="text-base-subtext text-sm mb-10">
+            Take 5 minutes. Come back when it's done.
+          </p>
+          <Button onClick={handleWin} disabled={submitting} className="w-full">
+            Done. Day 0 complete.
+          </Button>
+          {submitError && (
+            <p role="alert" className="text-status-missed text-sm mt-4 text-center">
+              {submitError}
+            </p>
+          )}
+        </div>
+      )}
+
+      {submitting && <p className="text-base-subtext text-sm">Setting up your cycle...</p>}
+
+      {step === 'celebrate' && (
+        <div className="w-full max-w-sm text-center">
+          <p className="text-accent-green font-heading font-bold text-4xl tracking-wide mb-2">
+            +10 XP
+          </p>
+          <h2 className="font-heading text-2xl font-bold text-base-text mb-2 tracking-wide">
+            Day 0 done.
+          </h2>
+          <p className="text-base-subtext text-sm mb-2">That's how it starts.</p>
+          <p className="text-base-subtext text-sm mb-10">
+            Day 1 begins tomorrow. Same time. Same commitment.
+          </p>
+          <Button onClick={() => setStep('notifications')} className="w-full">
+            Continue
+          </Button>
+        </div>
+      )}
+
+      {step === 'notifications' && (
+        <div className="w-full max-w-sm text-center">
+          <div className="w-14 h-14 rounded-full bg-accent-green/10 border border-accent-green/30 flex items-center justify-center mx-auto mb-6">
+            <svg
+              aria-hidden="true"
+              width="24"
+              height="24"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              className="text-accent-green"
+            >
+              <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
+              <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+            </svg>
           </div>
-        )}
-
-        {/* ── Win ─────────────────────────────────────────────────── */}
-        {step === 'win' && !submitting && (
-          <div className="w-full max-w-sm">
-            <h2 className="font-heading text-2xl font-bold text-base-text mb-2 tracking-wide">
-              Do it now. We'll wait.
-            </h2>
-            <p className="text-base-subtext text-sm mb-6">{microAction}</p>
-            <p className="text-base-subtext text-sm mb-10">
-              Take 5 minutes. Come back when it's done.
-            </p>
-            <Button onClick={handleWin} disabled={submitting} className="w-full mb-3">
-              Done. Day 0 complete.
-            </Button>
-            <Button variant="ghost" onClick={handleBack} className="w-full">
-              Back
-            </Button>
-            {submitError && (
-              <p role="alert" className="text-status-missed text-sm mt-4 text-center">
-                {submitError}
-              </p>
-            )}
-          </div>
-        )}
-
-        {submitting && (
-          <p className="text-base-subtext text-sm">Setting up your cycle...</p>
-        )}
-
-        {/* ── Celebrate ───────────────────────────────────────────── */}
-        {step === 'celebrate' && (
-          <div className="w-full max-w-sm text-center">
-            <p className="text-accent-green font-heading font-bold text-4xl tracking-wide mb-2">
-              +10 XP
-            </p>
-            <h2 className="font-heading text-2xl font-bold text-base-text mb-2 tracking-wide">
-              Day 0 done.
-            </h2>
-            <p className="text-base-subtext text-sm mb-2">That's how it starts.</p>
-            <p className="text-base-subtext text-sm mb-10">
-              Day 1 begins tomorrow. Same time. Same commitment.
-            </p>
-            <Button onClick={() => setStep('notifications')} className="w-full">
-              Continue
-            </Button>
-          </div>
-        )}
-
-        {/* ── Notifications ───────────────────────────────────────── */}
-        {step === 'notifications' && (
-          <div className="w-full max-w-sm text-center">
-            <div className="w-14 h-14 rounded-full bg-accent-green/10 border border-accent-green/30 flex items-center justify-center mx-auto mb-6">
-              <svg
-                aria-hidden="true"
-                width="24"
-                height="24"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="1.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                className="text-accent-green"
-              >
-                <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
-                <path d="M13.73 21a2 2 0 0 1-3.46 0" />
-              </svg>
-            </div>
-            <h2 className="font-heading text-2xl font-bold text-base-text mb-2 tracking-wide">
-              Stay on track.
-            </h2>
-            <p className="text-base-subtext text-sm mb-10 leading-relaxed">
-              Enable daily reminders so you never miss a check-in. You can turn these off any time
-              in settings.
-            </p>
-            <Button
-              onClick={async () => {
-                try {
-                  const sub = await subscribeToPush();
-                  if (sub) {
-                    const {
-                      data: { session },
-                    } = await supabase.auth.getSession();
-                    if (session?.access_token) {
-                      await supabase.functions.invoke('save-push-subscription', {
-                        body: { subscription: sub.toJSON() },
-                      });
-                    }
+          <h2 className="font-heading text-2xl font-bold text-base-text mb-2 tracking-wide">
+            Stay on track.
+          </h2>
+          <p className="text-base-subtext text-sm mb-10 leading-relaxed">
+            Enable daily reminders so you never miss a check-in. You can turn these off any time in
+            settings.
+          </p>
+          <Button
+            onClick={async () => {
+              try {
+                const sub = await subscribeToPush();
+                if (sub) {
+                  const {
+                    data: { session },
+                  } = await supabase.auth.getSession();
+                  if (session?.access_token) {
+                    await supabase.functions.invoke('save-push-subscription', {
+                      body: { subscription: sub.toJSON() },
+                    });
                   }
-                } catch {
-                  // Permission denied or push not supported, continue anyway
                 }
-                setOnboardingComplete(true);
-              }}
-              className="w-full mb-4"
-            >
-              Enable reminders
-            </Button>
-            <button
-              type="button"
-              onClick={() => setOnboardingComplete(true)}
-              className="text-base-muted text-sm hover:text-base-subtext transition-colors"
-            >
-              Skip for now
-            </button>
-          </div>
-        )}
-      </div>
+              } catch {
+                // Permission denied or push not supported, continue anyway
+              }
+              setOnboardingComplete(true);
+            }}
+            className="w-full mb-4"
+          >
+            Enable reminders
+          </Button>
+          <button
+            type="button"
+            onClick={() => setOnboardingComplete(true)}
+            className="text-base-muted text-sm hover:text-base-subtext transition-colors"
+          >
+            Skip for now
+          </button>
+        </div>
+      )}
     </div>
   );
 }

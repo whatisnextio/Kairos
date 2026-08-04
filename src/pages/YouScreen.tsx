@@ -7,7 +7,7 @@ import { supabase } from '@/services/supabaseClient';
 import { useAppStore } from '@/store/useAppStore';
 import { IDENTITY_ANCHORS } from '@/types';
 import { getLevelForXp } from '@/utils/gamification';
-import { useCallback, useEffect, useState } from 'react';
+import { type ChangeEvent, useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 
 const SAVE_PUSH_ENDPOINT = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/save-push-subscription`;
@@ -36,7 +36,7 @@ async function registerPush(): Promise<boolean> {
 }
 
 export default function YouScreen() {
-  const { profile, authUser, signOut } = useAppStore();
+  const { profile, authUser, profileImageDataUrl, setProfileImageDataUrl, signOut } = useAppStore();
   const { data: squadPulse } = useSquadPulse();
   const { mutate: matchToSquad, isPending: isMatching } = useMatchToSquad();
   const [pushStatus, setPushStatus] = useState<'idle' | 'requesting' | 'done' | 'denied'>('idle');
@@ -142,6 +142,20 @@ export default function YouScreen() {
     }
   }, [signOut]);
 
+  const handleProfileImage = useCallback(
+    (event: ChangeEvent<HTMLInputElement>) => {
+      const file = event.target.files?.[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = () => {
+        if (typeof reader.result === 'string') setProfileImageDataUrl(reader.result);
+      };
+      reader.readAsDataURL(file);
+      event.target.value = '';
+    },
+    [setProfileImageDataUrl],
+  );
+
   if (!profile) return null;
 
   const anchor = IDENTITY_ANCHORS.find((a) => a.id === profile.identityAnchorId);
@@ -157,8 +171,34 @@ export default function YouScreen() {
 
       {/* Profile */}
       <Card>
-        <p className="font-heading text-lg font-bold text-base-text">{profile.displayName}</p>
-        <p className="text-accent-green text-sm font-heading tracking-wider mt-0.5">{anchorName}</p>
+        <div className="flex items-start gap-4">
+          <div className="shrink-0">
+            <div className="w-16 h-16 rounded-full bg-base-border overflow-hidden flex items-center justify-center">
+              {profileImageDataUrl ? (
+                <img src={profileImageDataUrl} alt="" className="w-full h-full object-cover" />
+              ) : (
+                <span className="font-heading font-bold text-xl text-base-subtext">
+                  {profile.displayName.slice(0, 1).toUpperCase()}
+                </span>
+              )}
+            </div>
+            <label className="block text-center text-base-muted text-xs underline mt-2 cursor-pointer">
+              Change
+              <input
+                type="file"
+                accept="image/*"
+                className="sr-only"
+                onChange={handleProfileImage}
+              />
+            </label>
+          </div>
+          <div className="min-w-0 flex-1">
+            <p className="font-heading text-lg font-bold text-base-text">{profile.displayName}</p>
+            <p className="text-accent-green text-sm font-heading tracking-wider mt-0.5">
+              {anchorName}
+            </p>
+          </div>
+        </div>
         <div className="flex gap-4 mt-3">
           <div>
             <p className="text-base-subtext text-xs">XP</p>

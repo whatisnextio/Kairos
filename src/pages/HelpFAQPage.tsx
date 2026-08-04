@@ -3,15 +3,15 @@ import { useNavigate } from 'react-router-dom';
 const FAQS = [
   {
     q: 'What is 12K?',
-    a: '12K is a 365-day structured transformation campaign for men. You track progress across eight life domains, earn XP, get daily AI nudges, and stay accountable with a silent squad.',
+    a: '12K is a 12-week structured action framework. You track progress across four core domains, earn XP, get AI nudges, and build enough daily proof to keep going.',
   },
   {
     q: 'What is the KAIROS system?',
-    a: 'KAIROS is the five-phase arc that structures your 365 days: Gate (1-7), Stabilise (8-56), Build (57-151), Perform (152-217), Elite (218-365). Each phase has a distinct focus and intention.',
+    a: 'KAIROS is the six-phase arc behind the 84 days: Kickoff, Anchor, Increase, Rhythm, Own, and Sustain. Each phase lasts 14 days and changes the coaching emphasis.',
   },
   {
-    q: 'What are the eight domains?',
-    a: 'Body, Fuel, Me Time, Us Time, Shot (career and finances), Lens (creativity and perspective), Nest (home and environment), and Roots (faith, purpose, inner life). You check in across all eight every day.',
+    q: 'What are the core domains?',
+    a: 'The public framework starts with Body, Fuel, Mind, and Connection. Private custom routes can be added for specific lives and goals, but they are not forced into the default app.',
   },
   {
     q: 'What is the Brotherhood squad?',
@@ -23,19 +23,19 @@ const FAQS = [
   },
   {
     q: 'What is the free tier?',
-    a: 'Free users can track all eight domains, see basic progress rings, do weekly Vibe Checks, and get a Sunday AI nudge. All data is stored on your device.',
+    a: 'Free users can track the four core domains, see basic progress, do weekly Vibe Checks, use framework recommendations, and get a Sunday AI nudge. All data is stored on your device.',
   },
   {
     q: 'What is Brotherhood?',
-    a: '£7.99/month. Daily AI nudges, silent squad access, cloud sync, push notifications, weekly squad pulse, and a full 365-day cycle reflection when you finish.',
+    a: '£7.99/month. Daily AI nudges, silent squad access, cloud sync, push notifications, weekly squad pulse, and a full 84-day cycle reflection when you finish.',
   },
   {
     q: 'Can I cancel?',
     a: 'Yes. Cancel any time from the Stripe portal. No penalty. 7-day refund for new subscribers, contact liam@whatisnext.io.',
   },
   {
-    q: 'What happens at Day 365?',
-    a: 'You receive an AI-generated cycle reflection summarising your entire 365 days across all eight domains. Then you can start a new cycle or take a break.',
+    q: 'What happens at Day 84?',
+    a: 'You receive a cycle reflection summarising your 12 weeks across the domains you used. Then you can start a new cycle or take a break.',
   },
   {
     q: 'Is my data private?',

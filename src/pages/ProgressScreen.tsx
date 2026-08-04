@@ -5,7 +5,7 @@ import { useCycleReflection } from '@/hooks/useCycleReflection';
 import { useStreaks } from '@/hooks/useStreaks';
 import { useAppStore } from '@/store/useAppStore';
 import type { KairosPhaseConfig } from '@/types';
-import { DOMAINS } from '@/types';
+import { KAIROS_CYCLE_LENGTH_DAYS, getAvailableDomains } from '@/types';
 import { getLevelForXp, getXpProgressInLevel } from '@/utils/gamification';
 import { KAIROS_PHASES, getCurrentPhaseConfig, getDayInCycle } from '@/utils/kairos';
 import { useState } from 'react';
@@ -33,6 +33,7 @@ export default function ProgressScreen() {
   const [showDay84Modal, setShowDay84Modal] = useState(false);
   const {
     profile,
+    authUser,
     currentCycle,
     todayCheckIns,
     checkInHistory,
@@ -42,13 +43,14 @@ export default function ProgressScreen() {
 
   // Compute before early return so hooks are never called conditionally.
   const dayInCycle = profile && currentCycle ? getDayInCycle(currentCycle.startDate) : 0;
-  const cycleComplete = dayInCycle >= 365;
+  const cycleComplete = dayInCycle >= KAIROS_CYCLE_LENGTH_DAYS;
   const { data: aiReflection } = useCycleReflection(
     cycleComplete && profile?.tier === 'brotherhood',
   );
 
   if (!profile || !currentCycle) return null;
   const currentPhase = getCurrentPhaseConfig(dayInCycle);
+  const availableDomains = getAvailableDomains(authUser?.email);
   const level = getLevelForXp(profile.xp);
   const xpProgress = getXpProgressInLevel(profile.xp);
   const last7 = getLast7Days();
@@ -67,7 +69,7 @@ export default function ProgressScreen() {
               Cycle complete
             </p>
             <h2 className="font-heading text-xl font-bold text-base-text tracking-wide mb-3">
-              365 days done.
+              {KAIROS_CYCLE_LENGTH_DAYS} days done.
             </h2>
             <div className="flex gap-4 mb-4">
               <div>
@@ -155,7 +157,7 @@ export default function ProgressScreen() {
           </div>
 
           {/* Domain rows: pulled from local checkInHistory (all tiers) */}
-          {DOMAINS.map((d) => (
+          {availableDomains.map((d) => (
             <div
               key={d.type}
               className="grid grid-cols-[80px_repeat(7,1fr)] gap-1 mb-1.5 items-center"
@@ -187,7 +189,7 @@ export default function ProgressScreen() {
             Streaks
           </h2>
           <div className="flex flex-col gap-2">
-            {DOMAINS.map((d) => {
+            {availableDomains.map((d) => {
               const streak =
                 profile.tier === 'brotherhood'
                   ? remoteStreaks?.find((s) => s.domainType === d.type)

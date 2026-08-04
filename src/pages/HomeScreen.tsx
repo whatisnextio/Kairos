@@ -6,7 +6,13 @@ import WeeklyVibeCheckModal from '@/components/modals/WeeklyVibeCheckModal';
 import { useNudge } from '@/hooks/useNudge';
 import { useSquadMembers, useSquadPulse } from '@/hooks/useSquad';
 import { useAppStore } from '@/store/useAppStore';
-import { type CheckInStatus, DOMAINS, type DomainType, IDENTITY_ANCHORS } from '@/types';
+import {
+  type CheckInStatus,
+  type DomainType,
+  IDENTITY_ANCHORS,
+  KAIROS_CYCLE_LENGTH_DAYS,
+  getAvailableDomains,
+} from '@/types';
 import {
   getCurrentPhaseConfig,
   getCycleProgressPct,
@@ -42,10 +48,11 @@ function shouldShowVibeCheck(lastVibeCheckDate: string | null, dayInCycle: numbe
 }
 
 const PHASE_MILESTONE_MESSAGES: Record<string, string> = {
-  STABILISE: 'Gate closed. Floor set. Hold it for 49 days.',
-  BUILD: '7 weeks banked. Strength and running start now.',
-  PERFORM: 'Base built. Cambridge Half is in range. Perform.',
-  ELITE: '7 months in. The final phase. Finish what you started.',
+  ANCHOR: 'The start is real. Now make it easier to repeat.',
+  INCREASE: 'The floor is set. Add load carefully.',
+  RHYTHM: 'Patterns matter now. Make the week predictable.',
+  OWN: 'Remove friction. Make the action yours.',
+  SUSTAIN: 'Hold the gain. Prepare the next cycle deliberately.',
 };
 
 // Module-level flags: prevent re-prompting within the same JS session even if HomeScreen remounts
@@ -57,6 +64,7 @@ export default function HomeScreen() {
   const navigate = useNavigate();
   const {
     profile,
+    authUser,
     currentCycle,
     domainFocuses,
     todayCheckIns,
@@ -77,16 +85,20 @@ export default function HomeScreen() {
   const [showPhaseTransition, setShowPhaseTransition] = useState(false);
 
   const dayInCycle = profile && currentCycle ? getDayInCycle(currentCycle.startDate) : 1;
+  const displayDay = Math.min(dayInCycle, KAIROS_CYCLE_LENGTH_DAYS);
+  const phaseConfig = getCurrentPhaseConfig(dayInCycle);
+  const availableDomains = getAvailableDomains(authUser?.email);
+  const availableDomainTypes = new Set(availableDomains.map((domain) => domain.type));
+  const configuredDomainCount = domainFocuses.filter((focus) =>
+    availableDomainTypes.has(focus.domainType),
+  ).length;
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: Zustand setters are stable; lastCelebrationPhase intentionally excluded to avoid re-triggering after the silent first-load set
   useEffect(() => {
     if (!profile || !currentCycle) return;
-    if (dayInCycle >= 365 && currentCycle.status === 'active') {
+    if (dayInCycle >= KAIROS_CYCLE_LENGTH_DAYS && currentCycle.status === 'active') {
       setCelebrationPending(true);
-    } else if (
-      !phaseTransitionShownThisSession &&
-      phaseConfig.phase !== 'GATE'
-    ) {
+    } else if (!phaseTransitionShownThisSession && phaseConfig.phase !== 'KICKOFF') {
       if (lastCelebrationPhase === null) {
         // First load after this feature shipped: silently record current phase, no banner.
         setLastCelebrationPhase(phaseConfig.phase);
@@ -103,19 +115,26 @@ export default function HomeScreen() {
       setShowVibeCheck(true);
     } else if (
       !domainSetupShownThisSession &&
-      domainFocuses.length > 0 &&
-      domainFocuses.length < 8 &&
-      dayInCycle >= domainFocuses.length
+      configuredDomainCount > 0 &&
+      configuredDomainCount < availableDomains.length &&
+      dayInCycle >= configuredDomainCount
     ) {
-      // Show domain setup modal one domain at a time: Day 1 unlocks domain 2, Day 2 unlocks domain 3, etc.
+      // Show domain setup modal one domain at a time after the Day 0 win.
       domainSetupShownThisSession = true;
       setShowDomainSetup(true);
     }
-  }, [profile, currentCycle, lastVibeCheckDate, dayInCycle, domainFocuses.length]);
+  }, [
+    profile,
+    currentCycle,
+    lastVibeCheckDate,
+    dayInCycle,
+    configuredDomainCount,
+    availableDomains.length,
+    phaseConfig.phase,
+  ]);
 
   if (!profile || !currentCycle) return null;
 
-  const phaseConfig = getCurrentPhaseConfig(dayInCycle);
   const cyclePct = getCycleProgressPct(dayInCycle);
   const phasePct = getPhaseProgressPct(dayInCycle);
   const anchor = IDENTITY_ANCHORS.find((a) => a.id === profile.identityAnchorId);
@@ -143,7 +162,7 @@ export default function HomeScreen() {
             {anchorDisplayName}
           </p>
           <h1 className="font-heading text-2xl font-bold text-base-text tracking-wide mt-0.5">
-            Day {dayInCycle} of 365
+            Day {displayDay} of {KAIROS_CYCLE_LENGTH_DAYS}
           </h1>
           <p className="text-accent-green text-sm font-heading tracking-wider uppercase mt-0.5">
             {phaseConfig.label} Phase
@@ -291,7 +310,7 @@ export default function HomeScreen() {
             Today
           </h2>
           <div className="flex flex-col gap-2">
-            {DOMAINS.map((d) => {
+            {availableDomains.map((d) => {
               const focus = domainFocuses.find((f) => f.domainType === d.type);
               const checkIn = todayCheckIns[d.type];
               const status: CheckInStatus = checkIn?.status ?? 'Pending';

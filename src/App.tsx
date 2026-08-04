@@ -3,6 +3,7 @@ import { useSubscriptionVerification } from '@/hooks/useSubscriptionVerification
 import { scheduleDailyNotifications } from '@/services/localNotifications';
 import { supabase } from '@/services/supabaseClient';
 import { useAppStore } from '@/store/useAppStore';
+import { DEV_EMAIL, DEV_USER_ID, hasLocalDevSession } from '@/utils/localDevSession';
 import { Suspense, lazy, useEffect } from 'react';
 import { HashRouter, Navigate, Route, Routes } from 'react-router-dom';
 
@@ -48,11 +49,21 @@ export default function App() {
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
+      if (hasLocalDevSession()) {
+        setAuthUser({ id: DEV_USER_ID, email: DEV_EMAIL });
+        return;
+      }
+
       const user = data.session?.user;
       setAuthUser(user ? { id: user.id, email: user.email ?? '' } : null);
     });
 
     const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (!session && hasLocalDevSession()) {
+        setAuthUser({ id: DEV_USER_ID, email: DEV_EMAIL });
+        return;
+      }
+
       const user = session?.user;
       setAuthUser(user ? { id: user.id, email: user.email ?? '' } : null);
     });

@@ -1,5 +1,5 @@
 import type { KairosPhase, KairosPhaseConfig } from '@/types';
-import { KAIROS_PHASES } from '@/types';
+import { KAIROS_CYCLE_LENGTH_DAYS, KAIROS_PHASES } from '@/types';
 import { differenceInDays, parseISO, startOfDay } from 'date-fns';
 
 export { KAIROS_PHASES };
@@ -20,7 +20,7 @@ export function getCurrentPhase(cycleStartDate: string): KairosPhase {
 }
 
 export function getCycleProgressPct(dayInCycle: number): number {
-  return Math.min(100, Math.round((dayInCycle / 365) * 100));
+  return Math.min(100, Math.round((dayInCycle / KAIROS_CYCLE_LENGTH_DAYS) * 100));
 }
 
 export function getPhaseProgressPct(dayInCycle: number): number {
@@ -31,5 +31,5 @@ export function getPhaseProgressPct(dayInCycle: number): number {
 }
 
 export function isCycleComplete(dayInCycle: number): boolean {
-  return dayInCycle >= 365;
+  return dayInCycle >= KAIROS_CYCLE_LENGTH_DAYS;
 }

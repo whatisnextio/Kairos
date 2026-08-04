@@ -1,7 +1,7 @@
 import Button from '@/components/common/Button';
 import { supabase } from '@/services/supabaseClient';
 import { useAppStore } from '@/store/useAppStore';
-import { DOMAINS } from '@/types';
+import { getAvailableDomains } from '@/types';
 import type { DomainType } from '@/types';
 import { useState } from 'react';
 
@@ -15,8 +15,9 @@ export default function ProgressiveDomainSetupModal({ onClose }: Props) {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const availableDomains = getAvailableDomains(authUser?.email);
   const setupDomains = new Set(domainFocuses.map((f) => f.domainType));
-  const nextDomain = DOMAINS.find((d) => !setupDomains.has(d.type));
+  const nextDomain = availableDomains.find((d) => !setupDomains.has(d.type));
 
   if (!nextDomain || !authUser || !profile || !currentCycle) return null;
 
@@ -58,7 +59,7 @@ export default function ProgressiveDomainSetupModal({ onClose }: Props) {
     onClose();
   }
 
-  const remaining = DOMAINS.length - setupDomains.size;
+  const remaining = availableDomains.filter((domain) => !setupDomains.has(domain.type)).length;
 
   return (
     <div
@@ -88,14 +89,28 @@ export default function ProgressiveDomainSetupModal({ onClose }: Props) {
         >
           Set up <span className={nextDomain.colour}>{nextDomain.label}</span>
         </h2>
-        <p className="text-base-subtext text-sm mb-6">
-          What's your one focus for{' '}
-          <span className="text-base-text font-medium">{nextDomain.label}</span> this cycle?
-        </p>
+        <p className="text-base-subtext text-sm mb-6">{nextDomain.question}</p>
+
+        <div className="grid grid-cols-1 gap-2 mb-4">
+          {nextDomain.focusOptions.map((option) => (
+            <button
+              type="button"
+              key={option}
+              onClick={() => setFocus(option)}
+              className={`text-left rounded border px-3 py-2 text-sm transition-colors ${
+                focus === option
+                  ? 'border-accent-green bg-accent-green/10 text-base-text'
+                  : 'border-base-border bg-base-black/20 text-base-subtext hover:border-base-muted'
+              }`}
+            >
+              {option}
+            </button>
+          ))}
+        </div>
 
         <textarea
           className="input-field h-24 resize-none w-full mb-4"
-          placeholder={nextDomain.focusPrompt}
+          placeholder={`Or write your own. ${nextDomain.focusPrompt}`}
           value={focus}
           onChange={(e) => setFocus(e.target.value)}
         />

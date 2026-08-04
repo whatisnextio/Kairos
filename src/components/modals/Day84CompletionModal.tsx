@@ -1,7 +1,7 @@
 import Button from '@/components/common/Button';
 import { useCycleReflection, useMarkReflectionViewed } from '@/hooks/useCycleReflection';
 import { useAppStore } from '@/store/useAppStore';
-import { DOMAINS } from '@/types';
+import { KAIROS_CYCLE_LENGTH_DAYS, getAvailableDomains } from '@/types';
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
@@ -10,10 +10,6 @@ interface Props {
 }
 
 type Step = 'intro' | 'loading' | 'reflection' | 'your_words' | 'celebrate';
-
-const DOMAIN_COLOURS: Record<string, string> = Object.fromEntries(
-  DOMAINS.map((d) => [d.type, d.colour]),
-);
 
 function PulsingDots() {
   return (
@@ -31,7 +27,7 @@ function PulsingDots() {
 
 export default function Day84CompletionModal({ onClose }: Props) {
   const navigate = useNavigate();
-  const { completeCycle, profile, currentCycle, setNextCycleIntention } = useAppStore();
+  const { authUser, completeCycle, profile, currentCycle, setNextCycleIntention } = useAppStore();
   const [step, setStep] = useState<Step>('intro');
   const [reflection, setReflection] = useState('');
   const [saving, setSaving] = useState(false);
@@ -45,6 +41,10 @@ export default function Day84CompletionModal({ onClose }: Props) {
   const { mutate: markViewed } = useMarkReflectionViewed();
 
   const isBrotherhood = profile?.tier === 'brotherhood';
+  const availableDomains = getAvailableDomains(authUser?.email);
+  const domainColours: Record<string, string> = Object.fromEntries(
+    availableDomains.map((d) => [d.type, d.colour]),
+  );
 
   async function handleComplete() {
     setSaving(true);
@@ -92,20 +92,21 @@ export default function Day84CompletionModal({ onClose }: Props) {
               id="day84-modal-title"
               className="font-heading text-4xl font-bold text-base-text mb-4 tracking-wide leading-none"
             >
-              365 days.
+              {KAIROS_CYCLE_LENGTH_DAYS} days.
               <br />
               You showed up.
             </h2>
             <p className="text-base-subtext text-sm leading-relaxed mb-4">
               That's{' '}
               {currentCycle?.totalXpEarned ? `${currentCycle.totalXpEarned} XP earned and` : ''} one
-              full campaign of the KAIROS framework completed. Most men never finish what they start.
-              You did.
+              full campaign of the KAIROS framework completed. Most men never finish what they
+              start. You did.
             </p>
             {isBrotherhood ? (
               <>
                 <p className="text-base-subtext text-sm leading-relaxed mb-8">
-                  We've built your campaign reflection from 365 days of data. It's ready.
+                  We've built your campaign reflection from {KAIROS_CYCLE_LENGTH_DAYS} days of data.
+                  It's ready.
                 </p>
                 <Button onClick={handleGetReflection} className="w-full mb-3">
                   See my reflection
@@ -134,7 +135,8 @@ export default function Day84CompletionModal({ onClose }: Props) {
               Building your reflection
             </p>
             <p className="text-base-subtext text-sm mb-2">
-              365 days of data. Eight domains. Five phases.
+              {KAIROS_CYCLE_LENGTH_DAYS} days of data. {availableDomains.length} domains. Six
+              phases.
             </p>
             <p className="text-base-muted text-xs mb-4">This takes a few seconds.</p>
             <PulsingDots />
@@ -161,13 +163,13 @@ export default function Day84CompletionModal({ onClose }: Props) {
 
             {/* Domain callouts */}
             <div className="flex flex-col gap-2 mb-6">
-              {DOMAINS.map((d) => {
+              {availableDomains.map((d) => {
                 const callout = aiReflection.domain_callouts?.[d.type];
                 if (!callout) return null;
                 return (
                   <div key={d.type} className="flex gap-2.5 items-start">
                     <span
-                      className={`font-heading font-bold text-xs tracking-widest uppercase mt-0.5 shrink-0 w-16 ${DOMAIN_COLOURS[d.type]}`}
+                      className={`font-heading font-bold text-xs tracking-widest uppercase mt-0.5 shrink-0 w-16 ${domainColours[d.type]}`}
                     >
                       {d.label}
                     </span>
@@ -224,7 +226,8 @@ export default function Day84CompletionModal({ onClose }: Props) {
               What shifted in you?
             </h2>
             <p className="text-base-subtext text-sm mb-4">
-              The man who started 365 days ago. The man who just finished. What's the gap?
+              The man who started {KAIROS_CYCLE_LENGTH_DAYS} days ago. The man who just finished.
+              What's the gap?
             </p>
             <textarea
               className="input-field h-36 resize-none w-full mb-2 text-sm"
