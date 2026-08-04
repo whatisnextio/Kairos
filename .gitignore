@@ -6,6 +6,7 @@ dist/
 *.log
 .vite/
 test-results/
+.lighthouseci/
 supabase/.temp/
 
 # Private session files — never commit

@@ -285,7 +285,7 @@ export default function OnboardingFlow() {
   };
 
   return (
-    <div className="min-h-screen bg-base-black px-4 py-6 flex items-center justify-center">
+    <main className="min-h-screen bg-base-black px-4 py-6 flex items-center justify-center">
       <div className="w-full max-w-md">
         <div className="mb-6 flex items-center justify-between">
           <p className="font-heading text-xs text-base-muted tracking-widest uppercase">12K</p>
@@ -461,7 +461,7 @@ export default function OnboardingFlow() {
           </section>
         )}
       </div>
-    </div>
+    </main>
   );
 }
 
