@@ -99,15 +99,17 @@ export const PRODUCT_POSITIONING = {
   appName: '12K',
   systemName: 'Kairos',
   headline: 'Your 12-week transformation. Powered by the Kairos System.',
-  what: '12K is a guided 84-day operating system for turning daily action into visible change.',
+  what: '12K is a guided 12-week / 84-day operating system for turning daily action into visible change.',
   kairosMeaning:
     'Kairos is Greek for the right or opportune moment: the point where attention becomes action.',
-  why: 'It gives you the next useful move, a check-in, and a recovery path when the day slips.',
+  why: 'It gives you a clear goal, prompts and cues, one check-in, feedback, and a recovery path when the day slips.',
   audience: 'Built for adults who need a simple guided reset, not a gender-specific programme.',
   designedFor:
     'Designed for real life: inconsistent energy, busy work, family pressure, missed days, and the need to rebuild without shame.',
   categoryIntro:
     'Start with Body, Fuel, Self, and Connection. Add private sub-routes when your life needs them.',
+  proofLoop:
+    'Choose one useful move, do the smallest honest version, check in, recover quickly, and review the flywheel weekly.',
 } as const;
 
 export interface DomainConfig {

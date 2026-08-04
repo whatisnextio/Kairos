@@ -354,11 +354,11 @@ export default function OnboardingFlow() {
               Start your 12-week reset.
             </h1>
             <p className="text-base-subtext text-sm leading-relaxed mb-4">
-              12K is an 84-day reset powered by Kairos. {PRODUCT_POSITIONING.kairosMeaning}
+              12K means 12 weeks powered by Kairos. It is not 12 steps.{' '}
+              {PRODUCT_POSITIONING.kairosMeaning}
             </p>
             <p className="text-base-subtext text-sm leading-relaxed mb-5">
-              The daily loop is simple: choose one useful move, do the smallest honest version,
-              check in, and recover quickly when the day slips.
+              {PRODUCT_POSITIONING.proofLoop}
             </p>
             <p className="text-base-muted text-xs leading-relaxed mb-5">
               {PRODUCT_POSITIONING.audience}

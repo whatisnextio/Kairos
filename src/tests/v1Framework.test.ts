@@ -109,14 +109,16 @@ describe('V1 acceptance framework', () => {
 
   it('keeps onboarding and help positioning aligned to the category contract', () => {
     expect(PRODUCT_POSITIONING.headline).toContain('12-week transformation');
-    expect(PRODUCT_POSITIONING.what).toContain('guided 84-day operating system');
+    expect(PRODUCT_POSITIONING.what).toContain('guided 12-week / 84-day operating system');
     expect(PRODUCT_POSITIONING.kairosMeaning).toContain('Greek');
     expect(PRODUCT_POSITIONING.kairosMeaning).toContain('opportune moment');
     expect(PRODUCT_POSITIONING.kairosMeaning).not.toMatch(/latin|implement/i);
     expect(PRODUCT_POSITIONING.audience).toContain('not a gender-specific programme');
     expect(PRODUCT_POSITIONING.audience).not.toMatch(/\bmen\b|\bman\b|male/i);
+    expect(PRODUCT_POSITIONING.why).toContain('prompts and cues');
     expect(PRODUCT_POSITIONING.why).toContain('recovery path');
     expect(PRODUCT_POSITIONING.categoryIntro).toContain('Body, Fuel, Self, and Connection');
+    expect(PRODUCT_POSITIONING.proofLoop).toContain('smallest honest version');
   });
 
   it('keeps identity anchors distinct and plain-English', () => {

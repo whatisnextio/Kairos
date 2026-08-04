@@ -9,7 +9,9 @@ describe('brand and help copy contract', () => {
     expect(questions).toEqual(
       expect.arrayContaining([
         'What is 12K?',
+        'What does 12K stand for?',
         'What is the Kairos system?',
+        'What research is it based on?',
         'Why Self, not Mind?',
         'What does Connection include?',
         'What does reset do?',
@@ -22,7 +24,22 @@ describe('brand and help copy contract', () => {
     );
     expect(kairosAnswer).toContain('Greek');
     expect(kairosAnswer).toContain('Kickoff, Anchor, Increase, Rhythm, Own, and Sustain');
+    expect(kairosAnswer).toContain('Choose one useful move');
     expect(kairosAnswer).not.toMatch(/latin|implement/i);
+  });
+
+  it('explains 12K without implying a 12-step programme or guaranteed outcome', () => {
+    const standForAnswer = HELP_FAQS.find((item) => item.q === 'What does 12K stand for?')?.a;
+    const researchAnswer = HELP_FAQS.find((item) => item.q === 'What research is it based on?')?.a;
+
+    expect(standForAnswer).toContain('12 weeks powered by Kairos');
+    expect(standForAnswer).toContain('not 12 steps');
+    expect(standForAnswer).toContain('six-phase, 84-day reset');
+    expect(researchAnswer).toContain('clear goals');
+    expect(researchAnswer).toContain('prompts and cues');
+    expect(researchAnswer).toContain('self-monitoring');
+    expect(researchAnswer).toContain('not medical advice');
+    expect(`${standForAnswer} ${researchAnswer}`).not.toMatch(/guarantee|cure|diagnos/i);
   });
 
   it('keeps subscription copy aligned with current V1 capability', () => {

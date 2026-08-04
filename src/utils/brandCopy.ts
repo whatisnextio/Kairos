@@ -11,6 +11,10 @@ export const HELP_FAQS = [
     a: PRODUCT_POSITIONING.what,
   },
   {
+    q: 'What does 12K stand for?',
+    a: '12K means 12 weeks powered by Kairos. It is not 12 steps. It is a six-phase, 84-day reset across Body, Fuel, Self, and Connection.',
+  },
+  {
     q: 'Why will it help me?',
     a: PRODUCT_POSITIONING.why,
   },
@@ -24,7 +28,11 @@ export const HELP_FAQS = [
   },
   {
     q: 'What is the Kairos system?',
-    a: `${PRODUCT_POSITIONING.kairosMeaning} The system uses six 14-day phases: Kickoff, Anchor, Increase, Rhythm, Own, and Sustain.`,
+    a: `${PRODUCT_POSITIONING.kairosMeaning} The system uses six 14-day phases: Kickoff, Anchor, Increase, Rhythm, Own, and Sustain. The daily loop is: ${PRODUCT_POSITIONING.proofLoop}`,
+  },
+  {
+    q: 'What research is it based on?',
+    a: 'Kairos uses established behaviour-change ingredients: clear goals, prompts and cues, self-monitoring, feedback, repetition, rewards, and recovery after lapses. It is support, not medical advice.',
   },
   {
     q: 'What are the core domains?',
