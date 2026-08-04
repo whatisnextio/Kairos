@@ -1,5 +1,6 @@
 import { supabase } from '@/services/supabaseClient';
 import { useAppStore } from '@/store/useAppStore';
+import { toLocalIsoDate } from '@/utils/v1Framework';
 import type {
   CheckInStatus,
   CustomRoute,
@@ -137,7 +138,7 @@ export function useBootstrap() {
     bootstrapped.current = authUser.id;
     setIsBootstrapLoading(true);
 
-    const today = new Date().toISOString().split('T')[0];
+    const today = toLocalIsoDate(new Date());
 
     // Clear stale check-ins from a previous day (persisted in localStorage)
     const anyCheckIn = Object.values(todayCheckIns)[0];

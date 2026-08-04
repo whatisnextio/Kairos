@@ -24,6 +24,22 @@ import { getDayInCycle } from '@/utils/kairos';
 import { type ChangeEvent, useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 
+function resizeImageDataUrl(dataUrl: string, maxPx = 400, quality = 0.72): Promise<string> {
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.onload = () => {
+      const ratio = Math.min(maxPx / img.width, maxPx / img.height, 1);
+      const canvas = document.createElement('canvas');
+      canvas.width = Math.round(img.width * ratio);
+      canvas.height = Math.round(img.height * ratio);
+      canvas.getContext('2d')?.drawImage(img, 0, 0, canvas.width, canvas.height);
+      resolve(canvas.toDataURL('image/jpeg', quality));
+    };
+    img.onerror = () => resolve(dataUrl);
+    img.src = dataUrl;
+  });
+}
+
 const SAVE_PUSH_ENDPOINT = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/save-push-subscription`;
 const DELETE_ACCOUNT_ENDPOINT = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/delete-account`;
 const STRIPE_PORTAL_URL = import.meta.env.VITE_STRIPE_PORTAL_URL;
@@ -306,8 +322,11 @@ export default function YouScreen() {
       const file = event.target.files?.[0];
       if (!file) return;
       const reader = new FileReader();
-      reader.onload = () => {
-        if (typeof reader.result === 'string') setProfileImageDataUrl(reader.result);
+      reader.onload = async () => {
+        if (typeof reader.result === 'string') {
+          const resized = await resizeImageDataUrl(reader.result);
+          setProfileImageDataUrl(resized);
+        }
       };
       reader.readAsDataURL(file);
       event.target.value = '';
@@ -406,6 +425,9 @@ export default function YouScreen() {
                 onChange={handleProfileImage}
               />
             </label>
+            <p className="text-base-muted text-[10px] text-center mt-1 leading-tight">
+              This browser only
+            </p>
           </div>
           <div className="min-w-0 flex-1">
             <p className="font-heading text-lg font-bold text-base-text">{profile.displayName}</p>

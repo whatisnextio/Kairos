@@ -173,7 +173,7 @@ interface AppState {
   todayCustomRouteCheckIns: Record<string, CustomRouteCheckIn>;
   streaks: Partial<Record<DomainType, UserStreak>>;
   // Persisted history for local streak computation (free tier)
-  // Key: ISO date string. Kept to 90 days max.
+  // Key: ISO date string. Pruned to 90 days; paid history is fetched from Supabase on bootstrap.
   checkInHistory: Record<string, Partial<Record<DomainType, CheckInStatus>>>;
   customRouteCheckInHistory: Record<string, Record<string, CheckInStatus>>;
   checkInNoteOverrides: Record<string, CheckInNoteOverride>;
@@ -483,7 +483,7 @@ export const useAppStore = create<AppState & AppActions>()(
           // Update history (keep 90 days)
           const history = { ...state.checkInHistory };
           history[today] = { ...(history[today] ?? {}), [domainType]: nextStatus };
-          const cutoff = toLocalIsoDate(new Date(Date.now() - 400 * 86_400_000));
+          const cutoff = toLocalIsoDate(new Date(Date.now() - 90 * 86_400_000));
           for (const date of Object.keys(history)) {
             if (date < cutoff) delete history[date];
           }

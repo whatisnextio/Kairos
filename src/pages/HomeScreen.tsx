@@ -78,6 +78,7 @@ let vibeCheckShownThisSession = false;
 let domainSetupShownThisSession = false;
 let phaseTransitionShownThisSession = false;
 let accountabilitySuppressedThisSession = false;
+let catchUpSuppressedThisSession = false;
 
 export default function HomeScreen() {
   const navigate = useNavigate();
@@ -110,6 +111,7 @@ export default function HomeScreen() {
   const [showDomainSetup, setShowDomainSetup] = useState(false);
   const [showPhaseTransition, setShowPhaseTransition] = useState(false);
   const [showAccountabilityPrompt, setShowAccountabilityPrompt] = useState(false);
+  const [catchUpVisible, setCatchUpVisible] = useState(!catchUpSuppressedThisSession);
   const [selectedDomainType, setSelectedDomainType] = useState<DomainType | null>(null);
 
   const dayInCycle = profile && currentCycle ? getDayInCycle(currentCycle.startDate) : 1;
@@ -209,6 +211,8 @@ export default function HomeScreen() {
       void setCustomRouteCheckIn(routeId, 'Partial');
     } else if (current === 'Partial') {
       void setCustomRouteCheckIn(routeId, 'Missed');
+    } else if (current === 'Missed') {
+      void setCustomRouteCheckIn(routeId, 'Pending');
     } else {
       void setCustomRouteCheckIn(routeId, 'Done');
     }
@@ -383,7 +387,7 @@ export default function HomeScreen() {
           </Card>
         )}
 
-        {catchUpPath && (
+        {catchUpPath && catchUpVisible && (
           <Card className="border-status-partial/50 bg-status-partial/5">
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0">
@@ -400,15 +404,29 @@ export default function HomeScreen() {
                   .
                 </p>
               </div>
-              <Button
-                size="sm"
-                variant="ghost"
-                className="shrink-0"
-                aria-label={`Mark ${catchUpPath.domainLabel} Partial`}
-                onClick={() => setDailyCheckIn(catchUpPath.domainType, 'Partial')}
-              >
-                Mark Partial
-              </Button>
+              <div className="flex items-center gap-1 shrink-0">
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  aria-label={`Mark ${catchUpPath.domainLabel} Partial`}
+                  onClick={() => setDailyCheckIn(catchUpPath.domainType, 'Partial')}
+                >
+                  Mark Partial
+                </Button>
+                <button
+                  type="button"
+                  aria-label="Dismiss"
+                  className="flex items-center justify-center w-11 h-11 text-base-muted hover:text-base-text transition-colors rounded"
+                  onClick={() => {
+                    catchUpSuppressedThisSession = true;
+                    setCatchUpVisible(false);
+                  }}
+                >
+                  <svg aria-hidden="true" width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
+                    <path d="M2 2l10 10M12 2L2 12" />
+                  </svg>
+                </button>
+              </div>
             </div>
             <p className="text-base-muted text-xs mt-3">
               Partial means the smallest useful version was completed.
@@ -441,13 +459,15 @@ export default function HomeScreen() {
               <button
                 type="button"
                 aria-label="Dismiss accountability prompt"
-                className="text-base-muted hover:text-base-text transition-colors text-lg leading-none px-1"
+                className="flex items-center justify-center w-11 h-11 shrink-0 text-base-muted hover:text-base-text transition-colors rounded"
                 onClick={() => {
                   accountabilitySuppressedThisSession = true;
                   setShowAccountabilityPrompt(false);
                 }}
               >
-                x
+                <svg aria-hidden="true" width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
+                  <path d="M2 2l10 10M12 2L2 12" />
+                </svg>
               </button>
             </div>
             {accountabilityTarget && (
@@ -585,6 +605,11 @@ export default function HomeScreen() {
                       {!focus && (
                         <p className="text-base-muted text-xs mt-1">
                           Check in now, or open details to set tomorrow.
+                        </p>
+                      )}
+                      {status === 'Protected' && (
+                        <p className="text-base-muted text-xs mt-1">
+                          Streak protected — counts as a recovery day.
                         </p>
                       )}
                     </button>
