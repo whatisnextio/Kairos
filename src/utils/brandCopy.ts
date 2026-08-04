@@ -84,11 +84,11 @@ export const SUBSCRIPTION_COPY = {
   priceSuffix: 'per month when checkout is live.',
   paidFeatures: [
     'Daily AI nudge, based on your 12K context',
-    'Custom routes under Body, Fuel, Self, or Connection',
+    'Personal routes under Body, Fuel, Self, or Connection',
     'Cloud sync for daily actions and notes',
     'High-accountability PWA reminders',
     'Full Kairos Points, streak, badge, and history depth',
-    'Anonymous squad signals when matched',
+    'Anonymous squad matching and weekly pulse when matched',
     'Day 84 cycle reflection',
   ],
   lifechangerFeatures: [
@@ -106,6 +106,19 @@ export const SUBSCRIPTION_COPY = {
   ],
   lifechanger:
     'Lifechanger adds deeper personalisation without becoming open-ended chat or making diagnostic claims.',
+} as const;
+
+export const FEATURE_EXPLANATIONS = {
+  personalRoutes:
+    'Add work, money, photography, family, or any private focus as a route under one core domain. The framework stays Body, Fuel, Self, and Connection; your routes make it personal.',
+  personalRoutesAction:
+    'After you add a route, it can appear in Home, Progress, and Improve as its own proof line.',
+  squad:
+    'Squad is anonymous accountability, not chat. The match action places you with people in the same Kairos phase and shows a weekly pulse when one is available.',
+  notifications:
+    'Notifications are opt-in PWA prompts. High accountability repeats discreet check-in prompts inside your chosen hours.',
+  lifechanger:
+    'Lifechanger is the deeper support tier. It adds pattern-aware AI only when there is enough history; otherwise it behaves like Kairos Plus.',
 } as const;
 
 export const PRIVACY_COPY = {

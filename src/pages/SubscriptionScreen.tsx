@@ -3,7 +3,7 @@ import Card from '@/components/common/Card';
 import { useAppStore } from '@/store/useAppStore';
 import type { SubscriptionTier } from '@/types';
 import { buildStripeCheckoutUrl } from '@/utils/billing';
-import { SUBSCRIPTION_COPY } from '@/utils/brandCopy';
+import { FEATURE_EXPLANATIONS, SUBSCRIPTION_COPY } from '@/utils/brandCopy';
 import { hasBrotherhoodAccess } from '@/utils/entitlements';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -88,6 +88,13 @@ export default function SubscriptionScreen() {
             </span>
           )}
         </div>
+        <div className="mt-4 rounded border border-base-border bg-base-black/20 p-3">
+          <p className="font-heading text-xs text-base-subtext tracking-widest uppercase mb-1">
+            What unlocks
+          </p>
+          <p className="text-base-subtext text-xs mb-2">{FEATURE_EXPLANATIONS.personalRoutes}</p>
+          <p className="text-base-subtext text-xs">{FEATURE_EXPLANATIONS.squad}</p>
+        </div>
 
         <ul className="mt-4 flex flex-col gap-2">
           {SUBSCRIPTION_COPY.paidFeatures.map((feature) => (
@@ -125,6 +132,7 @@ export default function SubscriptionScreen() {
           )}
         </div>
         <p className="text-base-subtext text-sm mt-4">{SUBSCRIPTION_COPY.lifechanger}</p>
+        <p className="text-base-muted text-xs mt-2">{FEATURE_EXPLANATIONS.lifechanger}</p>
         <ul className="mt-4 flex flex-col gap-2">
           {SUBSCRIPTION_COPY.lifechangerFeatures.map((feature) => (
             <li key={feature} className="flex items-center gap-2 text-sm text-base-text">
@@ -155,6 +163,10 @@ export default function SubscriptionScreen() {
       <Card>
         <p className="text-base-subtext text-xs font-heading tracking-widest uppercase mb-2">
           Free tier
+        </p>
+        <p className="text-base-subtext text-sm mb-3">
+          Free is local-first: it lets you run the core four-domain loop on this device before
+          choosing paid sync and accountability.
         </p>
         <ul className="flex flex-col gap-2">
           {SUBSCRIPTION_COPY.freeFeatures.map((feature) => (
