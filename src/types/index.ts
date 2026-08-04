@@ -51,6 +51,7 @@ export interface DomainConfig {
   label: string;
   colour: string; // tailwind text colour class
   focusPrompt: string;
+  description: string;
 }
 
 export const DOMAINS: DomainConfig[] = [
@@ -59,48 +60,56 @@ export const DOMAINS: DomainConfig[] = [
     label: 'Body',
     colour: 'text-domain-body',
     focusPrompt: 'Walk daily. Train 4x week. Knee first, then run.',
+    description: 'Physical performance. Gym, running, recovery. The engine everything else runs on.',
   },
   {
     type: 'FUEL',
     label: 'Fuel',
     colour: 'text-domain-fuel',
     focusPrompt: 'Supplements AM. No alcohol. No bread. Water first.',
+    description: 'What goes in determines what comes out. Nutrition, sleep, supplementation.',
   },
   {
     type: 'METIME',
     label: 'Me Time',
     colour: 'text-domain-metime',
     focusPrompt: 'Scheduled. Private. Non-negotiable.',
+    description: 'Your edge. Private. Scheduled. Non-negotiable.',
   },
   {
     type: 'USTIME',
     label: 'Us Time',
     colour: 'text-domain-ustime',
     focusPrompt: 'Morning warmth. Intentional. Her pace.',
+    description: 'Connection and presence. Intentional. Her pace.',
   },
   {
     type: 'SHOT',
     label: 'Shot',
     colour: 'text-domain-shot',
     focusPrompt: '10–3 model. Pipeline. Salary by December.',
+    description: 'Shot Clubhouse. Revenue, pipeline, creative output. The business.',
   },
   {
     type: 'LENS',
     label: 'Lens',
     colour: 'text-domain-lens',
     focusPrompt: 'Dawn shoot monthly. Weekly out. Competition entered.',
+    description: 'Photography and vision. Dawn shoots, competitions, the creative eye.',
   },
   {
     type: 'NEST',
     label: 'Nest',
     colour: 'text-domain-nest',
     focusPrompt: 'Eldest shoulder-to-shoulder. Youngest football or games.',
+    description: 'Home and family. The environment you build and protect.',
   },
   {
     type: 'ROOTS',
     label: 'Roots',
     colour: 'text-domain-roots',
     focusPrompt: 'Debt clear. Capital building. Portugal fund.',
+    description: 'Financial foundation. Debt cleared. Capital building. The long game.',
   },
 ];
 
@@ -123,28 +132,59 @@ export interface IdentityAnchor {
   id: IdentityAnchorId;
   name: string;
   description: string;
+  tooltip: string;
 }
 
 export const IDENTITY_ANCHORS: IdentityAnchor[] = [
-  { id: 'provider', name: 'The Provider', description: 'You show up. Every day. No excuses.' },
+  {
+    id: 'provider',
+    name: 'The Provider',
+    description: 'You show up. Every day. No excuses.',
+    tooltip:
+      'You carry it so others do not have to. Money handled. Environment secured. Promises kept. Whether anyone notices or not, you are the reason things hold together. This identity demands consistency, not brilliance.',
+  },
   {
     id: 'builder',
     name: 'The Builder',
     description: 'You make things real that others only imagine.',
+    tooltip:
+      'You have no tolerance for ideas that stay ideas. Systems get built. Habits get engineered. Businesses, physiques, relationships. If it can be built, you build it. This identity demands execution over inspiration.',
   },
   {
     id: 'guardian',
     name: 'The Guardian',
     description: 'You protect what matters. Family, health, standards.',
+    tooltip:
+      'You draw a line. Health, family, standards. Things on your watch do not slide. The Guardian demands presence before performance. You cannot protect what you are not paying attention to.',
   },
-  { id: 'leader', name: 'The Leader', description: 'Others follow because you go first.' },
+  {
+    id: 'leader',
+    name: 'The Leader',
+    description: 'Others follow because you go first.',
+    tooltip:
+      'Leadership is a behaviour, not a title. You move first, decide fast, own outcomes. People around you raise their standard because yours is unmistakable. This identity demands courage daily.',
+  },
   {
     id: 'mentor',
     name: 'The Mentor',
     description: "Your hard-won lessons become someone else's shortcut.",
+    tooltip:
+      "You have earned the scars. Now the point is to make someone else's path shorter. Knowledge shared. Frameworks given away. The Mentor demands generosity with what you know.",
   },
-  { id: 'creator', name: 'The Creator', description: 'You build worlds with your hands or mind.' },
-  { id: 'custom', name: 'Custom', description: 'Define your own.' },
+  {
+    id: 'creator',
+    name: 'The Creator',
+    description: 'You build worlds with your hands or mind.',
+    tooltip:
+      'Blank pages do not intimidate you. Code, muscle, words, businesses. You produce. The Creator demands output over optimisation. Ship it. Refine it. Ship again.',
+  },
+  {
+    id: 'custom',
+    name: 'Custom',
+    description: 'Define your own.',
+    tooltip:
+      'You know who you are becoming better than any label can capture. Name your identity, write your own rules, hold yourself to them for 365 days.',
+  },
 ];
 
 // ─── Profile ─────────────────────────────────────────────────────────────────
