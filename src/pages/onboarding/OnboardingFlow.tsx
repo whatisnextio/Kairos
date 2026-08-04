@@ -1,8 +1,9 @@
 import Button from '@/components/common/Button';
 import { supabase } from '@/services/supabaseClient';
 import { useAppStore } from '@/store/useAppStore';
-import type { DailyCheckIn, DomainType, IdentityAnchorId } from '@/types';
+import type { DailyCheckIn, DomainType, IdentityAnchorId, Profile } from '@/types';
 import { DOMAINS, IDENTITY_ANCHORS } from '@/types';
+import { getComplimentaryProfileFields } from '@/utils/entitlements';
 import { useState } from 'react';
 
 type Step = 'welcome' | 'anchor' | 'domain' | 'action' | 'win' | 'celebrate';
@@ -40,6 +41,7 @@ export default function OnboardingFlow() {
     } = await supabase.auth.getUser();
     const dobFromAuth: string = fullUser?.user_metadata?.date_of_birth ?? today;
 
+    const complimentaryFields = getComplimentaryProfileFields(authUser.email);
     const { data: profile, error: profileErr } = await supabase
       .from('profiles')
       .upsert({
@@ -50,6 +52,7 @@ export default function OnboardingFlow() {
         tier: 'free',
         xp: 10,
         date_of_birth: dobFromAuth,
+        ...complimentaryFields,
       })
       .select()
       .single();
@@ -130,16 +133,16 @@ export default function OnboardingFlow() {
       displayName: displayName || 'Anonymous',
       identityAnchorId: anchorId,
       customAnchorName: anchorId === 'custom' ? customAnchor : undefined,
-      tier: 'free',
+      tier: profile.tier as Profile['tier'],
       xp: 10,
       currentKairosCycleId: cycle.id,
       dateOfBirth: dobFromAuth,
       squadId: null,
-      stripeCustomerId: null,
-      stripeSubscriptionId: null,
-      subscriptionStatus: null,
-      cancelAtPeriodEnd: false,
-      currentPeriodEnd: null,
+      stripeCustomerId: profile.stripe_customer_id as string | null,
+      stripeSubscriptionId: profile.stripe_subscription_id as string | null,
+      subscriptionStatus: profile.subscription_status as string | null,
+      cancelAtPeriodEnd: (profile.cancel_at_period_end as boolean | null) ?? false,
+      currentPeriodEnd: profile.current_period_end as string | null,
       createdAt: profile.created_at,
       updatedAt: profile.updated_at,
     });

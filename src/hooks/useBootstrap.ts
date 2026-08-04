@@ -8,6 +8,11 @@ import type {
   Profile,
   UserDomainFocus,
 } from '@/types';
+import {
+  applyComplimentaryBrotherhood,
+  getComplimentaryProfileFields,
+  hasComplimentaryBrotherhood,
+} from '@/utils/entitlements';
 import { useEffect, useRef } from 'react';
 
 function mapProfile(row: Record<string, unknown>): Profile {
@@ -111,7 +116,25 @@ export function useBootstrap() {
 
       if (!profileRow) return;
 
-      const mapped = mapProfile(profileRow as Record<string, unknown>);
+      let mapped = mapProfile(profileRow as Record<string, unknown>);
+      if (
+        hasComplimentaryBrotherhood(authUser?.email) &&
+        (mapped.tier !== 'brotherhood' || mapped.subscriptionStatus !== 'active')
+      ) {
+        const { data: updatedProfileRow, error: entitlementErr } = await supabase
+          .from('profiles')
+          .update(getComplimentaryProfileFields(authUser?.email))
+          .eq('id', authUser?.id)
+          .select('*')
+          .single();
+
+        if (updatedProfileRow) {
+          mapped = mapProfile(updatedProfileRow as Record<string, unknown>);
+        } else {
+          console.error('Complimentary entitlement sync failed:', entitlementErr?.message);
+          mapped = applyComplimentaryBrotherhood(authUser?.email, mapped);
+        }
+      }
       // Free users never sync XP to Supabase. Preserve locally accumulated XP
       // so logins don't reset it back to the Supabase default.
       const localProfile = useAppStore.getState().profile;
