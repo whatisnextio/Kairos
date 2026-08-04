@@ -17,6 +17,7 @@ import {
   getAvailableDomains,
   isOwnerAccount,
 } from '@/types';
+import { FEATURE_EXPLANATIONS } from '@/utils/brandCopy';
 import { getSubscriptionTierLabel, hasBrotherhoodAccess } from '@/utils/entitlements';
 import { deriveEarnedBadges, formatKairosPoints, getLevelForXp } from '@/utils/gamification';
 import { getDayInCycle } from '@/utils/kairos';
@@ -426,11 +427,13 @@ export default function YouScreen() {
         </div>
       </Card>
 
-      {/* Custom routes */}
+      {/* Personal routes */}
       <Card>
         <p className="text-base-subtext text-xs font-heading tracking-widest uppercase mb-3">
-          Custom routes
+          Personal routes
         </p>
+        <p className="text-base-subtext text-sm mb-2">{FEATURE_EXPLANATIONS.personalRoutes}</p>
+        <p className="text-base-muted text-xs mb-4">{FEATURE_EXPLANATIONS.personalRoutesAction}</p>
         {ownerAccount && hasPaidAccess && (
           <div className="rounded border border-accent-green/30 bg-accent-green/5 p-3 mb-4">
             <div className="flex items-start justify-between gap-3">
@@ -496,7 +499,7 @@ export default function YouScreen() {
         {!hasPaidAccess ? (
           <div className="rounded border border-status-partial/40 bg-status-partial/5 p-3">
             <p className="text-base-subtext text-sm mb-3">
-              Personal routes sit under the core framework and sync across devices on paid plans.
+              Kairos Plus unlocks personal routes, cloud sync, and Improve options for those routes.
             </p>
             <Link to="/subscription">
               <Button size="sm">Unlock personal routes</Button>
@@ -582,6 +585,7 @@ export default function YouScreen() {
           <p className="text-base-subtext text-xs font-heading tracking-widest uppercase mb-2">
             Squad
           </p>
+          <p className="text-base-subtext text-sm mb-3">{FEATURE_EXPLANATIONS.squad}</p>
           {profile.squadId ? (
             <>
               {squadPulse ? (
@@ -592,16 +596,19 @@ export default function YouScreen() {
                   <p className="text-base-text text-sm italic">{squadPulse.message}</p>
                 </>
               ) : (
-                <p className="text-base-subtext text-sm">Squad pulse drops on Sundays.</p>
+                <p className="text-base-subtext text-sm">
+                  You are matched. The weekly pulse appears after the next pulse run.
+                </p>
               )}
             </>
           ) : (
             <>
               <p className="text-base-subtext text-sm mb-3">
-                You haven't been matched to a squad yet.
+                You have not been matched yet. Tapping below creates or joins an anonymous phase
+                squad.
               </p>
               <Button size="sm" onClick={() => matchToSquad()} disabled={isMatching}>
-                {isMatching ? 'Matching...' : 'Find my squad'}
+                {isMatching ? 'Matching...' : 'Find anonymous squad'}
               </Button>
             </>
           )}
@@ -706,9 +713,7 @@ export default function YouScreen() {
             </p>
           ) : (
             <>
-              <p className="text-base-subtext text-sm mb-4">
-                Direct prompts, quiet copy, and no sensitive labels on the lock screen.
-              </p>
+              <p className="text-base-subtext text-sm mb-4">{FEATURE_EXPLANATIONS.notifications}</p>
               <div className="flex flex-col gap-3">
                 <label className="flex items-center justify-between gap-3 text-sm text-base-text">
                   <span>Reminders</span>

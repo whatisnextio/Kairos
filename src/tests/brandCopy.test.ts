@@ -1,4 +1,4 @@
-import { HELP_FAQS, SUBSCRIPTION_COPY, TERMS_COPY } from '@/utils/brandCopy';
+import { FEATURE_EXPLANATIONS, HELP_FAQS, SUBSCRIPTION_COPY, TERMS_COPY } from '@/utils/brandCopy';
 import { describe, expect, it } from 'vitest';
 
 describe('brand and help copy contract', () => {
@@ -39,9 +39,10 @@ describe('brand and help copy contract', () => {
     expect(SUBSCRIPTION_COPY.paidFeatures).toEqual(
       expect.arrayContaining([
         'Daily AI nudge, based on your 12K context',
-        'Custom routes under Body, Fuel, Self, or Connection',
+        'Personal routes under Body, Fuel, Self, or Connection',
         'Cloud sync for daily actions and notes',
         'High-accountability PWA reminders',
+        'Anonymous squad matching and weekly pulse when matched',
         'Day 84 cycle reflection',
       ]),
     );
@@ -70,5 +71,16 @@ describe('brand and help copy contract', () => {
     expect(text).not.toMatch(/cancel anytime/i);
     expect(text).not.toMatch(/7-day refund/i);
     expect(text).toContain('when checkout is live');
+  });
+
+  it('explains paid features without vague coming-soon language', () => {
+    const featureCopy = Object.values(FEATURE_EXPLANATIONS).join(' ');
+
+    expect(FEATURE_EXPLANATIONS.personalRoutes).toContain('under one core domain');
+    expect(FEATURE_EXPLANATIONS.personalRoutesAction).toContain('Home, Progress, and Improve');
+    expect(FEATURE_EXPLANATIONS.squad).toContain('anonymous accountability');
+    expect(FEATURE_EXPLANATIONS.notifications).toContain('opt-in PWA prompts');
+    expect(FEATURE_EXPLANATIONS.lifechanger).toContain('when there is enough history');
+    expect(featureCopy).not.toMatch(/coming soon/i);
   });
 });
