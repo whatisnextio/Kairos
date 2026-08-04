@@ -82,7 +82,7 @@ export default function LoginPage() {
       id: DEV_USER_ID,
       displayName: 'Liam',
       identityAnchorId: 'builder',
-      tier: 'brotherhood',
+      tier: 'lifechanger',
       xp: XP_PER_CHECK_IN_DONE + XP_PER_CHECK_IN_PARTIAL,
       currentKairosCycleId: DEV_CYCLE_ID,
       dateOfBirth: '1984-01-01',

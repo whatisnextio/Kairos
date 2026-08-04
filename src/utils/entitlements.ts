@@ -1,6 +1,7 @@
 import { type Profile, SUBSCRIPTION_TIER_CONFIGS, type SubscriptionTier } from '@/types';
 
 const COMPLIMENTARY_BROTHERHOOD_EMAILS = new Set(['ldgmcdowell@gmail.com']);
+const COMPLIMENTARY_LIFECHANGER_EMAILS = new Set(['ldgmcdowell@gmail.com']);
 const PAID_TIERS = new Set<SubscriptionTier>(['brotherhood', 'lifechanger']);
 
 export function hasPaidAccess(tier: SubscriptionTier | null | undefined): boolean {
@@ -16,14 +17,20 @@ export function getSubscriptionTierLabel(tier: SubscriptionTier | null | undefin
 }
 
 export function hasComplimentaryBrotherhood(email: string | null | undefined): boolean {
-  return COMPLIMENTARY_BROTHERHOOD_EMAILS.has(email?.trim().toLowerCase() ?? '');
+  const normalisedEmail = email?.trim().toLowerCase() ?? '';
+  return (
+    COMPLIMENTARY_BROTHERHOOD_EMAILS.has(normalisedEmail) ||
+    COMPLIMENTARY_LIFECHANGER_EMAILS.has(normalisedEmail)
+  );
 }
 
 export function getComplimentaryProfileFields(email: string | null | undefined) {
   if (!hasComplimentaryBrotherhood(email)) return {};
 
   return {
-    tier: 'brotherhood',
+    tier: COMPLIMENTARY_LIFECHANGER_EMAILS.has(email?.trim().toLowerCase() ?? '')
+      ? 'lifechanger'
+      : 'brotherhood',
     subscription_status: 'active',
     cancel_at_period_end: false,
     current_period_end: null,
@@ -38,7 +45,9 @@ export function applyComplimentaryBrotherhood(
 
   return {
     ...profile,
-    tier: 'brotherhood',
+    tier: COMPLIMENTARY_LIFECHANGER_EMAILS.has(email?.trim().toLowerCase() ?? '')
+      ? 'lifechanger'
+      : 'brotherhood',
     subscriptionStatus: 'active',
     cancelAtPeriodEnd: false,
     currentPeriodEnd: null,

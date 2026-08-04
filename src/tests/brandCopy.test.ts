@@ -31,7 +31,14 @@ describe('brand and help copy contract', () => {
         'Day 84 cycle reflection',
       ]),
     );
-    expect(SUBSCRIPTION_COPY.lifechanger).toContain('inherits Brotherhood access');
+    expect(SUBSCRIPTION_COPY.lifechanger).toContain('deeper personalisation');
+    expect(SUBSCRIPTION_COPY.lifechangerFeatures).toEqual(
+      expect.arrayContaining([
+        'Everything in Brotherhood',
+        'Advanced AI pattern support when history is strong enough',
+        'Fallback to standard Kairos support when data is thin',
+      ]),
+    );
   });
 
   it('does not promise unsupported billing outcomes while checkout is blocked', () => {
