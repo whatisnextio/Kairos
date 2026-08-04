@@ -125,7 +125,7 @@ export function buildAccountabilityPrompt(ignoredCount: number): AccountabilityP
     return {
       level: 3,
       title: 'Evening reset',
-      body: 'Pick one open item and choose the honest status. Partial counts when you rescued a smaller version.',
+      body: 'Pick one open item and mark what actually happened. A smaller version still counts.',
       steps: [
         'Choose one open item.',
         'Mark Done, Partial, or Missed.',
@@ -146,7 +146,7 @@ export function buildAccountabilityPrompt(ignoredCount: number): AccountabilityP
   return {
     level: 1,
     title: 'Still open',
-    body: 'One item is still open. Choose the honest status when you are ready.',
+    body: 'One item still needs a check-in. Mark it when you are ready.',
     steps: ['Pick the easiest item.', 'Make the first mark.', 'Keep moving.'],
   };
 }

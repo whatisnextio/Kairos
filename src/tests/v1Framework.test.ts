@@ -165,7 +165,7 @@ describe('V1 acceptance framework', () => {
     expect(buildAccountabilityPrompt(2).level).toBe(3);
     expect(buildAccountabilityPrompt(1).body.toLowerCase()).not.toContain('ignored');
     expect(buildAccountabilityPrompt(2).title).toBe('Evening reset');
-    expect(buildAccountabilityPrompt(2).body).toContain('Partial counts');
+    expect(buildAccountabilityPrompt(2).body).toContain('A smaller version still counts');
     expect(buildAccountabilityPrompt(2).body).not.toContain('not another task');
     expect(buildAccountabilityPrompt(2).steps).toContain('Mark Done, Partial, or Missed.');
   });
