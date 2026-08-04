@@ -46,6 +46,8 @@ export default function App() {
     currentCycle,
     celebrationPending,
     notificationPreferences,
+    refreshOfflineSyncState,
+    flushPendingSync,
   } = useAppStore();
 
   useBootstrap();
@@ -74,6 +76,15 @@ export default function App() {
 
     return () => listener.subscription.unsubscribe();
   }, [setAuthUser]);
+
+  useEffect(() => {
+    if (!authUser) return;
+    refreshOfflineSyncState().catch(() => {});
+    flushPendingSync().catch(() => {});
+
+    window.addEventListener('online', flushPendingSync);
+    return () => window.removeEventListener('online', flushPendingSync);
+  }, [authUser, refreshOfflineSyncState, flushPendingSync]);
 
   // Schedule native notifications once the user is authenticated
   useEffect(() => {

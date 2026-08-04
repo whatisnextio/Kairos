@@ -2,6 +2,14 @@ import {
   DEFAULT_NOTIFICATION_PREFERENCES,
   type NotificationPreferences,
 } from '@/services/localNotifications';
+import {
+  type OfflineMutation,
+  deleteOfflineMutation,
+  enqueueOfflineMutation,
+  getPendingOfflineMutationCount,
+  listPendingOfflineMutations,
+  markOfflineMutationFailed,
+} from '@/services/offlineQueue';
 import { supabase } from '@/services/supabaseClient';
 import type {
   AuthUser,
@@ -33,6 +41,117 @@ import { toLocalIsoDate } from '@/utils/v1Framework';
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
+type OfflineSyncStatus = 'idle' | 'pending' | 'syncing' | 'error' | 'degraded';
+
+interface CheckInNoteOverride {
+  checkInId: string;
+  domainType: DomainType;
+  date: string;
+  notes: string | null;
+  updatedAt: string;
+}
+
+interface DailyCheckInMutationPayload {
+  id: string;
+  date: string;
+  domainType: DomainType;
+  status: CheckInStatus;
+  notes: string | null;
+  xpDelta: number;
+  totalSyncDelta: number;
+  updatedAt: string;
+}
+
+interface DailyCheckInNoteMutationPayload {
+  checkInId: string;
+  notes: string | null;
+  updatedAt: string;
+}
+
+interface CustomRouteCheckInMutationPayload {
+  id: string;
+  routeId: string;
+  date: string;
+  status: CheckInStatus;
+  notes: string | null;
+  xpDelta: number;
+  updatedAt: string;
+}
+
+function isBrowserOffline(): boolean {
+  return typeof navigator !== 'undefined' && navigator.onLine === false;
+}
+
+async function syncOfflineMutation(mutation: OfflineMutation): Promise<void> {
+  if (mutation.type === 'daily_check_in') {
+    const payload = mutation.payload as unknown as DailyCheckInMutationPayload;
+    const { error } = await supabase.from('daily_check_ins').upsert(
+      {
+        id: payload.id,
+        user_id: mutation.userId,
+        cycle_id: mutation.cycleId,
+        date: payload.date,
+        domain_type: payload.domainType,
+        status: payload.status,
+        notes: payload.notes,
+        xp_awarded: payload.xpDelta,
+        updated_at: payload.updatedAt,
+      },
+      { onConflict: 'user_id,cycle_id,date,domain_type' },
+    );
+    if (error) throw new Error(error.message);
+    if (payload.totalSyncDelta !== 0) {
+      const { error: xpError } = await supabase.rpc('increment_profile_xp', {
+        p_user_id: mutation.userId,
+        p_delta: payload.totalSyncDelta,
+      });
+      if (xpError) throw new Error(xpError.message);
+    }
+    return;
+  }
+
+  if (mutation.type === 'daily_check_in_note') {
+    const payload = mutation.payload as unknown as DailyCheckInNoteMutationPayload;
+    const { error } = await supabase
+      .from('daily_check_ins')
+      .update({ notes: payload.notes, updated_at: payload.updatedAt })
+      .eq('id', payload.checkInId)
+      .eq('user_id', mutation.userId);
+    if (error) throw new Error(error.message);
+    return;
+  }
+
+  if (mutation.type === 'custom_route_check_in') {
+    const payload = mutation.payload as unknown as CustomRouteCheckInMutationPayload;
+    const { data, error } = await supabase
+      .from('custom_route_check_ins')
+      .upsert(
+        {
+          id: payload.id,
+          user_id: mutation.userId,
+          cycle_id: mutation.cycleId,
+          route_id: payload.routeId,
+          date: payload.date,
+          status: payload.status,
+          notes: payload.notes,
+          xp_awarded: payload.xpDelta,
+          updated_at: payload.updatedAt,
+        },
+        { onConflict: 'user_id,cycle_id,date,route_id' },
+      )
+      .select()
+      .single();
+    if (error || !data) throw new Error(error?.message ?? 'No row returned');
+    if (payload.xpDelta !== 0) {
+      const { error: xpError } = await supabase.rpc('increment_profile_xp', {
+        p_user_id: mutation.userId,
+        p_delta: payload.xpDelta,
+      });
+      if (xpError) throw new Error(xpError.message);
+    }
+  }
+}
+
 // ─── State Shape ─────────────────────────────────────────────────────────────
 
 interface AppState {
@@ -56,6 +175,7 @@ interface AppState {
   // Key: ISO date string. Kept to 90 days max.
   checkInHistory: Record<string, Partial<Record<DomainType, CheckInStatus>>>;
   customRouteCheckInHistory: Record<string, Record<string, CheckInStatus>>;
+  checkInNoteOverrides: Record<string, CheckInNoteOverride>;
   streakProtectionHistory: Record<string, true>;
   awardedWeeklyBonuses: Record<string, true>;
 
@@ -79,6 +199,9 @@ interface AppState {
   improveCardSnapshots: Record<string, ImproveCardSnapshot>;
   rewardedImproveCards: Record<string, true>;
   notificationPreferences: NotificationPreferences;
+  offlineSyncStatus: OfflineSyncStatus;
+  offlineQueueCount: number;
+  offlineSyncLastError: string | null;
 }
 
 // ─── Actions Shape ───────────────────────────────────────────────────────────
@@ -92,7 +215,10 @@ interface AppActions {
   updateDomainFocus: (domainType: DomainType, focusDescription: string) => Promise<void>;
 
   setDailyCheckIn: (domainType: DomainType, status: CheckInStatus, notes?: string) => Promise<void>;
+  updateDailyCheckInNote: (checkIn: DailyCheckIn, notes: string) => Promise<void>;
   setCustomRouteCheckIn: (routeId: string, status: CheckInStatus, notes?: string) => Promise<void>;
+  refreshOfflineSyncState: () => Promise<void>;
+  flushPendingSync: () => Promise<void>;
 
   setTodayCheckIns: (checkIns: Partial<Record<DomainType, DailyCheckIn>>) => void;
   setTodayCustomRouteCheckIns: (checkIns: Record<string, CustomRouteCheckIn>) => void;
@@ -155,6 +281,7 @@ const initialState: AppState = {
   todayCustomRouteCheckIns: {},
   checkInHistory: {},
   customRouteCheckInHistory: {},
+  checkInNoteOverrides: {},
   streakProtectionHistory: {},
   awardedWeeklyBonuses: {},
   streaks: {},
@@ -169,6 +296,9 @@ const initialState: AppState = {
   improveCardSnapshots: {},
   rewardedImproveCards: {},
   notificationPreferences: DEFAULT_NOTIFICATION_PREFERENCES,
+  offlineSyncStatus: 'idle',
+  offlineQueueCount: 0,
+  offlineSyncLastError: null,
 };
 
 // ─── Store ───────────────────────────────────────────────────────────────────
@@ -183,6 +313,66 @@ export const useAppStore = create<AppState & AppActions>()(
       setIsBootstrapLoading: (isBootstrapLoading) => set({ isBootstrapLoading }),
       setCurrentCycle: (currentCycle) => set({ currentCycle }),
       setDomainFocuses: (domainFocuses) => set({ domainFocuses }),
+      refreshOfflineSyncState: async () => {
+        try {
+          const count = await getPendingOfflineMutationCount();
+          set({
+            offlineQueueCount: count,
+            offlineSyncStatus: count > 0 ? 'pending' : 'idle',
+            offlineSyncLastError: null,
+          });
+        } catch (error) {
+          set({
+            offlineSyncStatus: 'degraded',
+            offlineSyncLastError:
+              error instanceof Error ? error.message : 'Offline storage is unavailable.',
+          });
+        }
+      },
+      flushPendingSync: async () => {
+        if (isBrowserOffline()) {
+          await get().refreshOfflineSyncState();
+          return;
+        }
+
+        let pending: OfflineMutation[];
+        try {
+          pending = await listPendingOfflineMutations();
+        } catch (error) {
+          set({
+            offlineSyncStatus: 'degraded',
+            offlineSyncLastError:
+              error instanceof Error ? error.message : 'Offline storage is unavailable.',
+          });
+          return;
+        }
+
+        if (pending.length === 0) {
+          set({ offlineQueueCount: 0, offlineSyncStatus: 'idle', offlineSyncLastError: null });
+          return;
+        }
+
+        set({ offlineSyncStatus: 'syncing', offlineQueueCount: pending.length });
+
+        for (const mutation of pending) {
+          try {
+            await syncOfflineMutation(mutation);
+            await deleteOfflineMutation(mutation.id);
+          } catch (error) {
+            const message = error instanceof Error ? error.message : 'Sync failed.';
+            await markOfflineMutationFailed(mutation.id, message);
+            const count = await getPendingOfflineMutationCount();
+            set({
+              offlineQueueCount: count,
+              offlineSyncStatus: 'error',
+              offlineSyncLastError: message,
+            });
+            return;
+          }
+        }
+
+        set({ offlineQueueCount: 0, offlineSyncStatus: 'idle', offlineSyncLastError: null });
+      },
       updateDomainFocus: async (domainType, focusDescription) => {
         const trimmed = focusDescription.trim();
         const { authUser, profile, currentCycle, domainFocuses } = get();
@@ -351,28 +541,137 @@ export const useAppStore = create<AppState & AppActions>()(
 
         if (profile.tier === 'free' || currentCycle.id === DEV_CYCLE_ID) return;
 
-        // Sync to Supabase for paid tiers
-        const { error } = await supabase.from('daily_check_ins').upsert(
-          {
-            user_id: profile.id,
-            cycle_id: currentCycle.id,
+        const mutation: OfflineMutation<DailyCheckInMutationPayload> = {
+          id: crypto.randomUUID(),
+          type: 'daily_check_in',
+          userId: profile.id,
+          cycleId: currentCycle.id,
+          payload: {
+            id: optimisticCheckIn.id,
             date: today,
-            domain_type: domainType,
+            domainType,
             status: nextStatus,
             notes: notes ?? null,
-            xp_awarded: xpDelta,
+            xpDelta,
+            totalSyncDelta: xpDelta + (weeklyBonusAwardedNow ? XP_PER_WEEK_COMPLETE : 0),
+            updatedAt: optimisticCheckIn.updatedAt,
           },
-          { onConflict: 'user_id,cycle_id,date,domain_type' },
-        );
+          createdAt: optimisticCheckIn.updatedAt,
+          updatedAt: optimisticCheckIn.updatedAt,
+          attemptCount: 0,
+          status: 'pending',
+        };
 
-        if (error) {
-          console.error('Check-in sync failed:', error.message);
-        } else {
-          const totalSyncDelta = xpDelta + (weeklyBonusAwardedNow ? XP_PER_WEEK_COMPLETE : 0);
-          if (totalSyncDelta !== 0) {
-            await supabase.rpc('increment_profile_xp', {
-              p_user_id: profile.id,
-              p_delta: totalSyncDelta,
+        if (isBrowserOffline()) {
+          try {
+            await enqueueOfflineMutation(mutation);
+            await get().refreshOfflineSyncState();
+          } catch (error) {
+            set({
+              offlineSyncStatus: 'degraded',
+              offlineSyncLastError:
+                error instanceof Error ? error.message : 'Offline storage is unavailable.',
+            });
+          }
+          return;
+        }
+
+        try {
+          await syncOfflineMutation(mutation);
+          await get().refreshOfflineSyncState();
+        } catch (error) {
+          const message = error instanceof Error ? error.message : 'Check-in sync failed.';
+          console.error('Check-in sync failed:', message);
+          try {
+            await enqueueOfflineMutation(mutation);
+            await get().refreshOfflineSyncState();
+          } catch (storageError) {
+            set({
+              offlineSyncStatus: 'degraded',
+              offlineSyncLastError:
+                storageError instanceof Error
+                  ? storageError.message
+                  : 'Offline storage is unavailable.',
+            });
+          }
+        }
+      },
+      updateDailyCheckInNote: async (checkIn, notes) => {
+        const { profile, currentCycle } = get();
+        if (!profile || !currentCycle) return;
+
+        const now = new Date().toISOString();
+        const cleanNotes = notes.trim() || null;
+        set((state) => {
+          const todayMatch = state.todayCheckIns[checkIn.domainType]?.id === checkIn.id;
+          return {
+            todayCheckIns: todayMatch
+              ? {
+                  ...state.todayCheckIns,
+                  [checkIn.domainType]: {
+                    ...state.todayCheckIns[checkIn.domainType],
+                    notes: cleanNotes,
+                    updatedAt: now,
+                  } as DailyCheckIn,
+                }
+              : state.todayCheckIns,
+            checkInNoteOverrides: {
+              ...state.checkInNoteOverrides,
+              [checkIn.id]: {
+                checkInId: checkIn.id,
+                domainType: checkIn.domainType,
+                date: checkIn.date,
+                notes: cleanNotes,
+                updatedAt: now,
+              },
+            },
+          };
+        });
+
+        if (profile.tier === 'free' || currentCycle.id === DEV_CYCLE_ID) return;
+
+        const mutation: OfflineMutation<DailyCheckInNoteMutationPayload> = {
+          id: crypto.randomUUID(),
+          type: 'daily_check_in_note',
+          userId: profile.id,
+          cycleId: currentCycle.id,
+          payload: { checkInId: checkIn.id, notes: cleanNotes, updatedAt: now },
+          createdAt: now,
+          updatedAt: now,
+          attemptCount: 0,
+          status: 'pending',
+        };
+
+        if (isBrowserOffline()) {
+          try {
+            await enqueueOfflineMutation(mutation);
+            await get().refreshOfflineSyncState();
+          } catch (error) {
+            set({
+              offlineSyncStatus: 'degraded',
+              offlineSyncLastError:
+                error instanceof Error ? error.message : 'Offline storage is unavailable.',
+            });
+          }
+          return;
+        }
+
+        try {
+          await syncOfflineMutation(mutation);
+          await get().refreshOfflineSyncState();
+        } catch (error) {
+          const message = error instanceof Error ? error.message : 'Note sync failed.';
+          console.error('Note sync failed:', message);
+          try {
+            await enqueueOfflineMutation(mutation);
+            await get().refreshOfflineSyncState();
+          } catch (storageError) {
+            set({
+              offlineSyncStatus: 'degraded',
+              offlineSyncLastError:
+                storageError instanceof Error
+                  ? storageError.message
+                  : 'Offline storage is unavailable.',
             });
           }
         }
@@ -563,48 +862,59 @@ export const useAppStore = create<AppState & AppActions>()(
 
         if (currentCycle.id === DEV_CYCLE_ID) return;
 
-        const { data, error } = await supabase
-          .from('custom_route_check_ins')
-          .upsert(
-            {
-              id: checkIn.id,
-              user_id: profile.id,
-              cycle_id: currentCycle.id,
-              route_id: routeId,
-              date: today,
-              status,
-              notes: notes ?? null,
-              xp_awarded: xpDelta,
-            },
-            { onConflict: 'user_id,cycle_id,date,route_id' },
-          )
-          .select()
-          .single();
+        const mutation: OfflineMutation<CustomRouteCheckInMutationPayload> = {
+          id: crypto.randomUUID(),
+          type: 'custom_route_check_in',
+          userId: profile.id,
+          cycleId: currentCycle.id,
+          payload: {
+            id: checkIn.id,
+            routeId,
+            date: today,
+            status,
+            notes: notes ?? null,
+            xpDelta,
+            updatedAt: now,
+          },
+          createdAt: now,
+          updatedAt: now,
+          attemptCount: 0,
+          status: 'pending',
+        };
 
-        if (error || !data) {
-          console.error('Custom route check-in sync failed:', error?.message ?? 'No row returned');
-        } else {
-          set((state) => ({
-            todayCustomRouteCheckIns: {
-              ...state.todayCustomRouteCheckIns,
-              [routeId]: {
-                id: data.id,
-                userId: data.user_id,
-                cycleId: data.cycle_id,
-                routeId: data.route_id,
-                date: data.date,
-                status: data.status,
-                notes: data.notes,
-                xpAwarded: data.xp_awarded,
-                createdAt: data.created_at,
-                updatedAt: data.updated_at,
-              },
-            },
-          }));
+        if (isBrowserOffline()) {
+          try {
+            await enqueueOfflineMutation(mutation);
+            await get().refreshOfflineSyncState();
+          } catch (error) {
+            set({
+              offlineSyncStatus: 'degraded',
+              offlineSyncLastError:
+                error instanceof Error ? error.message : 'Offline storage is unavailable.',
+            });
+          }
+          return;
         }
 
-        if (xpDelta !== 0) {
-          await supabase.rpc('increment_profile_xp', { p_user_id: profile.id, p_delta: xpDelta });
+        try {
+          await syncOfflineMutation(mutation);
+          await get().refreshOfflineSyncState();
+        } catch (error) {
+          const message =
+            error instanceof Error ? error.message : 'Custom route check-in sync failed.';
+          console.error('Custom route check-in sync failed:', message);
+          try {
+            await enqueueOfflineMutation(mutation);
+            await get().refreshOfflineSyncState();
+          } catch (storageError) {
+            set({
+              offlineSyncStatus: 'degraded',
+              offlineSyncLastError:
+                storageError instanceof Error
+                  ? storageError.message
+                  : 'Offline storage is unavailable.',
+            });
+          }
         }
       },
 
@@ -771,6 +1081,7 @@ export const useAppStore = create<AppState & AppActions>()(
           customRouteCheckInHistory: {},
           todayCheckIns: {},
           todayCustomRouteCheckIns: {},
+          checkInNoteOverrides: {},
           domainFocuses: [],
           customRoutes: [],
           streaks: {},
@@ -780,6 +1091,9 @@ export const useAppStore = create<AppState & AppActions>()(
           rewardedImproveCards: {},
           streakProtectionHistory: {},
           awardedWeeklyBonuses: {},
+          offlineSyncStatus: 'idle',
+          offlineQueueCount: 0,
+          offlineSyncLastError: null,
         }),
 
       signOut: async () => {
@@ -803,6 +1117,7 @@ export const useAppStore = create<AppState & AppActions>()(
         todayCustomRouteCheckIns: state.todayCustomRouteCheckIns,
         checkInHistory: state.checkInHistory,
         customRouteCheckInHistory: state.customRouteCheckInHistory,
+        checkInNoteOverrides: state.checkInNoteOverrides,
         streaks: state.streaks,
         profile: state.profile,
         currentCycle: state.currentCycle,
@@ -819,6 +1134,9 @@ export const useAppStore = create<AppState & AppActions>()(
         notificationPreferences: state.notificationPreferences,
         streakProtectionHistory: state.streakProtectionHistory,
         awardedWeeklyBonuses: state.awardedWeeklyBonuses,
+        offlineSyncStatus: state.offlineSyncStatus,
+        offlineQueueCount: state.offlineQueueCount,
+        offlineSyncLastError: state.offlineSyncLastError,
       }),
     },
   ),

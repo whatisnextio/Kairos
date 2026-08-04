@@ -2,7 +2,6 @@ import Button from '@/components/common/Button';
 import Card from '@/components/common/Card';
 import { useDomainCheckIns } from '@/hooks/useCheckIns';
 import { useStreaks } from '@/hooks/useStreaks';
-import { supabase } from '@/services/supabaseClient';
 import { useAppStore } from '@/store/useAppStore';
 import { type CheckInStatus, type DailyCheckIn, type DomainType, getDomainConfig } from '@/types';
 import { hasBrotherhoodAccess } from '@/utils/entitlements';
@@ -80,24 +79,32 @@ interface NoteRowProps {
   profileId: string;
   domainType: DomainType;
   limit: number;
+  noteOverride?: string | null;
+  onSaveNote: (checkIn: DailyCheckIn, notes: string) => Promise<void>;
 }
 
-function NoteRow({ checkIn, cycleId, profileId, domainType, limit }: NoteRowProps) {
+function NoteRow({
+  checkIn,
+  cycleId,
+  profileId,
+  domainType,
+  limit,
+  noteOverride,
+  onSaveNote,
+}: NoteRowProps) {
   const [expanded, setExpanded] = useState(false);
-  const [draft, setDraft] = useState(checkIn.notes ?? '');
+  const visibleNote = noteOverride !== undefined ? noteOverride : checkIn.notes;
+  const [draft, setDraft] = useState(visibleNote ?? '');
   const [saving, setSaving] = useState(false);
   const queryClient = useQueryClient();
 
   async function save() {
-    if (draft === (checkIn.notes ?? '')) {
+    if (draft === (visibleNote ?? '')) {
       setExpanded(false);
       return;
     }
     setSaving(true);
-    await supabase
-      .from('daily_check_ins')
-      .update({ notes: draft || null })
-      .eq('id', checkIn.id);
+    await onSaveNote(checkIn, draft);
     setSaving(false);
     setExpanded(false);
     queryClient.invalidateQueries({
@@ -117,9 +124,9 @@ function NoteRow({ checkIn, cycleId, profileId, domainType, limit }: NoteRowProp
             className={`w-1.5 h-1.5 rounded-full shrink-0 ${STATUS_DOT[checkIn.status] ?? 'bg-base-border'}`}
           />
           <span className="text-base-subtext text-xs">{checkIn.date}</span>
-          {checkIn.notes && (
+          {visibleNote && (
             <span className="text-base-muted text-xs italic truncate max-w-[120px]">
-              - {checkIn.notes}
+              - {visibleNote}
             </span>
           )}
         </div>
@@ -154,7 +161,7 @@ function NoteRow({ checkIn, cycleId, profileId, domainType, limit }: NoteRowProp
             <button
               type="button"
               onClick={() => {
-                setDraft(checkIn.notes ?? '');
+                setDraft(visibleNote ?? '');
                 setExpanded(false);
               }}
               className="text-base-muted text-xs hover:text-base-subtext transition-colors"
@@ -182,6 +189,8 @@ export default function DetailScreen() {
     streaks: localStreaks,
     todayCheckIns,
     checkInHistory,
+    checkInNoteOverrides,
+    updateDailyCheckInNote,
   } = useAppStore();
 
   const today = toLocalIsoDate(new Date());
@@ -437,6 +446,8 @@ export default function DetailScreen() {
                   profileId={profile.id}
                   domainType={domainType}
                   limit={HISTORY_LIMIT}
+                  noteOverride={checkInNoteOverrides[checkIn.id]?.notes}
+                  onSaveNote={updateDailyCheckInNote}
                 />
               ))}
             </div>

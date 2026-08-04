@@ -78,6 +78,9 @@ export default function HomeScreen() {
     customRoutes,
     todayCheckIns,
     todayCustomRouteCheckIns,
+    offlineSyncStatus,
+    offlineQueueCount,
+    offlineSyncLastError,
     lastVibeCheckDate,
     setDailyCheckIn,
     setCustomRouteCheckIn,
@@ -274,6 +277,32 @@ export default function HomeScreen() {
               Free progress lives on this device. Export before clearing browser data or changing
               phone.
             </p>
+          </Card>
+        )}
+
+        {offlineSyncStatus !== 'idle' && (
+          <Card
+            className={
+              offlineSyncStatus === 'degraded' || offlineSyncStatus === 'error'
+                ? 'border-status-partial/50 bg-status-partial/5'
+                : 'border-accent-green/30 bg-accent-green/5'
+            }
+          >
+            <p className="font-heading text-xs text-base-subtext tracking-widest uppercase mb-1">
+              {offlineSyncStatus === 'syncing' ? 'Syncing' : 'Offline ready'}
+            </p>
+            <p className="text-base-text text-sm leading-snug">
+              {offlineSyncStatus === 'degraded'
+                ? 'This device is blocking offline storage. Keep the app open until your changes save.'
+                : offlineSyncStatus === 'error'
+                  ? 'Your latest action is saved on this device and will retry shortly.'
+                  : offlineQueueCount > 0
+                    ? `${offlineQueueCount} action${offlineQueueCount === 1 ? '' : 's'} waiting to sync.`
+                    : 'Checking for saved actions.'}
+            </p>
+            {offlineSyncLastError && (
+              <p className="text-base-muted text-xs mt-2">{offlineSyncLastError}</p>
+            )}
           </Card>
         )}
 
