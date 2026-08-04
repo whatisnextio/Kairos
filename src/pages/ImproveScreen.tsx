@@ -364,7 +364,7 @@ export default function ImproveScreen() {
           {canSeeNudge && !nudge && !isLoading && !isError && (
             <Card>
               <p className="text-base-subtext text-sm mb-3">
-                No AI card yet today. Generate one or use the framework options below.
+                No AI card yet today. Generate one, or choose a Kairos option below.
               </p>
               <Button size="sm" onClick={() => refetch()}>
                 {isFetching ? 'Generating...' : 'Generate AI card'}
