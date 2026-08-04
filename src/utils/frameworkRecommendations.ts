@@ -8,7 +8,7 @@ import type {
   UserDomainFocus,
 } from '@/types';
 import { getAvailableDomains, getDomainConfig } from '@/types';
-import { getDiscreetDomainLabel } from '@/utils/v1Framework';
+import { getDailyDomainLabel } from '@/utils/v1Framework';
 
 export type FrameworkLens = 'Prep' | 'Reflect' | 'Coach' | 'Feedback';
 
@@ -51,7 +51,7 @@ export function buildFrameworkRecommendations({
     return {
       id: domain.type,
       domain,
-      label: getDiscreetDomainLabel(domain, email),
+      label: getDailyDomainLabel(domain),
       action: focus?.focusDescription ?? domain.focusOptions[0],
       status: todayCheckIns[domain.type]?.status,
       customRouteId: undefined as string | undefined,
