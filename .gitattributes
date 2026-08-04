@@ -1,0 +1,6 @@
+src/**/*.ts text eol=lf
+src/**/*.tsx text eol=lf
+supabase/**/*.ts text eol=lf
+supabase/**/*.sql text eol=lf
+vite.config.ts text eol=lf
+package.json text eol=lf
