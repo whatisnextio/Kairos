@@ -49,6 +49,29 @@ test.describe('NFR smoke gates', () => {
     await expectNoHorizontalOverflow(page);
   });
 
+  test('daily check-ins persist through reload and still work while offline', async ({
+    context,
+    page,
+  }) => {
+    await loginAsLocalLiam(page);
+
+    await page.getByRole('button', { name: /set body status/i }).click();
+    await page.getByRole('button', { name: /done full action completed/i }).click();
+    await page.reload();
+    await expect(page.getByRole('button', { name: /set body status/i })).toContainText('Done');
+
+    await context.setOffline(true);
+    await page.getByRole('button', { name: /set fuel status/i }).click();
+    await page
+      .getByRole('dialog')
+      .getByRole('button', { name: /partial smaller version/i })
+      .click();
+    await expect(page.getByRole('button', { name: /set fuel status/i })).toContainText('Partial');
+    await context.setOffline(false);
+
+    await expectNoHorizontalOverflow(page);
+  });
+
   test('paid core screens are accessible on mobile', async ({ page }) => {
     await loginAsLocalLiam(page);
 

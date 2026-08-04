@@ -124,6 +124,7 @@ export function useBootstrap() {
     mergeCheckInHistory,
     mergeCustomRouteCheckInHistory,
     setIsBootstrapLoading,
+    flushPendingSync,
   } = useAppStore();
   const bootstrapped = useRef<string | null>(null);
 
@@ -287,6 +288,8 @@ export function useBootstrap() {
       }
     }
 
-    load().finally(() => setIsBootstrapLoading(false));
+    load()
+      .then(() => flushPendingSync())
+      .finally(() => setIsBootstrapLoading(false));
   }, [authUser?.id]);
 }
