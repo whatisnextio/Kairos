@@ -3,7 +3,11 @@ import Card from '@/components/common/Card';
 import AbandonCycleModal from '@/components/modals/AbandonCycleModal';
 import WeeklyVibeCheckModal from '@/components/modals/WeeklyVibeCheckModal';
 import { useMatchToSquad, useSquadPulse } from '@/hooks/useSquad';
-import { isPushSupported, subscribeToPush } from '@/services/pushNotifications';
+import {
+  isPushSupported,
+  subscribeToPush,
+  unsubscribeFromPush,
+} from '@/services/pushNotifications';
 import { supabase } from '@/services/supabaseClient';
 import { useAppStore } from '@/store/useAppStore';
 import { type DomainType, IDENTITY_ANCHORS, getAvailableDomains } from '@/types';
@@ -16,7 +20,27 @@ const SAVE_PUSH_ENDPOINT = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/sa
 const DELETE_ACCOUNT_ENDPOINT = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/delete-account`;
 const STRIPE_PORTAL_URL = import.meta.env.VITE_STRIPE_PORTAL_URL;
 
-async function registerPush(): Promise<boolean> {
+async function syncPushPreferences(preferences: Record<string, unknown>): Promise<boolean> {
+  try {
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+    if (!session) return false;
+    const res = await fetch(SAVE_PUSH_ENDPOINT, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${session.access_token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ preferences }),
+    });
+    return res.ok;
+  } catch {
+    return false;
+  }
+}
+
+async function registerPush(preferences: Record<string, unknown>): Promise<boolean> {
   try {
     const sub = await subscribeToPush();
     if (!sub) return false;
@@ -30,7 +54,7 @@ async function registerPush(): Promise<boolean> {
         Authorization: `Bearer ${session.access_token}`,
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ subscription: sub }),
+      body: JSON.stringify({ subscription: sub, preferences }),
     });
     return res.ok;
   } catch {
@@ -45,17 +69,24 @@ export default function YouScreen() {
     customRoutes,
     journeyArchive,
     profileImageDataUrl,
+    notificationPreferences,
     setProfileImageDataUrl,
+    setNotificationPreferences,
     addCustomRoute,
     archiveCustomRoute,
     signOut,
   } = useAppStore();
   const { data: squadPulse } = useSquadPulse();
   const { mutate: matchToSquad, isPending: isMatching } = useMatchToSquad();
-  const [pushStatus, setPushStatus] = useState<'idle' | 'requesting' | 'done' | 'denied'>('idle');
+  const [pushStatus, setPushStatus] = useState<
+    'idle' | 'requesting' | 'done' | 'denied' | 'unsupported'
+  >('idle');
 
   useEffect(() => {
-    if (!isPushSupported()) return;
+    if (!isPushSupported()) {
+      setPushStatus('unsupported');
+      return;
+    }
     if (Notification.permission === 'denied') {
       setPushStatus('denied');
       return;
@@ -66,6 +97,39 @@ export default function YouScreen() {
       }),
     );
   }, []);
+
+  const updateNotificationPreferences = useCallback(
+    (preferences: Partial<typeof notificationPreferences>) => {
+      const next = { ...notificationPreferences, ...preferences };
+      setNotificationPreferences(preferences);
+      if (next.webPushEnabled) {
+        void syncPushPreferences(next);
+      }
+    },
+    [notificationPreferences, setNotificationPreferences],
+  );
+
+  const handleEnableNotifications = useCallback(async () => {
+    const next = { ...notificationPreferences, enabled: true, webPushEnabled: true };
+    setNotificationPreferences({ enabled: true, webPushEnabled: true });
+    if (!isPushSupported()) {
+      setNotificationPreferences({ enabled: false, webPushEnabled: false });
+      setPushStatus('unsupported');
+      return;
+    }
+    setPushStatus('requesting');
+    const ok = await registerPush(next);
+    setPushStatus(ok ? 'done' : Notification.permission === 'denied' ? 'denied' : 'idle');
+    if (!ok) setNotificationPreferences({ enabled: false, webPushEnabled: false });
+  }, [notificationPreferences, setNotificationPreferences]);
+
+  const handleDisableNotifications = useCallback(async () => {
+    const next = { ...notificationPreferences, enabled: false, webPushEnabled: false };
+    setNotificationPreferences({ enabled: false, webPushEnabled: false });
+    if (isPushSupported()) await unsubscribeFromPush();
+    await syncPushPreferences(next);
+    setPushStatus(isPushSupported() ? 'idle' : 'unsupported');
+  }, [notificationPreferences, setNotificationPreferences]);
 
   const [deleteConfirm, setDeleteConfirm] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -511,33 +575,103 @@ export default function YouScreen() {
       </Card>
 
       {/* Notifications: paid tiers only */}
-      {hasPaidAccess && isPushSupported() && (
+      {hasPaidAccess && (
         <Card>
           <p className="text-base-subtext text-xs font-heading tracking-widest uppercase mb-2">
             Notifications
           </p>
-          {pushStatus === 'done' ? (
-            <p className="text-accent-green text-sm">Daily nudge notifications on.</p>
+          {pushStatus === 'unsupported' ? (
+            <p className="text-base-muted text-sm">
+              Web push is not supported here. Install the PWA or use a browser with notification
+              support.
+            </p>
           ) : pushStatus === 'denied' ? (
             <p className="text-base-muted text-sm">
-              Notifications blocked. Enable in your browser settings.
+              Notifications are blocked. Re-enable them in browser settings, then return here.
             </p>
           ) : (
             <>
-              <p className="text-base-subtext text-sm mb-3">
-                Get your daily nudge as a notification, even when the app is closed.
+              <p className="text-base-subtext text-sm mb-4">
+                Direct prompts, quiet copy, and no sensitive labels on the lock screen.
               </p>
-              <Button
-                size="sm"
-                disabled={pushStatus === 'requesting'}
-                onClick={async () => {
-                  setPushStatus('requesting');
-                  const ok = await registerPush();
-                  setPushStatus(ok ? 'done' : 'denied');
-                }}
-              >
-                {pushStatus === 'requesting' ? 'Setting up...' : 'Enable notifications'}
-              </Button>
+              <div className="flex flex-col gap-3">
+                <label className="flex items-center justify-between gap-3 text-sm text-base-text">
+                  <span>Reminders</span>
+                  <input
+                    type="checkbox"
+                    checked={notificationPreferences.enabled}
+                    onChange={(e) =>
+                      e.target.checked
+                        ? void handleEnableNotifications()
+                        : void handleDisableNotifications()
+                    }
+                  />
+                </label>
+                <label className="text-base-subtext text-xs font-heading tracking-widest uppercase">
+                  Intensity
+                  <select
+                    className="input-field mt-1"
+                    value={notificationPreferences.intensity}
+                    disabled={!notificationPreferences.enabled}
+                    onChange={(e) =>
+                      updateNotificationPreferences({
+                        intensity: e.target.value as typeof notificationPreferences.intensity,
+                      })
+                    }
+                  >
+                    <option value="light">Light</option>
+                    <option value="standard">Standard</option>
+                    <option value="high">High accountability</option>
+                  </select>
+                </label>
+                <div className="grid grid-cols-2 gap-2">
+                  <label className="text-base-subtext text-xs font-heading tracking-widest uppercase">
+                    Start
+                    <input
+                      className="input-field mt-1"
+                      type="time"
+                      value={`${String(notificationPreferences.startHour).padStart(2, '0')}:00`}
+                      disabled={!notificationPreferences.enabled}
+                      onChange={(e) =>
+                        updateNotificationPreferences({
+                          startHour: Number(e.target.value.split(':')[0]),
+                        })
+                      }
+                    />
+                  </label>
+                  <label className="text-base-subtext text-xs font-heading tracking-widest uppercase">
+                    End
+                    <input
+                      className="input-field mt-1"
+                      type="time"
+                      value={`${String(notificationPreferences.endHour).padStart(2, '0')}:00`}
+                      disabled={!notificationPreferences.enabled}
+                      onChange={(e) =>
+                        updateNotificationPreferences({
+                          endHour: Number(e.target.value.split(':')[0]),
+                        })
+                      }
+                    />
+                  </label>
+                </div>
+                <label className="flex items-center justify-between gap-3 text-sm text-base-subtext">
+                  <span>Early-wake protocol</span>
+                  <input
+                    type="checkbox"
+                    checked={notificationPreferences.earlyProtocol}
+                    disabled={!notificationPreferences.enabled}
+                    onChange={(e) =>
+                      updateNotificationPreferences({ earlyProtocol: e.target.checked })
+                    }
+                  />
+                </label>
+                {pushStatus === 'done' && (
+                  <p className="text-accent-green text-xs">Web push is connected.</p>
+                )}
+                {pushStatus === 'requesting' && (
+                  <p className="text-base-muted text-xs">Setting up notifications...</p>
+                )}
+              </div>
             </>
           )}
         </Card>

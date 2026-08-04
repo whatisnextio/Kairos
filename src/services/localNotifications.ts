@@ -2,6 +2,26 @@ import { buildAccountabilityPrompt } from '@/utils/v1Framework';
 import { Capacitor } from '@capacitor/core';
 import { LocalNotifications } from '@capacitor/local-notifications';
 
+export type ReminderIntensity = 'light' | 'standard' | 'high';
+
+export interface NotificationPreferences {
+  enabled: boolean;
+  intensity: ReminderIntensity;
+  startHour: number;
+  endHour: number;
+  earlyProtocol: boolean;
+  webPushEnabled: boolean;
+}
+
+export const DEFAULT_NOTIFICATION_PREFERENCES: NotificationPreferences = {
+  enabled: false,
+  intensity: 'standard',
+  startHour: 5,
+  endHour: 21,
+  earlyProtocol: true,
+  webPushEnabled: false,
+};
+
 export const NOTIFICATION_SLOTS = [
   {
     id: 1,
@@ -47,6 +67,38 @@ export const NOTIFICATION_SLOTS = [
   },
 ];
 
+const INTENSITY_SLOT_IDS: Record<ReminderIntensity, number[]> = {
+  light: [2, 5],
+  standard: [1, 2, 4, 6],
+  high: [1, 2, 3, 4, 5, 6],
+};
+
+export function normaliseNotificationPreferences(
+  preferences: Partial<NotificationPreferences> | null | undefined,
+): NotificationPreferences {
+  const next = { ...DEFAULT_NOTIFICATION_PREFERENCES, ...(preferences ?? {}) };
+  return {
+    ...next,
+    startHour: Math.min(23, Math.max(0, Math.round(next.startHour))),
+    endHour: Math.min(23, Math.max(0, Math.round(next.endHour))),
+  };
+}
+
+export function buildNotificationSchedule(
+  preferences: Partial<NotificationPreferences> | null | undefined,
+) {
+  const prefs = normaliseNotificationPreferences(preferences);
+  if (!prefs.enabled) return [];
+
+  const ids = new Set(INTENSITY_SLOT_IDS[prefs.intensity]);
+  return NOTIFICATION_SLOTS.filter((slot) => {
+    if (!ids.has(slot.id)) return false;
+    if (slot.id === 1 && !prefs.earlyProtocol) return false;
+    if (slot.hour < prefs.startHour || slot.hour > prefs.endHour) return false;
+    return true;
+  });
+}
+
 export async function requestNotificationPermission(): Promise<boolean> {
   if (!Capacitor.isNativePlatform()) return false;
 
@@ -54,8 +106,16 @@ export async function requestNotificationPermission(): Promise<boolean> {
   return display === 'granted';
 }
 
-export async function scheduleDailyNotifications(): Promise<void> {
+export async function scheduleDailyNotifications(
+  preferences: Partial<NotificationPreferences> | null | undefined,
+): Promise<void> {
   if (!Capacitor.isNativePlatform()) return;
+
+  const slots = buildNotificationSchedule(preferences);
+  if (slots.length === 0) {
+    await cancelDailyNotifications();
+    return;
+  }
 
   const { display } = await LocalNotifications.checkPermissions();
   if (display !== 'granted') return;
@@ -64,10 +124,13 @@ export async function scheduleDailyNotifications(): Promise<void> {
   await cancelDailyNotifications();
 
   await LocalNotifications.schedule({
-    notifications: NOTIFICATION_SLOTS.map((slot) => ({
+    notifications: slots.map((slot) => ({
       id: slot.id,
       title: slot.title,
       body: slot.body,
+      extra: {
+        url: slot.id === 6 ? '/#/improve' : '/#/',
+      },
       schedule: {
         every: 'day' as const,
         on: { hour: slot.hour, minute: slot.minute },

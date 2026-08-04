@@ -33,12 +33,14 @@ registerRoute(
 self.addEventListener('push', (event: PushEvent) => {
   let title = '12K';
   let body = 'Time to check in.';
+  let url = '/#/';
 
   if (event.data) {
     try {
-      const data = event.data.json() as { title?: string; body?: string };
+      const data = event.data.json() as { title?: string; body?: string; url?: string };
       if (data.title) title = data.title;
       if (data.body) body = data.body;
+      if (data.url) url = data.url;
     } catch {
       // malformed payload, use defaults
     }
@@ -50,18 +52,34 @@ self.addEventListener('push', (event: PushEvent) => {
       icon: '/logo192.png',
       badge: '/logo192.png',
       tag: 'daily-nudge',
+      data: { url },
     }),
   );
 });
 
 self.addEventListener('notificationclick', (event: NotificationEvent) => {
   event.notification.close();
+  const rawUrl =
+    typeof event.notification.data === 'object' &&
+    event.notification.data &&
+    'url' in event.notification.data
+      ? String(event.notification.data.url)
+      : '/#/';
+  const targetUrl = new URL(rawUrl, self.location.origin).href;
   event.waitUntil(
-    self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
-      for (const client of clientList) {
-        if ('focus' in client) return (client as WindowClient).focus();
-      }
-      return self.clients.openWindow('/#/');
-    }),
+    self.clients
+      .matchAll({ type: 'window', includeUncontrolled: true })
+      .then(async (clientList) => {
+        for (const client of clientList) {
+          if ('focus' in client) {
+            const windowClient = client as WindowClient;
+            if ('navigate' in windowClient && windowClient.url !== targetUrl) {
+              await windowClient.navigate(targetUrl);
+            }
+            return windowClient.focus();
+          }
+        }
+        return self.clients.openWindow(targetUrl);
+      }),
   );
 });
