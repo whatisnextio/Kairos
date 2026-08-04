@@ -6,6 +6,7 @@ import type {
   CustomRouteCheckIn,
   DailyCheckIn,
   DomainType,
+  ImproveCardSnapshot,
   JourneyArchiveEntry,
   KairosCycle,
   Profile,
@@ -62,6 +63,9 @@ interface AppState {
   // null = first load, phase not yet recorded.
   lastCelebrationPhase: string | null;
   profileImageDataUrl: string | null;
+  improveCardStatuses: Record<string, CheckInStatus | 'accepted' | 'completed' | 'dismissed'>;
+  improveCardSnapshots: Record<string, ImproveCardSnapshot>;
+  rewardedImproveCards: Record<string, true>;
 }
 
 // ─── Actions Shape ───────────────────────────────────────────────────────────
@@ -108,6 +112,12 @@ interface AppActions {
   setNextCycleIntention: (intention: string | null) => void;
   setLastCelebrationPhase: (phase: string | null) => void;
   setProfileImageDataUrl: (dataUrl: string | null) => void;
+  setImproveCardStatus: (
+    cardId: string,
+    status: 'accepted' | 'completed' | 'dismissed',
+    xpReward?: number,
+    snapshot?: ImproveCardSnapshot,
+  ) => Promise<void>;
   submitVibeCheck: (rating: VibeCheck['rating']) => Promise<void>;
   completeCycle: (reflection: string) => Promise<void>;
 
@@ -139,6 +149,9 @@ const initialState: AppState = {
   nextCycleIntention: null,
   lastCelebrationPhase: null,
   profileImageDataUrl: null,
+  improveCardStatuses: {},
+  improveCardSnapshots: {},
+  rewardedImproveCards: {},
 };
 
 // ─── Store ───────────────────────────────────────────────────────────────────
@@ -581,6 +594,48 @@ export const useAppStore = create<AppState & AppActions>()(
       setNextCycleIntention: (nextCycleIntention) => set({ nextCycleIntention }),
       setLastCelebrationPhase: (lastCelebrationPhase) => set({ lastCelebrationPhase }),
       setProfileImageDataUrl: (profileImageDataUrl) => set({ profileImageDataUrl }),
+      setImproveCardStatus: async (cardId, status, xpReward, snapshot) => {
+        const reward = xpReward ?? 0;
+        let shouldSyncXp = false;
+        let userId: string | null = null;
+
+        set((state) => {
+          const shouldAward =
+            status === 'completed' && reward > 0 && !state.rewardedImproveCards[cardId];
+          const oldXp = state.profile?.xp ?? 0;
+          const newXp = shouldAward ? oldXp + reward : oldXp;
+          const oldLevel = getLevelForXp(oldXp);
+          const newLevel = getLevelForXp(newXp);
+          shouldSyncXp =
+            shouldAward &&
+            !!state.profile &&
+            hasBrotherhoodAccess(state.profile.tier) &&
+            state.currentCycle?.id !== DEV_CYCLE_ID;
+          userId = state.profile?.id ?? null;
+
+          return {
+            improveCardStatuses: {
+              ...state.improveCardStatuses,
+              [cardId]: status,
+            },
+            improveCardSnapshots: snapshot
+              ? { ...state.improveCardSnapshots, [cardId]: snapshot }
+              : state.improveCardSnapshots,
+            rewardedImproveCards: shouldAward
+              ? { ...state.rewardedImproveCards, [cardId]: true }
+              : state.rewardedImproveCards,
+            profile: state.profile && shouldAward ? { ...state.profile, xp: newXp } : state.profile,
+            levelUpPending:
+              shouldAward && newLevel.level > oldLevel.level
+                ? { level: newLevel.level, label: newLevel.label }
+                : state.levelUpPending,
+          };
+        });
+
+        if (shouldSyncXp && userId) {
+          await supabase.rpc('increment_profile_xp', { p_user_id: userId, p_delta: reward });
+        }
+      },
 
       submitVibeCheck: async (rating) => {
         const { profile, currentCycle } = get();
@@ -657,6 +712,9 @@ export const useAppStore = create<AppState & AppActions>()(
           customRoutes: [],
           streaks: {},
           nextCycleIntention: null,
+          improveCardStatuses: {},
+          improveCardSnapshots: {},
+          rewardedImproveCards: {},
         }),
 
       signOut: async () => {
@@ -690,6 +748,9 @@ export const useAppStore = create<AppState & AppActions>()(
         nextCycleIntention: state.nextCycleIntention,
         lastCelebrationPhase: state.lastCelebrationPhase,
         profileImageDataUrl: state.profileImageDataUrl,
+        improveCardStatuses: state.improveCardStatuses,
+        improveCardSnapshots: state.improveCardSnapshots,
+        rewardedImproveCards: state.rewardedImproveCards,
       }),
     },
   ),

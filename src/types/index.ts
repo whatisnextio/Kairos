@@ -532,6 +532,20 @@ export interface AiNudge {
   generatedAt: string;
 }
 
+export interface ImproveCardSnapshot {
+  id: string;
+  lens: string;
+  title: string;
+  body: string;
+  domainLabel: string;
+  phaseLabel: string;
+  actionText: string;
+  xpReward: number;
+  cta: NudgeCta;
+  domainType?: DomainType;
+  customRouteId?: string;
+}
+
 // ─── Squad ───────────────────────────────────────────────────────────────────
 
 export interface Squad {
