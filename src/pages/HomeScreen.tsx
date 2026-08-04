@@ -101,6 +101,7 @@ export default function HomeScreen() {
   const phaseConfig = getCurrentPhaseConfig(dayInCycle);
   const availableDomains = getAvailableDomains(authUser?.email);
   const activeCustomRoutes = customRoutes.filter((route) => !route.archivedAt);
+  const domainLabels = new Map(availableDomains.map((domain) => [domain.type, domain.label]));
   const availableDomainTypes = new Set(availableDomains.map((domain) => domain.type));
   const configuredDomainCount = domainFocuses.filter((focus) =>
     availableDomainTypes.has(focus.domainType),
@@ -168,11 +169,11 @@ export default function HomeScreen() {
 
   const handleCustomRouteCheckIn = (routeId: string, current: CheckInStatus | undefined) => {
     if (current === 'Done') {
-      setCustomRouteCheckIn(routeId, 'Partial');
+      void setCustomRouteCheckIn(routeId, 'Partial');
     } else if (current === 'Partial') {
-      setCustomRouteCheckIn(routeId, 'Missed');
+      void setCustomRouteCheckIn(routeId, 'Missed');
     } else {
-      setCustomRouteCheckIn(routeId, 'Done');
+      void setCustomRouteCheckIn(routeId, 'Done');
     }
   };
 
@@ -496,6 +497,9 @@ export default function HomeScreen() {
                     </div>
                     <p className="text-base-subtext text-xs mt-1 truncate">
                       {route.focusDescription}
+                    </p>
+                    <p className="text-base-muted text-[11px] mt-0.5">
+                      {domainLabels.get(route.parentDomainType) ?? 'Kairos'} route
                     </p>
                   </button>
                 </div>

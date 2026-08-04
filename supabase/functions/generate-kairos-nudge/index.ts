@@ -67,7 +67,9 @@ interface UserState {
   phase: string;
   dayInCycle: number;
   domainFocuses: Array<{ domain: string; focus: string }>;
+  customRoutes: Array<{ label: string; parentDomain: string; focus: string }>;
   recentCheckIns: Array<{ date: string; domain: string; status: string }>;
+  recentCustomRouteCheckIns: Array<{ date: string; route: string; status: string }>;
   streaks: Array<{ domain: string; current: number; longest: number }>;
   lastVibeCheck?: { rating: number; date: string };
 }
@@ -77,6 +79,11 @@ function buildUserPrompt(state: UserState, type: 'daily_nudge' | 'weekly_challen
   const phaseCtx = PHASE_CONTEXTS[state.phase] ?? state.phase;
 
   const focusLines = state.domainFocuses.map((f) => `  ${f.domain}: ${f.focus}`).join('\n');
+  const customRouteLines = state.customRoutes.length
+    ? state.customRoutes
+        .map((r) => `  ${r.label} under ${r.parentDomain}: ${r.focus}`)
+        .join('\n')
+    : '  No personal routes.';
 
   const checkInLines = state.recentCheckIns.length
     ? state.recentCheckIns
@@ -84,6 +91,12 @@ function buildUserPrompt(state: UserState, type: 'daily_nudge' | 'weekly_challen
         .map((c) => `  ${c.date} ${c.domain}: ${c.status}`)
         .join('\n')
     : '  No check-ins yet.';
+  const customCheckInLines = state.recentCustomRouteCheckIns.length
+    ? state.recentCustomRouteCheckIns
+        .slice(-7)
+        .map((c) => `  ${c.date} ${c.route}: ${c.status}`)
+        .join('\n')
+    : '  No personal route check-ins yet.';
 
   const streakLines = state.streaks.length
     ? state.streaks.map((s) => `  ${s.domain}: ${s.current} days (best: ${s.longest})`).join('\n')
@@ -99,8 +112,14 @@ Current phase: ${phaseCtx} (Day ${Math.min(state.dayInCycle, 84)} of 84)
 Domain focuses:
 ${focusLines}
 
+Personal routes:
+${customRouteLines}
+
 Last 7 days check-ins:
 ${checkInLines}
+
+Last 7 days personal route check-ins:
+${customCheckInLines}
 
 Current streaks:
 ${streakLines}
@@ -266,12 +285,28 @@ Deno.serve(async (req: Request) => {
       .eq('user_id', userId)
       .eq('cycle_id', cycle.id);
 
+    const { data: customRoutes } = await supabase
+      .from('custom_routes')
+      .select('id, label, parent_domain_type, focus_description')
+      .eq('user_id', userId)
+      .eq('cycle_id', cycle.id)
+      .is('archived_at', null)
+      .order('created_at', { ascending: true });
+
     const sevenDaysAgo = new Date(todayDate.getTime() - 7 * 86_400_000).toISOString().split('T')[0];
 
     const { data: checkIns } = await supabase
       .from('daily_check_ins')
       .select('date, domain_type, status')
       .eq('user_id', userId)
+      .gte('date', sevenDaysAgo)
+      .order('date', { ascending: true });
+
+    const { data: customCheckIns } = await supabase
+      .from('custom_route_check_ins')
+      .select('date, status, custom_routes(label)')
+      .eq('user_id', userId)
+      .eq('cycle_id', cycle.id)
       .gte('date', sevenDaysAgo)
       .order('date', { ascending: true });
 
@@ -300,10 +335,24 @@ Deno.serve(async (req: Request) => {
           focus: f.focus_description,
         }),
       ),
+      customRoutes: (customRoutes ?? []).map(
+        (r: { label: string; parent_domain_type: string; focus_description: string }) => ({
+          label: r.label,
+          parentDomain: r.parent_domain_type,
+          focus: r.focus_description,
+        }),
+      ),
       recentCheckIns: (checkIns ?? []).map(
         (c: { date: string; domain_type: string; status: string }) => ({
           date: c.date,
           domain: c.domain_type,
+          status: c.status,
+        }),
+      ),
+      recentCustomRouteCheckIns: (customCheckIns ?? []).map(
+        (c: { date: string; status: string; custom_routes: { label: string } | null }) => ({
+          date: c.date,
+          route: c.custom_routes?.label ?? 'Personal route',
           status: c.status,
         }),
       ),

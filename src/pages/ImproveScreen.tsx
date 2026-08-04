@@ -18,8 +18,11 @@ export default function ImproveScreen() {
   const profile = useAppStore((s) => s.profile);
   const authUser = useAppStore((s) => s.authUser);
   const domainFocuses = useAppStore((s) => s.domainFocuses);
+  const customRoutes = useAppStore((s) => s.customRoutes);
   const todayCheckIns = useAppStore((s) => s.todayCheckIns);
+  const todayCustomRouteCheckIns = useAppStore((s) => s.todayCustomRouteCheckIns);
   const setDailyCheckIn = useAppStore((s) => s.setDailyCheckIn);
+  const setCustomRouteCheckIn = useAppStore((s) => s.setCustomRouteCheckIn);
 
   const isPaidTier = hasBrotherhoodAccess(profile?.tier);
   const today = new Date();
@@ -35,6 +38,8 @@ export default function ImproveScreen() {
     email: authUser?.email,
     domainFocuses,
     todayCheckIns,
+    customRoutes: isPaidTier ? customRoutes : [],
+    todayCustomRouteCheckIns,
   });
 
   function handleComplete() {
@@ -218,6 +223,10 @@ export default function ImproveScreen() {
                       setActiveFrameworkId((current) =>
                         current === recommendation.id ? null : recommendation.id,
                       );
+                      return;
+                    }
+                    if (recommendation.customRouteId) {
+                      void setCustomRouteCheckIn(recommendation.customRouteId, 'Done');
                       return;
                     }
                     void setDailyCheckIn(recommendation.domainType, 'Done');

@@ -1,5 +1,13 @@
-import type { CheckInStatus, DailyCheckIn, DomainType, UserDomainFocus } from '@/types';
-import { getAvailableDomains } from '@/types';
+import type {
+  CheckInStatus,
+  CustomRoute,
+  CustomRouteCheckIn,
+  DailyCheckIn,
+  DomainConfig,
+  DomainType,
+  UserDomainFocus,
+} from '@/types';
+import { getAvailableDomains, getDomainConfig } from '@/types';
 import { getDiscreetDomainLabel } from '@/utils/v1Framework';
 
 export type FrameworkLens = 'Prep' | 'Reflect' | 'Coach' | 'Feedback';
@@ -10,6 +18,7 @@ export interface FrameworkRecommendation {
   title: string;
   body: string;
   domainType: DomainType;
+  customRouteId?: string;
   domainLabel: string;
   actionText: string;
 }
@@ -18,6 +27,8 @@ interface BuildArgs {
   email?: string | null;
   domainFocuses: UserDomainFocus[];
   todayCheckIns: Partial<Record<DomainType, DailyCheckIn>>;
+  customRoutes?: CustomRoute[];
+  todayCustomRouteCheckIns?: Record<string, CustomRouteCheckIn>;
 }
 
 function statusRank(status?: CheckInStatus): number {
@@ -31,56 +42,98 @@ export function buildFrameworkRecommendations({
   email,
   domainFocuses,
   todayCheckIns,
+  customRoutes = [],
+  todayCustomRouteCheckIns = {},
 }: BuildArgs): FrameworkRecommendation[] {
   const availableDomains = getAvailableDomains(email);
-  const rankedDomains = [...availableDomains].sort(
-    (a, b) => statusRank(todayCheckIns[a.type]?.status) - statusRank(todayCheckIns[b.type]?.status),
+  const domainTargets = availableDomains.map((domain) => {
+    const focus = domainFocuses.find((item) => item.domainType === domain.type);
+    return {
+      id: domain.type,
+      domain,
+      label: getDiscreetDomainLabel(domain, email),
+      action: focus?.focusDescription ?? domain.focusOptions[0],
+      status: todayCheckIns[domain.type]?.status,
+      customRouteId: undefined as string | undefined,
+    };
+  });
+  const customTargets = customRoutes
+    .filter((route) => !route.archivedAt)
+    .map((route) => {
+      const parentDomain = getDomainConfig(route.parentDomainType, email) ?? availableDomains[0];
+      return {
+        id: route.id,
+        domain: parentDomain,
+        label: route.label,
+        action: route.focusDescription,
+        status: todayCustomRouteCheckIns[route.id]?.status,
+        customRouteId: route.id,
+      };
+    })
+    .filter((target): target is typeof target & { domain: DomainConfig } => Boolean(target.domain));
+  const rankedTargets = [...domainTargets, ...customTargets].sort(
+    (a, b) => statusRank(a.status) - statusRank(b.status),
   );
-  const primaryDomain = rankedDomains[0] ?? availableDomains[0];
-  const secondaryDomain = rankedDomains[1] ?? primaryDomain;
-  const focus = domainFocuses.find((item) => item.domainType === primaryDomain.type);
-  const secondaryFocus = domainFocuses.find((item) => item.domainType === secondaryDomain.type);
-  const primaryAction = focus?.focusDescription ?? primaryDomain.focusOptions[0];
-  const secondaryAction = secondaryFocus?.focusDescription ?? secondaryDomain.focusOptions[0];
-  const primaryLabel = getDiscreetDomainLabel(primaryDomain, email);
-  const secondaryLabel = getDiscreetDomainLabel(secondaryDomain, email);
+  const primary = rankedTargets[0] ?? domainTargets[0];
+  const secondary = rankedTargets[1] ?? primary;
 
-  return [
+  const recommendations: FrameworkRecommendation[] = [
     {
-      id: `${primaryDomain.type}-prep`,
+      id: `${primary.id}-prep`,
       lens: 'Prep',
-      title: `Prep ${primaryLabel}`,
-      body: primaryDomain.prepOptions[0],
-      domainType: primaryDomain.type,
-      domainLabel: primaryLabel,
-      actionText: primaryAction,
+      title: `Prep ${primary.label}`,
+      body: primary.domain.prepOptions[0],
+      domainType: primary.domain.type,
+      customRouteId: primary.customRouteId,
+      domainLabel: primary.label,
+      actionText: primary.action,
     },
     {
-      id: `${secondaryDomain.type}-coach`,
+      id: `${secondary.id}-coach`,
       lens: 'Coach',
-      title: `Choose ${secondaryLabel}`,
-      body: secondaryDomain.coachPrompt,
-      domainType: secondaryDomain.type,
-      domainLabel: secondaryLabel,
-      actionText: secondaryAction,
+      title: `Choose ${secondary.label}`,
+      body: secondary.domain.coachPrompt,
+      domainType: secondary.domain.type,
+      customRouteId: secondary.customRouteId,
+      domainLabel: secondary.label,
+      actionText: secondary.action,
     },
     {
-      id: `${primaryDomain.type}-reflect`,
+      id: `${primary.id}-reflect`,
       lens: 'Reflect',
       title: 'Quick reflection',
-      body: primaryDomain.reflectPrompt,
-      domainType: primaryDomain.type,
-      domainLabel: primaryLabel,
+      body: primary.domain.reflectPrompt,
+      domainType: primary.domain.type,
+      customRouteId: primary.customRouteId,
+      domainLabel: primary.label,
       actionText: 'Write one honest line',
     },
     {
-      id: `${secondaryDomain.type}-feedback`,
+      id: `${secondary.id}-feedback`,
       lens: 'Feedback',
-      title: `${secondaryLabel} signal`,
-      body: secondaryDomain.feedbackPrompt,
-      domainType: secondaryDomain.type,
-      domainLabel: secondaryLabel,
-      actionText: secondaryAction,
+      title: `${secondary.label} signal`,
+      body: secondary.domain.feedbackPrompt,
+      domainType: secondary.domain.type,
+      customRouteId: secondary.customRouteId,
+      domainLabel: secondary.label,
+      actionText: secondary.action,
     },
   ];
+
+  const firstCustomTarget = customTargets[0];
+  const alreadyIncludesCustom = recommendations.some((item) => item.customRouteId);
+  if (firstCustomTarget && !alreadyIncludesCustom) {
+    recommendations[recommendations.length - 1] = {
+      id: `${firstCustomTarget.id}-feedback`,
+      lens: 'Feedback',
+      title: `${firstCustomTarget.label} signal`,
+      body: firstCustomTarget.domain.feedbackPrompt,
+      domainType: firstCustomTarget.domain.type,
+      customRouteId: firstCustomTarget.customRouteId,
+      domainLabel: firstCustomTarget.label,
+      actionText: firstCustomTarget.action,
+    };
+  }
+
+  return recommendations;
 }

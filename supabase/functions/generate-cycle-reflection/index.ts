@@ -190,7 +190,6 @@ Deno.serve(async (req: Request) => {
   }
 
   const userId = user.id;
-  const isOwner = user.email?.trim().toLowerCase() === 'ldgmcdowell@gmail.com';
 
   try {
     // Load profile + identity anchor
@@ -271,6 +270,19 @@ Deno.serve(async (req: Request) => {
       .eq('user_id', userId)
       .eq('cycle_id', cycle.id);
 
+    const { data: customRoutes } = await supabase
+      .from('custom_routes')
+      .select('id, label')
+      .eq('user_id', userId)
+      .eq('cycle_id', cycle.id)
+      .order('created_at', { ascending: true });
+
+    const { data: customCheckIns } = await supabase
+      .from('custom_route_check_ins')
+      .select('route_id, status, date')
+      .eq('user_id', userId)
+      .eq('cycle_id', cycle.id);
+
     // Load streaks
     const { data: streaks } = await supabase
       .from('user_streaks')
@@ -285,10 +297,8 @@ Deno.serve(async (req: Request) => {
       .eq('cycle_id', cycle.id)
       .order('date', { ascending: true });
 
-    // Compute domain stats across the public framework, with Liam-only custom routes for the owner account.
-    const DOMAIN_TYPES = isOwner
-      ? ['BODY', 'FUEL', 'METIME', 'USTIME', 'SHOT', 'LENS', 'NEST', 'ROOTS']
-      : ['BODY', 'FUEL', 'METIME', 'USTIME'];
+    // Compute stats across the public framework plus user-created paid personal routes.
+    const DOMAIN_TYPES = ['BODY', 'FUEL', 'METIME', 'USTIME'];
     const cycleStart = new Date(cycle.start_date);
     const today = new Date();
     const dayCount = Math.min(
@@ -320,10 +330,35 @@ Deno.serve(async (req: Request) => {
         bestStreak: streak?.longest_streak ?? 0,
         currentStreak: streak?.current_streak ?? 0,
       };
-    });
+    }).concat(
+      (customRoutes ?? []).map((route: { id: string; label: string }) => {
+        const routeCheckIns = (customCheckIns ?? []).filter(
+          (c: { route_id: string; status: string }) => c.route_id === route.id,
+        );
+        const doneCount = routeCheckIns.filter(
+          (c: { status: string }) => c.status === 'Done',
+        ).length;
+        const partialCount = routeCheckIns.filter(
+          (c: { status: string }) => c.status === 'Partial',
+        ).length;
+        const missedCount = routeCheckIns.filter(
+          (c: { status: string }) => c.status === 'Missed',
+        ).length;
+        return {
+          domain: route.label,
+          doneCount,
+          partialCount,
+          missedCount,
+          completionRate: dayCount > 0 ? (doneCount + partialCount * 0.5) / dayCount : 0,
+          bestStreak: 0,
+          currentStreak: 0,
+        };
+      }),
+    );
 
     const totalCheckIns = domainStats.reduce((s, d) => s + d.doneCount + d.partialCount, 0);
-    const overallCompletionRate = dayCount > 0 ? totalCheckIns / (dayCount * DOMAIN_TYPES.length) : 0;
+    const overallCompletionRate =
+      dayCount > 0 ? totalCheckIns / (dayCount * domainStats.length) : 0;
 
     const strongestDomain =
       [...domainStats].sort((a, b) => b.completionRate - a.completionRate)[0]?.domain ?? 'BODY';
@@ -362,7 +397,7 @@ Deno.serve(async (req: Request) => {
       totalXp: cycle.total_xp_earned ?? 0,
       overallCompletionRate,
       totalCheckIns,
-      domainCount: DOMAIN_TYPES.length,
+      domainCount: domainStats.length,
       vibeStart,
       vibeEnd,
       vibeTrend,
