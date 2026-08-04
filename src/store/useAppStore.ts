@@ -173,7 +173,7 @@ interface AppState {
   todayCustomRouteCheckIns: Record<string, CustomRouteCheckIn>;
   streaks: Partial<Record<DomainType, UserStreak>>;
   // Persisted history for local streak computation (free tier)
-  // Key: ISO date string. Kept to 90 days max.
+  // Key: ISO date string. Pruned to 90 days; paid history is fetched from Supabase on bootstrap.
   checkInHistory: Record<string, Partial<Record<DomainType, CheckInStatus>>>;
   customRouteCheckInHistory: Record<string, Record<string, CheckInStatus>>;
   checkInNoteOverrides: Record<string, CheckInNoteOverride>;
@@ -190,6 +190,7 @@ interface AppState {
   celebrationPending: boolean;
   // Set when XP crosses a level boundary; cleared when user dismisses the card.
   levelUpPending: { level: number; label: string } | null;
+  streakProtectionPending: string | null;
   // Seeded from Day 84 reflection; shown on NewCycleScreen to prompt intention.
   nextCycleIntention: string | null;
   // Tracks the last KAIROS phase the user was shown a milestone banner for.
@@ -250,6 +251,7 @@ interface AppActions {
   setOnboardingComplete: (complete: boolean) => void;
   setCelebrationPending: (pending: boolean) => void;
   setLevelUpPending: (data: { level: number; label: string } | null) => void;
+  setStreakProtectionPending: (domainLabel: string | null) => void;
   setNextCycleIntention: (intention: string | null) => void;
   setLastCelebrationPhase: (phase: string | null) => void;
   setProfileImageDataUrl: (dataUrl: string | null) => void;
@@ -292,6 +294,7 @@ const initialState: AppState = {
   onboardingComplete: false,
   celebrationPending: false,
   levelUpPending: null,
+  streakProtectionPending: null,
   nextCycleIntention: null,
   lastCelebrationPhase: null,
   profileImageDataUrl: null,
@@ -483,7 +486,7 @@ export const useAppStore = create<AppState & AppActions>()(
           // Update history (keep 90 days)
           const history = { ...state.checkInHistory };
           history[today] = { ...(history[today] ?? {}), [domainType]: nextStatus };
-          const cutoff = toLocalIsoDate(new Date(Date.now() - 400 * 86_400_000));
+          const cutoff = toLocalIsoDate(new Date(Date.now() - 90 * 86_400_000));
           for (const date of Object.keys(history)) {
             if (date < cutoff) delete history[date];
           }
@@ -540,6 +543,7 @@ export const useAppStore = create<AppState & AppActions>()(
               newLevel.level > oldLevel.level
                 ? { level: newLevel.level, label: newLevel.label }
                 : state.levelUpPending,
+            streakProtectionPending: protectionApplied ? domainType : state.streakProtectionPending,
           };
         });
 
@@ -964,6 +968,7 @@ export const useAppStore = create<AppState & AppActions>()(
       setOnboardingComplete: (onboardingComplete) => set({ onboardingComplete }),
       setCelebrationPending: (celebrationPending) => set({ celebrationPending }),
       setLevelUpPending: (levelUpPending) => set({ levelUpPending }),
+      setStreakProtectionPending: (streakProtectionPending) => set({ streakProtectionPending }),
       setNextCycleIntention: (nextCycleIntention) => set({ nextCycleIntention }),
       setLastCelebrationPhase: (lastCelebrationPhase) => set({ lastCelebrationPhase }),
       setProfileImageDataUrl: (profileImageDataUrl) => set({ profileImageDataUrl }),

@@ -1,7 +1,7 @@
 import Button from '@/components/common/Button';
 import { useCycleReflection, useMarkReflectionViewed } from '@/hooks/useCycleReflection';
 import { useAppStore } from '@/store/useAppStore';
-import { KAIROS_CYCLE_LENGTH_DAYS, getAvailableDomains } from '@/types';
+import { KAIROS_CYCLE_LENGTH_DAYS, XP_PER_CYCLE_COMPLETE, getAvailableDomains } from '@/types';
 import { hasBrotherhoodAccess } from '@/utils/entitlements';
 import { formatKairosPoints } from '@/utils/gamification';
 import { useEffect, useState } from 'react';
@@ -29,7 +29,8 @@ function PulsingDots() {
 
 export default function Day84CompletionModal({ onClose }: Props) {
   const navigate = useNavigate();
-  const { authUser, completeCycle, profile, currentCycle, setNextCycleIntention } = useAppStore();
+  const { authUser, completeCycle, profile, currentCycle, journeyArchive, setNextCycleIntention } =
+    useAppStore();
   const [step, setStep] = useState<Step>('intro');
   const [reflection, setReflection] = useState('');
   const [saving, setSaving] = useState(false);
@@ -44,11 +45,16 @@ export default function Day84CompletionModal({ onClose }: Props) {
 
   const isPaidTier = hasBrotherhoodAccess(profile?.tier);
   const availableDomains = getAvailableDomains(authUser?.email);
+  const nextCycleNumber = (journeyArchive?.length ?? 0) + 2;
   const domainColours: Record<string, string> = Object.fromEntries(
     availableDomains.map((d) => [d.type, d.colour]),
   );
 
   async function handleComplete() {
+    if (currentCycle?.status === 'completed') {
+      setStep('celebrate');
+      return;
+    }
     setSaving(true);
     await completeCycle(reflection);
     setSaving(false);
@@ -267,7 +273,7 @@ export default function Day84CompletionModal({ onClose }: Props) {
               Cycle complete
             </p>
             <p className="font-heading text-5xl font-bold text-accent-green mb-2 tracking-widest">
-              +500 KP
+              +{formatKairosPoints(XP_PER_CYCLE_COMPLETE)}
             </p>
             <p className="text-base-muted text-xs mb-6">Kairos Points for completing your cycle</p>
 
@@ -299,7 +305,8 @@ export default function Day84CompletionModal({ onClose }: Props) {
             )}
 
             <p className="text-base-subtext text-sm mb-8">
-              When you're ready, start Cycle 2. The work you laid down doesn't disappear.
+              When you're ready, start Cycle {nextCycleNumber}. The work you laid down doesn't
+              disappear.
             </p>
             <Button
               onClick={() => {
@@ -309,7 +316,7 @@ export default function Day84CompletionModal({ onClose }: Props) {
               className="w-full mb-3"
               type="button"
             >
-              Start Cycle 2
+              Start Cycle {nextCycleNumber}
             </Button>
             <Button variant="ghost" onClick={onClose} className="w-full" type="button">
               Take a break first

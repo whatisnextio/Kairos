@@ -73,11 +73,13 @@ const PHASE_MILESTONE_MESSAGES: Record<string, string> = {
   SUSTAIN: 'Hold the gain. Prepare the next cycle deliberately.',
 };
 
-// Module-level flags: prevent re-prompting within the same JS session even if HomeScreen remounts
+// Module-level flags: prevent re-prompting within the same JS session even if HomeScreen remounts.
+// Catch-up and accountability are keyed by cycle ID so they reset automatically on cycle change.
 let vibeCheckShownThisSession = false;
 let domainSetupShownThisSession = false;
 let phaseTransitionShownThisSession = false;
-let accountabilitySuppressedThisSession = false;
+let accountabilitySuppressedCycleId: string | null = null;
+let catchUpSuppressedCycleId: string | null = null;
 
 export default function HomeScreen() {
   const navigate = useNavigate();
@@ -104,13 +106,18 @@ export default function HomeScreen() {
   const setCelebrationPending = useAppStore((s) => s.setCelebrationPending);
   const levelUpPending = useAppStore((s) => s.levelUpPending);
   const setLevelUpPending = useAppStore((s) => s.setLevelUpPending);
+  const streakProtectionPending = useAppStore((s) => s.streakProtectionPending);
+  const setStreakProtectionPending = useAppStore((s) => s.setStreakProtectionPending);
   const lastCelebrationPhase = useAppStore((s) => s.lastCelebrationPhase);
   const setLastCelebrationPhase = useAppStore((s) => s.setLastCelebrationPhase);
   const [showVibeCheck, setShowVibeCheck] = useState(false);
   const [showDomainSetup, setShowDomainSetup] = useState(false);
   const [showPhaseTransition, setShowPhaseTransition] = useState(false);
   const [showAccountabilityPrompt, setShowAccountabilityPrompt] = useState(false);
+  const cycleId = currentCycle?.id ?? null;
+  const [catchUpVisible, setCatchUpVisible] = useState(catchUpSuppressedCycleId !== cycleId);
   const [selectedDomainType, setSelectedDomainType] = useState<DomainType | null>(null);
+  const [selectedCustomRouteId, setSelectedCustomRouteId] = useState<string | null>(null);
 
   const dayInCycle = profile && currentCycle ? getDayInCycle(currentCycle.startDate) : 1;
   const displayDay = Math.min(dayInCycle, KAIROS_CYCLE_LENGTH_DAYS);
@@ -182,13 +189,13 @@ export default function HomeScreen() {
   ]);
 
   useEffect(() => {
-    if (!shouldShowAccountability || accountabilitySuppressedThisSession) {
+    if (!shouldShowAccountability || accountabilitySuppressedCycleId === cycleId) {
       setShowAccountabilityPrompt(false);
       return;
     }
 
     setShowAccountabilityPrompt(true);
-  }, [shouldShowAccountability]);
+  }, [shouldShowAccountability, cycleId]);
 
   if (!profile || !currentCycle) return null;
 
@@ -203,16 +210,6 @@ export default function HomeScreen() {
       : (anchor?.name ?? 'Your identity');
   const firstName = profile.displayName.trim().split(/\s+/)[0] || 'You';
   const avatarInitial = firstName.charAt(0).toUpperCase() || 'K';
-
-  const handleCustomRouteCheckIn = (routeId: string, current: CheckInStatus | undefined) => {
-    if (current === 'Done') {
-      void setCustomRouteCheckIn(routeId, 'Partial');
-    } else if (current === 'Partial') {
-      void setCustomRouteCheckIn(routeId, 'Missed');
-    } else {
-      void setCustomRouteCheckIn(routeId, 'Done');
-    }
-  };
 
   return (
     <>
@@ -272,6 +269,31 @@ export default function HomeScreen() {
             </Button>
           </div>
         )}
+
+        {/* Streak protection explanation */}
+        {streakProtectionPending &&
+          (() => {
+            const protectedDomain = availableDomains.find(
+              (d) => d.type === streakProtectionPending,
+            );
+            return (
+              <div className="rounded-xl border border-base-border bg-base-surface/80 px-4 py-4">
+                <p className="font-heading text-xs text-base-muted tracking-widest uppercase mb-1">
+                  Streak protected
+                </p>
+                <p className="font-heading text-xl font-bold text-base-text tracking-wide">
+                  {protectedDomain?.label ?? streakProtectionPending} streak is safe.
+                </p>
+                <p className="text-base-subtext text-sm mt-1 mb-3">
+                  One grace day used this fortnight. The domain was marked Protected instead of
+                  Missed.
+                </p>
+                <Button size="sm" variant="ghost" onClick={() => setStreakProtectionPending(null)}>
+                  Got it
+                </Button>
+              </div>
+            );
+          })()}
 
         {/* Phase transition milestone */}
         {showPhaseTransition && (
@@ -383,7 +405,7 @@ export default function HomeScreen() {
           </Card>
         )}
 
-        {catchUpPath && (
+        {catchUpPath && catchUpVisible && (
           <Card className="border-status-partial/50 bg-status-partial/5">
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0">
@@ -400,15 +422,38 @@ export default function HomeScreen() {
                   .
                 </p>
               </div>
-              <Button
-                size="sm"
-                variant="ghost"
-                className="shrink-0"
-                aria-label={`Mark ${catchUpPath.domainLabel} Partial`}
-                onClick={() => setDailyCheckIn(catchUpPath.domainType, 'Partial')}
-              >
-                Mark Partial
-              </Button>
+              <div className="flex items-center gap-1 shrink-0">
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  aria-label={`Mark ${catchUpPath.domainLabel} Partial`}
+                  onClick={() => setDailyCheckIn(catchUpPath.domainType, 'Partial')}
+                >
+                  Mark Partial
+                </Button>
+                <button
+                  type="button"
+                  aria-label="Dismiss"
+                  className="flex items-center justify-center w-11 h-11 text-base-muted hover:text-base-text transition-colors rounded"
+                  onClick={() => {
+                    catchUpSuppressedCycleId = cycleId;
+                    setCatchUpVisible(false);
+                  }}
+                >
+                  <svg
+                    aria-hidden="true"
+                    width="14"
+                    height="14"
+                    viewBox="0 0 14 14"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="1.5"
+                    strokeLinecap="round"
+                  >
+                    <path d="M2 2l10 10M12 2L2 12" />
+                  </svg>
+                </button>
+              </div>
             </div>
             <p className="text-base-muted text-xs mt-3">
               Partial means the smallest useful version was completed.
@@ -441,13 +486,24 @@ export default function HomeScreen() {
               <button
                 type="button"
                 aria-label="Dismiss accountability prompt"
-                className="text-base-muted hover:text-base-text transition-colors text-lg leading-none px-1"
+                className="flex items-center justify-center w-11 h-11 shrink-0 text-base-muted hover:text-base-text transition-colors rounded"
                 onClick={() => {
-                  accountabilitySuppressedThisSession = true;
+                  accountabilitySuppressedCycleId = cycleId;
                   setShowAccountabilityPrompt(false);
                 }}
               >
-                x
+                <svg
+                  aria-hidden="true"
+                  width="14"
+                  height="14"
+                  viewBox="0 0 14 14"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.5"
+                  strokeLinecap="round"
+                >
+                  <path d="M2 2l10 10M12 2L2 12" />
+                </svg>
               </button>
             </div>
             {accountabilityTarget && (
@@ -456,7 +512,7 @@ export default function HomeScreen() {
                   size="sm"
                   variant="ghost"
                   onClick={() => {
-                    accountabilitySuppressedThisSession = true;
+                    accountabilitySuppressedCycleId = cycleId;
                     setShowAccountabilityPrompt(false);
                     setSelectedDomainType(accountabilityTarget.type);
                   }}
@@ -467,7 +523,7 @@ export default function HomeScreen() {
                   size="sm"
                   variant="ghost"
                   onClick={() => {
-                    accountabilitySuppressedThisSession = true;
+                    accountabilitySuppressedCycleId = cycleId;
                     setShowAccountabilityPrompt(false);
                   }}
                 >
@@ -587,6 +643,11 @@ export default function HomeScreen() {
                           Check in now, or open details to set tomorrow.
                         </p>
                       )}
+                      {status === 'Protected' && (
+                        <p className="text-base-muted text-xs mt-1">
+                          Streak protected. Counts as a recovery day.
+                        </p>
+                      )}
                     </button>
                     <button
                       type="button"
@@ -621,7 +682,7 @@ export default function HomeScreen() {
                             key={route.id}
                             type="button"
                             className={`w-full rounded-lg border px-3 py-2 text-left transition-colors ${STATUS_ROW_CLASSES[routeStatus]}`}
-                            onClick={() => handleCustomRouteCheckIn(route.id, routeStatus)}
+                            onClick={() => setSelectedCustomRouteId(route.id)}
                             aria-label={`Check in ${route.label}`}
                           >
                             <div className="flex items-center justify-between gap-3">
@@ -668,6 +729,25 @@ export default function HomeScreen() {
                 setSelectedDomainType(null);
               }}
               onClose={() => setSelectedDomainType(null)}
+            />
+          );
+        })()}
+      {selectedCustomRouteId &&
+        (() => {
+          const route = activeCustomRoutes.find((r) => r.id === selectedCustomRouteId);
+          if (!route) return null;
+          const checkIn = todayCustomRouteCheckIns[selectedCustomRouteId];
+          const currentStatus: CheckInStatus =
+            checkIn?.date === todayIso ? checkIn.status : 'Pending';
+          return (
+            <CheckInStatusModal
+              label={route.label}
+              currentStatus={currentStatus}
+              onSelect={(status) => {
+                void setCustomRouteCheckIn(selectedCustomRouteId, status);
+                setSelectedCustomRouteId(null);
+              }}
+              onClose={() => setSelectedCustomRouteId(null)}
             />
           );
         })()}

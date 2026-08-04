@@ -48,16 +48,30 @@ describe('V1 acceptance framework', () => {
     expect(getEarlyWakeProtocol(new Date('2026-08-04T08:00:00'))).toBeNull();
   });
 
-  it('turns a missed habit into a catch-up path', () => {
+  it('shows catch-up path for a pending domain', () => {
+    const domains = getAvailableDomains(OWNER_EMAIL);
+    const path = buildCatchUpPath(domains, {
+      FUEL: checkIn('FUEL', 'Done'),
+      METIME: checkIn('METIME', 'Done'),
+      USTIME: checkIn('USTIME', 'Done'),
+      // BODY is absent (Pending)
+    });
+
+    expect(path?.title).toBe('Choose one check-in');
+    expect(path?.body).toContain('easiest open item');
+    expect(path?.steps.join(' ')).toContain('Partial');
+  });
+
+  it('does not show catch-up path when all domains are explicitly marked', () => {
     const domains = getAvailableDomains(OWNER_EMAIL);
     const path = buildCatchUpPath(domains, {
       BODY: checkIn('BODY', 'Missed'),
       FUEL: checkIn('FUEL', 'Done'),
+      METIME: checkIn('METIME', 'Partial'),
+      USTIME: checkIn('USTIME', 'Done'),
     });
 
-    expect(path?.title).toBe('Catch up today');
-    expect(path?.body).toContain('rescue the day');
-    expect(path?.steps.join(' ')).toContain('Partial');
+    expect(path).toBeNull();
   });
 
   it('uses Self and Connection as the public categories for everyone', () => {

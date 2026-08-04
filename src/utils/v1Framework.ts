@@ -88,14 +88,13 @@ export function buildCatchUpPath(
       statusPriority(todayCheckIns[a.type]?.status) - statusPriority(todayCheckIns[b.type]?.status),
   )[0];
   const status = target ? todayCheckIns[target.type]?.status : undefined;
-  if (!target || (status !== 'Missed' && status !== 'Pending' && status !== undefined)) return null;
+  // Only prompt when the domain is still unmarked. A deliberate Missed mark means the user
+  // has already acknowledged the domain; showing a catch-up card at that point is nagging.
+  if (!target || (status !== 'Pending' && status !== undefined)) return null;
 
   return {
-    title: status === 'Missed' ? 'Catch up today' : 'Choose one check-in',
-    body:
-      status === 'Missed'
-        ? 'You can still rescue the day. Pick one smaller version and record what happened.'
-        : 'Start with the easiest open item. One clear mark is enough for now.',
+    title: 'Choose one check-in',
+    body: 'Start with the easiest open item. One clear mark is enough for now.',
     domainType: target.type,
     domainLabel: target.label,
     steps: [

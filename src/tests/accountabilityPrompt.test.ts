@@ -3,10 +3,10 @@ import { NOTIFICATION_SLOTS } from '@/services/localNotifications';
 import { describe, expect, it } from 'vitest';
 
 describe('contextual accountability prompt', () => {
-  it('is session-suppressed after dismissing or opening the target check-in', () => {
+  it('is suppressed per-cycle after dismissing or opening the target check-in', () => {
     const source = readFileSync('src/pages/HomeScreen.tsx', 'utf8');
 
-    expect(source).toContain('accountabilitySuppressedThisSession');
+    expect(source).toContain('accountabilitySuppressedCycleId');
     expect(source).toContain('Dismiss accountability prompt');
     expect(source).toContain('setShowAccountabilityPrompt(false)');
     expect(source).toContain('setSelectedDomainType(accountabilityTarget.type)');

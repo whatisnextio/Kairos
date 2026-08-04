@@ -16,6 +16,7 @@ import {
   hasComplimentaryBrotherhood,
 } from '@/utils/entitlements';
 import { isLocalDevUser } from '@/utils/localDevSession';
+import { toLocalIsoDate } from '@/utils/v1Framework';
 import { useEffect, useRef } from 'react';
 
 function mapProfile(row: Record<string, unknown>): Profile {
@@ -137,7 +138,7 @@ export function useBootstrap() {
     bootstrapped.current = authUser.id;
     setIsBootstrapLoading(true);
 
-    const today = new Date().toISOString().split('T')[0];
+    const today = toLocalIsoDate(new Date());
 
     // Clear stale check-ins from a previous day (persisted in localStorage)
     const anyCheckIn = Object.values(todayCheckIns)[0];
@@ -227,7 +228,7 @@ export function useBootstrap() {
           setCustomRoutes(routeRows.map((row) => mapCustomRoute(row as Record<string, unknown>)));
         }
 
-        const sevenDaysAgo = new Date(Date.now() - 6 * 86_400_000).toISOString().split('T')[0];
+        const sevenDaysAgo = toLocalIsoDate(new Date(Date.now() - 6 * 86_400_000));
         const { data: checkIns } = await supabase
           .from('daily_check_ins')
           .select('*')
