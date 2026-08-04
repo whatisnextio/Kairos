@@ -60,14 +60,18 @@ describe('onboarding and reset contract', () => {
   it('explains the framework before the setup screens', () => {
     const source = readFileSync('src/pages/onboarding/OnboardingFlow.tsx', 'utf8');
 
-    expect(source).toContain("type Step = 'framework' | 'identity' | 'focus' | 'commit';");
     expect(source).toContain(
-      "const ONBOARDING_STEPS: Step[] = ['framework', 'identity', 'focus', 'commit'];",
+      "type Step = 'framework' | 'identity' | 'focus' | 'accountability' | 'commit';",
+    );
+    expect(source).toContain(
+      "const ONBOARDING_STEPS: Step[] = ['framework', 'identity', 'focus', 'accountability', 'commit'];",
     );
     expect(source).toContain('{stepNumber} of {stepCount}');
     expect(source).toContain('12K is an 84-day reset powered by Kairos.');
     expect(source).toContain('Six phases');
-    expect(source).not.toContain("'notifications'");
+    expect(source).toContain('Set accountability intensity.');
+    expect(source).toContain('not diagnosis');
+    expect(source).toContain('setNotificationPreferences');
   });
 
   it('archives the active journey before cycle reset clears current state', async () => {

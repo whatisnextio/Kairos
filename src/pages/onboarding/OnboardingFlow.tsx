@@ -1,4 +1,9 @@
 import Button from '@/components/common/Button';
+import {
+  DEFAULT_NOTIFICATION_PREFERENCES,
+  REMINDER_INTENSITY_OPTIONS,
+  type ReminderIntensity,
+} from '@/services/localNotifications';
 import { supabase } from '@/services/supabaseClient';
 import { useAppStore } from '@/store/useAppStore';
 import type { DailyCheckIn, DomainType, IdentityAnchorId, Profile } from '@/types';
@@ -14,8 +19,8 @@ import { getComplimentaryProfileFields } from '@/utils/entitlements';
 import { DEV_CYCLE_ID, isLocalDevUser } from '@/utils/localDevSession';
 import { useRef, useState } from 'react';
 
-type Step = 'framework' | 'identity' | 'focus' | 'commit';
-const ONBOARDING_STEPS: Step[] = ['framework', 'identity', 'focus', 'commit'];
+type Step = 'framework' | 'identity' | 'focus' | 'accountability' | 'commit';
+const ONBOARDING_STEPS: Step[] = ['framework', 'identity', 'focus', 'accountability', 'commit'];
 
 export default function OnboardingFlow() {
   const {
@@ -28,6 +33,8 @@ export default function OnboardingFlow() {
     setOnboardingComplete,
     setTodayCheckIns,
     mergeCheckInHistory,
+    setNotificationPreferences,
+    notificationPreferences,
   } = useAppStore();
 
   const [step, setStep] = useState<Step>('framework');
@@ -38,6 +45,11 @@ export default function OnboardingFlow() {
   const [domain, setDomain] = useState<DomainType | null>(null);
   const [microAction, setMicroAction] = useState('');
   const [displayName, setDisplayName] = useState(profile?.displayName ?? '');
+  const [remindersEnabled, setRemindersEnabled] = useState(notificationPreferences.enabled);
+  const [reminderIntensity, setReminderIntensity] = useState<ReminderIntensity>(
+    notificationPreferences.intensity ?? DEFAULT_NOTIFICATION_PREFERENCES.intensity,
+  );
+  const [earlyProtocol, setEarlyProtocol] = useState(notificationPreferences.earlyProtocol);
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const submitInFlight = useRef(false);
@@ -60,6 +72,11 @@ export default function OnboardingFlow() {
   const goToCommit = () => {
     setSubmitError(null);
     setStep('commit');
+  };
+
+  const goToAccountability = () => {
+    setSubmitError(null);
+    setStep('accountability');
   };
 
   const completeLocally = ({
@@ -126,6 +143,12 @@ export default function OnboardingFlow() {
     ]);
     setTodayCheckIns({ [domain]: ci });
     mergeCheckInHistory({ [today]: { [domain]: 'Done' } });
+    setNotificationPreferences({
+      enabled: remindersEnabled,
+      intensity: reminderIntensity,
+      earlyProtocol,
+      webPushEnabled: false,
+    });
     setOnboardingComplete(true);
   };
 
@@ -301,6 +324,12 @@ export default function OnboardingFlow() {
       ]);
       setTodayCheckIns({ [domain]: ci });
       mergeCheckInHistory({ [today]: { [domain]: 'Done' } });
+      setNotificationPreferences({
+        enabled: remindersEnabled,
+        intensity: reminderIntensity,
+        earlyProtocol,
+        webPushEnabled: false,
+      });
       setOnboardingComplete(true);
     } catch (err) {
       setSubmitError(err instanceof Error ? err.message : 'Setup failed. Please try again.');
@@ -470,7 +499,82 @@ export default function OnboardingFlow() {
               <Button variant="ghost" onClick={() => setStep('identity')} className="flex-1">
                 Back
               </Button>
-              <Button onClick={goToCommit} disabled={!domain} className="flex-1">
+              <Button onClick={goToAccountability} disabled={!domain} className="flex-1">
+                Continue
+              </Button>
+            </div>
+          </section>
+        )}
+
+        {step === 'accountability' && (
+          <section>
+            <h1 className="font-heading text-3xl font-bold text-base-text tracking-wide mb-2">
+              Set accountability intensity.
+            </h1>
+            <p className="text-base-subtext text-sm leading-relaxed mb-5">
+              Choose how hard Kairos should keep the day visible. This is about prompt cadence and
+              tone, not diagnosis.
+            </p>
+
+            <div className="grid grid-cols-1 gap-2 mb-5">
+              {REMINDER_INTENSITY_OPTIONS.map((option) => (
+                <button
+                  type="button"
+                  key={option.id}
+                  onClick={() => setReminderIntensity(option.id)}
+                  className={`w-full text-left p-3 rounded border transition-colors ${
+                    reminderIntensity === option.id
+                      ? 'border-accent-green bg-accent-green/10'
+                      : 'border-base-border bg-base-surface hover:border-base-muted'
+                  }`}
+                >
+                  <p className="font-heading font-medium text-base-text tracking-wide">
+                    {option.label}
+                  </p>
+                  <p className="text-base-subtext text-xs mt-0.5">{option.description}</p>
+                </button>
+              ))}
+            </div>
+
+            <label className="flex items-start gap-3 rounded border border-base-border bg-base-surface p-3 mb-3">
+              <input
+                type="checkbox"
+                checked={remindersEnabled}
+                onChange={(event) => setRemindersEnabled(event.target.checked)}
+                className="mt-0.5 accent-accent-green"
+              />
+              <span>
+                <span className="block text-sm font-medium text-base-text">Enable reminders</span>
+                <span className="block text-xs text-base-subtext mt-0.5">
+                  You can change this later from You. Browser push setup may still ask for
+                  permission.
+                </span>
+              </span>
+            </label>
+
+            <label className="flex items-start gap-3 rounded border border-base-border bg-base-surface p-3">
+              <input
+                type="checkbox"
+                checked={earlyProtocol}
+                onChange={(event) => setEarlyProtocol(event.target.checked)}
+                disabled={!remindersEnabled}
+                className="mt-0.5 accent-accent-green disabled:opacity-50"
+              />
+              <span>
+                <span className="block text-sm font-medium text-base-text">
+                  Include early-wake protocol
+                </span>
+                <span className="block text-xs text-base-subtext mt-0.5">
+                  Useful if early starts can turn into drift or scrolling.
+                </span>
+              </span>
+            </label>
+
+            <div className="flex gap-3 mt-5">
+              <Button variant="ghost" onClick={() => setStep('focus')} className="flex-1">
+                Back
+              </Button>
+              <Button onClick={goToCommit} className="flex-1">
                 Continue
               </Button>
             </div>
@@ -523,7 +627,7 @@ export default function OnboardingFlow() {
             <div className="flex gap-3 mt-5">
               <Button
                 variant="ghost"
-                onClick={() => setStep('focus')}
+                onClick={() => setStep('accountability')}
                 disabled={submitting}
                 className="flex-1"
               >
@@ -539,7 +643,7 @@ export default function OnboardingFlow() {
             </div>
 
             <p className="text-base-muted text-xs text-center mt-4">
-              Reminders can be enabled later from You.
+              Accountability can be adjusted later from You.
             </p>
           </section>
         )}
