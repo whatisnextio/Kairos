@@ -16,7 +16,7 @@ export const KAIROS_PHASES: KairosPhaseConfig[] = [
     phase: 'KICKOFF',
     label: 'Kickoff',
     days: [1, 14],
-    tagline: 'Start small. Create the first visible win.',
+    tagline: 'Begin with one useful action you can repeat.',
   },
   {
     phase: 'ANCHOR',

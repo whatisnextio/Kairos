@@ -232,22 +232,20 @@ export default function HomeScreen() {
               Day {displayDay} of {KAIROS_CYCLE_LENGTH_DAYS}
             </h1>
             <p className="text-accent-green text-sm font-heading tracking-wider uppercase mt-0.5">
-              {phaseConfig.label} phase
+              {phaseConfig.label}
             </p>
           </div>
         </div>
 
         <div className="rounded border border-base-border bg-base-surface px-3 py-2">
           <div className="flex items-center justify-between gap-3">
-            <p className="font-heading text-sm text-base-text tracking-wide">
-              Today's Kairos proof
-            </p>
+            <p className="font-heading text-sm text-base-text tracking-wide">Today's plan</p>
             <p className="text-base-subtext text-xs whitespace-nowrap">
               Day {phaseDay} of {phaseLength}
             </p>
           </div>
           <p className="text-base-muted text-xs mt-1">
-            {anchorDisplayName} mode. One useful proof moves today forward.
+            Focus: {anchorDisplayName}. Pick one useful action and keep it visible.
           </p>
         </div>
 
@@ -428,7 +426,7 @@ export default function HomeScreen() {
                   {accountabilityTarget
                     ? `${getDailyDomainLabel(
                         accountabilityTarget,
-                      )} still needs a check-in. Mark what actually happened. A smaller version still counts.`
+                      )} still needs a check-in. Record what happened, or count a smaller useful version as Partial.`
                     : accountabilityPrompt.body}
                 </p>
               </div>

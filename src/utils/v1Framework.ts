@@ -91,17 +91,17 @@ export function buildCatchUpPath(
   if (!target || (status !== 'Missed' && status !== 'Pending' && status !== undefined)) return null;
 
   return {
-    title: status === 'Missed' ? 'Catch-up path' : 'Close the loop',
+    title: status === 'Missed' ? 'Catch up today' : 'Choose one check-in',
     body:
       status === 'Missed'
-        ? 'The day is not failed. Salvage one useful version and mark the honest result.'
-        : 'One small check-in is enough to stop the drift.',
+        ? 'You can still rescue the day. Pick one smaller version and record what happened.'
+        : 'Start with the easiest open item. One clear mark is enough for now.',
     domainType: target.type,
     domainLabel: target.label,
     steps: [
       target.prepOptions[0],
       `Do the smallest useful version of ${target.focusOptions[0].toLowerCase()}.`,
-      'Mark Partial if that is the honest score.',
+      'Use Partial when a smaller useful version happened.',
     ],
   };
 }
@@ -110,8 +110,8 @@ export function buildAccountabilityPrompt(ignoredCount: number): AccountabilityP
   if (ignoredCount >= 2) {
     return {
       level: 3,
-      title: 'Evening reset',
-      body: 'Pick one open item and mark what actually happened. A smaller version still counts.',
+      title: 'End-of-day check',
+      body: 'Pick one open item and record what happened. A smaller useful version still counts.',
       steps: [
         'Choose one open item.',
         'Mark Done, Partial, or Missed.',
@@ -125,7 +125,7 @@ export function buildAccountabilityPrompt(ignoredCount: number): AccountabilityP
       level: 2,
       title: 'Quick reset',
       body: 'One small mark keeps the day live. Choose the easiest open item.',
-      steps: ['Choose one open item.', 'Do two minutes.', 'Mark the truth.'],
+      steps: ['Choose one open item.', 'Do two minutes.', 'Record what happened.'],
     };
   }
 
