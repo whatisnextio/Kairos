@@ -1,4 +1,11 @@
-import type { XpLevel } from '@/types';
+import {
+  type CheckInStatus,
+  type EarnedBadge,
+  PUBLIC_DOMAIN_TYPES,
+  type Profile,
+  type XpLevel,
+} from '@/types';
+import { hasBrotherhoodAccess } from '@/utils/entitlements';
 
 const LEVELS: XpLevel[] = [
   { level: 1, label: 'Starter', minXp: 0, maxXp: 199 },
@@ -23,4 +30,132 @@ export function getXpProgressInLevel(xp: number): number {
   const range = level.maxXp - level.minXp;
   const progress = xp - level.minXp;
   return Math.round((progress / range) * 100);
+}
+
+export function getXpForCheckInStatus(status: CheckInStatus | undefined, paid: boolean): number {
+  if (!paid) return 0;
+  if (status === 'Done') return 25;
+  if (status === 'Partial') return 10;
+  return 0;
+}
+
+export function getFortnightBlockKey(dateIso: string): string {
+  const date = new Date(`${dateIso}T00:00:00`);
+  const yearStart = new Date(date.getFullYear(), 0, 1);
+  const dayOfYear = Math.floor((date.getTime() - yearStart.getTime()) / 86_400_000) + 1;
+  const block = Math.ceil(dayOfYear / 14);
+  return `${date.getFullYear()}-${String(block).padStart(2, '0')}`;
+}
+
+export function getWeekKey(dateIso: string): string {
+  const date = new Date(`${dateIso}T00:00:00`);
+  const day = date.getDay() || 7;
+  date.setDate(date.getDate() + 4 - day);
+  const yearStart = new Date(date.getFullYear(), 0, 1);
+  const week = Math.ceil(((date.getTime() - yearStart.getTime()) / 86_400_000 + 1) / 7);
+  return `${date.getFullYear()}-W${String(week).padStart(2, '0')}`;
+}
+
+export function shouldAwardWeeklyBonus({
+  weekDates,
+  history,
+  paid,
+  alreadyAwarded,
+}: {
+  weekDates: string[];
+  history: Record<string, Partial<Record<string, CheckInStatus>>>;
+  paid: boolean;
+  alreadyAwarded: boolean;
+}): boolean {
+  if (!paid || alreadyAwarded || weekDates.length !== 7) return false;
+  return weekDates.every((date) =>
+    PUBLIC_DOMAIN_TYPES.every((domain) => {
+      const status = history[date]?.[domain];
+      return status === 'Done' || status === 'Partial' || status === 'Protected';
+    }),
+  );
+}
+
+export function deriveEarnedBadges({
+  profile,
+  checkInHistory,
+  todayCheckIns,
+  rewardedImproveCards,
+  streakProtectionHistory,
+  awardedWeeklyBonuses = {},
+  dayInCycle,
+}: {
+  profile: Profile;
+  checkInHistory: Record<string, Partial<Record<string, CheckInStatus>>>;
+  todayCheckIns: Partial<Record<string, { status: CheckInStatus }>>;
+  rewardedImproveCards: Record<string, true>;
+  streakProtectionHistory: Record<string, true>;
+  awardedWeeklyBonuses?: Record<string, true>;
+  dayInCycle: number;
+}): EarnedBadge[] {
+  const paid = hasBrotherhoodAccess(profile.tier);
+  const allStatuses = [
+    ...Object.values(checkInHistory).flatMap((day) => Object.values(day)),
+    ...Object.values(todayCheckIns).map((checkIn) => checkIn?.status),
+  ];
+  const todayStatuses = PUBLIC_DOMAIN_TYPES.map((domain) => todayCheckIns[domain]?.status);
+  const hasTodayFullHouse = todayStatuses.every(
+    (status) => status === 'Done' || status === 'Partial' || status === 'Protected',
+  );
+  const hasProtectedDay =
+    Object.keys(streakProtectionHistory).length > 0 || allStatuses.includes('Protected');
+
+  const badges: Array<EarnedBadge & { paidOnly?: boolean }> = [
+    {
+      id: 'first-proof',
+      label: 'First Proof',
+      description: 'Logged the first useful action.',
+      earned: allStatuses.includes('Done'),
+    },
+    {
+      id: 'full-house',
+      label: 'Full House',
+      description: 'Closed all four core domains in one day.',
+      earned: hasTodayFullHouse,
+    },
+    {
+      id: 'seven-day-flywheel',
+      label: '7-Day Flywheel',
+      description: 'Kept every core domain live across a full week.',
+      earned: Object.keys(awardedWeeklyBonuses).length > 0,
+      paidOnly: true,
+    },
+    {
+      id: 'protected-rhythm',
+      label: 'Life Happens',
+      description: 'Used protection without breaking the rhythm.',
+      earned: hasProtectedDay,
+      paidOnly: true,
+    },
+    {
+      id: 'challenge-closed',
+      label: 'Challenge Closed',
+      description: 'Completed an Improve challenge.',
+      earned: Object.keys(rewardedImproveCards).length > 0,
+      paidOnly: true,
+    },
+    {
+      id: 'cycle-finisher',
+      label: 'Cycle Finisher',
+      description: 'Reached the end of an 84-day cycle.',
+      earned: dayInCycle >= 84,
+      paidOnly: true,
+    },
+    {
+      id: 'brotherhood',
+      label: 'Brotherhood',
+      description: 'Unlocked the full 12K status system.',
+      earned: paid,
+      paidOnly: true,
+    },
+  ];
+
+  return badges
+    .filter((badge) => paid || !badge.paidOnly)
+    .map(({ paidOnly: _paidOnly, ...badge }) => badge);
 }

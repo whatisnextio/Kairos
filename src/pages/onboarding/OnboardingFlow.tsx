@@ -2,7 +2,12 @@ import Button from '@/components/common/Button';
 import { supabase } from '@/services/supabaseClient';
 import { useAppStore } from '@/store/useAppStore';
 import type { DailyCheckIn, DomainType, IdentityAnchorId, Profile } from '@/types';
-import { IDENTITY_ANCHORS, PRODUCT_POSITIONING, getAvailableDomains } from '@/types';
+import {
+  IDENTITY_ANCHORS,
+  PRODUCT_POSITIONING,
+  XP_PER_CHECK_IN_DONE,
+  getAvailableDomains,
+} from '@/types';
 import { getComplimentaryProfileFields } from '@/utils/entitlements';
 import { DEV_CYCLE_ID, isLocalDevUser } from '@/utils/localDevSession';
 import { useRef, useState } from 'react';
@@ -68,7 +73,7 @@ export default function OnboardingFlow() {
       domainType: domain,
       status: 'Done',
       notes: null,
-      xpAwarded: 10,
+      xpAwarded: XP_PER_CHECK_IN_DONE,
       createdAt: now,
       updatedAt: now,
     };
@@ -97,7 +102,7 @@ export default function OnboardingFlow() {
       startDate: today,
       endDate: null,
       status: 'active',
-      totalXpEarned: 10,
+      totalXpEarned: XP_PER_CHECK_IN_DONE,
       completionPercentage: 0,
       createdAt: now,
     });
@@ -124,7 +129,10 @@ export default function OnboardingFlow() {
 
     const today = new Date().toISOString().split('T')[0];
     const now = new Date().toISOString();
-    const xpAfterWin = (profile?.xp ?? 0) + 10;
+    const complimentaryFields = getComplimentaryProfileFields(authUser.email);
+    const isPaidOnboarding = isLocalDevUser(authUser.id) || 'tier' in complimentaryFields;
+    const firstProofXp = isPaidOnboarding ? XP_PER_CHECK_IN_DONE : 0;
+    const xpAfterWin = (profile?.xp ?? 0) + firstProofXp;
 
     try {
       if (currentCycle?.status === 'active' || profile?.currentKairosCycleId) {
@@ -141,7 +149,6 @@ export default function OnboardingFlow() {
         data: { user: fullUser },
       } = await supabase.auth.getUser();
       const dobFromAuth: string = fullUser?.user_metadata?.date_of_birth ?? today;
-      const complimentaryFields = getComplimentaryProfileFields(authUser.email);
       const cleanName = displayName.trim() || 'Anonymous';
       const cleanCustomAnchor = anchorId === 'custom' ? customAnchor.trim() : null;
       const cleanAction = microAction.trim();
@@ -198,7 +205,7 @@ export default function OnboardingFlow() {
           date: today,
           domain_type: domain,
           status: 'Done',
-          xp_awarded: 10,
+          xp_awarded: firstProofXp,
         })
         .select()
         .single();
@@ -224,7 +231,7 @@ export default function OnboardingFlow() {
         domainType: domain,
         status: 'Done',
         notes: null,
-        xpAwarded: 10,
+        xpAwarded: firstProofXp,
         createdAt: checkInRow.created_at,
         updatedAt: checkInRow.updated_at,
       };
@@ -253,7 +260,7 @@ export default function OnboardingFlow() {
         startDate: today,
         endDate: null,
         status: 'active',
-        totalXpEarned: 10,
+        totalXpEarned: firstProofXp,
         completionPercentage: 0,
         createdAt: cycle.created_at,
       });

@@ -471,6 +471,8 @@ export interface JourneyArchiveEntry {
   }>;
   checkInHistory: Record<string, Partial<Record<DomainType, CheckInStatus>>>;
   customRouteCheckInHistory: Record<string, Record<string, CheckInStatus>>;
+  streakProtectionHistory?: Record<string, true>;
+  awardedWeeklyBonuses?: Record<string, true>;
 }
 
 // ─── Check-in ────────────────────────────────────────────────────────────────
@@ -566,9 +568,26 @@ export interface SquadPulse {
 
 // ─── XP / Gamification ───────────────────────────────────────────────────────
 
-export const XP_PER_CHECK_IN_DONE = 10;
-export const XP_PER_CHECK_IN_PARTIAL = 5;
+export const XP_PER_CHECK_IN_DONE = 25;
+export const XP_PER_CHECK_IN_PARTIAL = 10;
+export const XP_PER_WEEK_COMPLETE = 100;
 export const XP_PER_CYCLE_COMPLETE = 500;
+
+export type BadgeId =
+  | 'first-proof'
+  | 'full-house'
+  | 'seven-day-flywheel'
+  | 'protected-rhythm'
+  | 'challenge-closed'
+  | 'cycle-finisher'
+  | 'brotherhood';
+
+export interface EarnedBadge {
+  id: BadgeId;
+  label: string;
+  description: string;
+  earned: boolean;
+}
 
 export interface XpLevel {
   level: number;

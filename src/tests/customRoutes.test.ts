@@ -102,7 +102,7 @@ describe('custom routes', () => {
     const state = useAppStore.getState();
     expect(state.todayCustomRouteCheckIns['route-1']?.status).toBe('Done');
     expect(Object.values(state.customRouteCheckInHistory)[0]?.['route-1']).toBe('Done');
-    expect(state.profile?.xp).toBe(10);
+    expect(state.profile?.xp).toBe(25);
   });
 
   it('keeps archived routes out of recommendations while active routes can be targeted', () => {

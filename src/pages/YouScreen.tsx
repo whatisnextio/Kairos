@@ -12,7 +12,8 @@ import { supabase } from '@/services/supabaseClient';
 import { useAppStore } from '@/store/useAppStore';
 import { type DomainType, IDENTITY_ANCHORS, getAvailableDomains } from '@/types';
 import { getSubscriptionTierLabel, hasBrotherhoodAccess } from '@/utils/entitlements';
-import { getLevelForXp } from '@/utils/gamification';
+import { deriveEarnedBadges, getLevelForXp } from '@/utils/gamification';
+import { getDayInCycle } from '@/utils/kairos';
 import { type ChangeEvent, useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 
@@ -66,6 +67,7 @@ export default function YouScreen() {
   const {
     profile,
     authUser,
+    currentCycle,
     customRoutes,
     journeyArchive,
     profileImageDataUrl,
@@ -150,10 +152,25 @@ export default function YouScreen() {
   const customRouteCheckInHistory = useAppStore((s) => s.customRouteCheckInHistory);
   const domainFocuses = useAppStore((s) => s.domainFocuses);
   const lastVibeCheckDate = useAppStore((s) => s.lastVibeCheckDate);
+  const todayCheckIns = useAppStore((s) => s.todayCheckIns);
+  const rewardedImproveCards = useAppStore((s) => s.rewardedImproveCards);
+  const streakProtectionHistory = useAppStore((s) => s.streakProtectionHistory);
+  const awardedWeeklyBonuses = useAppStore((s) => s.awardedWeeklyBonuses);
 
   const handleExportData = useCallback(async () => {
     setIsExporting(true);
     let payload: Record<string, unknown>;
+    const earnedBadges = profile
+      ? deriveEarnedBadges({
+          profile,
+          checkInHistory,
+          todayCheckIns,
+          rewardedImproveCards,
+          streakProtectionHistory,
+          awardedWeeklyBonuses,
+          dayInCycle: currentCycle ? getDayInCycle(currentCycle.startDate) : 0,
+        }).filter((badge) => badge.earned)
+      : [];
 
     if (profile && hasBrotherhoodAccess(profile.tier)) {
       const { data: checkIns } = await supabase
@@ -185,6 +202,9 @@ export default function YouScreen() {
         })),
         customRoutes,
         journeyArchive,
+        earnedBadges,
+        streakProtectionHistory,
+        awardedWeeklyBonuses,
         checkIns: checkIns ?? [],
         customRouteCheckIns: customRouteCheckIns ?? [],
         vibeChecks: vibeChecks ?? [],
@@ -204,6 +224,7 @@ export default function YouScreen() {
         })),
         customRoutes,
         journeyArchive,
+        earnedBadges,
         checkInHistory,
         customRouteCheckInHistory,
       };
@@ -219,11 +240,16 @@ export default function YouScreen() {
     setIsExporting(false);
   }, [
     profile,
+    currentCycle,
     domainFocuses,
     customRoutes,
     journeyArchive,
     checkInHistory,
     customRouteCheckInHistory,
+    todayCheckIns,
+    rewardedImproveCards,
+    streakProtectionHistory,
+    awardedWeeklyBonuses,
   ]);
 
   const handleDeleteAccount = useCallback(async () => {
