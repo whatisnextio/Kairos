@@ -10,14 +10,17 @@
 //   5. Store in ai_nudges (type=cycle_reflection, date=cycle.start_date)
 //   6. Return reflection JSON
 
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { jsonResponse, preflightResponse } from "../_shared/cors.ts";
 
-const ANTHROPIC_API_KEY = Deno.env.get('ANTHROPIC_API_KEY') ?? '';
-const SUPABASE_URL = Deno.env.get('SUPABASE_URL') ?? '';
-const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
-const PAID_TIERS = new Set(['brotherhood', 'lifechanger']);
+const ANTHROPIC_API_KEY = Deno.env.get("ANTHROPIC_API_KEY") ?? "";
+const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
+const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ??
+  "";
+const PAID_TIERS = new Set(["brotherhood", "lifechanger"]);
 
-const SYSTEM_PROMPT = `You are the KAIROS cycle reflection engine. You write one deeply personal summary for someone who has just completed a 12-week behavioural action framework.
+const SYSTEM_PROMPT =
+  `You are the KAIROS cycle reflection engine. You write one deeply personal summary for someone who has just completed a 12-week behavioural action framework.
 
 Voice rules:
 - South UK British English. No em dashes, use commas or full stops.
@@ -66,31 +69,36 @@ interface CycleStats {
   domainCount: number;
   vibeStart: number | null;
   vibeEnd: number | null;
-  vibeTrend: 'improved' | 'declined' | 'stable' | 'unknown';
+  vibeTrend: "improved" | "declined" | "stable" | "unknown";
   domains: DomainStats[];
   strongestDomain: string;
   weakestDomain: string;
 }
 
 function buildPrompt(stats: CycleStats): string {
-  const vibeLine =
-    stats.vibeTrend === 'unknown'
-      ? 'No vibe check data.'
-      : `Vibe checks: started at ${stats.vibeStart}/5, ended at ${stats.vibeEnd}/5 (${stats.vibeTrend}).`;
+  const vibeLine = stats.vibeTrend === "unknown"
+    ? "No vibe check data."
+    : `Vibe checks: started at ${stats.vibeStart}/5, ended at ${stats.vibeEnd}/5 (${stats.vibeTrend}).`;
 
   const domainLines = stats.domains
     .map(
       (d) =>
         `  ${d.domain}: ${d.doneCount} Done, ${d.partialCount} Partial, ${d.missedCount} Missed` +
-        ` (${Math.round(d.completionRate * 100)}% completion, ${d.bestStreak} day best streak)`,
+        ` (${
+          Math.round(d.completionRate * 100)
+        }% completion, ${d.bestStreak} day best streak)`,
     )
-    .join('\n');
+    .join("\n");
 
   return `Identity anchor: ${stats.identityAnchor}
 Cycle: ${stats.cycleNumber} of their journey
 Total days tracked: ${stats.totalDays}
 Total XP earned: ${stats.totalXp}
-Overall check-in completion: ${Math.round(stats.overallCompletionRate * 100)}% (${stats.totalCheckIns} check-ins from a possible ${stats.totalDays * stats.domainCount})
+Overall check-in completion: ${
+    Math.round(stats.overallCompletionRate * 100)
+  }% (${stats.totalCheckIns} check-ins from a possible ${
+    stats.totalDays * stats.domainCount
+  })
 Strongest domain: ${stats.strongestDomain}
 Weakest domain: ${stats.weakestDomain}
 ${vibeLine}
@@ -109,21 +117,21 @@ async function callClaude(prompt: string): Promise<{
   _costPence: number;
 }> {
   if (!ANTHROPIC_API_KEY) {
-    throw new Error('ANTHROPIC_API_KEY not configured');
+    throw new Error("ANTHROPIC_API_KEY not configured");
   }
 
-  const response = await fetch('https://api.anthropic.com/v1/messages', {
-    method: 'POST',
+  const response = await fetch("https://api.anthropic.com/v1/messages", {
+    method: "POST",
     headers: {
-      'x-api-key': ANTHROPIC_API_KEY,
-      'anthropic-version': '2023-06-01',
-      'content-type': 'application/json',
+      "x-api-key": ANTHROPIC_API_KEY,
+      "anthropic-version": "2023-06-01",
+      "content-type": "application/json",
     },
     body: JSON.stringify({
-      model: 'claude-sonnet-4-6',
+      model: "claude-sonnet-4-6",
       max_tokens: 2048,
       system: SYSTEM_PROMPT,
-      messages: [{ role: 'user', content: prompt }],
+      messages: [{ role: "user", content: prompt }],
     }),
   });
 
@@ -133,49 +141,49 @@ async function callClaude(prompt: string): Promise<{
   }
 
   const data = await response.json();
-  const content: string = data.content?.[0]?.text ?? '';
+  const content: string = data.content?.[0]?.text ?? "";
   const inputTokens: number = data.usage?.input_tokens ?? 0;
   const outputTokens: number = data.usage?.output_tokens ?? 0;
   // Claude Sonnet: ~$3/Mtok input, ~$15/Mtok output, converted to pence
-  const costPence = Math.round(((inputTokens * 3 + outputTokens * 15) / 1_000_000) * 100 * 100);
+  const costPence = Math.round(
+    ((inputTokens * 3 + outputTokens * 15) / 1_000_000) * 100 * 100,
+  );
 
   try {
-    const jsonMatch = content.match(/```(?:json)?\s*([\s\S]*?)```/) ?? [null, content];
+    const jsonMatch = content.match(/```(?:json)?\s*([\s\S]*?)```/) ??
+      [null, content];
     const parsed = JSON.parse((jsonMatch[1] ?? content).trim());
     return { ...parsed, _costPence: costPence };
   } catch {
     return {
-      headline: '84 days. Done.',
-      body: 'You showed up. That counts for more than you know right now.',
+      headline: "84 days. Done.",
+      body: "You showed up. That counts for more than you know right now.",
       domain_callouts: {
-        BODY: 'The physical work is banked.',
-        FUEL: 'What you put in shaped what you got out.',
-        METIME: 'The private work mattered.',
-        USTIME: 'Presence is a practice.',
-        SHOT: 'The professional push continues.',
-        LENS: 'The eye keeps sharpening.',
-        NEST: 'The family work is never wasted.',
-        ROOTS: 'The foundation gets stronger.',
+        BODY: "The physical work is banked.",
+        FUEL: "What you put in shaped what you got out.",
+        METIME: "The private work mattered.",
+        USTIME: "Presence is a practice.",
+        SHOT: "The professional push continues.",
+        LENS: "The eye keeps sharpening.",
+        NEST: "The family work is never wasted.",
+        ROOTS: "The foundation gets stronger.",
       },
-      next_cycle_intention: 'Cycle 2 starts with everything you learned here.',
+      next_cycle_intention: "Cycle 2 starts with everything you learned here.",
       _costPence: costPence,
     };
   }
 }
 
 Deno.serve(async (req: Request) => {
-  if (req.method === 'OPTIONS') {
-    return new Response(null, {
-      headers: {
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Headers': 'authorization, content-type',
-      },
-    });
+  if (req.method === "OPTIONS") {
+    return preflightResponse(req);
   }
 
-  const authHeader = req.headers.get('Authorization');
+  const authHeader = req.headers.get("Authorization");
   if (!authHeader) {
-    return new Response(JSON.stringify({ error: 'Missing authorization' }), { status: 401 });
+    return jsonResponse(req, { error: "Missing authorization" }, {
+      status: 401,
+    });
   }
 
   const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
@@ -183,10 +191,10 @@ Deno.serve(async (req: Request) => {
   const {
     data: { user },
     error: authError,
-  } = await supabase.auth.getUser(authHeader.replace('Bearer ', ''));
+  } = await supabase.auth.getUser(authHeader.replace("Bearer ", ""));
 
   if (authError || !user) {
-    return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 });
+    return jsonResponse(req, { error: "Unauthorized" }, { status: 401 });
   }
 
   const userId = user.id;
@@ -194,37 +202,37 @@ Deno.serve(async (req: Request) => {
   try {
     // Load profile + identity anchor
     const { data: profile, error: profileErr } = await supabase
-      .from('profiles')
-      .select('*, identity_anchors(name), current_kairos_cycle_id, xp, tier')
-      .eq('id', userId)
+      .from("profiles")
+      .select("*, identity_anchors(name), current_kairos_cycle_id, xp, tier")
+      .eq("id", userId)
       .single();
 
     if (profileErr || !profile) {
-      return new Response(JSON.stringify({ error: 'Profile not found' }), { status: 404 });
+      return jsonResponse(req, { error: "Profile not found" }, { status: 404 });
     }
 
     if (!profile.current_kairos_cycle_id) {
-      return new Response(JSON.stringify({ error: 'No active cycle' }), { status: 400 });
+      return jsonResponse(req, { error: "No active cycle" }, { status: 400 });
     }
 
     // Load cycle
     const { data: cycle, error: cycleErr } = await supabase
-      .from('kairos_cycles')
-      .select('*')
-      .eq('id', profile.current_kairos_cycle_id)
+      .from("kairos_cycles")
+      .select("*")
+      .eq("id", profile.current_kairos_cycle_id)
       .single();
 
     if (cycleErr || !cycle) {
-      return new Response(JSON.stringify({ error: 'Cycle not found' }), { status: 404 });
+      return jsonResponse(req, { error: "Cycle not found" }, { status: 404 });
     }
 
     // Cache check: use cycle.start_date as the date anchor so it's stable per cycle
     const { data: cached } = await supabase
-      .from('ai_nudges')
-      .select('*')
-      .eq('user_id', userId)
-      .eq('date', cycle.start_date)
-      .eq('type', 'cycle_reflection')
+      .from("ai_nudges")
+      .select("*")
+      .eq("user_id", userId)
+      .eq("date", cycle.start_date)
+      .eq("type", "cycle_reflection")
       .maybeSingle();
 
     if (cached) {
@@ -240,87 +248,96 @@ Deno.serve(async (req: Request) => {
       } catch {
         // Older row with plain-text body — return as-is without extra fields
       }
-      return new Response(
-        JSON.stringify({
+      return jsonResponse(
+        req,
+        {
           reflection: {
             ...cached,
             body: parsed?.text ?? cached.body,
             domain_callouts: parsed?.domain_callouts ?? {},
-            next_cycle_intention: parsed?.next_cycle_intention ?? '',
+            next_cycle_intention: parsed?.next_cycle_intention ?? "",
             stats: parsed?.stats ?? {},
           },
           cached: true,
-        }),
-        { headers: { 'Content-Type': 'application/json' } },
+        },
       );
     }
 
     // Paid V1 tiers get the AI reflection.
     if (!PAID_TIERS.has(profile.tier)) {
-      return new Response(
-        JSON.stringify({ error: 'Cycle reflection requires paid access', tier_gate: true }),
+      return jsonResponse(
+        req,
+        { error: "Cycle reflection requires paid access", tier_gate: true },
         { status: 403 },
       );
     }
 
     // Load all check-ins for this cycle
     const { data: allCheckIns } = await supabase
-      .from('daily_check_ins')
-      .select('domain_type, status, date')
-      .eq('user_id', userId)
-      .eq('cycle_id', cycle.id);
+      .from("daily_check_ins")
+      .select("domain_type, status, date")
+      .eq("user_id", userId)
+      .eq("cycle_id", cycle.id);
 
     const { data: customRoutes } = await supabase
-      .from('custom_routes')
-      .select('id, label')
-      .eq('user_id', userId)
-      .eq('cycle_id', cycle.id)
-      .order('created_at', { ascending: true });
+      .from("custom_routes")
+      .select("id, label")
+      .eq("user_id", userId)
+      .eq("cycle_id", cycle.id)
+      .order("created_at", { ascending: true });
 
     const { data: customCheckIns } = await supabase
-      .from('custom_route_check_ins')
-      .select('route_id, status, date')
-      .eq('user_id', userId)
-      .eq('cycle_id', cycle.id);
+      .from("custom_route_check_ins")
+      .select("route_id, status, date")
+      .eq("user_id", userId)
+      .eq("cycle_id", cycle.id);
 
     // Load streaks
     const { data: streaks } = await supabase
-      .from('user_streaks')
-      .select('domain_type, current_streak, longest_streak')
-      .eq('user_id', userId);
+      .from("user_streaks")
+      .select("domain_type, current_streak, longest_streak")
+      .eq("user_id", userId);
 
     // Load vibe checks for this cycle (ordered oldest first)
     const { data: vibeChecks } = await supabase
-      .from('vibe_checks')
-      .select('rating, date')
-      .eq('user_id', userId)
-      .eq('cycle_id', cycle.id)
-      .order('date', { ascending: true });
+      .from("vibe_checks")
+      .select("rating, date")
+      .eq("user_id", userId)
+      .eq("cycle_id", cycle.id)
+      .order("date", { ascending: true });
 
     // Compute stats across the public framework plus user-created paid personal routes.
-    const DOMAIN_TYPES = ['BODY', 'FUEL', 'METIME', 'USTIME'];
+    const DOMAIN_TYPES = ["BODY", "FUEL", "METIME", "USTIME"];
     const cycleStart = new Date(cycle.start_date);
     const today = new Date();
     const dayCount = Math.min(
       84,
-      Math.max(1, Math.floor((today.getTime() - cycleStart.getTime()) / 86_400_000) + 1),
+      Math.max(
+        1,
+        Math.floor((today.getTime() - cycleStart.getTime()) / 86_400_000) + 1,
+      ),
     );
 
     const domainStats: DomainStats[] = DOMAIN_TYPES.map((domain) => {
       const domainCheckIns = (allCheckIns ?? []).filter(
-        (c: { domain_type: string; status: string }) => c.domain_type === domain,
+        (c: { domain_type: string; status: string }) =>
+          c.domain_type === domain,
       );
       const doneCount = domainCheckIns.filter(
-        (c: { status: string }) => c.status === 'Done',
+        (c: { status: string }) => c.status === "Done",
       ).length;
       const partialCount = domainCheckIns.filter(
-        (c: { status: string }) => c.status === 'Partial',
+        (c: { status: string }) => c.status === "Partial",
       ).length;
       const missedCount = domainCheckIns.filter(
-        (c: { status: string }) => c.status === 'Missed',
+        (c: { status: string }) => c.status === "Missed",
       ).length;
-      const completionRate = dayCount > 0 ? (doneCount + partialCount * 0.5) / dayCount : 0;
-      const streak = (streaks ?? []).find((s: { domain_type: string }) => s.domain_type === domain);
+      const completionRate = dayCount > 0
+        ? (doneCount + partialCount * 0.5) / dayCount
+        : 0;
+      const streak = (streaks ?? []).find((s: { domain_type: string }) =>
+        s.domain_type === domain
+      );
       return {
         domain,
         doneCount,
@@ -336,45 +353,55 @@ Deno.serve(async (req: Request) => {
           (c: { route_id: string; status: string }) => c.route_id === route.id,
         );
         const doneCount = routeCheckIns.filter(
-          (c: { status: string }) => c.status === 'Done',
+          (c: { status: string }) => c.status === "Done",
         ).length;
         const partialCount = routeCheckIns.filter(
-          (c: { status: string }) => c.status === 'Partial',
+          (c: { status: string }) => c.status === "Partial",
         ).length;
         const missedCount = routeCheckIns.filter(
-          (c: { status: string }) => c.status === 'Missed',
+          (c: { status: string }) => c.status === "Missed",
         ).length;
         return {
           domain: route.label,
           doneCount,
           partialCount,
           missedCount,
-          completionRate: dayCount > 0 ? (doneCount + partialCount * 0.5) / dayCount : 0,
+          completionRate: dayCount > 0
+            ? (doneCount + partialCount * 0.5) / dayCount
+            : 0,
           bestStreak: 0,
           currentStreak: 0,
         };
       }),
     );
 
-    const totalCheckIns = domainStats.reduce((s, d) => s + d.doneCount + d.partialCount, 0);
-    const overallCompletionRate =
-      dayCount > 0 ? totalCheckIns / (dayCount * domainStats.length) : 0;
+    const totalCheckIns = domainStats.reduce(
+      (s, d) => s + d.doneCount + d.partialCount,
+      0,
+    );
+    const overallCompletionRate = dayCount > 0
+      ? totalCheckIns / (dayCount * domainStats.length)
+      : 0;
 
-    const strongestDomain =
-      [...domainStats].sort((a, b) => b.completionRate - a.completionRate)[0]?.domain ?? 'BODY';
-    const weakestDomain =
-      [...domainStats].sort((a, b) => a.completionRate - b.completionRate)[0]?.domain ?? 'ROOTS';
+    const strongestDomain = [...domainStats].sort((a, b) =>
+      b.completionRate - a.completionRate
+    )[0]?.domain ?? "BODY";
+    const weakestDomain = [...domainStats].sort((a, b) =>
+      a.completionRate - b.completionRate
+    )[0]?.domain ?? "ROOTS";
 
     // Vibe trend
     let vibeStart: number | null = null;
     let vibeEnd: number | null = null;
-    let vibeTrend: 'improved' | 'declined' | 'stable' | 'unknown' = 'unknown';
+    let vibeTrend: "improved" | "declined" | "stable" | "unknown" = "unknown";
     if (vibeChecks && vibeChecks.length >= 2) {
-      vibeStart = vibeChecks[0].rating;
-      vibeEnd = vibeChecks[vibeChecks.length - 1].rating;
-      if (vibeEnd > vibeStart) vibeTrend = 'improved';
-      else if (vibeEnd < vibeStart) vibeTrend = 'declined';
-      else vibeTrend = 'stable';
+      const firstRating = vibeChecks[0].rating;
+      const lastRating = vibeChecks[vibeChecks.length - 1].rating;
+      vibeStart = firstRating;
+      vibeEnd = lastRating;
+      if (lastRating > firstRating) vibeTrend = "improved";
+      else if (lastRating < firstRating) vibeTrend = "declined";
+      else vibeTrend = "stable";
     } else if (vibeChecks && vibeChecks.length === 1) {
       vibeStart = vibeChecks[0].rating;
       vibeEnd = vibeChecks[0].rating;
@@ -382,13 +409,13 @@ Deno.serve(async (req: Request) => {
 
     // Count completed cycles (excluding this one)
     const { count: previousCycles } = await supabase
-      .from('kairos_cycles')
-      .select('id', { count: 'exact', head: true })
-      .eq('user_id', userId)
-      .eq('status', 'completed');
+      .from("kairos_cycles")
+      .select("id", { count: "exact", head: true })
+      .eq("user_id", userId)
+      .eq("status", "completed");
 
-    const anchorName =
-      (profile.identity_anchors as { name: string })?.name ?? profile.identity_anchor_id;
+    const anchorName = (profile.identity_anchors as { name: string })?.name ??
+      profile.identity_anchor_id;
 
     const stats: CycleStats = {
       identityAnchor: profile.custom_anchor_name ?? anchorName,
@@ -427,35 +454,36 @@ Deno.serve(async (req: Request) => {
     });
 
     const { data: reflection, error: insertErr } = await supabase
-      .from('ai_nudges')
+      .from("ai_nudges")
       .upsert(
         {
           user_id: userId,
           date: cycle.start_date,
-          type: 'cycle_reflection',
+          type: "cycle_reflection",
           title: result.headline,
           body: bodyJson,
           domain_type: null,
           kairos_phase: null,
           xp_reward: null,
-          status: 'new',
+          status: "new",
           cta: null,
           cost_pence: result._costPence ?? 0,
         },
-        { onConflict: 'user_id,date,type', ignoreDuplicates: false },
+        { onConflict: "user_id,date,type", ignoreDuplicates: false },
       )
       .select()
       .single();
 
     if (insertErr) {
-      console.error('Upsert cycle reflection failed:', insertErr.message);
-      return new Response(JSON.stringify({ error: 'Failed to store reflection' }), {
+      console.error("Upsert cycle reflection failed:", insertErr.message);
+      return jsonResponse(req, { error: "Failed to store reflection" }, {
         status: 500,
       });
     }
 
-    return new Response(
-      JSON.stringify({
+    return jsonResponse(
+      req,
+      {
         reflection: {
           ...reflection,
           body: result.body,
@@ -464,12 +492,11 @@ Deno.serve(async (req: Request) => {
           stats: reflectionStats,
         },
         cached: false,
-      }),
-      { headers: { 'Content-Type': 'application/json' } },
+      },
     );
   } catch (err) {
-    const message = err instanceof Error ? err.message : 'Unknown error';
-    console.error('generate-cycle-reflection error:', message);
-    return new Response(JSON.stringify({ error: message }), { status: 500 });
+    const message = err instanceof Error ? err.message : "Unknown error";
+    console.error("generate-cycle-reflection error:", message);
+    return jsonResponse(req, { error: message }, { status: 500 });
   }
 });

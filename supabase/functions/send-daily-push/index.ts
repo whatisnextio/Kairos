@@ -12,18 +12,22 @@
 //   VAPID_PRIVATE_KEY = base64url-encoded P-256 private key (raw scalar, 32 bytes)
 //   SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY
 
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { jsonResponse, preflightResponse } from "../_shared/cors.ts";
 
-const SUPABASE_URL = Deno.env.get('SUPABASE_URL') ?? '';
-const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
-const VAPID_SUBJECT = Deno.env.get('VAPID_SUBJECT') ?? 'mailto:liam@whatisnext.io';
-const VAPID_PUBLIC_KEY = Deno.env.get('VAPID_PUBLIC_KEY') ?? '';
-const VAPID_PRIVATE_KEY = Deno.env.get('VAPID_PRIVATE_KEY') ?? '';
-const PAID_TIERS = ['brotherhood', 'lifechanger'];
+const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
+const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ??
+  "";
+const VAPID_SUBJECT = Deno.env.get("VAPID_SUBJECT") ??
+  "mailto:liam@whatisnext.io";
+const VAPID_PUBLIC_KEY = Deno.env.get("VAPID_PUBLIC_KEY") ?? "";
+const VAPID_PRIVATE_KEY = Deno.env.get("VAPID_PRIVATE_KEY") ?? "";
+const PAID_TIERS = ["brotherhood", "lifechanger"];
+const CORS_ALLOWED_HEADERS = "authorization, content-type, x-service-role";
 
 type NotificationPreferences = {
   enabled?: boolean;
-  intensity?: 'light' | 'standard' | 'high';
+  intensity?: "light" | "standard" | "high";
   startHour?: number;
   endHour?: number;
   earlyProtocol?: boolean;
@@ -38,31 +42,31 @@ type DailyNudge = {
 };
 
 function notificationsEnabled(preferences: unknown): boolean {
-  if (!preferences || typeof preferences !== 'object') return true;
+  if (!preferences || typeof preferences !== "object") return true;
   const prefs = preferences as NotificationPreferences;
   return prefs.enabled !== false && prefs.webPushEnabled !== false;
 }
 
 function domainLabel(domainType: string | null | undefined): string {
   switch (domainType) {
-    case 'BODY':
-      return 'Body';
-    case 'FUEL':
-      return 'Fuel';
-    case 'METIME':
-      return 'Self';
-    case 'USTIME':
-      return 'Connection';
+    case "BODY":
+      return "Body";
+    case "FUEL":
+      return "Fuel";
+    case "METIME":
+      return "Self";
+    case "USTIME":
+      return "Connection";
     default:
-      return 'Kairos';
+      return "Kairos";
   }
 }
 
 function buildPushPayload(nudge: DailyNudge): string {
   const label = domainLabel(nudge.domain_type);
-  const url = nudge.cta === 'check_in_now' ? '/#/' : '/#/improve';
+  const url = nudge.cta === "check_in_now" ? "/#/" : "/#/improve";
   return JSON.stringify({
-    title: '12K: today is live',
+    title: "12K: today is live",
     body: `${label} action waiting. Open 12K.`,
     url,
   });
@@ -72,25 +76,31 @@ function buildPushPayload(nudge: DailyNudge): string {
 
 function b64urlEncode(data: Uint8Array): string {
   return btoa(String.fromCharCode(...data))
-    .replace(/\+/g, '-')
-    .replace(/\//g, '_')
-    .replace(/=/g, '');
+    .replace(/\+/g, "-")
+    .replace(/\//g, "_")
+    .replace(/=/g, "");
 }
 
 function b64urlDecode(str: string): Uint8Array {
   const padded = str
-    .replace(/-/g, '+')
-    .replace(/_/g, '/')
-    .padEnd(str.length + ((4 - (str.length % 4)) % 4), '=');
+    .replace(/-/g, "+")
+    .replace(/_/g, "/")
+    .padEnd(str.length + ((4 - (str.length % 4)) % 4), "=");
   const binary = atob(padded);
   return new Uint8Array([...binary].map((c) => c.charCodeAt(0)));
+}
+
+function toArrayBufferView(bytes: Uint8Array): Uint8Array<ArrayBuffer> {
+  const copy = new Uint8Array(bytes.byteLength);
+  copy.set(bytes);
+  return copy;
 }
 
 // ─── VAPID JWT ────────────────────────────────────────────────────────────────
 
 async function buildVapidJwt(audience: string): Promise<string> {
   const header = b64urlEncode(
-    new TextEncoder().encode(JSON.stringify({ typ: 'JWT', alg: 'ES256' })),
+    new TextEncoder().encode(JSON.stringify({ typ: "JWT", alg: "ES256" })),
   );
   const now = Math.floor(Date.now() / 1000);
   const payload = b64urlEncode(
@@ -101,15 +111,19 @@ async function buildVapidJwt(audience: string): Promise<string> {
 
   const keyData = b64urlDecode(VAPID_PRIVATE_KEY);
   const key = await crypto.subtle.importKey(
-    'raw',
-    keyData,
-    { name: 'ECDSA', namedCurve: 'P-256' },
+    "raw",
+    toArrayBufferView(keyData),
+    { name: "ECDSA", namedCurve: "P-256" },
     false,
-    ['sign'],
+    ["sign"],
   );
 
   const sigData = new TextEncoder().encode(`${header}.${payload}`);
-  const sig = await crypto.subtle.sign({ name: 'ECDSA', hash: 'SHA-256' }, key, sigData);
+  const sig = await crypto.subtle.sign(
+    { name: "ECDSA", hash: "SHA-256" },
+    key,
+    sigData,
+  );
 
   // DER signature from WebCrypto is in raw (r||s) format for P-256
   return `${header}.${payload}.${b64urlEncode(new Uint8Array(sig))}`;
@@ -120,18 +134,20 @@ async function buildVapidJwt(audience: string): Promise<string> {
 async function encryptPayload(
   payload: string,
   subscriptionKeys: { p256dh: string; auth: string },
-): Promise<{ body: Uint8Array; salt: Uint8Array; serverPublicKey: Uint8Array }> {
+): Promise<
+  { body: Uint8Array; salt: Uint8Array; serverPublicKey: Uint8Array }
+> {
   const encoder = new TextEncoder();
 
   // Generate ephemeral server key pair
   const serverKeyPair = await crypto.subtle.generateKey(
-    { name: 'ECDH', namedCurve: 'P-256' },
+    { name: "ECDH", namedCurve: "P-256" },
     true,
-    ['deriveBits'],
+    ["deriveBits"],
   );
 
   const serverPublicKeyRaw = new Uint8Array(
-    await crypto.subtle.exportKey('raw', serverKeyPair.publicKey),
+    await crypto.subtle.exportKey("raw", serverKeyPair.publicKey),
   );
 
   // Subscriber's public key and auth secret
@@ -139,16 +155,16 @@ async function encryptPayload(
   const authSecret = b64urlDecode(subscriptionKeys.auth);
 
   const clientPublicKey = await crypto.subtle.importKey(
-    'raw',
-    clientPublicKeyRaw,
-    { name: 'ECDH', namedCurve: 'P-256' },
+    "raw",
+    toArrayBufferView(clientPublicKeyRaw),
+    { name: "ECDH", namedCurve: "P-256" },
     false,
     [],
   );
 
   // ECDH shared secret
   const sharedSecretBits = await crypto.subtle.deriveBits(
-    { name: 'ECDH', public: clientPublicKey },
+    { name: "ECDH", public: clientPublicKey },
     serverKeyPair.privateKey,
     256,
   );
@@ -164,11 +180,20 @@ async function encryptPayload(
     info: Uint8Array,
     length: number,
   ): Promise<Uint8Array> {
-    const baseKey = await crypto.subtle.importKey('raw', inputKeyMaterial, 'HKDF', false, [
-      'deriveBits',
-    ]);
+    const baseKey = await crypto.subtle.importKey(
+      "raw",
+      toArrayBufferView(inputKeyMaterial),
+      "HKDF",
+      false,
+      ["deriveBits"],
+    );
     const bits = await crypto.subtle.deriveBits(
-      { name: 'HKDF', hash: 'SHA-256', salt: salt_, info },
+      {
+        name: "HKDF",
+        hash: "SHA-256",
+        salt: toArrayBufferView(salt_),
+        info: toArrayBufferView(info),
+      },
       baseKey,
       length * 8,
     );
@@ -177,11 +202,12 @@ async function encryptPayload(
 
   // Build context per aesgcm spec: "WebPush: info\0" || uint16be(len(client)) || client || uint16be(len(server)) || server
   function buildContext(): Uint8Array {
-    const prefix = encoder.encode('WebPush: info\x00');
+    const prefix = encoder.encode("WebPush: info\x00");
     const clientLen = new Uint8Array([0, clientPublicKeyRaw.length]);
     const serverLen = new Uint8Array([0, serverPublicKeyRaw.length]);
     const out = new Uint8Array(
-      prefix.length + 2 + clientPublicKeyRaw.length + 2 + serverPublicKeyRaw.length,
+      prefix.length + 2 + clientPublicKeyRaw.length + 2 +
+        serverPublicKeyRaw.length,
     );
     let off = 0;
     out.set(prefix, off);
@@ -196,7 +222,7 @@ async function encryptPayload(
     return out;
   }
 
-  const authInfo = encoder.encode('Content-Encoding: auth\x00');
+  const authInfo = encoder.encode("Content-Encoding: auth\x00");
   const ikm = await hkdf(sharedSecret, authSecret, authInfo, 32);
 
   const context = buildContext();
@@ -204,9 +230,12 @@ async function encryptPayload(
   const nonceInfo = context;
 
   // Derive content encryption key and nonce using RFC 8291 info strings
-  const cekInfo = new Uint8Array([...encoder.encode('Content-Encoding: aesgcm\x00'), ...keyInfo]);
+  const cekInfo = new Uint8Array([
+    ...encoder.encode("Content-Encoding: aesgcm\x00"),
+    ...keyInfo,
+  ]);
   const nonceInfoFull = new Uint8Array([
-    ...encoder.encode('Content-Encoding: nonce\x00'),
+    ...encoder.encode("Content-Encoding: nonce\x00"),
     ...nonceInfo,
   ]);
 
@@ -214,13 +243,25 @@ async function encryptPayload(
   const nonce = await hkdf(ikm, salt, nonceInfoFull, 12);
 
   // AES-128-GCM encryption with 2-byte padding prefix
-  const aesKey = await crypto.subtle.importKey('raw', cek, 'AES-GCM', false, ['encrypt']);
+  const aesKey = await crypto.subtle.importKey(
+    "raw",
+    toArrayBufferView(cek),
+    "AES-GCM",
+    false,
+    [
+      "encrypt",
+    ],
+  );
   const plaintext = encoder.encode(payload);
   const paddedPlain = new Uint8Array(2 + plaintext.length);
   paddedPlain.set(plaintext, 2); // 2 zero-byte padding length
 
   const ciphertext = new Uint8Array(
-    await crypto.subtle.encrypt({ name: 'AES-GCM', iv: nonce }, aesKey, paddedPlain),
+    await crypto.subtle.encrypt(
+      { name: "AES-GCM", iv: toArrayBufferView(nonce) },
+      aesKey,
+      toArrayBufferView(paddedPlain),
+    ),
   );
 
   return { body: ciphertext, salt, serverPublicKey: serverPublicKeyRaw };
@@ -242,14 +283,20 @@ async function sendPush(
 
   const headers: Record<string, string> = {
     Authorization: `vapid t=${jwt},k=${VAPID_PUBLIC_KEY}`,
-    'Content-Type': 'application/octet-stream',
-    'Content-Encoding': 'aesgcm',
+    "Content-Type": "application/octet-stream",
+    "Content-Encoding": "aesgcm",
     Encryption: `salt=${b64urlEncode(salt)}`,
-    'Crypto-Key': `dh=${b64urlEncode(serverPublicKey)};p256ecdsa=${b64urlEncode(vapidPublicKeyBytes)}`,
-    TTL: '86400',
+    "Crypto-Key": `dh=${b64urlEncode(serverPublicKey)};p256ecdsa=${
+      b64urlEncode(vapidPublicKeyBytes)
+    }`,
+    TTL: "86400",
   };
 
-  const res = await fetch(endpoint, { method: 'POST', headers, body });
+  const res = await fetch(endpoint, {
+    method: "POST",
+    headers,
+    body: toArrayBufferView(body),
+  });
   const stale = res.status === 404 || res.status === 410;
   return { ok: res.ok || res.status === 201, stale };
 }
@@ -257,54 +304,69 @@ async function sendPush(
 // ─── Main handler ─────────────────────────────────────────────────────────────
 
 Deno.serve(async (req: Request) => {
-  if (req.method === 'OPTIONS') {
-    return new Response(null, {
-      headers: {
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Headers': 'authorization, content-type, x-service-role',
-      },
-    });
+  if (req.method === "OPTIONS") {
+    return preflightResponse(req, CORS_ALLOWED_HEADERS);
   }
 
-  const serviceRole = req.headers.get('x-service-role');
+  const serviceRole = req.headers.get("x-service-role");
   if (serviceRole !== SUPABASE_SERVICE_ROLE_KEY) {
-    return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 });
+    return jsonResponse(
+      req,
+      { error: "Unauthorized" },
+      { status: 401 },
+      CORS_ALLOWED_HEADERS,
+    );
   }
 
   if (!VAPID_PUBLIC_KEY || !VAPID_PRIVATE_KEY) {
-    return new Response(JSON.stringify({ error: 'VAPID keys not configured' }), { status: 500 });
+    return jsonResponse(
+      req,
+      { error: "VAPID keys not configured" },
+      { status: 500 },
+      CORS_ALLOWED_HEADERS,
+    );
   }
 
   const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
-  const today = new Date().toISOString().split('T')[0];
+  const today = new Date().toISOString().split("T")[0];
 
   // 1. Fetch paid users with push subscriptions.
   // ai_nudges has no FK to push_subscriptions so we use two separate queries.
   const { data: subscriptions, error: subErr } = await supabase
-    .from('push_subscriptions')
-    .select('user_id, subscription, preferences, profiles!inner(tier)')
-    .in('profiles.tier', PAID_TIERS);
+    .from("push_subscriptions")
+    .select("user_id, subscription, preferences, profiles!inner(tier)")
+    .in("profiles.tier", PAID_TIERS);
 
   if (subErr) {
-    console.error('send-daily-push: subscriptions query error', subErr.message);
-    return new Response(JSON.stringify({ error: subErr.message }), { status: 500 });
+    console.error("send-daily-push: subscriptions query error", subErr.message);
+    return jsonResponse(
+      req,
+      { error: subErr.message },
+      { status: 500 },
+      CORS_ALLOWED_HEADERS,
+    );
   }
 
-  const userIds = (subscriptions ?? []).map((s: Record<string, unknown>) => s.user_id as string);
+  const userIds = (subscriptions ?? []).map((s: Record<string, unknown>) =>
+    s.user_id as string
+  );
 
   if (userIds.length === 0) {
-    return new Response(JSON.stringify({ sent: 0, failed: 0, staleRemoved: 0 }), {
-      headers: { 'Content-Type': 'application/json' },
-    });
+    return jsonResponse(
+      req,
+      { sent: 0, failed: 0, staleRemoved: 0 },
+      {},
+      CORS_ALLOWED_HEADERS,
+    );
   }
 
   // 2. Fetch today's nudges for those users.
   const { data: nudges } = await supabase
-    .from('ai_nudges')
-    .select('user_id, domain_type, kairos_phase, cta')
-    .in('user_id', userIds)
-    .eq('date', today)
-    .eq('type', 'daily_nudge');
+    .from("ai_nudges")
+    .select("user_id, domain_type, kairos_phase, cta")
+    .in("user_id", userIds)
+    .eq("date", today)
+    .eq("type", "daily_nudge");
 
   const nudgeMap = new Map(
     (nudges ?? []).map((n: DailyNudge) => [n.user_id, n]),
@@ -345,10 +407,13 @@ Deno.serve(async (req: Request) => {
 
   // Remove expired subscriptions
   if (staleIds.length > 0) {
-    await supabase.from('push_subscriptions').delete().in('user_id', staleIds);
+    await supabase.from("push_subscriptions").delete().in("user_id", staleIds);
   }
 
-  return new Response(JSON.stringify({ sent, failed, staleRemoved: staleIds.length }), {
-    headers: { 'Content-Type': 'application/json' },
-  });
+  return jsonResponse(
+    req,
+    { sent, failed, staleRemoved: staleIds.length },
+    {},
+    CORS_ALLOWED_HEADERS,
+  );
 });

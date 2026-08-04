@@ -29,9 +29,9 @@ describe('account data controls', () => {
   it('delete endpoint requires a signed-in POST before deleting auth user', () => {
     const source = readFileSync('supabase/functions/delete-account/index.ts', 'utf8');
 
-    expect(source).toContain("req.method !== 'POST'");
+    expect(source).toMatch(/req\.method !== ["']POST["']/);
     expect(source).toContain('Missing authorization');
-    expect(source).toContain('supabase.auth.admin.deleteUser(userId)');
+    expect(source).toMatch(/supabase\.auth\.admin\.deleteUser\(\s*userId,\s*\)/);
     expect(source).toContain('profiles');
   });
 });
