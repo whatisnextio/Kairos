@@ -3,6 +3,7 @@ import Card from '@/components/common/Card';
 import { supabase } from '@/services/supabaseClient';
 import { useAppStore } from '@/store/useAppStore';
 import { IDENTITY_ANCHORS, type IdentityAnchorId } from '@/types';
+import { toLocalIsoDate } from '@/utils/v1Framework';
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
@@ -15,6 +16,7 @@ export default function NewCycleScreen() {
     setProfile,
     setCurrentCycle,
     resetCycleLocalState,
+    archiveCurrentJourney,
     nextCycleIntention,
   } = useAppStore();
   const [anchorId, setAnchorId] = useState<IdentityAnchorId | null>(
@@ -50,7 +52,7 @@ export default function NewCycleScreen() {
     setStarting(true);
     setError(null);
 
-    const today = new Date().toISOString().split('T')[0];
+    const today = toLocalIsoDate(new Date());
 
     const { data: cycle, error: cycleErr } = await supabase
       .from('kairos_cycles')
@@ -97,6 +99,7 @@ export default function NewCycleScreen() {
       customAnchorName: anchorId === 'custom' ? customAnchor : undefined,
     });
 
+    archiveCurrentJourney('completed');
     resetCycleLocalState();
     setStarting(false);
     navigate('/', { replace: true });

@@ -73,12 +73,13 @@ const PHASE_MILESTONE_MESSAGES: Record<string, string> = {
   SUSTAIN: 'Hold the gain. Prepare the next cycle deliberately.',
 };
 
-// Module-level flags: prevent re-prompting within the same JS session even if HomeScreen remounts
+// Module-level flags: prevent re-prompting within the same JS session even if HomeScreen remounts.
+// Catch-up and accountability are keyed by cycle ID so they reset automatically on cycle change.
 let vibeCheckShownThisSession = false;
 let domainSetupShownThisSession = false;
 let phaseTransitionShownThisSession = false;
-let accountabilitySuppressedThisSession = false;
-let catchUpSuppressedThisSession = false;
+let accountabilitySuppressedCycleId: string | null = null;
+let catchUpSuppressedCycleId: string | null = null;
 
 export default function HomeScreen() {
   const navigate = useNavigate();
@@ -111,7 +112,8 @@ export default function HomeScreen() {
   const [showDomainSetup, setShowDomainSetup] = useState(false);
   const [showPhaseTransition, setShowPhaseTransition] = useState(false);
   const [showAccountabilityPrompt, setShowAccountabilityPrompt] = useState(false);
-  const [catchUpVisible, setCatchUpVisible] = useState(!catchUpSuppressedThisSession);
+  const cycleId = currentCycle?.id ?? null;
+  const [catchUpVisible, setCatchUpVisible] = useState(catchUpSuppressedCycleId !== cycleId);
   const [selectedDomainType, setSelectedDomainType] = useState<DomainType | null>(null);
 
   const dayInCycle = profile && currentCycle ? getDayInCycle(currentCycle.startDate) : 1;
@@ -184,7 +186,7 @@ export default function HomeScreen() {
   ]);
 
   useEffect(() => {
-    if (!shouldShowAccountability || accountabilitySuppressedThisSession) {
+    if (!shouldShowAccountability || accountabilitySuppressedCycleId === cycleId) {
       setShowAccountabilityPrompt(false);
       return;
     }
@@ -418,7 +420,7 @@ export default function HomeScreen() {
                   aria-label="Dismiss"
                   className="flex items-center justify-center w-11 h-11 text-base-muted hover:text-base-text transition-colors rounded"
                   onClick={() => {
-                    catchUpSuppressedThisSession = true;
+                    catchUpSuppressedCycleId = cycleId;
                     setCatchUpVisible(false);
                   }}
                 >
@@ -470,7 +472,7 @@ export default function HomeScreen() {
                 aria-label="Dismiss accountability prompt"
                 className="flex items-center justify-center w-11 h-11 shrink-0 text-base-muted hover:text-base-text transition-colors rounded"
                 onClick={() => {
-                  accountabilitySuppressedThisSession = true;
+                  accountabilitySuppressedCycleId = cycleId;
                   setShowAccountabilityPrompt(false);
                 }}
               >
@@ -494,7 +496,7 @@ export default function HomeScreen() {
                   size="sm"
                   variant="ghost"
                   onClick={() => {
-                    accountabilitySuppressedThisSession = true;
+                    accountabilitySuppressedCycleId = cycleId;
                     setShowAccountabilityPrompt(false);
                     setSelectedDomainType(accountabilityTarget.type);
                   }}
@@ -505,7 +507,7 @@ export default function HomeScreen() {
                   size="sm"
                   variant="ghost"
                   onClick={() => {
-                    accountabilitySuppressedThisSession = true;
+                    accountabilitySuppressedCycleId = cycleId;
                     setShowAccountabilityPrompt(false);
                   }}
                 >

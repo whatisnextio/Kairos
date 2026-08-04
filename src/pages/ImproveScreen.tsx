@@ -14,6 +14,7 @@ import {
   resolveImproveCompletionTarget,
 } from '@/utils/improveLifecycle';
 import { getCurrentPhaseConfig, getDayInCycle } from '@/utils/kairos';
+import { toLocalIsoDate } from '@/utils/v1Framework';
 import { Zap } from 'lucide-react';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -53,6 +54,8 @@ interface ImproveCardContentProps {
   ctaExpanded: boolean;
   rewarded: boolean;
   isUpdating: boolean;
+  reflectionText: string;
+  onReflectionChange: (text: string) => void;
   onToggleWrite: () => void;
   onAccept: () => void;
   onDismiss: () => void;
@@ -65,6 +68,8 @@ function ImproveCardContent({
   ctaExpanded,
   rewarded,
   isUpdating,
+  reflectionText,
+  onReflectionChange,
   onToggleWrite,
   onAccept,
   onDismiss,
@@ -106,6 +111,8 @@ function ImproveCardContent({
         <textarea
           className="input-field w-full h-20 resize-none text-sm mb-3"
           placeholder={CTA_PROMPTS[card.cta as keyof typeof CTA_PROMPTS]}
+          value={reflectionText}
+          onChange={(e) => onReflectionChange(e.target.value)}
           // biome-ignore lint/a11y/noAutofocus: textarea is primary focus after opening reflection
           autoFocus
         />
@@ -160,7 +167,7 @@ export default function ImproveScreen() {
 
   const isPaidTier = hasBrotherhoodAccess(profile?.tier);
   const now = new Date();
-  const todayIso = now.toISOString().split('T')[0];
+  const todayIso = toLocalIsoDate(now);
   const isSunday = now.getDay() === 0;
   const canSeeNudge = isPaidTier || isSunday;
   const locked = !isPaidTier && !isSunday;
@@ -172,6 +179,7 @@ export default function ImproveScreen() {
 
   const [activeCardId, setActiveCardId] = useState<string | null>(null);
   const [ctaExpanded, setCtaExpanded] = useState(false);
+  const [reflectionText, setReflectionText] = useState('');
 
   const frameworkRecommendations = buildFrameworkRecommendations({
     email: authUser?.email,
@@ -270,6 +278,7 @@ export default function ImproveScreen() {
     }
     setCardStatus(card, 'completed');
     setCtaExpanded(false);
+    setReflectionText('');
   }
 
   function renderCard(card: ImproveCard, emphasise = false) {
@@ -281,7 +290,11 @@ export default function ImproveScreen() {
           ctaExpanded={ctaExpanded}
           rewarded={!!rewardedImproveCards[card.id]}
           isUpdating={isUpdatingNudge && card.kind === 'ai'}
+          reflectionText={activeCardId === card.id ? reflectionText : ''}
+          onReflectionChange={setReflectionText}
           onToggleWrite={() => {
+            const closing = activeCardId === card.id && ctaExpanded;
+            if (closing) setReflectionText('');
             setActiveCardId((current) => (current === card.id ? null : card.id));
             setCtaExpanded((current) => (activeCardId === card.id ? !current : true));
           }}

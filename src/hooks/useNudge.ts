@@ -3,6 +3,7 @@ import { useAppStore } from '@/store/useAppStore';
 import type { AiNudge, DomainType, KairosPhase, NudgeCta, NudgeStatus, NudgeType } from '@/types';
 import { hasBrotherhoodAccess } from '@/utils/entitlements';
 import { getLevelForXp } from '@/utils/gamification';
+import { toLocalIsoDate } from '@/utils/v1Framework';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 const NUDGE_ENDPOINT = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-kairos-nudge`;
@@ -46,7 +47,7 @@ export function useNudge() {
   const profile = useAppStore((s) => s.profile);
   const authUser = useAppStore((s) => s.authUser);
 
-  const today = new Date().toISOString().split('T')[0];
+  const today = toLocalIsoDate(new Date());
   const isSunday = new Date().getDay() === 0;
   const enabled = !!authUser && !!profile && (hasBrotherhoodAccess(profile.tier) || isSunday);
 
@@ -69,7 +70,7 @@ export function useUpdateNudgeStatus() {
   const queryClient = useQueryClient();
   const profile = useAppStore((s) => s.profile);
   const setProfile = useAppStore((s) => s.setProfile);
-  const today = new Date().toISOString().split('T')[0];
+  const today = toLocalIsoDate(new Date());
 
   return useMutation({
     mutationFn: async ({
