@@ -80,11 +80,13 @@ export function useBootstrap() {
   const {
     authUser,
     todayCheckIns,
+    todayCustomRouteCheckIns,
     setProfile,
     setCurrentCycle,
     setDomainFocuses,
     setOnboardingComplete,
     setTodayCheckIns,
+    setTodayCustomRouteCheckIns,
     mergeCheckInHistory,
     setIsBootstrapLoading,
   } = useAppStore();
@@ -100,17 +102,21 @@ export function useBootstrap() {
     bootstrapped.current = authUser.id;
     setIsBootstrapLoading(true);
 
-    if (isLocalDevUser(authUser.id)) {
-      setIsBootstrapLoading(false);
-      return;
-    }
-
     const today = new Date().toISOString().split('T')[0];
 
     // Clear stale check-ins from a previous day (persisted in localStorage)
     const anyCheckIn = Object.values(todayCheckIns)[0];
     if (anyCheckIn && anyCheckIn.date !== today) {
       setTodayCheckIns({});
+    }
+    const anyCustomRouteCheckIn = Object.values(todayCustomRouteCheckIns)[0];
+    if (anyCustomRouteCheckIn && anyCustomRouteCheckIn.date !== today) {
+      setTodayCustomRouteCheckIns({});
+    }
+
+    if (isLocalDevUser(authUser.id)) {
+      setIsBootstrapLoading(false);
+      return;
     }
 
     async function load() {

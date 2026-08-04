@@ -19,6 +19,7 @@ export default function AbandonCycleModal({ onClose }: Props) {
     setCurrentCycle,
     setOnboardingComplete,
     resetCycleLocalState,
+    archiveCurrentJourney,
   } = useAppStore();
   const [confirming, setConfirming] = useState(false);
   const [abandoning, setAbandoning] = useState(false);
@@ -41,8 +42,19 @@ export default function AbandonCycleModal({ onClose }: Props) {
         setAbandoning(false);
         return;
       }
+
+      const { error: profileErr } = await supabase
+        .from('profiles')
+        .update({ current_kairos_cycle_id: null })
+        .eq('id', authUser.id);
+      if (profileErr) {
+        setError(profileErr.message);
+        setAbandoning(false);
+        return;
+      }
     }
 
+    archiveCurrentJourney('abandoned');
     setCurrentCycle(null);
     if (profile) setProfile({ ...profile, currentKairosCycleId: null });
     resetCycleLocalState();
@@ -77,18 +89,18 @@ export default function AbandonCycleModal({ onClose }: Props) {
               id="abandon-modal-title"
               className="font-heading text-xl font-bold text-base-text mb-2 tracking-wide"
             >
-              Reset objectives?
+              Reset 12K journey?
             </h2>
             <p className="text-base-subtext text-sm mb-6">
-              This clears your current objectives and restarts setup from the first screen after
-              login. XP earned is kept.
+              This starts onboarding again. Your active journey and progress reset, but previous
+              history, XP, profile, and memory stay intact.
             </p>
             <div className="flex gap-3">
               <Button variant="ghost" onClick={onClose} className="flex-1">
                 Keep going
               </Button>
               <Button variant="danger" onClick={() => setConfirming(true)} className="flex-1">
-                Reset objectives
+                Reset 12K
               </Button>
             </div>
           </>
@@ -98,8 +110,8 @@ export default function AbandonCycleModal({ onClose }: Props) {
               Are you sure?
             </h2>
             <p className="text-base-subtext text-sm mb-6">
-              Day {currentCycle ? getDayInCycle(currentCycle.startDate) : '?'} progress will be
-              marked abandoned. You will choose your identity, domain, and first action again.
+              Day {currentCycle ? getDayInCycle(currentCycle.startDate) : '?'} will be closed and
+              kept in history. You will choose your identity, domain, and first action again.
             </p>
             {error && (
               <p role="alert" className="text-status-missed text-xs mb-3">

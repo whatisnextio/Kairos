@@ -2,8 +2,11 @@ import { supabase } from '@/services/supabaseClient';
 import type {
   AuthUser,
   CheckInStatus,
+  CustomRoute,
+  CustomRouteCheckIn,
   DailyCheckIn,
   DomainType,
+  JourneyArchiveEntry,
   KairosCycle,
   Profile,
   UserDomainFocus,
@@ -29,9 +32,12 @@ interface AppState {
   // Cycle
   currentCycle: KairosCycle | null;
   domainFocuses: UserDomainFocus[];
+  customRoutes: CustomRoute[];
+  journeyArchive: JourneyArchiveEntry[];
 
   // Check-ins
   todayCheckIns: Partial<Record<DomainType, DailyCheckIn>>;
+  todayCustomRouteCheckIns: Record<string, CustomRouteCheckIn>;
   streaks: Partial<Record<DomainType, UserStreak>>;
   // Persisted history for local streak computation (free tier)
   // Key: ISO date string. Kept to 90 days max.
@@ -65,8 +71,21 @@ interface AppActions {
   setDomainFocuses: (focuses: UserDomainFocus[]) => void;
 
   setDailyCheckIn: (domainType: DomainType, status: CheckInStatus, notes?: string) => Promise<void>;
+  setCustomRouteCheckIn: (routeId: string, status: CheckInStatus, notes?: string) => void;
 
   setTodayCheckIns: (checkIns: Partial<Record<DomainType, DailyCheckIn>>) => void;
+  setTodayCustomRouteCheckIns: (checkIns: Record<string, CustomRouteCheckIn>) => void;
+  addCustomRoute: (route: {
+    label: string;
+    description?: string;
+    focusDescription: string;
+  }) => void;
+  updateCustomRoute: (
+    routeId: string,
+    route: Partial<Pick<CustomRoute, 'label' | 'description' | 'focusDescription'>>,
+  ) => void;
+  archiveCustomRoute: (routeId: string) => void;
+  archiveCurrentJourney: (reason: JourneyArchiveEntry['reason']) => void;
 
   mergeCheckInHistory: (
     entries: Record<string, Partial<Record<DomainType, CheckInStatus>>>,
@@ -94,7 +113,10 @@ const initialState: AppState = {
   isBootstrapLoading: false,
   currentCycle: null,
   domainFocuses: [],
+  customRoutes: [],
+  journeyArchive: [],
   todayCheckIns: {},
+  todayCustomRouteCheckIns: {},
   checkInHistory: {},
   streaks: {},
   lastVibeCheckDate: null,
@@ -119,6 +141,7 @@ export const useAppStore = create<AppState & AppActions>()(
       setCurrentCycle: (currentCycle) => set({ currentCycle }),
       setDomainFocuses: (domainFocuses) => set({ domainFocuses }),
       setTodayCheckIns: (todayCheckIns) => set({ todayCheckIns }),
+      setTodayCustomRouteCheckIns: (todayCustomRouteCheckIns) => set({ todayCustomRouteCheckIns }),
       setDailyCheckIn: async (domainType, status, notes) => {
         const { profile, currentCycle, todayCheckIns } = get();
         if (!profile || !currentCycle) return;
@@ -171,6 +194,12 @@ export const useAppStore = create<AppState & AppActions>()(
             todayCheckIns: { ...state.todayCheckIns, [domainType]: optimisticCheckIn },
             checkInHistory: history,
             streaks: { ...state.streaks, [domainType]: updatedStreak },
+            currentCycle: state.currentCycle
+              ? {
+                  ...state.currentCycle,
+                  totalXpEarned: Math.max(0, state.currentCycle.totalXpEarned + xpDelta),
+                }
+              : null,
             profile: state.profile ? { ...state.profile, xp: newXp } : null,
             levelUpPending:
               newLevel.level > oldLevel.level
@@ -201,6 +230,129 @@ export const useAppStore = create<AppState & AppActions>()(
           await supabase.rpc('increment_profile_xp', { p_user_id: profile.id, p_delta: xpDelta });
         }
       },
+
+      addCustomRoute: ({ label, description, focusDescription }) => {
+        const { profile, currentCycle } = get();
+        if (!profile || !currentCycle) return;
+
+        const now = new Date().toISOString();
+        const route: CustomRoute = {
+          id: crypto.randomUUID(),
+          userId: profile.id,
+          cycleId: currentCycle.id,
+          label: label.trim(),
+          description: description?.trim() ?? '',
+          focusDescription: focusDescription.trim(),
+          createdAt: now,
+          archivedAt: null,
+        };
+
+        if (!route.label || !route.focusDescription) return;
+        set((state) => ({ customRoutes: [...state.customRoutes, route] }));
+      },
+
+      updateCustomRoute: (routeId, route) =>
+        set((state) => ({
+          customRoutes: state.customRoutes.map((existing) =>
+            existing.id === routeId
+              ? {
+                  ...existing,
+                  ...route,
+                  label: route.label?.trim() ?? existing.label,
+                  description: route.description?.trim() ?? existing.description,
+                  focusDescription: route.focusDescription?.trim() ?? existing.focusDescription,
+                }
+              : existing,
+          ),
+        })),
+
+      archiveCustomRoute: (routeId) =>
+        set((state) => {
+          const archivedAt = new Date().toISOString();
+          return {
+            customRoutes: state.customRoutes.map((route) =>
+              route.id === routeId ? { ...route, archivedAt } : route,
+            ),
+          };
+        }),
+
+      setCustomRouteCheckIn: (routeId, status, notes) => {
+        const { profile, currentCycle, customRoutes, todayCustomRouteCheckIns } = get();
+        if (!profile || !currentCycle) return;
+        const route = customRoutes.find((r) => r.id === routeId && !r.archivedAt);
+        if (!route) return;
+
+        const today = new Date().toISOString().split('T')[0];
+        const now = new Date().toISOString();
+        const xpForStatus = (s: CheckInStatus | undefined): number =>
+          s === 'Done' ? XP_PER_CHECK_IN_DONE : s === 'Partial' ? XP_PER_CHECK_IN_PARTIAL : 0;
+        const previous = todayCustomRouteCheckIns[routeId];
+        const previousStatus = previous?.date === today ? previous.status : undefined;
+        const xpDelta = xpForStatus(status) - xpForStatus(previousStatus);
+        const oldXp = profile.xp;
+        const newXp = Math.max(0, oldXp + xpDelta);
+        const oldLevel = getLevelForXp(oldXp);
+        const newLevel = getLevelForXp(newXp);
+
+        const checkIn: CustomRouteCheckIn = {
+          id: previous?.id ?? crypto.randomUUID(),
+          userId: profile.id,
+          cycleId: currentCycle.id,
+          routeId,
+          date: today,
+          status,
+          notes: notes ?? null,
+          xpAwarded: xpDelta,
+          createdAt: previous?.createdAt ?? now,
+          updatedAt: now,
+        };
+
+        set((state) => ({
+          todayCustomRouteCheckIns: {
+            ...state.todayCustomRouteCheckIns,
+            [routeId]: checkIn,
+          },
+          currentCycle: state.currentCycle
+            ? {
+                ...state.currentCycle,
+                totalXpEarned: Math.max(0, state.currentCycle.totalXpEarned + xpDelta),
+              }
+            : null,
+          profile: state.profile ? { ...state.profile, xp: newXp } : null,
+          levelUpPending:
+            newLevel.level > oldLevel.level
+              ? { level: newLevel.level, label: newLevel.label }
+              : state.levelUpPending,
+        }));
+      },
+
+      archiveCurrentJourney: (reason) =>
+        set((state) => {
+          if (!state.currentCycle) return state;
+          const today = new Date().toISOString().split('T')[0];
+          const archivedAt = new Date().toISOString();
+          const entry: JourneyArchiveEntry = {
+            id: crypto.randomUUID(),
+            archivedAt,
+            reason,
+            cycleId: state.currentCycle.id,
+            startDate: state.currentCycle.startDate,
+            endDate: today,
+            xp: state.currentCycle.totalXpEarned,
+            domainFocuses: state.domainFocuses.map((focus) => ({
+              domainType: focus.domainType,
+              focusDescription: focus.focusDescription,
+            })),
+            customRoutes: state.customRoutes.map((route) => ({
+              label: route.label,
+              description: route.description,
+              focusDescription: route.focusDescription,
+            })),
+            checkInHistory: state.checkInHistory,
+          };
+
+          return { journeyArchive: [entry, ...state.journeyArchive].slice(0, 12) };
+        }),
 
       mergeCheckInHistory: (entries) =>
         set((state) => ({ checkInHistory: { ...state.checkInHistory, ...entries } })),
@@ -279,7 +431,9 @@ export const useAppStore = create<AppState & AppActions>()(
         set({
           checkInHistory: {},
           todayCheckIns: {},
+          todayCustomRouteCheckIns: {},
           domainFocuses: [],
+          customRoutes: [],
           streaks: {},
           nextCycleIntention: null,
         }),
@@ -302,11 +456,14 @@ export const useAppStore = create<AppState & AppActions>()(
       partialize: (state) => ({
         onboardingComplete: state.onboardingComplete,
         todayCheckIns: state.todayCheckIns,
+        todayCustomRouteCheckIns: state.todayCustomRouteCheckIns,
         checkInHistory: state.checkInHistory,
         streaks: state.streaks,
         profile: state.profile,
         currentCycle: state.currentCycle,
         domainFocuses: state.domainFocuses,
+        customRoutes: state.customRoutes,
+        journeyArchive: state.journeyArchive,
         lastVibeCheckDate: state.lastVibeCheckDate,
         nextCycleIntention: state.nextCycleIntention,
         lastCelebrationPhase: state.lastCelebrationPhase,

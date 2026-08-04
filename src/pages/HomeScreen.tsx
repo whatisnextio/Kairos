@@ -67,9 +67,12 @@ export default function HomeScreen() {
     authUser,
     currentCycle,
     domainFocuses,
+    customRoutes,
     todayCheckIns,
+    todayCustomRouteCheckIns,
     lastVibeCheckDate,
     setDailyCheckIn,
+    setCustomRouteCheckIn,
   } = useAppStore();
   const { data: nudge } = useNudge();
   const { data: squadPulse } = useSquadPulse();
@@ -88,6 +91,7 @@ export default function HomeScreen() {
   const displayDay = Math.min(dayInCycle, KAIROS_CYCLE_LENGTH_DAYS);
   const phaseConfig = getCurrentPhaseConfig(dayInCycle);
   const availableDomains = getAvailableDomains(authUser?.email);
+  const activeCustomRoutes = customRoutes.filter((route) => !route.archivedAt);
   const availableDomainTypes = new Set(availableDomains.map((domain) => domain.type));
   const configuredDomainCount = domainFocuses.filter((focus) =>
     availableDomainTypes.has(focus.domainType),
@@ -150,6 +154,16 @@ export default function HomeScreen() {
       setDailyCheckIn(domain, 'Missed');
     } else {
       setDailyCheckIn(domain, 'Done');
+    }
+  };
+
+  const handleCustomRouteCheckIn = (routeId: string, current: CheckInStatus | undefined) => {
+    if (current === 'Done') {
+      setCustomRouteCheckIn(routeId, 'Partial');
+    } else if (current === 'Partial') {
+      setCustomRouteCheckIn(routeId, 'Missed');
+    } else {
+      setCustomRouteCheckIn(routeId, 'Done');
     }
   };
 
@@ -360,6 +374,35 @@ export default function HomeScreen() {
                     >
                       <path d="M5 2l5 5-5 5" />
                     </svg>
+                  </button>
+                </div>
+              );
+            })}
+            {activeCustomRoutes.map((route) => {
+              const checkIn = todayCustomRouteCheckIns[route.id];
+              const today = new Date().toISOString().split('T')[0];
+              const status: CheckInStatus = checkIn?.date === today ? checkIn.status : 'Pending';
+
+              return (
+                <div
+                  key={route.id}
+                  className={`w-full flex rounded border transition-colors ${STATUS_COLOURS[status]} bg-base-surface`}
+                >
+                  <button
+                    type="button"
+                    className="flex-1 text-left p-4"
+                    onClick={() => handleCustomRouteCheckIn(route.id, status)}
+                    aria-label={`Check in ${route.label}`}
+                  >
+                    <div className="flex items-center justify-between gap-3">
+                      <span className="font-heading font-medium tracking-wide text-base-text truncate">
+                        {route.label}
+                      </span>
+                      <span className="text-xs shrink-0">{STATUS_LABELS[status]}</span>
+                    </div>
+                    <p className="text-base-subtext text-xs mt-1 truncate">
+                      {route.focusDescription}
+                    </p>
                   </button>
                 </div>
               );

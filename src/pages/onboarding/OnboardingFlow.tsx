@@ -40,6 +40,7 @@ export default function OnboardingFlow() {
 
     const today = new Date().toISOString().split('T')[0];
     const now = new Date().toISOString();
+    const xpAfterWin = (profile?.xp ?? 0) + 10;
 
     if (isLocalDevUser(authUser.id)) {
       const ci: DailyCheckIn = {
@@ -61,7 +62,7 @@ export default function OnboardingFlow() {
         identityAnchorId: anchorId,
         customAnchorName: anchorId === 'custom' ? customAnchor : undefined,
         tier: 'brotherhood',
-        xp: 10,
+        xp: xpAfterWin,
         currentKairosCycleId: DEV_CYCLE_ID,
         dateOfBirth: '1984-01-01',
         squadId: null,
@@ -107,7 +108,7 @@ export default function OnboardingFlow() {
     const dobFromAuth: string = fullUser?.user_metadata?.date_of_birth ?? today;
 
     const complimentaryFields = getComplimentaryProfileFields(authUser.email);
-    const { data: profile, error: profileErr } = await supabase
+    const { data: profileRow, error: profileErr } = await supabase
       .from('profiles')
       .upsert({
         id: authUser.id,
@@ -115,14 +116,14 @@ export default function OnboardingFlow() {
         identity_anchor_id: anchorId,
         custom_anchor_name: anchorId === 'custom' ? customAnchor : null,
         tier: 'free',
-        xp: 10,
+        xp: xpAfterWin,
         date_of_birth: dobFromAuth,
         ...complimentaryFields,
       })
       .select()
       .single();
 
-    if (profileErr || !profile) {
+    if (profileErr || !profileRow) {
       setSubmitError(profileErr?.message ?? 'Setup failed. Check your connection.');
       setSubmitting(false);
       return;
@@ -198,18 +199,18 @@ export default function OnboardingFlow() {
       displayName: displayName || 'Anonymous',
       identityAnchorId: anchorId,
       customAnchorName: anchorId === 'custom' ? customAnchor : undefined,
-      tier: profile.tier as Profile['tier'],
-      xp: 10,
+      tier: profileRow.tier as Profile['tier'],
+      xp: xpAfterWin,
       currentKairosCycleId: cycle.id,
       dateOfBirth: dobFromAuth,
       squadId: null,
-      stripeCustomerId: profile.stripe_customer_id as string | null,
-      stripeSubscriptionId: profile.stripe_subscription_id as string | null,
-      subscriptionStatus: profile.subscription_status as string | null,
-      cancelAtPeriodEnd: (profile.cancel_at_period_end as boolean | null) ?? false,
-      currentPeriodEnd: profile.current_period_end as string | null,
-      createdAt: profile.created_at,
-      updatedAt: profile.updated_at,
+      stripeCustomerId: profileRow.stripe_customer_id as string | null,
+      stripeSubscriptionId: profileRow.stripe_subscription_id as string | null,
+      subscriptionStatus: profileRow.subscription_status as string | null,
+      cancelAtPeriodEnd: (profileRow.cancel_at_period_end as boolean | null) ?? false,
+      currentPeriodEnd: profileRow.current_period_end as string | null,
+      createdAt: profileRow.created_at,
+      updatedAt: profileRow.updated_at,
     });
 
     setCurrentCycle({

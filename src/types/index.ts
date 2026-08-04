@@ -344,6 +344,50 @@ export interface UserDomainFocus {
   setAt: string;
 }
 
+export interface CustomRoute {
+  id: string;
+  userId: string;
+  cycleId: string;
+  label: string;
+  description: string;
+  focusDescription: string;
+  createdAt: string;
+  archivedAt: string | null;
+}
+
+export interface CustomRouteCheckIn {
+  id: string;
+  userId: string;
+  cycleId: string;
+  routeId: string;
+  date: string;
+  status: CheckInStatus;
+  notes: string | null;
+  xpAwarded: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface JourneyArchiveEntry {
+  id: string;
+  archivedAt: string;
+  reason: CycleStatus;
+  cycleId: string | null;
+  startDate: string | null;
+  endDate: string;
+  xp: number;
+  domainFocuses: Array<{
+    domainType: DomainType;
+    focusDescription: string;
+  }>;
+  customRoutes: Array<{
+    label: string;
+    description: string;
+    focusDescription: string;
+  }>;
+  checkInHistory: Record<string, Partial<Record<DomainType, CheckInStatus>>>;
+}
+
 // ─── Check-in ────────────────────────────────────────────────────────────────
 
 export type CheckInStatus = 'Done' | 'Partial' | 'Missed' | 'Pending' | 'Protected';

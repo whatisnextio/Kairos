@@ -36,7 +36,17 @@ async function registerPush(): Promise<boolean> {
 }
 
 export default function YouScreen() {
-  const { profile, authUser, profileImageDataUrl, setProfileImageDataUrl, signOut } = useAppStore();
+  const {
+    profile,
+    authUser,
+    customRoutes,
+    journeyArchive,
+    profileImageDataUrl,
+    setProfileImageDataUrl,
+    addCustomRoute,
+    archiveCustomRoute,
+    signOut,
+  } = useAppStore();
   const { data: squadPulse } = useSquadPulse();
   const { mutate: matchToSquad, isPending: isMatching } = useMatchToSquad();
   const [pushStatus, setPushStatus] = useState<'idle' | 'requesting' | 'done' | 'denied'>('idle');
@@ -59,6 +69,8 @@ export default function YouScreen() {
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const [showAbandon, setShowAbandon] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
+  const [routeLabel, setRouteLabel] = useState('');
+  const [routeFocus, setRouteFocus] = useState('');
 
   const checkInHistory = useAppStore((s) => s.checkInHistory);
   const domainFocuses = useAppStore((s) => s.domainFocuses);
@@ -90,6 +102,8 @@ export default function YouScreen() {
           domainType: f.domainType,
           focusDescription: f.focusDescription,
         })),
+        customRoutes,
+        journeyArchive,
         checkIns: checkIns ?? [],
         vibeChecks: vibeChecks ?? [],
       };
@@ -106,6 +120,8 @@ export default function YouScreen() {
           domainType: f.domainType,
           focusDescription: f.focusDescription,
         })),
+        customRoutes,
+        journeyArchive,
         checkInHistory,
       };
     }
@@ -118,7 +134,7 @@ export default function YouScreen() {
     a.click();
     URL.revokeObjectURL(url);
     setIsExporting(false);
-  }, [profile, domainFocuses, checkInHistory]);
+  }, [profile, domainFocuses, customRoutes, journeyArchive, checkInHistory]);
 
   const handleDeleteAccount = useCallback(async () => {
     setIsDeleting(true);
@@ -155,6 +171,15 @@ export default function YouScreen() {
     },
     [setProfileImageDataUrl],
   );
+
+  const handleAddCustomRoute = useCallback(() => {
+    addCustomRoute({
+      label: routeLabel,
+      focusDescription: routeFocus,
+    });
+    setRouteLabel('');
+    setRouteFocus('');
+  }, [addCustomRoute, routeFocus, routeLabel]);
 
   if (!profile) return null;
 
@@ -212,6 +237,92 @@ export default function YouScreen() {
           </div>
         </div>
       </Card>
+
+      {/* Custom routes */}
+      <Card>
+        <p className="text-base-subtext text-xs font-heading tracking-widest uppercase mb-3">
+          Custom routes
+        </p>
+        <div className="flex flex-col gap-2 mb-4">
+          {customRoutes.filter((route) => !route.archivedAt).length === 0 ? (
+            <p className="text-base-muted text-sm">No custom routes active.</p>
+          ) : (
+            customRoutes
+              .filter((route) => !route.archivedAt)
+              .map((route) => (
+                <div
+                  key={route.id}
+                  className="flex items-start justify-between gap-3 border-b border-base-border pb-2 last:border-b-0 last:pb-0"
+                >
+                  <div className="min-w-0">
+                    <p className="font-heading text-sm font-medium text-base-text truncate">
+                      {route.label}
+                    </p>
+                    <p className="text-base-subtext text-xs truncate">{route.focusDescription}</p>
+                  </div>
+                  <button
+                    type="button"
+                    className="text-base-muted text-xs underline shrink-0"
+                    onClick={() => archiveCustomRoute(route.id)}
+                  >
+                    Remove
+                  </button>
+                </div>
+              ))
+          )}
+        </div>
+        <div className="flex flex-col gap-2">
+          <input
+            className="input-field"
+            placeholder="Route name, e.g. Nest"
+            value={routeLabel}
+            onChange={(e) => setRouteLabel(e.target.value)}
+          />
+          <textarea
+            className="input-field h-20 resize-none"
+            placeholder="What does a small win look like?"
+            value={routeFocus}
+            onChange={(e) => setRouteFocus(e.target.value)}
+          />
+          <Button
+            size="sm"
+            onClick={handleAddCustomRoute}
+            disabled={!routeLabel.trim() || !routeFocus.trim()}
+          >
+            Add route
+          </Button>
+        </div>
+      </Card>
+
+      {/* Journey history */}
+      {journeyArchive.length > 0 && (
+        <Card>
+          <p className="text-base-subtext text-xs font-heading tracking-widest uppercase mb-3">
+            Journey history
+          </p>
+          <div className="flex flex-col gap-3">
+            {journeyArchive.slice(0, 3).map((entry) => (
+              <div key={entry.id} className="border-b border-base-border pb-3 last:border-b-0">
+                <div className="flex items-center justify-between gap-3">
+                  <p className="font-heading text-sm font-medium text-base-text capitalize">
+                    {entry.reason}
+                  </p>
+                  <p className="text-base-muted text-xs">
+                    {new Date(entry.archivedAt).toLocaleDateString('en-GB', {
+                      day: 'numeric',
+                      month: 'short',
+                      year: 'numeric',
+                    })}
+                  </p>
+                </div>
+                <p className="text-base-subtext text-xs mt-1">
+                  {entry.domainFocuses.length + entry.customRoutes.length} routes kept.
+                </p>
+              </div>
+            ))}
+          </div>
+        </Card>
+      )}
 
       {/* Squad: brotherhood only */}
       {profile.tier === 'brotherhood' && (
@@ -360,7 +471,7 @@ export default function YouScreen() {
           onClick={() => setShowAbandon(true)}
           className="text-base-muted text-xs underline w-full text-center"
         >
-          Reset objectives
+          Reset 12K journey
         </button>
       </div>
 
