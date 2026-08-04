@@ -14,6 +14,7 @@ import type {
   VibeCheck,
 } from '@/types';
 import { XP_PER_CHECK_IN_DONE, XP_PER_CHECK_IN_PARTIAL, XP_PER_CYCLE_COMPLETE } from '@/types';
+import { hasBrotherhoodAccess } from '@/utils/entitlements';
 import { getLevelForXp } from '@/utils/gamification';
 import { DEV_CYCLE_ID, clearLocalDevSession } from '@/utils/localDevSession';
 import { computeLocalStreak } from '@/utils/streak';
@@ -275,7 +276,7 @@ export const useAppStore = create<AppState & AppActions>()(
 
         if (profile.tier === 'free' || currentCycle.id === DEV_CYCLE_ID) return;
 
-        // Sync to Supabase for Brotherhood tier
+        // Sync to Supabase for paid tiers
         const { error } = await supabase.from('daily_check_ins').upsert(
           {
             user_id: profile.id,
@@ -477,7 +478,7 @@ export const useAppStore = create<AppState & AppActions>()(
           })
           .eq('id', currentCycle.id);
 
-        if (profile.tier === 'brotherhood') {
+        if (hasBrotherhoodAccess(profile.tier)) {
           await supabase.from('cycle_reflections').insert({
             user_id: profile.id,
             cycle_id: currentCycle.id,

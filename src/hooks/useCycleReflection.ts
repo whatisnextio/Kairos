@@ -1,5 +1,6 @@
 import { supabase } from '@/services/supabaseClient';
 import { useAppStore } from '@/store/useAppStore';
+import { hasBrotherhoodAccess } from '@/utils/entitlements';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 const REFLECTION_ENDPOINT = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-cycle-reflection`;
@@ -51,7 +52,7 @@ export function useCycleReflection(enabled: boolean) {
       if (!session) throw new Error('No session');
       return fetchReflection(session.access_token);
     },
-    enabled: enabled && !!profile && !!currentCycle && profile.tier === 'brotherhood',
+    enabled: enabled && !!profile && !!currentCycle && hasBrotherhoodAccess(profile.tier),
     staleTime: Number.POSITIVE_INFINITY,
     retry: 1,
   });

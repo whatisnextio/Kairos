@@ -8,6 +8,7 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL') ?? '';
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
 const STRIPE_SECRET_KEY = Deno.env.get('STRIPE_SECRET_KEY') ?? '';
+const PAID_TIERS = ['brotherhood', 'lifechanger'];
 // Comma-separated list of admin emails allowed to trigger manual computation.
 const ADMIN_EMAILS = new Set(
   (Deno.env.get('ADMIN_EMAILS') ?? 'liam@whatisnext.io').split(',').map((e) => e.trim()),
@@ -86,7 +87,7 @@ Deno.serve(async (req: Request) => {
     const { count: paidUsers } = await supabase
       .from('profiles')
       .select('*', { count: 'exact', head: true })
-      .eq('tier', 'brotherhood')
+      .in('tier', PAID_TIERS)
       .eq('subscription_status', 'active');
 
     const total = totalUsers ?? 0;

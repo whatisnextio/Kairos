@@ -1,6 +1,19 @@
-import type { Profile } from '@/types';
+import { type Profile, SUBSCRIPTION_TIER_CONFIGS, type SubscriptionTier } from '@/types';
 
 const COMPLIMENTARY_BROTHERHOOD_EMAILS = new Set(['ldgmcdowell@gmail.com']);
+const PAID_TIERS = new Set<SubscriptionTier>(['brotherhood', 'lifechanger']);
+
+export function hasPaidAccess(tier: SubscriptionTier | null | undefined): boolean {
+  return tier ? SUBSCRIPTION_TIER_CONFIGS[tier].accessLevel === 'paid' : false;
+}
+
+export function hasBrotherhoodAccess(tier: SubscriptionTier | null | undefined): boolean {
+  return tier ? PAID_TIERS.has(tier) : false;
+}
+
+export function getSubscriptionTierLabel(tier: SubscriptionTier | null | undefined): string {
+  return tier ? SUBSCRIPTION_TIER_CONFIGS[tier].label : 'Free';
+}
 
 export function hasComplimentaryBrotherhood(email: string | null | undefined): boolean {
   return COMPLIMENTARY_BROTHERHOOD_EMAILS.has(email?.trim().toLowerCase() ?? '');

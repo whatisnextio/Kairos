@@ -1,5 +1,6 @@
 import { supabase } from '@/services/supabaseClient';
 import { useAppStore } from '@/store/useAppStore';
+import { hasBrotherhoodAccess } from '@/utils/entitlements';
 import { useEffect, useState } from 'react';
 
 const PENDING_KEY = 'kairos_checkout_pending';
@@ -26,7 +27,7 @@ export function useSubscriptionVerification() {
       return;
     }
 
-    if (profile?.tier === 'brotherhood') {
+    if (hasBrotherhoodAccess(profile?.tier)) {
       localStorage.removeItem(PENDING_KEY);
       return;
     }
@@ -49,13 +50,13 @@ export function useSubscriptionVerification() {
             .eq('id', profile.id)
             .single();
 
-          if (data?.tier === 'brotherhood') {
+          if (data && hasBrotherhoodAccess(data.tier)) {
             if (!cancelled) {
               const current = useAppStore.getState().profile;
               if (current) {
                 setProfile({
                   ...current,
-                  tier: 'brotherhood',
+                  tier: data.tier,
                   stripeCustomerId:
                     (data.stripe_customer_id as string | null) ?? current.stripeCustomerId,
                   stripeSubscriptionId:

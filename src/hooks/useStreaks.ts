@@ -1,6 +1,7 @@
 import { supabase } from '@/services/supabaseClient';
 import { useAppStore } from '@/store/useAppStore';
 import type { DomainType, UserStreak } from '@/types';
+import { hasBrotherhoodAccess } from '@/utils/entitlements';
 import { useQuery } from '@tanstack/react-query';
 
 interface RawStreak {
@@ -22,7 +23,7 @@ function toUserStreak(userId: string, raw: RawStreak): UserStreak {
 
 export function useStreaks() {
   const profile = useAppStore((s) => s.profile);
-  const enabled = !!profile && profile.tier === 'brotherhood';
+  const enabled = !!profile && hasBrotherhoodAccess(profile.tier);
 
   return useQuery({
     queryKey: ['streaks', profile?.id],

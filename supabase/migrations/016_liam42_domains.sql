@@ -3,7 +3,7 @@
 -- 4-domain / 6-phase setup to the Liam 42 framework:
 --   8 domains : BODY, FUEL, METIME, USTIME, SHOT, LENS, NEST, ROOTS
 --   5 phases  : GATE, STABILISE, BUILD, PERFORM, ELITE
---   365-day campaign (squad_pulses week_number extended to 52)
+--   legacy long campaign (squad_pulses week_number extended to 52)
 
 -- ─── user_domain_focuses ─────────────────────────────────────────────────────
 
@@ -60,7 +60,7 @@ alter table squads
   check (kairos_phase in ('GATE','STABILISE','BUILD','PERFORM','ELITE'));
 
 -- ─── squad_pulses : week_number ──────────────────────────────────────────────
--- Extended from 12 to 52 to cover a full 365-day campaign.
+-- Extended from 12 to 52 for the legacy long-campaign model.
 
 alter table squad_pulses
   drop constraint if exists squad_pulses_week_number_check;

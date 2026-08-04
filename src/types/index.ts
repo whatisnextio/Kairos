@@ -296,7 +296,36 @@ export const DOMAINS: DomainConfig[] = [
 
 // ─── Subscription ────────────────────────────────────────────────────────────
 
-export type SubscriptionTier = 'free' | 'brotherhood';
+export type SubscriptionTier = 'free' | 'brotherhood' | 'lifechanger';
+
+export interface SubscriptionTierConfig {
+  tier: SubscriptionTier;
+  label: string;
+  accessLevel: 'free' | 'paid';
+  description: string;
+}
+
+export const SUBSCRIPTION_TIER_CONFIGS: Record<SubscriptionTier, SubscriptionTierConfig> = {
+  free: {
+    tier: 'free',
+    label: 'Free',
+    accessLevel: 'free',
+    description: 'Core 12K tracking, local progress, weekly check-in, and Sunday AI nudge.',
+  },
+  brotherhood: {
+    tier: 'brotherhood',
+    label: 'Brotherhood',
+    accessLevel: 'paid',
+    description: 'Full V1 12K system with daily AI nudges, cloud sync, squads, and reflections.',
+  },
+  lifechanger: {
+    tier: 'lifechanger',
+    label: 'Lifechanger',
+    accessLevel: 'paid',
+    description:
+      'Advanced personalisation tier. In V1 it inherits Brotherhood access until deeper AI coaching ships.',
+  },
+};
 
 export function isOwnerAccount(email?: string | null): boolean {
   return email?.trim().toLowerCase() === 'ldgmcdowell@gmail.com';

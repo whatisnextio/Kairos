@@ -15,6 +15,9 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 const STRIPE_WEBHOOK_SECRET = Deno.env.get('STRIPE_WEBHOOK_SECRET') ?? '';
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL') ?? '';
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
+const STRIPE_LIFECHANGER_PRICE_ID = Deno.env.get('STRIPE_LIFECHANGER_PRICE_ID') ?? '';
+
+type ProductTier = 'brotherhood' | 'lifechanger';
 
 // Stripe webhook signature verification (manual HMAC — no Stripe SDK in Deno)
 async function verifyStripeSignature(
@@ -69,6 +72,23 @@ function mapStatus(stripeStatus: string): string {
   return statusMap[stripeStatus] ?? stripeStatus;
 }
 
+function getMetadataTier(obj: Record<string, unknown>): ProductTier | null {
+  const metadata = obj.metadata as Record<string, string> | null;
+  const tier = metadata?.tier ?? metadata?.subscription_tier ?? null;
+  return tier === 'lifechanger' ? 'lifechanger' : tier === 'brotherhood' ? 'brotherhood' : null;
+}
+
+function getPriceTier(obj: Record<string, unknown>): ProductTier | null {
+  if (!STRIPE_LIFECHANGER_PRICE_ID) return null;
+  const items = obj.items as { data?: Array<{ price?: { id?: string } }> } | undefined;
+  const priceIds = items?.data?.map((item) => item.price?.id).filter(Boolean) ?? [];
+  return priceIds.includes(STRIPE_LIFECHANGER_PRICE_ID) ? 'lifechanger' : null;
+}
+
+function getPaidTier(obj: Record<string, unknown>): ProductTier {
+  return getMetadataTier(obj) ?? getPriceTier(obj) ?? 'brotherhood';
+}
+
 Deno.serve(async (req: Request) => {
   if (req.method !== 'POST') {
     return new Response('Method not allowed', { status: 405 });
@@ -105,6 +125,7 @@ Deno.serve(async (req: Request) => {
         // this event, so we can't rely on it to be the first event that sets the tier.
         const customerId = obj.customer as string;
         const subscriptionId = obj.subscription as string | null;
+        const paidTier = getPaidTier(obj);
         const userId =
           (obj.client_reference_id as string | null) ??
           (obj.metadata as Record<string, string> | null)?.user_id;
@@ -116,7 +137,7 @@ Deno.serve(async (req: Request) => {
           .update({
             stripe_customer_id: customerId,
             stripe_subscription_id: subscriptionId ?? null,
-            tier: 'brotherhood',
+            tier: paidTier,
             subscription_status: 'active',
           })
           .eq('id', userId);
@@ -129,10 +150,11 @@ Deno.serve(async (req: Request) => {
         const customerId = obj.customer as string;
         const subStatus = obj.status as string;
         const subId = obj.id as string;
-        // Retain brotherhood during grace periods (past_due = first payment failure).
+        const paidTier = getPaidTier(obj);
+        // Retain paid access during grace periods (past_due = first payment failure).
         // Only downgrade on incomplete (never paid) or hard cancellation paths.
         const graceStatuses = new Set(['active', 'trialing', 'past_due']);
-        const tier = graceStatuses.has(subStatus) ? 'brotherhood' : 'free';
+        const tier = graceStatuses.has(subStatus) ? paidTier : 'free';
         // current_period_end from Stripe is a Unix timestamp (seconds)
         const periodEndUnix = obj.current_period_end as number | null;
         const currentPeriodEnd = periodEndUnix

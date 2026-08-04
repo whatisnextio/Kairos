@@ -15,6 +15,7 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 const ANTHROPIC_API_KEY = Deno.env.get('ANTHROPIC_API_KEY') ?? '';
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL') ?? '';
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
+const PAID_TIERS = new Set(['brotherhood', 'lifechanger']);
 
 const SYSTEM_PROMPT = `You are the KAIROS cycle reflection engine. You write one deeply personal summary for someone who has just completed a 12-week behavioural action framework.
 
@@ -255,10 +256,10 @@ Deno.serve(async (req: Request) => {
       );
     }
 
-    // Only Brotherhood gets the AI reflection
-    if (profile.tier !== 'brotherhood') {
+    // Paid V1 tiers get the AI reflection.
+    if (!PAID_TIERS.has(profile.tier)) {
       return new Response(
-        JSON.stringify({ error: 'Cycle reflection requires Brotherhood tier', tier_gate: true }),
+        JSON.stringify({ error: 'Cycle reflection requires paid access', tier_gate: true }),
         { status: 403 },
       );
     }

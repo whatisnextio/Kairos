@@ -14,8 +14,12 @@ describe('PWA UX shell', () => {
 
   it('uses the 12-week product description in install metadata', () => {
     const html = readFileSync('index.html', 'utf8');
+    const viteConfig = readFileSync('vite.config.ts', 'utf8');
 
     expect(html).toContain('12K: Your 12-week transformation. Powered by Kairos.');
+    expect(viteConfig).toContain('12K - Your 12-Week Transformation');
+    expect(viteConfig).toContain('12K: Your 12-week transformation. Powered by Kairos.');
     expect(html).not.toContain('365-day transformation');
+    expect(viteConfig).not.toMatch(/365[- ]day/i);
   });
 });

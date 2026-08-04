@@ -1,8 +1,12 @@
 import type { Profile } from '@/types';
+import { SUBSCRIPTION_TIER_CONFIGS } from '@/types';
 import {
   applyComplimentaryBrotherhood,
   getComplimentaryProfileFields,
+  getSubscriptionTierLabel,
+  hasBrotherhoodAccess,
   hasComplimentaryBrotherhood,
+  hasPaidAccess,
 } from '@/utils/entitlements';
 import { describe, expect, it } from 'vitest';
 
@@ -51,5 +55,25 @@ describe('complimentary Brotherhood entitlement', () => {
       cancelAtPeriodEnd: false,
       currentPeriodEnd: null,
     });
+  });
+});
+
+describe('subscription tier contract', () => {
+  it('defines Free, Brotherhood, and Lifechanger explicitly', () => {
+    expect(Object.keys(SUBSCRIPTION_TIER_CONFIGS)).toEqual(['free', 'brotherhood', 'lifechanger']);
+  });
+
+  it('treats Brotherhood and Lifechanger as paid V1 access', () => {
+    expect(hasPaidAccess('free')).toBe(false);
+    expect(hasPaidAccess('brotherhood')).toBe(true);
+    expect(hasPaidAccess('lifechanger')).toBe(true);
+    expect(hasBrotherhoodAccess('brotherhood')).toBe(true);
+    expect(hasBrotherhoodAccess('lifechanger')).toBe(true);
+  });
+
+  it('exposes stable tier labels for account UI', () => {
+    expect(getSubscriptionTierLabel('free')).toBe('Free');
+    expect(getSubscriptionTierLabel('brotherhood')).toBe('Brotherhood');
+    expect(getSubscriptionTierLabel('lifechanger')).toBe('Lifechanger');
   });
 });

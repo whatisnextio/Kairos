@@ -1,6 +1,7 @@
 import { supabase } from '@/services/supabaseClient';
 import { useAppStore } from '@/store/useAppStore';
 import type { CheckInStatus, DailyCheckIn, DomainType } from '@/types';
+import { hasBrotherhoodAccess } from '@/utils/entitlements';
 import { useQuery } from '@tanstack/react-query';
 
 interface RawCheckIn {
@@ -34,7 +35,7 @@ function toCheckIn(raw: RawCheckIn): DailyCheckIn {
 export function useDomainCheckIns(domainType: DomainType, limit = 28) {
   const profile = useAppStore((s) => s.profile);
   const currentCycle = useAppStore((s) => s.currentCycle);
-  const enabled = !!profile && !!currentCycle && profile.tier === 'brotherhood';
+  const enabled = !!profile && !!currentCycle && hasBrotherhoodAccess(profile.tier);
 
   return useQuery({
     queryKey: ['check-ins', profile?.id, currentCycle?.id, domainType, limit],
