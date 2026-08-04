@@ -67,6 +67,7 @@ const PHASE_MILESTONE_MESSAGES: Record<string, string> = {
 let vibeCheckShownThisSession = false;
 let domainSetupShownThisSession = false;
 let phaseTransitionShownThisSession = false;
+let accountabilitySuppressedThisSession = false;
 
 export default function HomeScreen() {
   const navigate = useNavigate();
@@ -97,6 +98,7 @@ export default function HomeScreen() {
   const [showVibeCheck, setShowVibeCheck] = useState(false);
   const [showDomainSetup, setShowDomainSetup] = useState(false);
   const [showPhaseTransition, setShowPhaseTransition] = useState(false);
+  const [showAccountabilityPrompt, setShowAccountabilityPrompt] = useState(false);
   const [selectedDomainType, setSelectedDomainType] = useState<DomainType | null>(null);
 
   const dayInCycle = profile && currentCycle ? getDayInCycle(currentCycle.startDate) : 1;
@@ -118,7 +120,7 @@ export default function HomeScreen() {
   const currentHour = new Date().getHours();
   const shouldShowAccountability =
     (currentHour >= 15 && openDomainCount >= 2) || (currentHour >= 18 && openDomainCount > 0);
-  const accountabilityPrompt = shouldShowAccountability
+  const accountabilityPrompt = showAccountabilityPrompt
     ? buildAccountabilityPrompt(Math.min(2, Math.max(0, openDomainCount - 1)))
     : null;
   const accountabilityTarget = accountabilityPrompt
@@ -167,6 +169,15 @@ export default function HomeScreen() {
     availableDomains.length,
     phaseConfig.phase,
   ]);
+
+  useEffect(() => {
+    if (!shouldShowAccountability || accountabilitySuppressedThisSession) {
+      setShowAccountabilityPrompt(false);
+      return;
+    }
+
+    setShowAccountabilityPrompt(true);
+  }, [shouldShowAccountability]);
 
   if (!profile || !currentCycle) return null;
 
@@ -367,26 +378,56 @@ export default function HomeScreen() {
         )}
 
         {accountabilityPrompt && (
-          <Card>
-            <p className="font-heading text-xs text-base-subtext tracking-widest uppercase mb-1">
-              {accountabilityPrompt.title}
-            </p>
-            <p className="text-base-text text-sm leading-snug">
-              {accountabilityTarget
-                ? `${getDailyDomainLabel(
-                    accountabilityTarget,
-                  )} is still open. Choose the honest status. Partial is fine for a smaller version.`
-                : accountabilityPrompt.body}
-            </p>
-            {accountabilityTarget && (
-              <Button
-                size="sm"
-                variant="ghost"
-                className="mt-3"
-                onClick={() => setSelectedDomainType(accountabilityTarget.type)}
+          <Card className="border-status-partial/50 bg-status-partial/5">
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0">
+                <p className="font-heading text-xs text-status-partial tracking-widest uppercase mb-1">
+                  {accountabilityPrompt.title}
+                </p>
+                <p className="text-base-text text-sm leading-snug">
+                  {accountabilityTarget
+                    ? `${getDailyDomainLabel(
+                        accountabilityTarget,
+                      )} is still open. Choose the honest status. Partial is fine for a smaller version.`
+                    : accountabilityPrompt.body}
+                </p>
+              </div>
+              <button
+                type="button"
+                aria-label="Dismiss accountability prompt"
+                className="text-base-muted hover:text-base-text transition-colors text-lg leading-none px-1"
+                onClick={() => {
+                  accountabilitySuppressedThisSession = true;
+                  setShowAccountabilityPrompt(false);
+                }}
               >
-                Check in {getDailyDomainLabel(accountabilityTarget)}
-              </Button>
+                x
+              </button>
+            </div>
+            {accountabilityTarget && (
+              <div className="flex gap-2 mt-3">
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => {
+                    accountabilitySuppressedThisSession = true;
+                    setShowAccountabilityPrompt(false);
+                    setSelectedDomainType(accountabilityTarget.type);
+                  }}
+                >
+                  Check in {getDailyDomainLabel(accountabilityTarget)}
+                </Button>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => {
+                    accountabilitySuppressedThisSession = true;
+                    setShowAccountabilityPrompt(false);
+                  }}
+                >
+                  Later
+                </Button>
+              </div>
             )}
           </Card>
         )}
