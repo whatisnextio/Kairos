@@ -7,11 +7,12 @@ import {
 import { supabase } from '@/services/supabaseClient';
 import { useAppStore } from '@/store/useAppStore';
 import { DEV_EMAIL, DEV_USER_ID, hasLocalDevSession } from '@/utils/localDevSession';
-import { Suspense, lazy, useEffect } from 'react';
+import { type ReactNode, Suspense, lazy, useEffect } from 'react';
 import { HashRouter, Navigate, Route, Routes } from 'react-router-dom';
 
 import ErrorBoundary from '@/components/common/ErrorBoundary';
 import AppShell from '@/components/layout/AppShell';
+import PwaInstallPrompt from '@/components/pwa/PwaInstallPrompt';
 import HomeScreen from '@/pages/HomeScreen';
 import ImproveScreen from '@/pages/ImproveScreen';
 import ProgressScreen from '@/pages/ProgressScreen';
@@ -33,6 +34,15 @@ const NewCycleScreen = lazy(() => import('@/pages/NewCycleScreen'));
 
 function PageFallback() {
   return <div className="px-4 pt-10 text-base-subtext text-sm">Loading...</div>;
+}
+
+function withInstallPrompt(content: ReactNode) {
+  return (
+    <>
+      {content}
+      <PwaInstallPrompt />
+    </>
+  );
 }
 
 export default function App() {
@@ -112,29 +122,29 @@ export default function App() {
   // YouScreen subscription card will show their current status on next load.
 
   if (!authUser) {
-    return (
+    return withInstallPrompt(
       <HashRouter>
         <Routes>
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
           <Route path="*" element={<Navigate to="/login" replace />} />
         </Routes>
-      </HashRouter>
+      </HashRouter>,
     );
   }
 
   if (!onboardingComplete || !profile) {
-    return (
+    return withInstallPrompt(
       <HashRouter>
         <Routes>
           <Route path="/onboarding/*" element={<OnboardingFlow />} />
           <Route path="*" element={<Navigate to="/onboarding" replace />} />
         </Routes>
-      </HashRouter>
+      </HashRouter>,
     );
   }
 
-  return (
+  return withInstallPrompt(
     <HashRouter>
       <AppShell>
         <ErrorBoundary>
@@ -165,6 +175,6 @@ export default function App() {
           </Suspense>
         </ErrorBoundary>
       </AppShell>
-    </HashRouter>
+    </HashRouter>,
   );
 }

@@ -1,6 +1,6 @@
 export default function SplashScreen() {
   return (
-    <div
+    <output
       className="fixed inset-0 bg-base-black flex items-center justify-center"
       aria-busy="true"
       aria-label="Loading 12K"
@@ -14,6 +14,6 @@ export default function SplashScreen() {
           className="relative h-20 w-20 rounded-xl shadow-[0_0_32px_rgba(34,197,94,0.18)] animate-pulse"
         />
       </div>
-    </div>
+    </output>
   );
 }
