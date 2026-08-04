@@ -35,6 +35,9 @@ export default defineConfig({
   resolve: {
     alias: { '@': '/src' },
   },
+  optimizeDeps: {
+    entries: ['index.html', 'src/**/*.{ts,tsx}'],
+  },
   build: {
     rollupOptions: {
       output: {

@@ -119,8 +119,15 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-base-black flex flex-col items-center justify-center px-6 py-12">
-      <img src="/kairos-12k-logo.svg" alt="Kairos 12K" className="w-48 mb-4" draggable={false} />
+    <main className="min-h-screen bg-base-black flex flex-col items-center justify-center px-6 py-12">
+      <img
+        src="/kairos-12k-logo.svg"
+        alt="Kairos 12K"
+        width="192"
+        height="54"
+        className="w-48 h-auto mb-4"
+        draggable={false}
+      />
       <p className="text-base-text font-heading font-bold text-lg tracking-wide mb-1">
         12 weeks. Four domains. Daily proof.
       </p>
@@ -150,7 +157,7 @@ export default function LoginPage() {
           </Button>
           <p className="text-center text-base-subtext text-xs">
             No account yet?{' '}
-            <Link to="/register" className="text-accent-green hover:underline">
+            <Link to="/register" className="text-accent-green underline underline-offset-2">
               Sign up
             </Link>
           </p>
@@ -161,6 +168,6 @@ export default function LoginPage() {
           )}
         </form>
       )}
-    </div>
+    </main>
   );
 }

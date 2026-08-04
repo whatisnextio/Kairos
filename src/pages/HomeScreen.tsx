@@ -336,11 +336,11 @@ export default function HomeScreen() {
               {accountabilityPrompt.title}
             </p>
             <p className="text-base-text text-sm leading-snug">{accountabilityPrompt.body}</p>
-            <div className="flex gap-2 mt-3 overflow-x-auto pb-1">
+            <div className="flex flex-wrap gap-2 mt-3">
               {accountabilityPrompt.steps.map((step) => (
                 <span
                   key={step}
-                  className="shrink-0 rounded border border-base-border px-3 py-2 text-xs text-base-subtext"
+                  className="rounded border border-base-border px-3 py-2 text-xs text-base-subtext"
                 >
                   {step}
                 </span>
