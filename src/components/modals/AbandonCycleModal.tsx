@@ -11,7 +11,15 @@ interface Props {
 
 export default function AbandonCycleModal({ onClose }: Props) {
   const navigate = useNavigate();
-  const { authUser, currentCycle, setCurrentCycle, resetCycleLocalState } = useAppStore();
+  const {
+    authUser,
+    profile,
+    currentCycle,
+    setProfile,
+    setCurrentCycle,
+    setOnboardingComplete,
+    resetCycleLocalState,
+  } = useAppStore();
   const [confirming, setConfirming] = useState(false);
   const [abandoning, setAbandoning] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -21,23 +29,27 @@ export default function AbandonCycleModal({ onClose }: Props) {
     setAbandoning(true);
     setError(null);
 
-    // All tiers have their cycle row in Supabase (created during onboarding for all users).
-    // Must update it regardless of tier so bootstrap doesn't reload the cycle as 'active' on next login.
-    const { error: err } = await supabase
-      .from('kairos_cycles')
-      .update({ status: 'abandoned', end_date: new Date().toISOString().split('T')[0] })
-      .eq('id', currentCycle.id);
-    if (err) {
-      setError(err.message);
-      setAbandoning(false);
-      return;
+    if (currentCycle.id !== 'local-dev-cycle') {
+      // All tiers have their cycle row in Supabase (created during onboarding for all users).
+      // Must update it regardless of tier so bootstrap doesn't reload the cycle as 'active' on next login.
+      const { error: err } = await supabase
+        .from('kairos_cycles')
+        .update({ status: 'abandoned', end_date: new Date().toISOString().split('T')[0] })
+        .eq('id', currentCycle.id);
+      if (err) {
+        setError(err.message);
+        setAbandoning(false);
+        return;
+      }
     }
 
-    setCurrentCycle({ ...currentCycle, status: 'abandoned' });
+    setCurrentCycle(null);
+    if (profile) setProfile({ ...profile, currentKairosCycleId: null });
     resetCycleLocalState();
+    setOnboardingComplete(false);
     setAbandoning(false);
     onClose();
-    navigate('/new-cycle', { replace: true });
+    navigate('/onboarding', { replace: true });
   }
 
   return (
@@ -65,17 +77,18 @@ export default function AbandonCycleModal({ onClose }: Props) {
               id="abandon-modal-title"
               className="font-heading text-xl font-bold text-base-text mb-2 tracking-wide"
             >
-              Reset your cycle?
+              Reset objectives?
             </h2>
             <p className="text-base-subtext text-sm mb-6">
-              This marks your current cycle as abandoned and starts fresh. XP earned is kept.
+              This clears your current objectives and restarts setup from the first screen after
+              login. XP earned is kept.
             </p>
             <div className="flex gap-3">
               <Button variant="ghost" onClick={onClose} className="flex-1">
                 Keep going
               </Button>
               <Button variant="danger" onClick={() => setConfirming(true)} className="flex-1">
-                Reset cycle
+                Reset objectives
               </Button>
             </div>
           </>
@@ -86,7 +99,7 @@ export default function AbandonCycleModal({ onClose }: Props) {
             </h2>
             <p className="text-base-subtext text-sm mb-6">
               Day {currentCycle ? getDayInCycle(currentCycle.startDate) : '?'} progress will be
-              marked abandoned. This cannot be undone.
+              marked abandoned. You will choose your identity, domain, and first action again.
             </p>
             {error && (
               <p role="alert" className="text-status-missed text-xs mb-3">
@@ -103,7 +116,7 @@ export default function AbandonCycleModal({ onClose }: Props) {
                 disabled={abandoning}
                 className="flex-1"
               >
-                {abandoning ? 'Abandoning…' : 'Yes, reset it'}
+                {abandoning ? 'Resetting...' : 'Yes, reset'}
               </Button>
             </div>
           </>

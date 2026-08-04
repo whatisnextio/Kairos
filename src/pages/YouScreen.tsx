@@ -360,7 +360,7 @@ export default function YouScreen() {
           onClick={() => setShowAbandon(true)}
           className="text-base-muted text-xs underline w-full text-center"
         >
-          Reset cycle
+          Reset objectives
         </button>
       </div>
 

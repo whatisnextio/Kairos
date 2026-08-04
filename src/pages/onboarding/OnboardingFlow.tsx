@@ -4,6 +4,7 @@ import { useAppStore } from '@/store/useAppStore';
 import type { DailyCheckIn, DomainType, IdentityAnchorId, Profile } from '@/types';
 import { IDENTITY_ANCHORS, KAIROS_CYCLE_LENGTH_DAYS, getAvailableDomains } from '@/types';
 import { getComplimentaryProfileFields } from '@/utils/entitlements';
+import { DEV_CYCLE_ID, isLocalDevUser } from '@/utils/localDevSession';
 import { useState } from 'react';
 
 type Step = 'welcome' | 'anchor' | 'domain' | 'action' | 'win' | 'celebrate';
@@ -11,6 +12,7 @@ type Step = 'welcome' | 'anchor' | 'domain' | 'action' | 'win' | 'celebrate';
 export default function OnboardingFlow() {
   const {
     authUser,
+    profile,
     setProfile,
     setCurrentCycle,
     setDomainFocuses,
@@ -24,7 +26,7 @@ export default function OnboardingFlow() {
   const [customAnchor, setCustomAnchor] = useState('');
   const [domain, setDomain] = useState<DomainType | null>(null);
   const [microAction, setMicroAction] = useState('');
-  const [displayName, setDisplayName] = useState('');
+  const [displayName, setDisplayName] = useState(profile?.displayName ?? '');
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const availableDomains = getAvailableDomains(authUser?.email);
@@ -36,6 +38,66 @@ export default function OnboardingFlow() {
     setSubmitError(null);
 
     const today = new Date().toISOString().split('T')[0];
+    const now = new Date().toISOString();
+
+    if (isLocalDevUser(authUser.id)) {
+      const ci: DailyCheckIn = {
+        id: `local-checkin-${domain.toLowerCase()}`,
+        userId: authUser.id,
+        cycleId: DEV_CYCLE_ID,
+        date: today,
+        domainType: domain,
+        status: 'Done',
+        notes: null,
+        xpAwarded: 10,
+        createdAt: now,
+        updatedAt: now,
+      };
+
+      setProfile({
+        id: authUser.id,
+        displayName: displayName || 'Liam',
+        identityAnchorId: anchorId,
+        customAnchorName: anchorId === 'custom' ? customAnchor : undefined,
+        tier: 'brotherhood',
+        xp: 10,
+        currentKairosCycleId: DEV_CYCLE_ID,
+        dateOfBirth: '1984-01-01',
+        squadId: null,
+        stripeCustomerId: null,
+        stripeSubscriptionId: null,
+        subscriptionStatus: 'active',
+        cancelAtPeriodEnd: false,
+        currentPeriodEnd: null,
+        createdAt: now,
+        updatedAt: now,
+      });
+      setCurrentCycle({
+        id: DEV_CYCLE_ID,
+        userId: authUser.id,
+        startDate: today,
+        endDate: null,
+        status: 'active',
+        totalXpEarned: 10,
+        completionPercentage: 0,
+        createdAt: now,
+      });
+      setDomainFocuses([
+        {
+          id: `local-focus-${domain.toLowerCase()}`,
+          userId: authUser.id,
+          cycleId: DEV_CYCLE_ID,
+          domainType: domain,
+          focusDescription: microAction,
+          setAt: now,
+        },
+      ]);
+      setTodayCheckIns({ [domain]: ci });
+      mergeCheckInHistory({ [today]: { [domain]: 'Done' } });
+      setStep('celebrate');
+      setSubmitting(false);
+      return;
+    }
 
     // Prefer the DOB the user provided at registration; fall back to today
     const {
