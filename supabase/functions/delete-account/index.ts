@@ -9,28 +9,31 @@
 //   3. Delete from auth.users via admin API
 //   4. Return 200
 
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import {
+  jsonResponse,
+  preflightResponse,
+  textResponse,
+} from "../_shared/cors.ts";
 
-const SUPABASE_URL = Deno.env.get('SUPABASE_URL') ?? '';
-const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
+const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
+const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ??
+  "";
 
 Deno.serve(async (req: Request) => {
-  if (req.method === 'OPTIONS') {
-    return new Response(null, {
-      headers: {
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Headers': 'authorization, content-type',
-      },
-    });
+  if (req.method === "OPTIONS") {
+    return preflightResponse(req);
   }
 
-  if (req.method !== 'POST') {
-    return new Response('Method not allowed', { status: 405 });
+  if (req.method !== "POST") {
+    return textResponse(req, "Method not allowed", { status: 405 });
   }
 
-  const authHeader = req.headers.get('Authorization');
+  const authHeader = req.headers.get("Authorization");
   if (!authHeader) {
-    return new Response(JSON.stringify({ error: 'Missing authorization' }), { status: 401 });
+    return jsonResponse(req, { error: "Missing authorization" }, {
+      status: 401,
+    });
   }
 
   const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
@@ -39,10 +42,10 @@ Deno.serve(async (req: Request) => {
   const {
     data: { user },
     error: authError,
-  } = await supabase.auth.getUser(authHeader.replace('Bearer ', ''));
+  } = await supabase.auth.getUser(authHeader.replace("Bearer ", ""));
 
   if (authError || !user) {
-    return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 });
+    return jsonResponse(req, { error: "Unauthorized" }, { status: 401 });
   }
 
   const userId = user.id;
@@ -50,33 +53,42 @@ Deno.serve(async (req: Request) => {
   try {
     // Decrement squad member_count before profile delete so the squad isn't left over-counted.
     const { data: profileSnap } = await supabase
-      .from('profiles')
-      .select('squad_id')
-      .eq('id', userId)
+      .from("profiles")
+      .select("squad_id")
+      .eq("id", userId)
       .maybeSingle();
 
     if (profileSnap?.squad_id) {
-      await supabase.rpc('decrement_squad_member_count', { p_squad_id: profileSnap.squad_id });
+      await supabase.rpc("decrement_squad_member_count", {
+        p_squad_id: profileSnap.squad_id,
+      });
     }
 
     // Delete profile — cascades to:
     // kairos_cycles, user_domain_focuses, daily_check_ins, user_streaks,
     // vibe_checks, squad_pulses (via squads), ai_nudges, outcomes, push_subscriptions
-    const { error: profileErr } = await supabase.from('profiles').delete().eq('id', userId);
+    const { error: profileErr } = await supabase.from("profiles").delete().eq(
+      "id",
+      userId,
+    );
 
-    if (profileErr) throw new Error(`Profile delete failed: ${profileErr.message}`);
+    if (profileErr) {
+      throw new Error(`Profile delete failed: ${profileErr.message}`);
+    }
 
     // Delete from auth.users (service role required)
-    const { error: authDeleteErr } = await supabase.auth.admin.deleteUser(userId);
+    const { error: authDeleteErr } = await supabase.auth.admin.deleteUser(
+      userId,
+    );
 
-    if (authDeleteErr) throw new Error(`Auth delete failed: ${authDeleteErr.message}`);
+    if (authDeleteErr) {
+      throw new Error(`Auth delete failed: ${authDeleteErr.message}`);
+    }
 
-    return new Response(JSON.stringify({ deleted: true }), {
-      headers: { 'Content-Type': 'application/json' },
-    });
+    return jsonResponse(req, { deleted: true });
   } catch (err) {
-    const message = err instanceof Error ? err.message : 'Unknown error';
-    console.error('delete-account error:', message);
-    return new Response(JSON.stringify({ error: message }), { status: 500 });
+    const message = err instanceof Error ? err.message : "Unknown error";
+    console.error("delete-account error:", message);
+    return jsonResponse(req, { error: message }, { status: 500 });
   }
 });

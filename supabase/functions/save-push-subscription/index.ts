@@ -6,28 +6,31 @@
 //
 // Body: { subscription?: PushSubscription JSON, preferences?: notification preferences JSON }
 
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import {
+  jsonResponse,
+  preflightResponse,
+  textResponse,
+} from "../_shared/cors.ts";
 
-const SUPABASE_URL = Deno.env.get('SUPABASE_URL') ?? '';
-const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
+const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
+const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ??
+  "";
 
 Deno.serve(async (req: Request) => {
-  if (req.method === 'OPTIONS') {
-    return new Response(null, {
-      headers: {
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Headers': 'authorization, content-type',
-      },
-    });
+  if (req.method === "OPTIONS") {
+    return preflightResponse(req);
   }
 
-  if (req.method !== 'POST') {
-    return new Response('Method not allowed', { status: 405 });
+  if (req.method !== "POST") {
+    return textResponse(req, "Method not allowed", { status: 405 });
   }
 
-  const authHeader = req.headers.get('Authorization');
+  const authHeader = req.headers.get("Authorization");
   if (!authHeader) {
-    return new Response(JSON.stringify({ error: 'Missing authorization' }), { status: 401 });
+    return jsonResponse(req, { error: "Missing authorization" }, {
+      status: 401,
+    });
   }
 
   const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
@@ -35,21 +38,21 @@ Deno.serve(async (req: Request) => {
   const {
     data: { user },
     error: authError,
-  } = await supabase.auth.getUser(authHeader.replace('Bearer ', ''));
+  } = await supabase.auth.getUser(authHeader.replace("Bearer ", ""));
 
   if (authError || !user) {
-    return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 });
+    return jsonResponse(req, { error: "Unauthorized" }, { status: 401 });
   }
 
   let body: { subscription?: unknown; preferences?: unknown };
   try {
     body = await req.json();
   } catch {
-    return new Response(JSON.stringify({ error: 'Invalid JSON body' }), { status: 400 });
+    return jsonResponse(req, { error: "Invalid JSON body" }, { status: 400 });
   }
 
   if (!body.subscription && !body.preferences) {
-    return new Response(JSON.stringify({ error: 'Missing subscription or preferences' }), {
+    return jsonResponse(req, { error: "Missing subscription or preferences" }, {
       status: 400,
     });
   }
@@ -66,27 +69,28 @@ Deno.serve(async (req: Request) => {
     if (body.preferences) upsertPayload.preferences = body.preferences;
 
     const { error: upsertErr } = await supabase
-      .from('push_subscriptions')
-      .upsert(upsertPayload, { onConflict: 'user_id' });
+      .from("push_subscriptions")
+      .upsert(upsertPayload, { onConflict: "user_id" });
 
     if (upsertErr) {
-      console.error('save-push-subscription error:', upsertErr.message);
-      return new Response(JSON.stringify({ error: upsertErr.message }), { status: 500 });
+      console.error("save-push-subscription error:", upsertErr.message);
+      return jsonResponse(req, { error: upsertErr.message }, { status: 500 });
     }
   } else {
     payload.preferences = body.preferences;
     const { error: updateErr } = await supabase
-      .from('push_subscriptions')
+      .from("push_subscriptions")
       .update(payload)
-      .eq('user_id', user.id);
+      .eq("user_id", user.id);
 
     if (updateErr) {
-      console.error('save-push-subscription preferences error:', updateErr.message);
-      return new Response(JSON.stringify({ error: updateErr.message }), { status: 500 });
+      console.error(
+        "save-push-subscription preferences error:",
+        updateErr.message,
+      );
+      return jsonResponse(req, { error: updateErr.message }, { status: 500 });
     }
   }
 
-  return new Response(JSON.stringify({ saved: true }), {
-    headers: { 'Content-Type': 'application/json' },
-  });
+  return jsonResponse(req, { saved: true });
 });

@@ -1,0 +1,73 @@
+import { readFileSync, readdirSync } from 'node:fs';
+import { join } from 'node:path';
+import { describe, expect, it } from 'vitest';
+
+const edgeFunctionRoot = 'supabase/functions';
+const corsProtectedFunctions = [
+  'compute-weekly-metrics',
+  'delete-account',
+  'generate-cycle-reflection',
+  'generate-kairos-nudge',
+  'generate-squad-pulse',
+  'match-to-squad',
+  'save-push-subscription',
+  'send-daily-push',
+];
+
+function functionSource(name: string): string {
+  return readFileSync(join(edgeFunctionRoot, name, 'index.ts'), 'utf8');
+}
+
+describe('security hardening', () => {
+  it('uses explicit CORS allowlisting instead of wildcard browser origins', () => {
+    const helper = readFileSync('supabase/functions/_shared/cors.ts', 'utf8');
+
+    expect(helper).toContain('https://www.12k.app');
+    expect(helper).toContain('https://12k.app');
+    expect(helper).toContain('http://localhost:5173');
+    expect(helper).toContain('isAllowedCorsOrigin');
+    expect(helper).not.toContain("Access-Control-Allow-Origin': '*'");
+
+    for (const name of corsProtectedFunctions) {
+      const source = functionSource(name);
+      expect(source).toMatch(/from ["']\.\.\/_shared\/cors\.ts["']/);
+      expect(source).toContain('preflightResponse(req');
+      expect(source).not.toContain("Access-Control-Allow-Origin': '*'");
+    }
+  });
+
+  it('keeps Stripe webhook signature-gated and outside browser CORS handling', () => {
+    const source = functionSource('stripe-webhook');
+
+    expect(source).toContain('verifyStripeSignature');
+    expect(source).toMatch(/req\.headers\.get\(["']stripe-signature["']\)/);
+    expect(source).not.toMatch(/from ["']\.\.\/_shared\/cors\.ts["']/);
+  });
+
+  it('keeps backend enforcement for client-visible premium state', () => {
+    const profileGuard = readFileSync(
+      'supabase/migrations/024_harden_profile_sensitive_updates.sql',
+      'utf8',
+    );
+    const customRoutes = readFileSync('supabase/migrations/021_custom_routes.sql', 'utf8');
+
+    expect(profileGuard).toContain('guard_profile_sensitive_fields');
+    expect(profileGuard).toContain('Profile entitlement fields cannot be changed directly');
+    expect(profileGuard).toContain('claim_complimentary_lifechanger');
+    expect(customRoutes).toContain("p.tier in ('brotherhood', 'lifechanger')");
+    expect(customRoutes).toContain('auth.uid() = user_id');
+  });
+
+  it('documents the reviewed security surfaces and residual risks', () => {
+    const review = readFileSync('docs/SECURITY_REVIEW.md', 'utf8');
+    const functionNames = readdirSync(edgeFunctionRoot, { withFileTypes: true })
+      .filter((entry) => entry.isDirectory() && !entry.name.startsWith('_'))
+      .map((entry) => entry.name);
+
+    expect(review).toContain('Row Level Security');
+    expect(review).toContain('Client-visible entitlement checks versus backend enforcement');
+    expect(review).toContain('Local persistence');
+    expect(review).toContain('Hosted Supabase migration state was not re-read');
+    expect(functionNames).toContain('stripe-webhook');
+  });
+});
