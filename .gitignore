@@ -5,3 +5,10 @@ dist/
 .DS_Store
 *.log
 .vite/
+
+# Private session files — never commit
+HANDOFF.md
+NEXT_PROMPT.md
+CLAUDE.local.md
+.claude/rules/
+pitches/
