@@ -1,9 +1,18 @@
+import { PRODUCT_POSITIONING } from '@/types';
 import { useNavigate } from 'react-router-dom';
 
 const FAQS = [
   {
     q: 'What is 12K?',
-    a: '12K is a 12-week structured action framework. You track progress across four core domains, earn XP, get AI nudges, and build enough daily proof to keep going.',
+    a: PRODUCT_POSITIONING.what,
+  },
+  {
+    q: 'Why will it help me?',
+    a: PRODUCT_POSITIONING.why,
+  },
+  {
+    q: 'What is it designed for?',
+    a: PRODUCT_POSITIONING.designedFor,
   },
   {
     q: 'What is the KAIROS system?',
@@ -11,7 +20,11 @@ const FAQS = [
   },
   {
     q: 'What are the core domains?',
-    a: 'The public framework starts with Body, Fuel, Mind, and Connection. Private custom routes can be added for specific lives and goals, but they are not forced into the default app.',
+    a: PRODUCT_POSITIONING.categoryIntro,
+  },
+  {
+    q: 'Why Self, not Mind?',
+    a: 'Self is broader than mindset. It covers attention, recovery, reflection, identity, mood, confidence, emotional regulation, and private coded check-ins.',
   },
   {
     q: 'What is the Brotherhood squad?',

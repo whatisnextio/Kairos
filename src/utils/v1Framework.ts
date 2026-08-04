@@ -38,13 +38,11 @@ export interface FlywheelSummary {
   entries: FlywheelEntry[];
 }
 
-export const OWNER_FLYWHEEL: Array<{ domainType: DomainType; label: string }> = [
+export const CORE_FLYWHEEL: Array<{ domainType: DomainType; label: string }> = [
   { domainType: 'BODY', label: 'Body' },
-  { domainType: 'USTIME', label: 'Marriage' },
-  { domainType: 'NEST', label: 'Family' },
-  { domainType: 'ROOTS', label: 'Money' },
-  { domainType: 'SHOT', label: 'SHOT' },
-  { domainType: 'LENS', label: 'Photography' },
+  { domainType: 'FUEL', label: 'Fuel' },
+  { domainType: 'METIME', label: 'Self' },
+  { domainType: 'USTIME', label: 'Connection' },
 ];
 
 const OWNER_DISCREET_LABELS: Partial<Record<DomainType, string>> = {
@@ -187,14 +185,12 @@ export function buildWeeklyFlywheel({
 }): FlywheelSummary {
   const availableDomains = getAvailableDomains(email);
   const domainMap = new Map(availableDomains.map((domain) => [domain.type, domain]));
-  const rows = isOwnerAccount(email)
-    ? OWNER_FLYWHEEL.filter((item) => domainMap.has(item.domainType))
-    : availableDomains.map((domain) => ({ domainType: domain.type, label: domain.label }));
+  const rows = CORE_FLYWHEEL.filter((item) => domainMap.has(item.domainType));
   const dates = last7Dates(today);
   const todayIso = toLocalIsoDate(today);
 
   return {
-    title: isOwnerAccount(email) ? 'Six-part flywheel' : 'Core flywheel',
+    title: 'Core flywheel',
     entries: rows.map((row) => {
       let done = 0;
       let partial = 0;

@@ -125,7 +125,7 @@ export default function LoginPage() {
         12 weeks. Four domains. Daily proof.
       </p>
       <p className="text-base-subtext text-sm text-center max-w-xs mb-10">
-        Build body, fuel, mind, and connection through small actions that repeat.
+        Build body, fuel, self, and connection through small actions that repeat.
       </p>
 
       {sent ? (

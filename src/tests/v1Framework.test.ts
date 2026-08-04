@@ -1,6 +1,12 @@
 import { NOTIFICATION_SLOTS } from '@/services/localNotifications';
 import type { CheckInStatus, DailyCheckIn, DomainType } from '@/types';
-import { getAvailableDomains, getDomainConfig } from '@/types';
+import {
+  PRIVATE_ROUTE_TEMPLATES,
+  PRODUCT_POSITIONING,
+  getAvailableDomains,
+  getDomainConfig,
+} from '@/types';
+import { buildFrameworkRecommendations } from '@/utils/frameworkRecommendations';
 import {
   CONNECTION_SUPPORT_OPTIONS,
   buildAccountabilityPrompt,
@@ -53,14 +59,55 @@ describe('V1 acceptance framework', () => {
     expect(path?.steps.join(' ')).toContain('Partial');
   });
 
-  it('uses coded private labels for owner-only sensitive history contexts', () => {
+  it('uses Self as the public category while keeping owner private labels coded', () => {
     const meTime = getDomainConfig('METIME', OWNER_EMAIL);
     const usTime = getDomainConfig('USTIME', OWNER_EMAIL);
-    const publicMind = getDomainConfig('METIME', 'user@example.com');
+    const publicSelf = getDomainConfig('METIME', 'user@example.com');
 
     expect(meTime && getDiscreetDomainLabel(meTime, OWNER_EMAIL)).toBe('MT');
     expect(usTime && getDiscreetDomainLabel(usTime, OWNER_EMAIL)).toBe('UT');
-    expect(publicMind && getDiscreetDomainLabel(publicMind, 'user@example.com')).toBe('Mind');
+    expect(publicSelf?.label).toBe('Self');
+    expect(publicSelf && getDiscreetDomainLabel(publicSelf, 'user@example.com')).toBe('Self');
+    expect(publicSelf?.description).toContain('identity');
+  });
+
+  it('keeps the top-level framework to Body, Fuel, Self, and Connection for everyone', () => {
+    const publicDomains = getAvailableDomains('user@example.com');
+    const ownerDomains = getAvailableDomains(OWNER_EMAIL);
+    const expected = ['Body', 'Fuel', 'Self', 'Connection'];
+
+    expect(publicDomains.map((domain) => domain.label)).toEqual(expected);
+    expect(ownerDomains.map((domain) => domain.label)).toEqual(expected);
+    expect(ownerDomains.map((domain) => domain.type)).toEqual(['BODY', 'FUEL', 'METIME', 'USTIME']);
+  });
+
+  it('keeps private route templates as subcategories of the main framework', () => {
+    expect(PRIVATE_ROUTE_TEMPLATES.map((route) => [route.label, route.parentDomainType])).toEqual([
+      ['SHOT', 'USTIME'],
+      ['Lens', 'METIME'],
+      ['Nest', 'USTIME'],
+      ['Roots', 'FUEL'],
+    ]);
+  });
+
+  it('keeps onboarding and help positioning aligned to the category contract', () => {
+    expect(PRODUCT_POSITIONING.headline).toContain('12-week transformation');
+    expect(PRODUCT_POSITIONING.what).toContain('guided 84-day operating system');
+    expect(PRODUCT_POSITIONING.why).toContain('recovery path');
+    expect(PRODUCT_POSITIONING.categoryIntro).toContain('Body, Fuel, Self, and Connection');
+  });
+
+  it('uses discreet owner labels in framework recommendation cards', () => {
+    const recommendations = buildFrameworkRecommendations({
+      email: OWNER_EMAIL,
+      domainFocuses: [],
+      todayCheckIns: {
+        METIME: checkIn('METIME', 'Missed'),
+      },
+    });
+
+    expect(recommendations[0].title).toBe('Prep MT');
+    expect(recommendations[0].domainLabel).toBe('MT');
   });
 
   it('keeps Us Time connection-first when physical or mood barriers exist', () => {
@@ -89,29 +136,25 @@ describe('V1 acceptance framework', () => {
     ]);
   });
 
-  it('builds Liam flywheel across body, marriage, family, money, SHOT, and photography', () => {
+  it('builds the same top-level flywheel for Liam and public users', () => {
     const flywheel = buildWeeklyFlywheel({
       email: OWNER_EMAIL,
       today: new Date('2026-08-04T12:00:00'),
       todayCheckIns: {
         BODY: checkIn('BODY', 'Done'),
+        FUEL: checkIn('FUEL', 'Done'),
+        METIME: checkIn('METIME', 'Partial'),
         USTIME: checkIn('USTIME', 'Partial'),
-        NEST: checkIn('NEST', 'Missed'),
-        ROOTS: checkIn('ROOTS', 'Done'),
-        SHOT: checkIn('SHOT', 'Done'),
-        LENS: checkIn('LENS', 'Partial'),
       },
       checkInHistory: {},
     });
 
-    expect(flywheel.title).toBe('Six-part flywheel');
+    expect(flywheel.title).toBe('Core flywheel');
     expect(flywheel.entries.map((entry) => entry.label)).toEqual([
       'Body',
-      'Marriage',
-      'Family',
-      'Money',
-      'SHOT',
-      'Photography',
+      'Fuel',
+      'Self',
+      'Connection',
     ]);
     expect(flywheel.entries.find((entry) => entry.label === 'Body')?.score).toBe(14);
   });

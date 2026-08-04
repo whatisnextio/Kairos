@@ -54,6 +54,54 @@ export const KAIROS_PHASES: KairosPhaseConfig[] = [
 
 export type DomainType = 'BODY' | 'FUEL' | 'METIME' | 'USTIME' | 'SHOT' | 'LENS' | 'NEST' | 'ROOTS';
 
+export const PUBLIC_DOMAIN_TYPES: DomainType[] = ['BODY', 'FUEL', 'METIME', 'USTIME'];
+
+export interface PrivateRouteTemplate {
+  type: DomainType;
+  label: string;
+  parentDomainType: DomainType;
+  description: string;
+}
+
+export const PRIVATE_ROUTE_TEMPLATES: PrivateRouteTemplate[] = [
+  {
+    type: 'SHOT',
+    label: 'SHOT',
+    parentDomainType: 'USTIME',
+    description: 'Mission/work execution that must support connection rather than replace it.',
+  },
+  {
+    type: 'LENS',
+    label: 'Lens',
+    parentDomainType: 'METIME',
+    description: 'Creative practice, photography outings, edits, exports, and submissions.',
+  },
+  {
+    type: 'NEST',
+    label: 'Nest',
+    parentDomainType: 'USTIME',
+    description: 'Home rhythm, fatherhood, family presence, and practical support.',
+  },
+  {
+    type: 'ROOTS',
+    label: 'Roots',
+    parentDomainType: 'FUEL',
+    description: 'Money, debt, salary, wealth, and long-range optionality foundations.',
+  },
+];
+
+export const PRODUCT_POSITIONING = {
+  appName: '12K',
+  systemName: 'Kairos',
+  headline: 'Your 12-week transformation. Powered by the Kairos System.',
+  what: '12K is a guided 84-day operating system for turning daily action into visible change.',
+  why: 'It gives you the next useful move, a check-in, and a recovery path when the day slips.',
+  designedFor:
+    'Designed for real life: inconsistent energy, busy work, family pressure, missed days, and the need to rebuild without shame.',
+  categoryIntro:
+    'Start with Body, Fuel, Self, and Connection. Add private sub-routes when your life needs them.',
+} as const;
+
 export interface DomainConfig {
   type: DomainType;
   label: string;
@@ -119,23 +167,27 @@ export const DOMAINS: DomainConfig[] = [
   },
   {
     type: 'METIME',
-    label: 'Mind',
+    label: 'Self',
     ownerLabel: 'Me Time',
     colour: 'text-domain-metime',
     audience: 'public',
-    description: 'Attention, recovery, self-respect, quiet time, and emotional regulation.',
-    focusPrompt: 'Pick a reset that gives your head some room.',
-    question: 'What would make you feel less hijacked by the day?',
+    description: 'Attention, recovery, identity, reflection, confidence, and emotional regulation.',
+    focusPrompt:
+      'Pick the reset, reflection, or private check-in that helps you take yourself back.',
+    question: 'What would make you feel more in control of yourself today?',
     focusOptions: [
       'Take a 10-minute reset',
       'Write one honest line',
-      'Read 10 pages',
-      'Put the phone down by 21:30',
+      'Name one visible win',
+      'Put the phone away for 30 minutes',
+      'Plan a quiet recovery block',
+      'Do your private check-in',
     ],
     prepOptions: ['Choose the place', 'Set a short timer', 'Remove the phone from reach'],
-    reflectPrompt: 'Where did your attention go, and what pulled it back?',
-    coachPrompt: 'Recovery works best when it is planned before you need it.',
-    feedbackPrompt: 'A calmer mind is not a luxury. It is the base for better choices.',
+    reflectPrompt: 'What pulled you off centre, and what brought you back?',
+    coachPrompt:
+      'Self is broader than mindset. Protect attention, recovery, confidence, and identity.',
+    feedbackPrompt: 'Self is the base layer. When you are regulated, the other choices get easier.',
   },
   {
     type: 'USTIME',
@@ -143,19 +195,22 @@ export const DOMAINS: DomainConfig[] = [
     ownerLabel: 'Us Time',
     colour: 'text-domain-ustime',
     audience: 'public',
-    description: 'Relationships, presence, useful communication, and small acts that build trust.',
-    focusPrompt: 'Choose one relationship action that shows presence.',
-    question: 'Who needs a better version of you today?',
+    description:
+      'Partner, family, affection, communication, practical support, and consent-led closeness.',
+    focusPrompt: 'Choose one relationship action that makes connection easier.',
+    question: 'Who needs a more present version of you today?',
     focusOptions: [
-      'Send the message',
+      'Check their energy first',
       'Have a no-phone conversation',
       'Do one useful household action',
+      'Offer affection with no agenda',
       'Ask a better question and listen',
+      'Be present with family for 15 minutes',
     ],
     prepOptions: ['Name the person', 'Choose the moment', 'Keep it small and specific'],
-    reflectPrompt: 'Where were you present, and where did you go missing?',
-    coachPrompt: 'Connection improves through small, visible deposits.',
-    feedbackPrompt: 'The point is not grand gestures. It is reliable presence.',
+    reflectPrompt: 'Where did you create warmth, safety, or attention?',
+    coachPrompt: 'Connection starts with the other person as they are today.',
+    feedbackPrompt: 'The point is not pressure or grand gestures. It is reliable presence.',
   },
   {
     type: 'SHOT',
@@ -247,11 +302,8 @@ export function isOwnerAccount(email?: string | null): boolean {
   return email?.trim().toLowerCase() === 'ldgmcdowell@gmail.com';
 }
 
-export function getAvailableDomains(email?: string | null): DomainConfig[] {
-  const owner = isOwnerAccount(email);
-  return DOMAINS.filter((domain) => owner || domain.audience === 'public').map((domain) =>
-    owner && domain.ownerLabel ? { ...domain, label: domain.ownerLabel } : domain,
-  );
+export function getAvailableDomains(_email?: string | null): DomainConfig[] {
+  return DOMAINS.filter((domain) => PUBLIC_DOMAIN_TYPES.includes(domain.type));
 }
 
 export function getDomainConfig(type: DomainType, email?: string | null): DomainConfig | undefined {
