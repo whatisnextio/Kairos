@@ -324,7 +324,7 @@ export default function YouScreen() {
     if (!result.ok) {
       setRouteError(
         result.reason === 'upgrade'
-          ? 'Personal routes are included in Brotherhood and Lifechanger.'
+          ? 'Personal routes are included in Kairos Plus and Lifechanger.'
           : 'Route could not be saved. Check the name and focus, then try again.',
       );
       return;
@@ -350,7 +350,7 @@ export default function YouScreen() {
       if (!result.ok) {
         setPersonalSetupError(
           result.reason === 'upgrade'
-            ? 'Personal setup needs Brotherhood or Lifechanger access.'
+            ? 'Personal setup needs Kairos Plus or Lifechanger access.'
             : 'Personal setup could not be saved. Try again from this screen.',
         );
         setIsApplyingPersonalSetup(false);
@@ -627,7 +627,7 @@ export default function YouScreen() {
             </div>
             <Link to="/subscription">
               <Button size="sm" className="mt-3">
-                Upgrade to Brotherhood
+                Upgrade to Kairos Plus
               </Button>
             </Link>
           </>

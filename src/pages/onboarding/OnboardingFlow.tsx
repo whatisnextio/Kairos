@@ -331,6 +331,9 @@ export default function OnboardingFlow() {
               The daily loop is simple: choose one useful move, do the smallest honest version,
               check in, and recover quickly when the day slips.
             </p>
+            <p className="text-base-muted text-xs leading-relaxed mb-5">
+              {PRODUCT_POSITIONING.audience}
+            </p>
 
             <div className="grid grid-cols-2 gap-2 mb-5">
               {availableDomains.map((d) => (

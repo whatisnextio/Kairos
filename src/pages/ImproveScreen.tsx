@@ -307,10 +307,10 @@ export default function ImproveScreen() {
           </div>
           <div className="absolute inset-0 flex flex-col items-center justify-center bg-base-surface/85 p-4 text-center">
             <p className="font-heading font-medium text-base-text text-sm mb-3">
-              Improve cards are a Brotherhood feature.
+              Improve cards are a Kairos Plus feature.
             </p>
             <Button size="sm" onClick={() => navigate('/subscription')}>
-              Unlock Brotherhood, {SUBSCRIPTION_COPY.price}/mo
+              Unlock Kairos Plus, {SUBSCRIPTION_COPY.price}/mo
             </Button>
             <p className="text-base-muted text-xs mt-3">Free tier gets one nudge on Sundays.</p>
           </div>

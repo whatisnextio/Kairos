@@ -56,15 +56,15 @@ export const HELP_FAQS = [
   },
   {
     q: 'How does the AI nudge work?',
-    a: 'AI nudges use your identity anchor, phase, recent check-ins, streaks, and active routes. Brotherhood gets daily nudges. Lifechanger can add grounded pattern signals when there is enough history. Free gets a Sunday nudge.',
+    a: 'AI nudges use your identity anchor, phase, recent check-ins, streaks, and active routes. Kairos Plus gets daily nudges. Lifechanger can add grounded pattern signals when there is enough history. Free gets a Sunday nudge.',
   },
   {
-    q: 'What is Brotherhood?',
-    a: 'Brotherhood unlocks the full V1 loop: daily AI nudges, paid progress depth, cloud sync, custom routes, push reminders, anonymous squad signals, and the Day 84 reflection.',
+    q: 'What is Kairos Plus?',
+    a: 'Kairos Plus unlocks the full V1 loop: daily AI nudges, paid progress depth, cloud sync, custom routes, push reminders, anonymous squad signals, and the Day 84 reflection.',
   },
   {
     q: 'What is Lifechanger?',
-    a: 'Lifechanger adds advanced pattern support on top of Brotherhood. It can use trends, vibe movement, streaks, notes, and cross-domain signals when your history is strong enough. If the data is thin, it falls back to standard Kairos support.',
+    a: 'Lifechanger adds advanced pattern support on top of Kairos Plus. It can use trends, vibe movement, streaks, notes, and cross-domain signals when your history is strong enough. If the data is thin, it falls back to standard Kairos support.',
   },
   {
     q: 'Is my data private?',
@@ -92,7 +92,7 @@ export const SUBSCRIPTION_COPY = {
     'Day 84 cycle reflection',
   ],
   lifechangerFeatures: [
-    'Everything in Brotherhood',
+    'Everything in Kairos Plus',
     'Advanced AI pattern support when history is strong enough',
     'Trend, vibe, streak, note, and cross-domain signals',
     'Fallback to standard Kairos support when data is thin',

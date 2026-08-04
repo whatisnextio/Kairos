@@ -75,7 +75,7 @@ export default function SubscriptionScreen() {
         <div className="flex items-start justify-between gap-3">
           <div>
             <p className="text-base-subtext text-xs font-heading tracking-widest uppercase mb-2">
-              Brotherhood
+              Kairos Plus
             </p>
             <p className="font-heading text-3xl font-bold text-base-text">
               {SUBSCRIPTION_COPY.price}
@@ -103,7 +103,7 @@ export default function SubscriptionScreen() {
           className="w-full mt-6"
           disabled={hasPaidAccess}
         >
-          {hasPaidAccess ? 'Already active' : 'Unlock Brotherhood'}
+          {hasPaidAccess ? 'Already active' : 'Unlock Kairos Plus'}
         </Button>
       </Card>
 
@@ -174,5 +174,5 @@ export default function SubscriptionScreen() {
 }
 
 function tierLabel(tier: PaidCheckoutTier): string {
-  return tier === 'lifechanger' ? 'Lifechanger' : 'Brotherhood';
+  return tier === 'lifechanger' ? 'Lifechanger' : 'Kairos Plus';
 }

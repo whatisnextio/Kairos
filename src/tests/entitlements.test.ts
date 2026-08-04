@@ -28,7 +28,7 @@ const baseProfile: Profile = {
   updatedAt: '2026-01-01T00:00:00Z',
 };
 
-describe('complimentary Brotherhood entitlement', () => {
+describe('complimentary paid entitlement', () => {
   it('matches the owner email case-insensitively', () => {
     expect(hasComplimentaryBrotherhood('LDGMCDOWELL@gmail.com')).toBe(true);
     expect(hasComplimentaryBrotherhood(' ldgmcdowell@gmail.com ')).toBe(true);
@@ -59,11 +59,11 @@ describe('complimentary Brotherhood entitlement', () => {
 });
 
 describe('subscription tier contract', () => {
-  it('defines Free, Brotherhood, and Lifechanger explicitly', () => {
+  it('keeps database tier keys stable while exposing general-audience labels', () => {
     expect(Object.keys(SUBSCRIPTION_TIER_CONFIGS)).toEqual(['free', 'brotherhood', 'lifechanger']);
   });
 
-  it('treats Brotherhood and Lifechanger as paid V1 access', () => {
+  it('treats Kairos Plus and Lifechanger as paid V1 access', () => {
     expect(hasPaidAccess('free')).toBe(false);
     expect(hasPaidAccess('brotherhood')).toBe(true);
     expect(hasPaidAccess('lifechanger')).toBe(true);
@@ -73,7 +73,7 @@ describe('subscription tier contract', () => {
 
   it('exposes stable tier labels for account UI', () => {
     expect(getSubscriptionTierLabel('free')).toBe('Free');
-    expect(getSubscriptionTierLabel('brotherhood')).toBe('Brotherhood');
+    expect(getSubscriptionTierLabel('brotherhood')).toBe('Kairos Plus');
     expect(getSubscriptionTierLabel('lifechanger')).toBe('Lifechanger');
   });
 });

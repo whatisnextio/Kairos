@@ -15,7 +15,7 @@ describe('brand and help copy contract', () => {
         'What does reset do?',
         'How do notifications work?',
         'How does the AI nudge work?',
-        'What is Brotherhood?',
+        'What is Kairos Plus?',
         'What is Lifechanger?',
         'Why can I not open checkout?',
       ]),
@@ -26,6 +26,16 @@ describe('brand and help copy contract', () => {
   });
 
   it('keeps subscription copy aligned with current V1 capability', () => {
+    const publicCopy = [
+      SUBSCRIPTION_COPY.title,
+      SUBSCRIPTION_COPY.intro,
+      SUBSCRIPTION_COPY.lifechanger,
+      ...SUBSCRIPTION_COPY.paidFeatures,
+      ...SUBSCRIPTION_COPY.lifechangerFeatures,
+      ...SUBSCRIPTION_COPY.freeFeatures,
+      ...HELP_FAQS.flatMap((item) => [item.q, item.a]),
+    ].join(' ');
+
     expect(SUBSCRIPTION_COPY.paidFeatures).toEqual(
       expect.arrayContaining([
         'Daily AI nudge, based on your 12K context',
@@ -38,11 +48,13 @@ describe('brand and help copy contract', () => {
     expect(SUBSCRIPTION_COPY.lifechanger).toContain('deeper personalisation');
     expect(SUBSCRIPTION_COPY.lifechangerFeatures).toEqual(
       expect.arrayContaining([
-        'Everything in Brotherhood',
+        'Everything in Kairos Plus',
         'Advanced AI pattern support when history is strong enough',
         'Fallback to standard Kairos support when data is thin',
       ]),
     );
+    expect(publicCopy).not.toContain('Brotherhood');
+    expect(publicCopy).not.toMatch(/\bmen\b|\bman\b|male/i);
   });
 
   it('does not promise unsupported billing outcomes while checkout is blocked', () => {
