@@ -100,6 +100,8 @@ export const PRODUCT_POSITIONING = {
   systemName: 'Kairos',
   headline: 'Your 12-week transformation. Powered by the Kairos System.',
   what: '12K is a guided 84-day operating system for turning daily action into visible change.',
+  kairosMeaning:
+    'Kairos is Greek for the right or opportune moment: the point where attention becomes action.',
   why: 'It gives you the next useful move, a check-in, and a recovery path when the day slips.',
   designedFor:
     'Designed for real life: inconsistent energy, busy work, family pressure, missed days, and the need to rebuild without shame.',

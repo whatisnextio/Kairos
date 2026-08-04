@@ -24,7 +24,7 @@ export const HELP_FAQS = [
   },
   {
     q: 'What is the Kairos system?',
-    a: 'Kairos is the six-phase arc behind the 84 days: Kickoff, Anchor, Increase, Rhythm, Own, and Sustain. Each phase lasts 14 days and changes the coaching emphasis.',
+    a: `${PRODUCT_POSITIONING.kairosMeaning} The system uses six 14-day phases: Kickoff, Anchor, Increase, Rhythm, Own, and Sustain.`,
   },
   {
     q: 'What are the core domains?',

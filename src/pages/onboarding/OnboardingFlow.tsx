@@ -4,6 +4,7 @@ import { useAppStore } from '@/store/useAppStore';
 import type { DailyCheckIn, DomainType, IdentityAnchorId, Profile } from '@/types';
 import {
   IDENTITY_ANCHORS,
+  KAIROS_PHASES,
   PRODUCT_POSITIONING,
   XP_PER_CHECK_IN_DONE,
   getAvailableDomains,
@@ -13,8 +14,8 @@ import { getComplimentaryProfileFields } from '@/utils/entitlements';
 import { DEV_CYCLE_ID, isLocalDevUser } from '@/utils/localDevSession';
 import { useRef, useState } from 'react';
 
-type Step = 'identity' | 'focus' | 'commit';
-const ONBOARDING_STEPS: Step[] = ['identity', 'focus', 'commit'];
+type Step = 'framework' | 'identity' | 'focus' | 'commit';
+const ONBOARDING_STEPS: Step[] = ['framework', 'identity', 'focus', 'commit'];
 
 export default function OnboardingFlow() {
   const {
@@ -29,7 +30,7 @@ export default function OnboardingFlow() {
     mergeCheckInHistory,
   } = useAppStore();
 
-  const [step, setStep] = useState<Step>('identity');
+  const [step, setStep] = useState<Step>('framework');
   const [anchorId, setAnchorId] = useState<IdentityAnchorId | null>(
     profile?.identityAnchorId ?? null,
   );
@@ -44,6 +45,12 @@ export default function OnboardingFlow() {
   const availableDomains = getAvailableDomains(authUser?.email);
   const selectedDomain = availableDomains.find((d) => d.type === domain);
   const stepNumber = ONBOARDING_STEPS.indexOf(step) + 1;
+  const stepCount = ONBOARDING_STEPS.length;
+
+  const goToIdentity = () => {
+    setSubmitError(null);
+    setStep('identity');
+  };
 
   const goToFocus = () => {
     setSubmitError(null);
@@ -303,17 +310,68 @@ export default function OnboardingFlow() {
   };
 
   return (
-    <main className="min-h-screen bg-base-black px-4 py-6 flex items-center justify-center">
+    <main className="min-h-screen bg-base-black px-4 py-6 flex items-start justify-center">
       <div className="w-full max-w-md">
         <div className="mb-6 flex items-center justify-between">
           <p className="font-heading text-xs text-base-muted tracking-widest uppercase">12K</p>
-          <p className="text-base-muted text-xs">{stepNumber} of 3</p>
+          <p className="text-base-muted text-xs">
+            {stepNumber} of {stepCount}
+          </p>
         </div>
+
+        {step === 'framework' && (
+          <section>
+            <h1 className="font-heading text-3xl font-bold text-base-text tracking-wide mb-2">
+              Start your 12-week reset.
+            </h1>
+            <p className="text-base-subtext text-sm leading-relaxed mb-4">
+              12K is an 84-day reset powered by Kairos. {PRODUCT_POSITIONING.kairosMeaning}
+            </p>
+            <p className="text-base-subtext text-sm leading-relaxed mb-5">
+              The daily loop is simple: choose one useful move, do the smallest honest version,
+              check in, and recover quickly when the day slips.
+            </p>
+
+            <div className="grid grid-cols-2 gap-2 mb-5">
+              {availableDomains.map((d) => (
+                <div key={d.type} className="rounded border border-base-border bg-base-surface p-3">
+                  <p className={`font-heading text-sm font-medium tracking-wide ${d.colour}`}>
+                    {d.label}
+                  </p>
+                  <p className="text-base-subtext text-xs mt-1 leading-snug">{d.description}</p>
+                </div>
+              ))}
+            </div>
+
+            <div className="mb-5">
+              <p className="text-base-subtext text-xs font-heading tracking-widest uppercase mb-2">
+                Six phases
+              </p>
+              <div className="grid grid-cols-2 gap-2">
+                {KAIROS_PHASES.map((phase) => (
+                  <div
+                    key={phase.phase}
+                    className="rounded border border-base-border bg-base-black/20 px-3 py-2"
+                  >
+                    <p className="font-heading text-sm text-base-text">{phase.label}</p>
+                    <p className="text-base-muted text-[11px] mt-0.5">
+                      Days {phase.days[0]}-{phase.days[1]}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <Button onClick={goToIdentity} className="w-full">
+              Start setup
+            </Button>
+          </section>
+        )}
 
         {step === 'identity' && (
           <section>
             <h1 className="font-heading text-3xl font-bold text-base-text tracking-wide mb-2">
-              Start your 12-week reset.
+              Choose who you are becoming.
             </h1>
             <p className="text-base-subtext text-sm leading-relaxed mb-5">
               {AUTH_COPY.body} It gives you the next useful move, a check-in, and a recovery path
