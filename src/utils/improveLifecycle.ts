@@ -28,7 +28,7 @@ export function normaliseNudgeErrorMessage(error: unknown): string {
   const lower = message.toLowerCase();
 
   if (lower.includes('no session')) {
-    return 'Sign in again to generate an AI card. Framework options still work offline.';
+    return 'Sign in again for an AI card. Your Kairos options are ready below.';
   }
 
   if (lower.includes('free tier') || lower.includes('tier')) {
@@ -36,14 +36,14 @@ export function normaliseNudgeErrorMessage(error: unknown): string {
   }
 
   if (lower.includes('failed to store')) {
-    return 'AI generated a card but could not save it. Retry, or use the framework options below.';
+    return 'AI made a card but could not save it. Retry, or choose a Kairos option below.';
   }
 
   if (lower.includes('failed') || lower.includes('unavailable')) {
-    return 'AI generation did not complete. Retry, or use the framework options below.';
+    return 'AI did not complete this time. Retry, or choose a Kairos option below.';
   }
 
-  return 'AI generation is not available right now. Framework options below still work.';
+  return 'AI is not ready right now. Your Kairos options are ready below.';
 }
 
 export function resolveImproveCompletionTarget({

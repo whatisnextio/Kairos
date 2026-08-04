@@ -41,4 +41,16 @@ describe('PWA UX shell', () => {
     expect(home).toContain('Check in now, or open details to set tomorrow.');
     expect(recommendations).toContain('getDailyDomainLabel(domain)');
   });
+
+  it('keeps Improve AI fallback copy clear and intentional', () => {
+    const improve = readFileSync('src/pages/ImproveScreen.tsx', 'utf8');
+    const lifecycle = readFileSync('src/utils/improveLifecycle.ts', 'utf8');
+    const oldFallbackPhrase = ['framework', 'options', 'below'].join(' ');
+    const oldAwkwardPhrase = ['carrying', 'today'].join(' ');
+
+    expect(improve).toContain('choose a Kairos option below');
+    expect(lifecycle).toContain('Your Kairos options are ready below');
+    expect(`${improve}\n${lifecycle}`).not.toContain(oldFallbackPhrase);
+    expect(`${improve}\n${lifecycle}`).not.toContain(oldAwkwardPhrase);
+  });
 });

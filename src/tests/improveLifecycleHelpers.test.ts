@@ -30,11 +30,22 @@ describe('Improve lifecycle helpers', () => {
 
   it('gives specific AI generation failure copy', () => {
     expect(normaliseNudgeErrorMessage(new Error('No session'))).toContain('Sign in again');
+    expect(normaliseNudgeErrorMessage(new Error('No session'))).toContain('Kairos options');
     expect(
       normaliseNudgeErrorMessage(new Error('Free tier gets nudges on Sundays only')),
     ).toContain('Sunday nudge');
     expect(normaliseNudgeErrorMessage(new Error('Failed to store nudge'))).toContain(
       'could not save',
+    );
+    expect(normaliseNudgeErrorMessage(new Error('AI generation unavailable'))).toBe(
+      'AI did not complete this time. Retry, or choose a Kairos option below.',
+    );
+    expect(normaliseNudgeErrorMessage(new Error('Provider timeout'))).toBe(
+      'AI is not ready right now. Your Kairos options are ready below.',
+    );
+    const oldFallbackPhrase = ['framework', 'options', 'below'].join(' ');
+    expect(normaliseNudgeErrorMessage(new Error('AI generation unavailable'))).not.toContain(
+      oldFallbackPhrase,
     );
   });
 
