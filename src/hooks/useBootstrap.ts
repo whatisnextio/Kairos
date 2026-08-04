@@ -228,7 +228,7 @@ export function useBootstrap() {
           setCustomRoutes(routeRows.map((row) => mapCustomRoute(row as Record<string, unknown>)));
         }
 
-        const sevenDaysAgo = new Date(Date.now() - 6 * 86_400_000).toISOString().split('T')[0];
+        const sevenDaysAgo = toLocalIsoDate(new Date(Date.now() - 6 * 86_400_000));
         const { data: checkIns } = await supabase
           .from('daily_check_ins')
           .select('*')

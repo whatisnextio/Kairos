@@ -22,7 +22,7 @@ export function computeLocalStreak(
   let running = 0;
   let pastCurrentStreak = false;
 
-  for (let i = 0; i < 400; i++) {
+  for (let i = 0; i < 90; i++) {
     const d = new Date(refMs - i * 86_400_000).toISOString().split('T')[0];
     const s = history[d]?.[domainType];
     if (s === 'Done' || s === 'Partial') {
