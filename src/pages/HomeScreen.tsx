@@ -115,6 +115,7 @@ export default function HomeScreen() {
   const cycleId = currentCycle?.id ?? null;
   const [catchUpVisible, setCatchUpVisible] = useState(catchUpSuppressedCycleId !== cycleId);
   const [selectedDomainType, setSelectedDomainType] = useState<DomainType | null>(null);
+  const [selectedCustomRouteId, setSelectedCustomRouteId] = useState<string | null>(null);
 
   const dayInCycle = profile && currentCycle ? getDayInCycle(currentCycle.startDate) : 1;
   const displayDay = Math.min(dayInCycle, KAIROS_CYCLE_LENGTH_DAYS);
@@ -207,18 +208,6 @@ export default function HomeScreen() {
       : (anchor?.name ?? 'Your identity');
   const firstName = profile.displayName.trim().split(/\s+/)[0] || 'You';
   const avatarInitial = firstName.charAt(0).toUpperCase() || 'K';
-
-  const handleCustomRouteCheckIn = (routeId: string, current: CheckInStatus | undefined) => {
-    if (current === 'Done') {
-      void setCustomRouteCheckIn(routeId, 'Partial');
-    } else if (current === 'Partial') {
-      void setCustomRouteCheckIn(routeId, 'Missed');
-    } else if (current === 'Missed') {
-      void setCustomRouteCheckIn(routeId, 'Pending');
-    } else {
-      void setCustomRouteCheckIn(routeId, 'Done');
-    }
-  };
 
   return (
     <>
@@ -666,7 +655,7 @@ export default function HomeScreen() {
                             key={route.id}
                             type="button"
                             className={`w-full rounded-lg border px-3 py-2 text-left transition-colors ${STATUS_ROW_CLASSES[routeStatus]}`}
-                            onClick={() => handleCustomRouteCheckIn(route.id, routeStatus)}
+                            onClick={() => setSelectedCustomRouteId(route.id)}
                             aria-label={`Check in ${route.label}`}
                           >
                             <div className="flex items-center justify-between gap-3">
@@ -713,6 +702,25 @@ export default function HomeScreen() {
                 setSelectedDomainType(null);
               }}
               onClose={() => setSelectedDomainType(null)}
+            />
+          );
+        })()}
+      {selectedCustomRouteId &&
+        (() => {
+          const route = activeCustomRoutes.find((r) => r.id === selectedCustomRouteId);
+          if (!route) return null;
+          const checkIn = todayCustomRouteCheckIns[selectedCustomRouteId];
+          const currentStatus: CheckInStatus =
+            checkIn?.date === todayIso ? checkIn.status : 'Pending';
+          return (
+            <CheckInStatusModal
+              label={route.label}
+              currentStatus={currentStatus}
+              onSelect={(status) => {
+                void setCustomRouteCheckIn(selectedCustomRouteId, status);
+                setSelectedCustomRouteId(null);
+              }}
+              onClose={() => setSelectedCustomRouteId(null)}
             />
           );
         })()}

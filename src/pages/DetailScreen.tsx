@@ -162,7 +162,9 @@ function NoteRow({
             // biome-ignore lint/a11y/noAutofocus: inline editor should grab focus on expand
             autoFocus
           />
-          <p className={`text-xs mb-2 text-right ${draft.length > 450 ? 'text-status-missed' : 'text-base-muted'}`}>
+          <p
+            className={`text-xs mb-2 text-right ${draft.length > 450 ? 'text-status-missed' : 'text-base-muted'}`}
+          >
             {draft.length}/500
           </p>
           <div className="flex gap-2">
