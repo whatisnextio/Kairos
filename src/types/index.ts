@@ -115,7 +115,6 @@ export const PRODUCT_POSITIONING = {
 export interface DomainConfig {
   type: DomainType;
   label: string;
-  ownerLabel?: string;
   colour: string; // tailwind text colour class
   audience: 'public' | 'owner';
   description: string;
@@ -178,7 +177,6 @@ export const DOMAINS: DomainConfig[] = [
   {
     type: 'METIME',
     label: 'Self',
-    ownerLabel: 'Me Time',
     colour: 'text-domain-metime',
     audience: 'public',
     description: 'Attention, recovery, identity, reflection, confidence, and emotional regulation.',
@@ -202,7 +200,6 @@ export const DOMAINS: DomainConfig[] = [
   {
     type: 'USTIME',
     label: 'Connection',
-    ownerLabel: 'Us Time',
     colour: 'text-domain-ustime',
     audience: 'public',
     description:

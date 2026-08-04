@@ -40,6 +40,5 @@ describe('PWA UX shell', () => {
     expect(home).toContain('aria-label={`Check in ${displayLabel}`}');
     expect(home).toContain('Check in now, or open details to set tomorrow.');
     expect(recommendations).toContain('getDailyDomainLabel(domain)');
-    expect(recommendations).not.toContain('getDiscreetDomainLabel(domain, email)');
   });
 });

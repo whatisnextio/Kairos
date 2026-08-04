@@ -14,7 +14,6 @@ import {
   buildCatchUpPath,
   buildWeeklyFlywheel,
   getDailyDomainLabel,
-  getDiscreetDomainLabel,
   getEarlyWakeProtocol,
 } from '@/utils/v1Framework';
 import { describe, expect, it } from 'vitest';
@@ -61,17 +60,14 @@ describe('V1 acceptance framework', () => {
     expect(path?.steps.join(' ')).toContain('Partial');
   });
 
-  it('uses Self as the public category while keeping owner private labels coded', () => {
-    const meTime = getDomainConfig('METIME', OWNER_EMAIL);
-    const usTime = getDomainConfig('USTIME', OWNER_EMAIL);
+  it('uses Self and Connection as the public categories for everyone', () => {
+    const self = getDomainConfig('METIME', OWNER_EMAIL);
+    const connection = getDomainConfig('USTIME', OWNER_EMAIL);
     const publicSelf = getDomainConfig('METIME', 'user@example.com');
 
-    expect(meTime && getDiscreetDomainLabel(meTime, OWNER_EMAIL)).toBe('MT');
-    expect(usTime && getDiscreetDomainLabel(usTime, OWNER_EMAIL)).toBe('UT');
-    expect(meTime && getDailyDomainLabel(meTime)).toBe('Self');
-    expect(usTime && getDailyDomainLabel(usTime)).toBe('Connection');
+    expect(self && getDailyDomainLabel(self)).toBe('Self');
+    expect(connection && getDailyDomainLabel(connection)).toBe('Connection');
     expect(publicSelf?.label).toBe('Self');
-    expect(publicSelf && getDiscreetDomainLabel(publicSelf, 'user@example.com')).toBe('Self');
     expect(publicSelf?.description).toContain('identity');
   });
 
@@ -152,7 +148,7 @@ describe('V1 acceptance framework', () => {
     expect(recommendations[0].domainLabel).toBe('Self');
   });
 
-  it('keeps Us Time connection-first when physical or mood barriers exist', () => {
+  it('keeps Connection comfort-first when physical or mood barriers exist', () => {
     expect(CONNECTION_SUPPORT_OPTIONS).toContain(
       'No-mood day: affection stays available without an agenda.',
     );
