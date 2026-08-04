@@ -106,6 +106,8 @@ export default function HomeScreen() {
   const setCelebrationPending = useAppStore((s) => s.setCelebrationPending);
   const levelUpPending = useAppStore((s) => s.levelUpPending);
   const setLevelUpPending = useAppStore((s) => s.setLevelUpPending);
+  const streakProtectionPending = useAppStore((s) => s.streakProtectionPending);
+  const setStreakProtectionPending = useAppStore((s) => s.setStreakProtectionPending);
   const lastCelebrationPhase = useAppStore((s) => s.lastCelebrationPhase);
   const setLastCelebrationPhase = useAppStore((s) => s.setLastCelebrationPhase);
   const [showVibeCheck, setShowVibeCheck] = useState(false);
@@ -267,6 +269,28 @@ export default function HomeScreen() {
             </Button>
           </div>
         )}
+
+        {/* Streak protection explanation */}
+        {streakProtectionPending && (() => {
+          const protectedDomain = availableDomains.find((d) => d.type === streakProtectionPending);
+          return (
+            <div className="rounded-xl border border-base-border bg-base-surface/80 px-4 py-4">
+              <p className="font-heading text-xs text-base-muted tracking-widest uppercase mb-1">
+                Streak protected
+              </p>
+              <p className="font-heading text-xl font-bold text-base-text tracking-wide">
+                {protectedDomain?.label ?? streakProtectionPending} streak is safe.
+              </p>
+              <p className="text-base-subtext text-sm mt-1 mb-3">
+                One grace day used this fortnight. The domain was marked Protected instead of
+                Missed.
+              </p>
+              <Button size="sm" variant="ghost" onClick={() => setStreakProtectionPending(null)}>
+                Got it
+              </Button>
+            </div>
+          );
+        })()}
 
         {/* Phase transition milestone */}
         {showPhaseTransition && (
