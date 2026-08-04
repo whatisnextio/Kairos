@@ -7,6 +7,12 @@ import { SUBSCRIPTION_COPY } from '@/utils/brandCopy';
 import { hasBrotherhoodAccess } from '@/utils/entitlements';
 import { buildFrameworkRecommendations } from '@/utils/frameworkRecommendations';
 import { formatKairosPoints } from '@/utils/gamification';
+import {
+  getDismissedCardsMessage,
+  getImproveStatusHelper,
+  normaliseNudgeErrorMessage,
+  resolveImproveCompletionTarget,
+} from '@/utils/improveLifecycle';
 import { getCurrentPhaseConfig, getDayInCycle } from '@/utils/kairos';
 import { Zap } from 'lucide-react';
 import { useState } from 'react';
@@ -94,6 +100,7 @@ function ImproveCardContent({
 
       <p className="text-base-subtext text-sm mb-3">{card.body}</p>
       <p className="text-base-text text-sm mb-4">{card.actionText}</p>
+      <p className="text-base-muted text-xs mb-4">{getImproveStatusHelper(card.status)}</p>
 
       {writeOpen && card.cta && card.cta in CTA_PROMPTS && (
         <textarea
@@ -160,7 +167,7 @@ export default function ImproveScreen() {
   const dayInCycle = currentCycle ? getDayInCycle(currentCycle.startDate) : 1;
   const phaseConfig = getCurrentPhaseConfig(dayInCycle);
 
-  const { data: nudge, isLoading, isError, refetch } = useNudge();
+  const { data: nudge, isLoading, isFetching, isError, error: nudgeError, refetch } = useNudge();
   const { mutate: updateStatus, isPending: isUpdatingNudge } = useUpdateNudgeStatus();
 
   const [activeCardId, setActiveCardId] = useState<string | null>(null);
@@ -175,7 +182,7 @@ export default function ImproveScreen() {
   });
 
   const aiCard: ImproveCard | null =
-    canSeeNudge && nudge && nudge.status !== 'dismissed'
+    canSeeNudge && nudge
       ? {
           id: nudge.id,
           kind: 'ai',
@@ -225,9 +232,11 @@ export default function ImproveScreen() {
       status: (improveCardStatuses[snapshot.id] as NudgeStatus | undefined) ?? 'new',
     }));
 
-  const visibleCards = [aiCard, ...frameworkCards, ...snapshotCards]
-    .filter((card): card is ImproveCard => Boolean(card))
-    .filter((card) => card.status !== 'dismissed');
+  const allCards = [aiCard, ...frameworkCards, ...snapshotCards].filter(
+    (card): card is ImproveCard => Boolean(card),
+  );
+  const dismissedCards = allCards.filter((card) => card.status === 'dismissed');
+  const visibleCards = allCards.filter((card) => card.status !== 'dismissed');
   const activeCards = visibleCards.filter((card) => card.status === 'accepted').slice(0, 3);
   const nextCards = visibleCards
     .filter((card) => card.status === 'new')
@@ -246,11 +255,17 @@ export default function ImproveScreen() {
   }
 
   function completeCard(card: ImproveCard) {
-    if (card.kind === 'framework' && card.cta !== 'reflect') {
-      if (card.customRouteId) {
-        void setCustomRouteCheckIn(card.customRouteId, 'Done');
-      } else if (card.domainType) {
-        void setDailyCheckIn(card.domainType, 'Done');
+    if (card.cta !== 'reflect') {
+      const target = resolveImproveCompletionTarget({
+        domainType: card.domainType,
+        customRouteId: card.customRouteId,
+        customRoutes,
+      });
+
+      if (target.kind === 'custom') {
+        void setCustomRouteCheckIn(target.routeId, 'Done');
+      } else if (target.kind === 'core') {
+        void setDailyCheckIn(target.domainType, 'Done');
       }
     }
     setCardStatus(card, 'completed');
@@ -323,15 +338,26 @@ export default function ImproveScreen() {
         <>
           {canSeeNudge && isLoading && (
             <Card>
-              <p className="text-base-subtext text-sm">Generating your card...</p>
+              <p className="font-heading text-sm font-medium text-base-text mb-1">
+                Generating your AI card
+              </p>
+              <p className="text-base-subtext text-sm">
+                Using your phase, focus, recent proof, and active routes.
+              </p>
             </Card>
           )}
 
           {canSeeNudge && isError && !isLoading && (
             <Card>
-              <p className="text-status-partial text-sm">
-                AI generation is unavailable, so the framework options below are carrying today.
+              <p className="font-heading text-sm font-medium text-status-partial mb-1">
+                AI card not ready
               </p>
+              <p className="text-base-subtext text-sm mb-3">
+                {normaliseNudgeErrorMessage(nudgeError)}
+              </p>
+              <Button size="sm" variant="ghost" onClick={() => refetch()} disabled={isFetching}>
+                {isFetching ? 'Retrying...' : 'Retry AI card'}
+              </Button>
             </Card>
           )}
 
@@ -341,8 +367,19 @@ export default function ImproveScreen() {
                 No AI card yet today. Generate one or use the framework options below.
               </p>
               <Button size="sm" onClick={() => refetch()}>
-                Generate card
+                {isFetching ? 'Generating...' : 'Generate AI card'}
               </Button>
+            </Card>
+          )}
+
+          {dismissedCards.length > 0 && (
+            <Card>
+              <p className="font-heading text-xs font-medium text-base-subtext tracking-widest uppercase mb-2">
+                Hidden today
+              </p>
+              <p className="text-base-subtext text-sm">
+                {getDismissedCardsMessage(dismissedCards.length)}
+              </p>
             </Card>
           )}
 
