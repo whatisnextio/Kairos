@@ -105,6 +105,12 @@ function NoteRow({
   const [saving, setSaving] = useState(false);
   const queryClient = useQueryClient();
 
+  // Sync draft when the saved note changes externally (e.g. after query invalidation),
+  // but only while the editor is closed to avoid clobbering in-progress typing.
+  useEffect(() => {
+    if (!expanded) setDraft(visibleNote ?? '');
+  }, [visibleNote, expanded]);
+
   async function save() {
     if (draft === (visibleNote ?? '')) {
       setExpanded(false);
@@ -148,7 +154,7 @@ function NoteRow({
       {expanded && (
         <div className="ml-3 mb-2">
           <textarea
-            className="input-field w-full h-16 resize-none text-xs mb-2"
+            className="input-field w-full h-16 resize-none text-xs mb-1"
             placeholder="Add a note for this day..."
             value={draft}
             onChange={(e) => setDraft(e.target.value)}
@@ -156,6 +162,9 @@ function NoteRow({
             // biome-ignore lint/a11y/noAutofocus: inline editor should grab focus on expand
             autoFocus
           />
+          <p className={`text-xs mb-2 text-right ${draft.length > 450 ? 'text-status-missed' : 'text-base-muted'}`}>
+            {draft.length}/500
+          </p>
           <div className="flex gap-2">
             <button
               type="button"

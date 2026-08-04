@@ -192,7 +192,7 @@ export default function HomeScreen() {
     }
 
     setShowAccountabilityPrompt(true);
-  }, [shouldShowAccountability]);
+  }, [shouldShowAccountability, cycleId]);
 
   if (!profile || !currentCycle) return null;
 
