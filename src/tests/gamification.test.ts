@@ -1,5 +1,29 @@
-import { getLevelForXp, getXpProgressInLevel } from '@/utils/gamification';
+import type { Profile } from '@/types';
+import {
+  deriveEarnedBadges,
+  formatKairosPoints,
+  getLevelForXp,
+  getXpProgressInLevel,
+} from '@/utils/gamification';
 import { describe, expect, it } from 'vitest';
+
+const paidProfile: Profile = {
+  id: 'user-1',
+  displayName: 'Test User',
+  identityAnchorId: 'builder',
+  tier: 'brotherhood',
+  xp: 0,
+  currentKairosCycleId: 'cycle-1',
+  dateOfBirth: '1984-01-01',
+  squadId: null,
+  stripeCustomerId: null,
+  stripeSubscriptionId: null,
+  subscriptionStatus: 'active',
+  cancelAtPeriodEnd: false,
+  currentPeriodEnd: null,
+  createdAt: '2026-08-04T00:00:00Z',
+  updatedAt: '2026-08-04T00:00:00Z',
+};
 
 describe('getLevelForXp', () => {
   it('returns level 1 (Starter) for 0 XP', () => {
@@ -97,5 +121,26 @@ describe('getXpProgressInLevel', () => {
   it('returns 99 or 100 near level max', () => {
     const pct = getXpProgressInLevel(198);
     expect(pct).toBeGreaterThanOrEqual(99);
+  });
+});
+
+describe('Kairos Points rewards', () => {
+  it('formats public points as KP', () => {
+    expect(formatKairosPoints(18_000)).toBe('18,000 KP');
+  });
+
+  it('explains how every badge is earned', () => {
+    const badges = deriveEarnedBadges({
+      profile: paidProfile,
+      checkInHistory: {},
+      todayCheckIns: {},
+      rewardedImproveCards: {},
+      streakProtectionHistory: {},
+      awardedWeeklyBonuses: {},
+      dayInCycle: 1,
+    });
+
+    expect(badges.length).toBeGreaterThan(0);
+    expect(badges.every((badge) => badge.trigger.trim().length > 0)).toBe(true);
   });
 });

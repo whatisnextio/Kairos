@@ -3,6 +3,7 @@ import { useCycleReflection, useMarkReflectionViewed } from '@/hooks/useCycleRef
 import { useAppStore } from '@/store/useAppStore';
 import { KAIROS_CYCLE_LENGTH_DAYS, getAvailableDomains } from '@/types';
 import { hasBrotherhoodAccess } from '@/utils/entitlements';
+import { formatKairosPoints } from '@/utils/gamification';
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
@@ -99,9 +100,11 @@ export default function Day84CompletionModal({ onClose }: Props) {
             </h2>
             <p className="text-base-subtext text-sm leading-relaxed mb-4">
               That's{' '}
-              {currentCycle?.totalXpEarned ? `${currentCycle.totalXpEarned} XP earned and` : ''} one
-              full campaign of the KAIROS framework completed. Most people never finish what they
-              start. You did.
+              {currentCycle?.totalXpEarned
+                ? `${formatKairosPoints(currentCycle.totalXpEarned)} earned and `
+                : ''}
+              one full campaign of the KAIROS framework completed. Most people never finish what
+              they start. You did.
             </p>
             {isPaidTier ? (
               <>
@@ -185,9 +188,9 @@ export default function Day84CompletionModal({ onClose }: Props) {
               <div className="flex gap-4 border-t border-base-border pt-4 mb-6">
                 <div>
                   <p className="font-heading text-base font-bold text-accent-green">
-                    {aiReflection.stats.totalXp.toLocaleString()}
+                    {formatKairosPoints(aiReflection.stats.totalXp)}
                   </p>
-                  <p className="text-base-muted text-xs">XP earned</p>
+                  <p className="text-base-muted text-xs">KP earned</p>
                 </div>
                 <div>
                   <p className="font-heading text-base font-bold text-base-text">
@@ -264,9 +267,9 @@ export default function Day84CompletionModal({ onClose }: Props) {
               Cycle complete
             </p>
             <p className="font-heading text-5xl font-bold text-accent-green mb-2 tracking-widest">
-              +500
+              +500 KP
             </p>
-            <p className="text-base-muted text-xs mb-6">XP for completing your cycle</p>
+            <p className="text-base-muted text-xs mb-6">Kairos Points for completing your cycle</p>
 
             <h2 className="font-heading text-2xl font-bold text-base-text mb-4 tracking-wide">
               One cycle done.
@@ -276,9 +279,9 @@ export default function Day84CompletionModal({ onClose }: Props) {
               <div className="flex justify-center gap-6 mb-6">
                 <div>
                   <p className="font-heading text-lg font-bold text-base-text">
-                    {aiReflection.stats.totalXp.toLocaleString()}
+                    {formatKairosPoints(aiReflection.stats.totalXp)}
                   </p>
-                  <p className="text-base-muted text-xs">XP total</p>
+                  <p className="text-base-muted text-xs">KP total</p>
                 </div>
                 <div>
                   <p className="font-heading text-lg font-bold text-base-text">

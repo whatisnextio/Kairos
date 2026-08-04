@@ -20,6 +20,13 @@ const LEVELS: XpLevel[] = [
   { level: 10, label: 'Kairos', minXp: 18000, maxXp: Number.POSITIVE_INFINITY },
 ];
 
+export const POINTS_SHORT_LABEL = 'KP';
+export const POINTS_FULL_LABEL = 'Kairos Points';
+
+export function formatKairosPoints(points: number): string {
+  return `${points.toLocaleString()} ${POINTS_SHORT_LABEL}`;
+}
+
 export function getLevelForXp(xp: number): XpLevel {
   return LEVELS.find((l) => xp >= l.minXp && xp <= l.maxXp) ?? LEVELS[0];
 }
@@ -110,18 +117,21 @@ export function deriveEarnedBadges({
       id: 'first-proof',
       label: 'First Proof',
       description: 'Logged the first useful action.',
+      trigger: 'Complete one Done check-in.',
       earned: allStatuses.includes('Done'),
     },
     {
       id: 'full-house',
       label: 'Full House',
       description: 'Closed all four core domains in one day.',
+      trigger: 'Check in Body, Fuel, Self, and Connection today.',
       earned: hasTodayFullHouse,
     },
     {
       id: 'seven-day-flywheel',
       label: '7-Day Flywheel',
       description: 'Kept every core domain live across a full week.',
+      trigger: 'Close all four core domains for a full week.',
       earned: Object.keys(awardedWeeklyBonuses).length > 0,
       paidOnly: true,
     },
@@ -129,6 +139,7 @@ export function deriveEarnedBadges({
       id: 'protected-rhythm',
       label: 'Life Happens',
       description: 'Used protection without breaking the rhythm.',
+      trigger: 'Use streak protection on a disrupted day.',
       earned: hasProtectedDay,
       paidOnly: true,
     },
@@ -136,6 +147,7 @@ export function deriveEarnedBadges({
       id: 'challenge-closed',
       label: 'Challenge Closed',
       description: 'Completed an Improve challenge.',
+      trigger: 'Accept and complete one Improve card.',
       earned: Object.keys(rewardedImproveCards).length > 0,
       paidOnly: true,
     },
@@ -143,6 +155,7 @@ export function deriveEarnedBadges({
       id: 'cycle-finisher',
       label: 'Cycle Finisher',
       description: 'Reached the end of an 84-day cycle.',
+      trigger: 'Reach Day 84 and close the cycle.',
       earned: dayInCycle >= 84,
       paidOnly: true,
     },
@@ -150,6 +163,7 @@ export function deriveEarnedBadges({
       id: 'brotherhood',
       label: 'Kairos Plus',
       description: 'Unlocked the full 12K status system.',
+      trigger: 'Unlock Kairos Plus or Lifechanger access.',
       earned: paid,
       paidOnly: true,
     },

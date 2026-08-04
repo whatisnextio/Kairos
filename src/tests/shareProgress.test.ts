@@ -81,6 +81,7 @@ describe('progress sharing privacy', () => {
       preferences: {
         includeName: true,
         includePhoto: true,
+        includeBadges: true,
         includeDomainDetail: true,
         includeStats: true,
       },
@@ -90,8 +91,30 @@ describe('progress sharing privacy', () => {
     expect(preview.text).toContain('Liam: 12K progress');
     expect(preview.text).toContain('Body 64%');
     expect(preview.text).toContain('Connection 43%');
-    expect(preview.text).toContain('Level: Level 10: Kairos. XP: 18000.');
+    expect(preview.text).toContain('Level: Level 10: Kairos. Kairos Points: 18,000 KP.');
     expect(preview.showPhoto).toBe(true);
+  });
+
+  it('hides milestone badge copy when badge sharing is disabled', () => {
+    const preview = buildProgressSharePreview({
+      displayName: 'Liam',
+      dayInCycle: 21,
+      xp: 500,
+      levelLabel: 'Level 3: Consistent',
+      earnedBadgeLabel: 'Full House',
+      flywheel,
+      preferences: {
+        includeName: false,
+        includePhoto: false,
+        includeBadges: false,
+        includeDomainDetail: false,
+        includeStats: true,
+      },
+      profileImageDataUrl: null,
+    });
+
+    expect(preview.text).not.toContain('Milestone: Full House.');
+    expect(preview.text).toContain('Still in the daily loop.');
   });
 
   it('copies when native sharing is unavailable', async () => {

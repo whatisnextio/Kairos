@@ -7,7 +7,13 @@ import { useAppStore } from '@/store/useAppStore';
 import type { KairosPhaseConfig } from '@/types';
 import { KAIROS_CYCLE_LENGTH_DAYS, getAvailableDomains } from '@/types';
 import { hasBrotherhoodAccess } from '@/utils/entitlements';
-import { deriveEarnedBadges, getLevelForXp, getXpProgressInLevel } from '@/utils/gamification';
+import {
+  POINTS_FULL_LABEL,
+  deriveEarnedBadges,
+  formatKairosPoints,
+  getLevelForXp,
+  getXpProgressInLevel,
+} from '@/utils/gamification';
 import { KAIROS_PHASES, getCurrentPhaseConfig, getDayInCycle } from '@/utils/kairos';
 import { buildProgressSharePreview, shareOrCopyProgress } from '@/utils/shareProgress';
 import { buildWeeklyFlywheel, getDiscreetDomainLabel, toLocalIsoDate } from '@/utils/v1Framework';
@@ -129,9 +135,9 @@ export default function ProgressScreen() {
             <div className="flex gap-4 mb-4">
               <div>
                 <p className="font-heading font-bold text-base-text">
-                  {currentCycle.totalXpEarned?.toLocaleString() ?? profile.xp.toLocaleString()}
+                  {formatKairosPoints(currentCycle.totalXpEarned ?? profile.xp)}
                 </p>
-                <p className="text-base-muted text-xs">XP earned</p>
+                <p className="text-base-muted text-xs">KP earned</p>
               </div>
               {aiReflection?.stats && (
                 <>
@@ -176,7 +182,7 @@ export default function ProgressScreen() {
             <p className="font-heading text-xl font-bold text-base-text">
               Level {level.level}: {level.label}
             </p>
-            <p className="text-base-subtext text-xs mt-1">{profile.xp} XP total</p>
+            <p className="text-base-subtext text-xs mt-1">{formatKairosPoints(profile.xp)} total</p>
             <div className="mt-3 h-1.5 bg-base-border rounded-full overflow-hidden">
               <div
                 className="h-full bg-accent-green rounded-full transition-all"
@@ -208,10 +214,10 @@ export default function ProgressScreen() {
             <p className="text-base-subtext text-xs font-heading tracking-widest uppercase mb-1">
               Basic progress
             </p>
-            <p className="font-heading text-xl font-bold text-base-text">No XP on Free</p>
+            <p className="font-heading text-xl font-bold text-base-text">No KP on Free</p>
             <p className="text-base-subtext text-xs mt-1">
-              Free keeps your visual check-in history on this device. Status, XP, streak protection,
-              weekly bonuses, and badges unlock with Kairos Plus.
+              Free keeps your visual check-in history on this device. Status, {POINTS_FULL_LABEL},
+              streak protection, weekly bonuses, and badges unlock with Kairos Plus.
             </p>
           </Card>
         )}
@@ -357,6 +363,9 @@ export default function ProgressScreen() {
                 >
                   <p className="font-heading text-sm font-medium text-base-text">{badge.label}</p>
                   <p className="text-base-muted text-[11px] mt-1">{badge.description}</p>
+                  <p className="text-base-subtext text-[11px] mt-2">
+                    {badge.earned ? 'Earned' : 'Unlock'}: {badge.trigger}
+                  </p>
                 </div>
               ))}
             </div>

@@ -18,7 +18,7 @@ import {
   isOwnerAccount,
 } from '@/types';
 import { getSubscriptionTierLabel, hasBrotherhoodAccess } from '@/utils/entitlements';
-import { deriveEarnedBadges, getLevelForXp } from '@/utils/gamification';
+import { deriveEarnedBadges, formatKairosPoints, getLevelForXp } from '@/utils/gamification';
 import { getDayInCycle } from '@/utils/kairos';
 import { type ChangeEvent, useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
@@ -412,8 +412,10 @@ export default function YouScreen() {
         </div>
         <div className="flex gap-4 mt-3">
           <div>
-            <p className="text-base-subtext text-xs">XP</p>
-            <p className="font-heading font-bold text-base-text">{profile.xp}</p>
+            <p className="text-base-subtext text-xs">KP</p>
+            <p className="font-heading font-bold text-base-text">
+              {formatKairosPoints(profile.xp)}
+            </p>
           </div>
           <div>
             <p className="text-base-subtext text-xs">Level</p>
@@ -803,8 +805,9 @@ export default function YouScreen() {
             {[
               ['includeName', 'Include display name'],
               ['includePhoto', 'Include profile photo in preview'],
+              ['includeBadges', 'Include milestone badge'],
               ['includeDomainDetail', 'Show core domain scores'],
-              ['includeStats', 'Show level and XP'],
+              ['includeStats', 'Show level and KP'],
             ].map(([key, label]) => (
               <label
                 key={key}
