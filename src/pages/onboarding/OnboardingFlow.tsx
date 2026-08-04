@@ -339,8 +339,8 @@ export default function OnboardingFlow() {
   };
 
   return (
-    <main className="min-h-screen bg-base-black px-4 py-6 flex items-start justify-center">
-      <div className="w-full max-w-md">
+    <main className="flex min-h-dvh items-start justify-center px-4 py-6 sm:px-6 sm:py-10">
+      <div className="w-full max-w-2xl rounded-[20px] border border-white/10 bg-base-black/80 px-4 py-5 shadow-[0_32px_120px_rgba(0,0,0,0.42)] backdrop-blur-xl sm:px-7 sm:py-7">
         <div className="mb-6 flex items-center justify-between">
           <p className="font-heading text-xs text-base-muted tracking-widest uppercase">12K</p>
           <p className="text-base-muted text-xs">

@@ -46,71 +46,73 @@ export default function RegisterPage() {
   };
 
   return (
-    <main className="min-h-screen bg-base-black flex flex-col items-center justify-center px-6 py-12">
-      <img
-        src="/kairos-12k-logo.svg"
-        alt="Kairos 12K"
-        width="192"
-        height="54"
-        className="w-48 h-auto mb-4"
-        draggable={false}
-      />
-      <p className="text-base-text font-heading font-bold text-lg tracking-wide mb-1">
-        {AUTH_COPY.headline}
-      </p>
-      <p className="text-base-subtext text-sm text-center max-w-xs mb-10">{AUTH_COPY.body}</p>
+    <main className="flex min-h-dvh flex-col items-center justify-center px-5 py-10 sm:px-6">
+      <section className="w-full max-w-md rounded-[20px] border border-white/10 bg-base-black/80 px-5 py-7 shadow-[0_32px_120px_rgba(0,0,0,0.42)] backdrop-blur-xl sm:px-7">
+        <img
+          src="/kairos-12k-logo.svg"
+          alt="Kairos 12K"
+          width="192"
+          height="54"
+          className="mb-6 h-auto w-48"
+          draggable={false}
+        />
+        <p className="mb-1 font-heading text-lg font-bold tracking-wide text-base-text">
+          {AUTH_COPY.headline}
+        </p>
+        <p className="mb-8 text-sm leading-relaxed text-base-subtext">{AUTH_COPY.body}</p>
 
-      {sent ? (
-        <div className="text-center">
-          <p className="text-base-text font-medium mb-2">Check your email.</p>
-          <p className="text-base-subtext text-sm">Confirm your address to continue.</p>
-        </div>
-      ) : (
-        <form onSubmit={handleRegister} className="w-full max-w-sm flex flex-col gap-4">
-          <Input
-            id="email"
-            type="email"
-            label="Email"
-            placeholder="you@example.com"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-          />
-          <Input
-            id="dob"
-            type="date"
-            label="Date of birth"
-            value={dob}
-            onChange={(e) => setDob(e.target.value)}
-            required
-          />
-          <label className="flex items-start gap-3 cursor-pointer">
-            <input
-              type="checkbox"
-              checked={ageConfirmed}
-              onChange={(e) => setAgeConfirmed(e.target.checked)}
-              className="mt-0.5 accent-accent-green"
+        {sent ? (
+          <div>
+            <p className="text-base-text font-medium mb-2">Check your email.</p>
+            <p className="text-base-subtext text-sm">Confirm your address to continue.</p>
+          </div>
+        ) : (
+          <form onSubmit={handleRegister} className="w-full max-w-sm flex flex-col gap-4">
+            <Input
+              id="email"
+              type="email"
+              label="Email"
+              placeholder="you@example.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
             />
-            <span className="text-sm text-base-subtext">
-              I confirm I am 18 years of age or over. 12K is an adult product.
-            </span>
-          </label>
-          {error && (
-            <p role="alert" className="text-xs text-status-missed">
-              {error}
+            <Input
+              id="dob"
+              type="date"
+              label="Date of birth"
+              value={dob}
+              onChange={(e) => setDob(e.target.value)}
+              required
+            />
+            <label className="flex items-start gap-3 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={ageConfirmed}
+                onChange={(e) => setAgeConfirmed(e.target.checked)}
+                className="mt-0.5 accent-accent-green"
+              />
+              <span className="text-sm text-base-subtext">
+                I confirm I am 18 years of age or over. 12K is an adult product.
+              </span>
+            </label>
+            {error && (
+              <p role="alert" className="text-xs text-status-missed">
+                {error}
+              </p>
+            )}
+            <Button type="submit" disabled={loading || !ageConfirmed} className="w-full">
+              {loading ? 'Sending...' : 'Create account'}
+            </Button>
+            <p className="text-center text-base-subtext text-xs">
+              Already have an account?{' '}
+              <Link to="/login" className="text-accent-green underline underline-offset-2">
+                Sign in
+              </Link>
             </p>
-          )}
-          <Button type="submit" disabled={loading || !ageConfirmed} className="w-full">
-            {loading ? 'Sending...' : 'Create account'}
-          </Button>
-          <p className="text-center text-base-subtext text-xs">
-            Already have an account?{' '}
-            <Link to="/login" className="text-accent-green underline underline-offset-2">
-              Sign in
-            </Link>
-          </p>
-        </form>
-      )}
+          </form>
+        )}
+      </section>
     </main>
   );
 }

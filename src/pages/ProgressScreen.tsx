@@ -120,7 +120,7 @@ export default function ProgressScreen() {
   return (
     <>
       {showDay84Modal && <Day84CompletionModal onClose={() => setShowDay84Modal(false)} />}
-      <div className="px-4 pt-6 pb-4 flex flex-col gap-4">
+      <div className="mx-auto flex w-full max-w-2xl flex-col gap-4 px-4 pb-4 pt-6 sm:px-6 sm:pt-8">
         <h1 className="font-heading text-2xl font-bold text-base-text tracking-wide">Progress</h1>
 
         {/* Cycle-complete banner */}

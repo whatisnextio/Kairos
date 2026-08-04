@@ -10,17 +10,14 @@ const TABS = [
 
 export default function BottomTabBar() {
   return (
-    <nav
-      aria-label="Main navigation"
-      className="fixed bottom-0 left-0 right-0 max-w-md mx-auto bg-base-surface border-t border-base-border pb-safe"
-    >
-      <div className="flex items-stretch">
+    <nav aria-label="Main navigation" className="app-tabbar pb-safe">
+      <div className="grid grid-cols-4 gap-1">
         {TABS.map(({ to, icon: Icon, label }) => (
           <NavLink
             key={to}
             to={to}
             end={to === '/'}
-            className={({ isActive }) => `tab-item flex-1 py-3 ${isActive ? 'active' : ''}`}
+            className={({ isActive }) => `tab-item px-2 pb-2 pt-4 ${isActive ? 'active' : ''}`}
           >
             <Icon size={20} strokeWidth={1.5} />
             <span>{label}</span>

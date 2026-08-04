@@ -7,6 +7,7 @@ const config: Config = {
     extend: {
       colors: {
         'base-black': '#0B0B0B',
+        'base-bg': '#090A0A',
         'base-surface': '#141414',
         'base-elevated': '#1C1C1C',
         'base-border': '#2A2A2A',

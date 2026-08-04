@@ -5,7 +5,7 @@ export default function HelpFAQPage() {
   const navigate = useNavigate();
 
   return (
-    <div className="px-4 pt-6 pb-4">
+    <div className="mx-auto w-full max-w-2xl px-4 pb-4 pt-6 sm:px-6 sm:pt-8">
       <button
         type="button"
         onClick={() => navigate(-1)}
