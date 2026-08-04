@@ -84,6 +84,8 @@ test.describe('NFR smoke gates', () => {
     await page.goto('/#/progress');
     await expect(page.getByText(/weekly bonuses/i)).toBeVisible();
     await expect(page.getByText(/badges/i)).toBeVisible();
+    await page.getByRole('button', { name: /preview share/i }).click();
+    await expect(page.getByText('12K progress', { exact: true })).toBeVisible();
   });
 
   test('PWA manifest and icons are installable assets', async ({ request }) => {

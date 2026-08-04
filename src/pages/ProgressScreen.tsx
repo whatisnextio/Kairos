@@ -9,6 +9,7 @@ import { KAIROS_CYCLE_LENGTH_DAYS, getAvailableDomains } from '@/types';
 import { hasBrotherhoodAccess } from '@/utils/entitlements';
 import { deriveEarnedBadges, getLevelForXp, getXpProgressInLevel } from '@/utils/gamification';
 import { KAIROS_PHASES, getCurrentPhaseConfig, getDayInCycle } from '@/utils/kairos';
+import { buildProgressSharePreview, shareOrCopyProgress } from '@/utils/shareProgress';
 import { buildWeeklyFlywheel, getDiscreetDomainLabel, toLocalIsoDate } from '@/utils/v1Framework';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -33,6 +34,8 @@ function getLast7Days(): string[] {
 export default function ProgressScreen() {
   const navigate = useNavigate();
   const [showDay84Modal, setShowDay84Modal] = useState(false);
+  const [showSharePreview, setShowSharePreview] = useState(false);
+  const [shareStatus, setShareStatus] = useState<string | null>(null);
   const {
     profile,
     authUser,
@@ -46,6 +49,8 @@ export default function ProgressScreen() {
     streakProtectionHistory,
     awardedWeeklyBonuses,
     streaks: localStreaks,
+    profileImageDataUrl,
+    sharePrivacyPreferences,
   } = useAppStore();
   const { data: remoteStreaks } = useStreaks();
 
@@ -82,6 +87,29 @@ export default function ProgressScreen() {
   });
   const earnedBadges = badges.filter((badge) => badge.earned);
   const unearnedBadges = badges.filter((badge) => !badge.earned);
+  const sharePreview = buildProgressSharePreview({
+    displayName: profile.displayName,
+    dayInCycle,
+    xp: profile.xp,
+    levelLabel: `Level ${level.level}: ${level.label}`,
+    earnedBadgeLabel: earnedBadges[0]?.label,
+    flywheel,
+    preferences: sharePrivacyPreferences,
+    profileImageDataUrl,
+  });
+
+  async function handleShareProgress() {
+    setShareStatus(null);
+    try {
+      const result = await shareOrCopyProgress(sharePreview);
+      if (result === 'shared') setShareStatus('Shared from your device.');
+      if (result === 'copied') setShareStatus('Copied. Paste it wherever you choose.');
+      if (result === 'cancelled') setShareStatus('Share cancelled. Nothing left the app.');
+      if (result === 'unsupported') setShareStatus('Copy the preview text manually.');
+    } catch {
+      setShareStatus('Sharing failed. Copy the preview text manually.');
+    }
+  }
 
   return (
     <>
@@ -332,6 +360,60 @@ export default function ProgressScreen() {
                 </div>
               ))}
             </div>
+          </Card>
+        )}
+
+        {hasPaidAccess && (
+          <Card>
+            <h2 className="font-heading text-xs font-medium text-base-subtext tracking-widest uppercase mb-2">
+              Controlled share
+            </h2>
+            <p className="text-base-subtext text-sm mb-3">
+              Preview exactly what leaves the app. Private routes and notes stay out unless you
+              change your sharing privacy in You.
+            </p>
+
+            {!showSharePreview ? (
+              <Button size="sm" onClick={() => setShowSharePreview(true)} type="button">
+                Preview share
+              </Button>
+            ) : (
+              <div className="flex flex-col gap-3">
+                <div className="rounded border border-base-border bg-base-black/20 p-3">
+                  {sharePreview.showPhoto && profileImageDataUrl && (
+                    <img
+                      src={profileImageDataUrl}
+                      alt=""
+                      className="w-12 h-12 rounded-full object-cover mb-3"
+                    />
+                  )}
+                  <p className="font-heading text-sm font-medium text-base-text mb-2">
+                    {sharePreview.title}
+                  </p>
+                  <pre className="whitespace-pre-wrap font-body text-sm text-base-subtext leading-relaxed">
+                    {sharePreview.text}
+                  </pre>
+                </div>
+                <div className="flex gap-2">
+                  <Button size="sm" onClick={handleShareProgress} type="button" className="flex-1">
+                    Share or copy
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => {
+                      setShowSharePreview(false);
+                      setShareStatus(null);
+                    }}
+                    type="button"
+                    className="flex-1"
+                  >
+                    Cancel
+                  </Button>
+                </div>
+                {shareStatus && <p className="text-base-muted text-xs">{shareStatus}</p>}
+              </div>
+            )}
           </Card>
         )}
 
