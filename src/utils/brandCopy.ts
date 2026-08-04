@@ -129,7 +129,7 @@ export const PRIVACY_COPY = {
   notDone:
     'We do not sell your data, use advertising networks, or make private route labels public. Supabase stores app data, Stripe handles payments when billing is live, and Plausible measures usage without cookies.',
   rights:
-    'You can export your local data from the You screen. For deletion or access requests, contact support and we will respond within 30 days.',
+    'You can export your data and request account deletion from the You screen. For access questions or support-led requests, contact support and we will respond within 30 days.',
 } as const;
 
 export const TERMS_COPY = {

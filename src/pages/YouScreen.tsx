@@ -143,6 +143,7 @@ export default function YouScreen() {
   }, [notificationPreferences, setNotificationPreferences]);
 
   const [deleteConfirm, setDeleteConfirm] = useState(false);
+  const [deletePhrase, setDeletePhrase] = useState('');
   const [isDeleting, setIsDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const [showAbandon, setShowAbandon] = useState(false);
@@ -283,6 +284,7 @@ export default function YouScreen() {
       data: { session },
     } = await supabase.auth.getSession();
     if (!session) {
+      setDeleteError('Sign in again before deleting your account.');
       setIsDeleting(false);
       return;
     }
@@ -291,7 +293,8 @@ export default function YouScreen() {
       headers: { Authorization: `Bearer ${session.access_token}` },
     });
     if (res.ok) {
-      signOut();
+      await signOut();
+      localStorage.removeItem('12k-app-store');
     } else {
       setDeleteError('Delete failed. Please try again or contact support.');
       setIsDeleting(false);
@@ -876,64 +879,89 @@ export default function YouScreen() {
         </button>
       </div>
 
-      {/* GDPR data export */}
-      <div className="pt-2">
-        <button
+      {/* Account data */}
+      <Card>
+        <p className="text-base-subtext text-xs font-heading tracking-widest uppercase mb-2">
+          Account and data
+        </p>
+        <p className="text-base-subtext text-sm mb-4">
+          Export gives you a JSON copy of your 12K data. Delete is permanent and clears this account
+          from the app.
+        </p>
+        <Button
           type="button"
+          variant="ghost"
+          size="sm"
           onClick={handleExportData}
           disabled={isExporting}
-          className="text-base-muted text-xs underline w-full text-center disabled:opacity-50"
+          className="w-full mb-4"
         >
           {isExporting ? 'Preparing download...' : 'Download my data'}
-        </button>
-      </div>
-
-      {/* GDPR account deletion */}
-      <div className="pt-2">
-        {!deleteConfirm ? (
-          <button
-            type="button"
-            onClick={() => setDeleteConfirm(true)}
-            className="text-status-missed text-xs font-heading tracking-wider uppercase w-full text-center"
-          >
-            Delete my account
-          </button>
-        ) : (
-          <Card className="border-status-missed/40">
-            <p className="text-base-text text-sm font-heading font-medium mb-1">
-              This is permanent.
-            </p>
-            <p className="text-base-subtext text-xs mb-4">
-              All your data will be deleted and cannot be recovered. Your subscription will not be
-              automatically cancelled. Cancel that in your billing settings first.
-            </p>
-            {deleteError && (
-              <p role="alert" className="text-status-missed text-xs mb-3">
-                {deleteError}
+        </Button>
+        <div className="border-t border-base-border pt-4">
+          {!deleteConfirm ? (
+            <button
+              type="button"
+              onClick={() => {
+                setDeleteConfirm(true);
+                setDeleteError(null);
+                setDeletePhrase('');
+              }}
+              className="text-status-missed text-xs font-heading tracking-wider uppercase w-full text-center"
+            >
+              Delete my account
+            </button>
+          ) : (
+            <div className="rounded border border-status-missed/40 bg-status-missed/5 p-3">
+              <p className="text-base-text text-sm font-heading font-medium mb-1">
+                This is permanent.
               </p>
-            )}
-            <div className="flex gap-2">
-              <Button
-                variant="danger"
-                size="sm"
-                disabled={isDeleting}
-                onClick={handleDeleteAccount}
-                className="flex-1"
-              >
-                {isDeleting ? 'Deleting...' : 'Delete account'}
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setDeleteConfirm(false)}
-                className="flex-1"
-              >
-                Cancel
-              </Button>
+              <p className="text-base-subtext text-xs mb-3">
+                This deletes your profile, journey history, check-ins, notes, custom routes, nudges,
+                squad link, push subscriptions, and auth account. Billing is handled separately in
+                Stripe.
+              </p>
+              <label className="text-base-subtext text-xs font-heading tracking-widest uppercase">
+                Type DELETE to confirm
+                <input
+                  className="input-field mt-1"
+                  value={deletePhrase}
+                  onChange={(event) => setDeletePhrase(event.target.value)}
+                  autoComplete="off"
+                />
+              </label>
+              {deleteError && (
+                <p role="alert" className="text-status-missed text-xs mt-3">
+                  {deleteError}
+                </p>
+              )}
+              <div className="flex gap-2 mt-4">
+                <Button
+                  variant="danger"
+                  size="sm"
+                  disabled={isDeleting || deletePhrase !== 'DELETE'}
+                  onClick={handleDeleteAccount}
+                  className="flex-1"
+                >
+                  {isDeleting ? 'Deleting...' : 'Delete permanently'}
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    setDeleteConfirm(false);
+                    setDeletePhrase('');
+                    setDeleteError(null);
+                  }}
+                  className="flex-1"
+                >
+                  Cancel
+                </Button>
+              </div>
             </div>
-          </Card>
-        )}
-      </div>
+          )}
+        </div>
+      </Card>
 
       {showAbandon && <AbandonCycleModal onClose={() => setShowAbandon(false)} />}
       {showVibeCheck && <WeeklyVibeCheckModal onClose={() => setShowVibeCheck(false)} />}
