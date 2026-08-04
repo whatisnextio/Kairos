@@ -31,7 +31,7 @@ This is a once-per-cycle moment. It should feel earned.
 
 Output format: JSON only, no markdown, no explanation.
 {
-  "headline": "string (under 70 chars, punchy, specific to this man's data)",
+  "headline": "string (under 70 chars, punchy, specific to this person's data)",
   "body": "string (2-3 sentences, 300 chars max, must reference at least 2 specific stats: XP, streak, completion rate, or vibe trend)",
   "domain_callouts": {
     "BODY": "string (one sharp line about their body domain performance, 80 chars max)",

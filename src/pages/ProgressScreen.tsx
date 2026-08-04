@@ -211,7 +211,7 @@ export default function ProgressScreen() {
             <p className="font-heading text-xl font-bold text-base-text">No XP on Free</p>
             <p className="text-base-subtext text-xs mt-1">
               Free keeps your visual check-in history on this device. Status, XP, streak protection,
-              weekly bonuses, and badges unlock with Brotherhood.
+              weekly bonuses, and badges unlock with Kairos Plus.
             </p>
           </Card>
         )}

@@ -100,7 +100,7 @@ export default function Day84CompletionModal({ onClose }: Props) {
             <p className="text-base-subtext text-sm leading-relaxed mb-4">
               That's{' '}
               {currentCycle?.totalXpEarned ? `${currentCycle.totalXpEarned} XP earned and` : ''} one
-              full campaign of the KAIROS framework completed. Most men never finish what they
+              full campaign of the KAIROS framework completed. Most people never finish what they
               start. You did.
             </p>
             {isPaidTier ? (
@@ -227,8 +227,8 @@ export default function Day84CompletionModal({ onClose }: Props) {
               What shifted in you?
             </h2>
             <p className="text-base-subtext text-sm mb-4">
-              The man who started {KAIROS_CYCLE_LENGTH_DAYS} days ago. The man who just finished.
-              What's the gap?
+              The person who started {KAIROS_CYCLE_LENGTH_DAYS} days ago. The person who just
+              finished. What's the gap?
             </p>
             <textarea
               className="input-field h-36 resize-none w-full mb-2 text-sm"

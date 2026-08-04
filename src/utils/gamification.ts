@@ -148,7 +148,7 @@ export function deriveEarnedBadges({
     },
     {
       id: 'brotherhood',
-      label: 'Brotherhood',
+      label: 'Kairos Plus',
       description: 'Unlocked the full 12K status system.',
       earned: paid,
       paidOnly: true,

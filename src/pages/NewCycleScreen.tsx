@@ -111,7 +111,7 @@ export default function NewCycleScreen() {
         <h1 className="font-heading text-2xl font-bold text-base-text tracking-wide">
           Start fresh.
         </h1>
-        <p className="text-base-subtext text-sm mt-1">Same system. New man.</p>
+        <p className="text-base-subtext text-sm mt-1">Same system. New cycle.</p>
       </div>
 
       {/* Seed from previous cycle's AI reflection */}

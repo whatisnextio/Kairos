@@ -103,6 +103,7 @@ export const PRODUCT_POSITIONING = {
   kairosMeaning:
     'Kairos is Greek for the right or opportune moment: the point where attention becomes action.',
   why: 'It gives you the next useful move, a check-in, and a recovery path when the day slips.',
+  audience: 'Built for adults who need a simple guided reset, not a gender-specific programme.',
   designedFor:
     'Designed for real life: inconsistent energy, busy work, family pressure, missed days, and the need to rebuild without shame.',
   categoryIntro:
@@ -321,7 +322,7 @@ export const SUBSCRIPTION_TIER_CONFIGS: Record<SubscriptionTier, SubscriptionTie
   },
   brotherhood: {
     tier: 'brotherhood',
-    label: 'Brotherhood',
+    label: 'Kairos Plus',
     accessLevel: 'paid',
     description: 'Full V1 12K system with daily AI nudges, cloud sync, squads, and reflections.',
   },
@@ -329,7 +330,7 @@ export const SUBSCRIPTION_TIER_CONFIGS: Record<SubscriptionTier, SubscriptionTie
     tier: 'lifechanger',
     label: 'Lifechanger',
     accessLevel: 'paid',
-    description: 'Brotherhood access plus deeper AI pattern support when there is enough history.',
+    description: 'Kairos Plus access plus deeper AI pattern support when there is enough history.',
   },
 };
 

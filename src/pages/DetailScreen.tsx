@@ -492,7 +492,7 @@ export default function DetailScreen() {
             })}
           </div>
           <p className="text-base-muted text-xs mt-3 border-t border-base-border pt-2">
-            Upgrade to Brotherhood for your full 28-day history, sparkline trends, and per-day
+            Upgrade to Kairos Plus for your full 28-day history, sparkline trends, and per-day
             notes.
           </p>
         </Card>

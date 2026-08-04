@@ -112,6 +112,8 @@ describe('V1 acceptance framework', () => {
     expect(PRODUCT_POSITIONING.kairosMeaning).toContain('Greek');
     expect(PRODUCT_POSITIONING.kairosMeaning).toContain('opportune moment');
     expect(PRODUCT_POSITIONING.kairosMeaning).not.toMatch(/latin|implement/i);
+    expect(PRODUCT_POSITIONING.audience).toContain('not a gender-specific programme');
+    expect(PRODUCT_POSITIONING.audience).not.toMatch(/\bmen\b|\bman\b|male/i);
     expect(PRODUCT_POSITIONING.why).toContain('recovery path');
     expect(PRODUCT_POSITIONING.categoryIntro).toContain('Body, Fuel, Self, and Connection');
   });

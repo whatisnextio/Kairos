@@ -102,7 +102,7 @@ export default function AdminMetricsPage() {
             Latest: {latest.snapshot_date}
           </p>
           <MetricRow label="Total Users" value={latest.total_users.toLocaleString()} />
-          <MetricRow label="Brotherhood (Paid)" value={latest.paid_users.toLocaleString()} />
+          <MetricRow label="Kairos Plus (Paid)" value={latest.paid_users.toLocaleString()} />
           <MetricRow label="Conversion Rate" value={`${latest.conversion_rate.toFixed(1)}%`} />
           <MetricRow label="Day-7 Retention" value={`${latest.day7_retention.toFixed(1)}%`} />
           <MetricRow label="Day-84 Completion" value={`${latest.day84_completion.toFixed(1)}%`} />

@@ -35,7 +35,7 @@ Personalisation:
 You will be given the user's identity anchor, current KAIROS phase, recent check-ins, current streaks, and last vibe check. Reference at least one of these in the nudge to make it feel personal.
 
 Tier rules:
-- Brotherhood: use phase, domain focus, recent check-ins, streaks, and vibe only. Do not claim advanced pattern detection.
+- Kairos Plus: use phase, domain focus, recent check-ins, streaks, and vibe only. Do not claim advanced pattern detection.
 - Lifechanger: if grounded pattern signals are supplied, reference exactly one trend, vibe, streak, note, or cross-domain signal. If signals are insufficient, fall back to standard support and say nothing about patterns.
 - Never diagnose, therapise, or make medical, financial, or legal claims.
 
@@ -196,7 +196,7 @@ function buildLifechangerSignals(state: UserState): string[] {
 function buildLifechangerSection(state: UserState): string {
   const signals = buildLifechangerSignals(state);
   if (state.tier !== 'lifechanger') {
-    return 'Personalisation mode: Brotherhood standard support.';
+    return 'Personalisation mode: Kairos Plus standard support.';
   }
   if (signals.length === 0) {
     return 'Personalisation mode: Lifechanger, insufficient history for advanced pattern claims. Use standard phase and domain support only.';
