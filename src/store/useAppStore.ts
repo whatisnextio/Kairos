@@ -12,6 +12,7 @@ import type {
 } from '@/types';
 import { XP_PER_CHECK_IN_DONE, XP_PER_CHECK_IN_PARTIAL, XP_PER_CYCLE_COMPLETE } from '@/types';
 import { getLevelForXp } from '@/utils/gamification';
+import { clearLocalDevSession } from '@/utils/localDevSession';
 import { computeLocalStreak } from '@/utils/streak';
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
@@ -284,6 +285,7 @@ export const useAppStore = create<AppState & AppActions>()(
         }),
 
       signOut: async () => {
+        clearLocalDevSession();
         // reset() before signOut so the auth listener's setAuthUser(null) call
         // (which fires synchronously inside signOut) runs AFTER isAuthLoading is
         // already true, and its isAuthLoading: false write is the final write.

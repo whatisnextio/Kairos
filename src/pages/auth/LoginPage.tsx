@@ -4,12 +4,15 @@ import { supabase } from '@/services/supabaseClient';
 import { useAppStore } from '@/store/useAppStore';
 import type { DailyCheckIn, DomainType, KairosCycle, Profile, UserDomainFocus } from '@/types';
 import { getAvailableDomains } from '@/types';
+import {
+  DEV_CYCLE_ID,
+  DEV_EMAIL,
+  DEV_USER_ID,
+  isLocalDevHost,
+  startLocalDevSession,
+} from '@/utils/localDevSession';
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-
-const DEV_EMAIL = 'ldgmcdowell@gmail.com';
-const DEV_USER_ID = 'local-dev-liam';
-const DEV_CYCLE_ID = 'local-dev-cycle';
 
 export default function LoginPage() {
   const {
@@ -25,8 +28,7 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [sent, setSent] = useState(false);
   const [error, setError] = useState('');
-  const showDevLogin =
-    import.meta.env.DEV && ['127.0.0.1', 'localhost'].includes(window.location.hostname);
+  const showDevLogin = isLocalDevHost();
 
   const handleMagicLink = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -104,6 +106,7 @@ export default function LoginPage() {
       createdAt: now,
     };
 
+    startLocalDevSession();
     setAuthUser({ id: DEV_USER_ID, email: DEV_EMAIL });
     setProfile(profile);
     setCurrentCycle(cycle);

@@ -13,6 +13,7 @@ import {
   getComplimentaryProfileFields,
   hasComplimentaryBrotherhood,
 } from '@/utils/entitlements';
+import { isLocalDevUser } from '@/utils/localDevSession';
 import { useEffect, useRef } from 'react';
 
 function mapProfile(row: Record<string, unknown>): Profile {
@@ -98,6 +99,11 @@ export function useBootstrap() {
     if (bootstrapped.current === authUser.id) return;
     bootstrapped.current = authUser.id;
     setIsBootstrapLoading(true);
+
+    if (isLocalDevUser(authUser.id)) {
+      setIsBootstrapLoading(false);
+      return;
+    }
 
     const today = new Date().toISOString().split('T')[0];
 
