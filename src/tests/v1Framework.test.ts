@@ -1,6 +1,7 @@
 import { NOTIFICATION_SLOTS } from '@/services/localNotifications';
 import type { CheckInStatus, DailyCheckIn, DomainType } from '@/types';
 import {
+  IDENTITY_ANCHORS,
   PRIVATE_ROUTE_TEMPLATES,
   PRODUCT_POSITIONING,
   getAvailableDomains,
@@ -116,6 +117,24 @@ describe('V1 acceptance framework', () => {
     expect(PRODUCT_POSITIONING.audience).not.toMatch(/\bmen\b|\bman\b|male/i);
     expect(PRODUCT_POSITIONING.why).toContain('recovery path');
     expect(PRODUCT_POSITIONING.categoryIntro).toContain('Body, Fuel, Self, and Connection');
+  });
+
+  it('keeps identity anchors distinct and plain-English', () => {
+    const anchorNames = IDENTITY_ANCHORS.map((anchor) => anchor.name);
+    const descriptions = IDENTITY_ANCHORS.map((anchor) => anchor.description);
+    const builder = IDENTITY_ANCHORS.find((anchor) => anchor.id === 'builder');
+    const creator = IDENTITY_ANCHORS.find((anchor) => anchor.id === 'creator');
+    const custom = IDENTITY_ANCHORS.find((anchor) => anchor.id === 'custom');
+
+    expect(new Set(anchorNames).size).toBe(IDENTITY_ANCHORS.length);
+    expect(new Set(descriptions).size).toBe(IDENTITY_ANCHORS.length);
+    expect(descriptions.every((description) => description.split(' ').length >= 7)).toBe(true);
+    expect(builder?.description).toContain('systems');
+    expect(builder?.description).toContain('shipped work');
+    expect(creator?.description).toContain('art');
+    expect(creator?.description).toContain('photos');
+    expect(creator?.description.toLowerCase()).not.toContain('build');
+    expect(custom?.description).toContain('own words');
   });
 
   it('uses clear category labels in framework recommendation cards', () => {

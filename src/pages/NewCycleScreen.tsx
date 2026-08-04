@@ -128,7 +128,9 @@ export default function NewCycleScreen() {
         <p className="font-heading text-xs text-base-subtext tracking-widest uppercase mb-3">
           Your identity anchor
         </p>
-        <p className="text-base-subtext text-xs mb-4">You can keep the same or choose a new one.</p>
+        <p className="text-base-subtext text-xs mb-4">
+          You can keep the same role or choose the one that best fits this cycle.
+        </p>
         <div className="flex flex-col gap-2">
           {IDENTITY_ANCHORS.map((anchor) => (
             <button
