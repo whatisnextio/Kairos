@@ -1,3 +1,5 @@
+.gitattributes text eol=lf
+.gitignore text eol=lf
 src/**/*.ts text eol=lf
 src/**/*.tsx text eol=lf
 supabase/**/*.ts text eol=lf

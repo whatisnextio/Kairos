@@ -5,6 +5,7 @@ dist/
 .DS_Store
 *.log
 .vite/
+supabase/.temp/
 
 # Private session files — never commit
 HANDOFF.md
