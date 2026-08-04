@@ -322,8 +322,7 @@ export const SUBSCRIPTION_TIER_CONFIGS: Record<SubscriptionTier, SubscriptionTie
     tier: 'lifechanger',
     label: 'Lifechanger',
     accessLevel: 'paid',
-    description:
-      'Advanced personalisation tier. In V1 it inherits Brotherhood access until deeper AI coaching ships.',
+    description: 'Brotherhood access plus deeper AI pattern support when there is enough history.',
   },
 };
 

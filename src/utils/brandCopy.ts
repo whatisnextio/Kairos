@@ -56,7 +56,7 @@ export const HELP_FAQS = [
   },
   {
     q: 'How does the AI nudge work?',
-    a: 'AI nudges use your identity anchor, phase, recent check-ins, streaks, and active routes. Brotherhood gets daily nudges. Free gets a Sunday nudge.',
+    a: 'AI nudges use your identity anchor, phase, recent check-ins, streaks, and active routes. Brotherhood gets daily nudges. Lifechanger can add grounded pattern signals when there is enough history. Free gets a Sunday nudge.',
   },
   {
     q: 'What is Brotherhood?',
@@ -64,7 +64,7 @@ export const HELP_FAQS = [
   },
   {
     q: 'What is Lifechanger?',
-    a: 'Lifechanger is reserved for deeper personalisation. In V1 it inherits Brotherhood access until the advanced AI coaching rules are shipped.',
+    a: 'Lifechanger adds advanced pattern support on top of Brotherhood. It can use trends, vibe movement, streaks, notes, and cross-domain signals when your history is strong enough. If the data is thin, it falls back to standard Kairos support.',
   },
   {
     q: 'Is my data private?',
@@ -77,9 +77,10 @@ export const HELP_FAQS = [
 ] as const;
 
 export const SUBSCRIPTION_COPY = {
-  title: 'Brotherhood',
-  intro: 'The full V1 12K loop: daily prompts, deeper progress, cloud sync, and private routes.',
+  title: 'Upgrade 12K',
+  intro: 'Choose the level of guided support that matches how much accountability you want.',
   price: '£7.99',
+  lifechangerPrice: '£19.99',
   priceSuffix: 'per month when checkout is live.',
   paidFeatures: [
     'Daily AI nudge, based on your 12K context',
@@ -90,6 +91,12 @@ export const SUBSCRIPTION_COPY = {
     'Anonymous squad signals when matched',
     'Day 84 cycle reflection',
   ],
+  lifechangerFeatures: [
+    'Everything in Brotherhood',
+    'Advanced AI pattern support when history is strong enough',
+    'Trend, vibe, streak, note, and cross-domain signals',
+    'Fallback to standard Kairos support when data is thin',
+  ],
   freeFeatures: [
     'Track the four core domains',
     'Local device progress',
@@ -98,7 +105,7 @@ export const SUBSCRIPTION_COPY = {
     'Sunday AI nudge',
   ],
   lifechanger:
-    'Lifechanger is planned for advanced personalisation. In V1 it inherits Brotherhood access without extra claims.',
+    'Lifechanger adds deeper personalisation without becoming open-ended chat or making diagnostic claims.',
 } as const;
 
 export const PRIVACY_COPY = {

@@ -1,6 +1,7 @@
 import Button from '@/components/common/Button';
 import Card from '@/components/common/Card';
 import { useAppStore } from '@/store/useAppStore';
+import type { SubscriptionTier } from '@/types';
 import { buildStripeCheckoutUrl } from '@/utils/billing';
 import { SUBSCRIPTION_COPY } from '@/utils/brandCopy';
 import { hasBrotherhoodAccess } from '@/utils/entitlements';
@@ -8,6 +9,11 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 const STRIPE_CHECKOUT_URL = import.meta.env.VITE_STRIPE_CHECKOUT_URL as string;
+const STRIPE_LIFECHANGER_CHECKOUT_URL = import.meta.env.VITE_STRIPE_LIFECHANGER_CHECKOUT_URL as
+  | string
+  | undefined;
+
+type PaidCheckoutTier = Extract<SubscriptionTier, 'brotherhood' | 'lifechanger'>;
 
 export default function SubscriptionScreen() {
   const navigate = useNavigate();
@@ -15,15 +21,17 @@ export default function SubscriptionScreen() {
   const [checkoutError, setCheckoutError] = useState<string | null>(null);
   const hasPaidAccess = hasBrotherhoodAccess(profile?.tier);
 
-  const handleUpgrade = () => {
+  const handleUpgrade = (tier: PaidCheckoutTier) => {
     setCheckoutError(null);
+    const checkoutUrl =
+      tier === 'lifechanger' ? STRIPE_LIFECHANGER_CHECKOUT_URL : STRIPE_CHECKOUT_URL;
     const url = buildStripeCheckoutUrl({
-      checkoutUrl: STRIPE_CHECKOUT_URL,
+      checkoutUrl,
       profileId: profile?.id,
     });
 
     if (!url) {
-      setCheckoutError('Checkout is not available yet. Try again later or contact support.');
+      setCheckoutError(`${tierLabel(tier)} checkout is not available yet. Contact support.`);
       return;
     }
 
@@ -31,6 +39,9 @@ export default function SubscriptionScreen() {
     localStorage.setItem('kairos_checkout_pending', String(Date.now()));
     window.location.href = url;
   };
+
+  const isLifechanger = profile?.tier === 'lifechanger';
+  const isBrotherhood = profile?.tier === 'brotherhood';
 
   return (
     <div className="px-4 pt-6 pb-4 flex flex-col gap-4">
@@ -61,8 +72,22 @@ export default function SubscriptionScreen() {
       <p className="text-base-subtext text-sm">{SUBSCRIPTION_COPY.intro}</p>
 
       <Card className="border-accent-green/40">
-        <p className="font-heading text-3xl font-bold text-base-text">{SUBSCRIPTION_COPY.price}</p>
-        <p className="text-base-subtext text-sm">{SUBSCRIPTION_COPY.priceSuffix}</p>
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <p className="text-base-subtext text-xs font-heading tracking-widest uppercase mb-2">
+              Brotherhood
+            </p>
+            <p className="font-heading text-3xl font-bold text-base-text">
+              {SUBSCRIPTION_COPY.price}
+            </p>
+            <p className="text-base-subtext text-sm">{SUBSCRIPTION_COPY.priceSuffix}</p>
+          </div>
+          {hasPaidAccess && (
+            <span className="rounded border border-accent-green/40 px-2 py-1 text-[11px] text-accent-green font-heading uppercase tracking-wider">
+              Active
+            </span>
+          )}
+        </div>
 
         <ul className="mt-4 flex flex-col gap-2">
           {SUBSCRIPTION_COPY.paidFeatures.map((feature) => (
@@ -73,15 +98,59 @@ export default function SubscriptionScreen() {
           ))}
         </ul>
 
-        <Button onClick={handleUpgrade} className="w-full mt-6" disabled={hasPaidAccess}>
+        <Button
+          onClick={() => handleUpgrade('brotherhood')}
+          className="w-full mt-6"
+          disabled={hasPaidAccess}
+        >
           {hasPaidAccess ? 'Already active' : 'Unlock Brotherhood'}
         </Button>
-        {checkoutError && (
-          <p role="alert" className="text-status-missed text-xs mt-3">
-            {checkoutError}
-          </p>
-        )}
       </Card>
+
+      <Card>
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <p className="text-base-subtext text-xs font-heading tracking-widest uppercase mb-2">
+              Lifechanger
+            </p>
+            <p className="font-heading text-3xl font-bold text-base-text">
+              {SUBSCRIPTION_COPY.lifechangerPrice}
+            </p>
+            <p className="text-base-subtext text-sm">{SUBSCRIPTION_COPY.priceSuffix}</p>
+          </div>
+          {isLifechanger && (
+            <span className="rounded border border-accent-green/40 px-2 py-1 text-[11px] text-accent-green font-heading uppercase tracking-wider">
+              Active
+            </span>
+          )}
+        </div>
+        <p className="text-base-subtext text-sm mt-4">{SUBSCRIPTION_COPY.lifechanger}</p>
+        <ul className="mt-4 flex flex-col gap-2">
+          {SUBSCRIPTION_COPY.lifechangerFeatures.map((feature) => (
+            <li key={feature} className="flex items-center gap-2 text-sm text-base-text">
+              <span className="text-accent-green font-bold">+</span>
+              {feature}
+            </li>
+          ))}
+        </ul>
+        <Button
+          onClick={() => handleUpgrade('lifechanger')}
+          className="w-full mt-6"
+          disabled={isLifechanger}
+        >
+          {isLifechanger
+            ? 'Lifechanger active'
+            : isBrotherhood
+              ? 'Upgrade to Lifechanger'
+              : 'Choose Lifechanger'}
+        </Button>
+      </Card>
+
+      {checkoutError && (
+        <p role="alert" className="text-status-missed text-xs text-center">
+          {checkoutError}
+        </p>
+      )}
 
       <Card>
         <p className="text-base-subtext text-xs font-heading tracking-widest uppercase mb-2">
@@ -97,16 +166,13 @@ export default function SubscriptionScreen() {
         </ul>
       </Card>
 
-      <Card>
-        <p className="text-base-subtext text-xs font-heading tracking-widest uppercase mb-2">
-          Lifechanger
-        </p>
-        <p className="text-base-subtext text-sm">{SUBSCRIPTION_COPY.lifechanger}</p>
-      </Card>
-
       <p className="text-base-muted text-xs text-center">
         Payment and cancellation details are handled by Stripe when checkout is available.
       </p>
     </div>
   );
+}
+
+function tierLabel(tier: PaidCheckoutTier): string {
+  return tier === 'lifechanger' ? 'Lifechanger' : 'Brotherhood';
 }

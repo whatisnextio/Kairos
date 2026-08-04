@@ -34,6 +34,11 @@ Length:
 Personalisation:
 You will be given the user's identity anchor, current KAIROS phase, recent check-ins, current streaks, and last vibe check. Reference at least one of these in the nudge to make it feel personal.
 
+Tier rules:
+- Brotherhood: use phase, domain focus, recent check-ins, streaks, and vibe only. Do not claim advanced pattern detection.
+- Lifechanger: if grounded pattern signals are supplied, reference exactly one trend, vibe, streak, note, or cross-domain signal. If signals are insufficient, fall back to standard support and say nothing about patterns.
+- Never diagnose, therapise, or make medical, financial, or legal claims.
+
 KAIROS phase contexts:
 - KICKOFF (Days 1-14): Start small. Create the first visible win.
 - ANCHOR (Days 15-28): Make the habit easy to find, repeat, and protect.
@@ -62,16 +67,144 @@ const PHASE_CONTEXTS: Record<string, string> = {
 };
 
 interface UserState {
+  tier: string;
   identityAnchorName: string;
   customAnchorName?: string;
   phase: string;
   dayInCycle: number;
   domainFocuses: Array<{ domain: string; focus: string }>;
   customRoutes: Array<{ label: string; parentDomain: string; focus: string }>;
-  recentCheckIns: Array<{ date: string; domain: string; status: string }>;
-  recentCustomRouteCheckIns: Array<{ date: string; route: string; status: string }>;
+  recentCheckIns: Array<{ date: string; domain: string; status: string; notes?: string | null }>;
+  recentCustomRouteCheckIns: Array<{
+    date: string;
+    route: string;
+    status: string;
+    notes?: string | null;
+  }>;
   streaks: Array<{ domain: string; current: number; longest: number }>;
   lastVibeCheck?: { rating: number; date: string };
+  vibeChecks: Array<{ rating: number; date: string }>;
+}
+
+const NOTE_KEYWORDS = [
+  'tired',
+  'sleep',
+  'pain',
+  'stress',
+  'anxious',
+  'overwhelmed',
+  'alcohol',
+  'bread',
+  'bloated',
+  'energy',
+  'argued',
+  'avoid',
+  'missed',
+];
+
+function completionWeight(status: string): number {
+  if (status === 'Done' || status === 'Protected') return 1;
+  if (status === 'Partial') return 0.5;
+  return 0;
+}
+
+function formatDomain(domain: string): string {
+  if (domain === 'METIME') return 'Self';
+  if (domain === 'USTIME') return 'Connection';
+  return domain.charAt(0) + domain.slice(1).toLowerCase();
+}
+
+function buildLifechangerSignals(state: UserState): string[] {
+  if (state.tier !== 'lifechanger') return [];
+
+  const signals: string[] = [];
+  const grouped = state.recentCheckIns.reduce<Record<string, typeof state.recentCheckIns>>(
+    (groups, checkIn) => {
+      groups[checkIn.domain] = groups[checkIn.domain] ?? [];
+      groups[checkIn.domain].push(checkIn);
+      return groups;
+    },
+    {},
+  );
+
+  for (const [domain, items] of Object.entries(grouped)) {
+    if (items.length < 3) continue;
+    const score =
+      items.reduce((sum, item) => sum + completionWeight(item.status), 0) / items.length;
+    const label = formatDomain(domain);
+    const missed = items.filter((item) => item.status === 'Missed').length;
+
+    if (score >= 0.75) {
+      signals.push(
+        `${label} is the strongest recent trend at ${Math.round(score * 100)}% completion.`,
+      );
+      break;
+    }
+    if (missed >= 2) {
+      signals.push(`${label} has ${missed} recent misses, so offer a recovery path.`);
+      break;
+    }
+  }
+
+  const sortedVibes = [...state.vibeChecks].sort((a, b) => a.date.localeCompare(b.date));
+  if (sortedVibes.length >= 2) {
+    const first = sortedVibes[0];
+    const last = sortedVibes[sortedVibes.length - 1];
+    if (Math.abs(last.rating - first.rating) >= 1) {
+      signals.push(`Vibe moved from ${first.rating}/5 to ${last.rating}/5 across recent checks.`);
+    }
+  }
+
+  const streak = state.streaks
+    .filter((item) => item.current >= 3 || (item.longest >= 7 && item.current === 0))
+    .sort((a, b) => b.current - a.current || b.longest - a.longest)[0];
+  if (streak) {
+    const label = formatDomain(streak.domain);
+    signals.push(
+      streak.current >= 3
+        ? `${label} has a ${streak.current}-day current streak to protect.`
+        : `${label} had a ${streak.longest}-day best streak and needs a restart.`,
+    );
+  }
+
+  const noteSource = [...state.recentCheckIns, ...state.recentCustomRouteCheckIns].find((item) => {
+    const note = item.notes?.toLowerCase() ?? '';
+    return NOTE_KEYWORDS.some((keyword) => note.includes(keyword));
+  });
+  if (noteSource?.notes) {
+    const keyword = NOTE_KEYWORDS.find((item) => noteSource.notes?.toLowerCase().includes(item));
+    signals.push(
+      `Recent notes mention "${keyword}", so keep the nudge practical and non-diagnostic.`,
+    );
+  }
+
+  const bodyFuelGood = ['BODY', 'FUEL'].some((domain) =>
+    grouped[domain]?.some((item) => completionWeight(item.status) >= 1),
+  );
+  const selfConnectionOpen = ['METIME', 'USTIME'].some((domain) =>
+    grouped[domain]?.some((item) => item.status === 'Missed' || item.status === 'Partial'),
+  );
+  if (bodyFuelGood && selfConnectionOpen) {
+    signals.push(
+      'Body or Fuel has recent proof while Self or Connection is open, so connect the next action across domains.',
+    );
+  }
+
+  return signals.slice(0, 4);
+}
+
+function buildLifechangerSection(state: UserState): string {
+  const signals = buildLifechangerSignals(state);
+  if (state.tier !== 'lifechanger') {
+    return 'Personalisation mode: Brotherhood standard support.';
+  }
+  if (signals.length === 0) {
+    return 'Personalisation mode: Lifechanger, insufficient history for advanced pattern claims. Use standard phase and domain support only.';
+  }
+  return [
+    'Personalisation mode: Lifechanger pattern support. Use one grounded signal, not all of them.',
+    ...signals.map((signal) => `- ${signal}`),
+  ].join('\n');
 }
 
 function buildUserPrompt(state: UserState, type: 'daily_nudge' | 'weekly_challenge'): string {
@@ -80,9 +213,7 @@ function buildUserPrompt(state: UserState, type: 'daily_nudge' | 'weekly_challen
 
   const focusLines = state.domainFocuses.map((f) => `  ${f.domain}: ${f.focus}`).join('\n');
   const customRouteLines = state.customRoutes.length
-    ? state.customRoutes
-        .map((r) => `  ${r.label} under ${r.parentDomain}: ${r.focus}`)
-        .join('\n')
+    ? state.customRoutes.map((r) => `  ${r.label} under ${r.parentDomain}: ${r.focus}`).join('\n')
     : '  No personal routes.';
 
   const checkInLines = state.recentCheckIns.length
@@ -125,6 +256,8 @@ Current streaks:
 ${streakLines}
 
 Last vibe check: ${vibeLines}
+
+${buildLifechangerSection(state)}
 
 Generate one ${type} for today.`;
 }
@@ -297,14 +430,14 @@ Deno.serve(async (req: Request) => {
 
     const { data: checkIns } = await supabase
       .from('daily_check_ins')
-      .select('date, domain_type, status')
+      .select('date, domain_type, status, notes')
       .eq('user_id', userId)
       .gte('date', sevenDaysAgo)
       .order('date', { ascending: true });
 
     const { data: customCheckIns } = await supabase
       .from('custom_route_check_ins')
-      .select('date, status, custom_routes(label)')
+      .select('date, status, notes, custom_routes(label)')
       .eq('user_id', userId)
       .eq('cycle_id', cycle.id)
       .gte('date', sevenDaysAgo)
@@ -315,15 +448,17 @@ Deno.serve(async (req: Request) => {
       .select('domain_type, current_streak, longest_streak')
       .eq('user_id', userId);
 
-    const { data: vibeCheck } = await supabase
+    const { data: vibeChecks } = await supabase
       .from('vibe_checks')
       .select('rating, date')
       .eq('user_id', userId)
-      .order('date', { ascending: false })
-      .limit(1)
-      .maybeSingle();
+      .gte('date', sevenDaysAgo)
+      .order('date', { ascending: true });
+
+    const lastVibeCheck = vibeChecks?.[vibeChecks.length - 1];
 
     const state: UserState = {
+      tier: profile.tier,
       identityAnchorName:
         (profile.identity_anchors as { name: string } | null)?.name ?? profile.identity_anchor_id,
       customAnchorName: profile.custom_anchor_name ?? undefined,
@@ -343,17 +478,24 @@ Deno.serve(async (req: Request) => {
         }),
       ),
       recentCheckIns: (checkIns ?? []).map(
-        (c: { date: string; domain_type: string; status: string }) => ({
+        (c: { date: string; domain_type: string; status: string; notes: string | null }) => ({
           date: c.date,
           domain: c.domain_type,
           status: c.status,
+          notes: c.notes,
         }),
       ),
       recentCustomRouteCheckIns: (customCheckIns ?? []).map(
-        (c: { date: string; status: string; custom_routes: { label: string } | null }) => ({
+        (c: {
+          date: string;
+          status: string;
+          notes: string | null;
+          custom_routes: { label: string } | null;
+        }) => ({
           date: c.date,
           route: c.custom_routes?.label ?? 'Personal route',
           status: c.status,
+          notes: c.notes,
         }),
       ),
       streaks: (streaks ?? []).map(
@@ -363,7 +505,13 @@ Deno.serve(async (req: Request) => {
           longest: s.longest_streak,
         }),
       ),
-      lastVibeCheck: vibeCheck ? { rating: vibeCheck.rating, date: vibeCheck.date } : undefined,
+      lastVibeCheck: lastVibeCheck
+        ? { rating: lastVibeCheck.rating, date: lastVibeCheck.date }
+        : undefined,
+      vibeChecks: (vibeChecks ?? []).map((v: { rating: number; date: string }) => ({
+        rating: v.rating,
+        date: v.date,
+      })),
     };
 
     const userPrompt = buildUserPrompt(state, 'daily_nudge');

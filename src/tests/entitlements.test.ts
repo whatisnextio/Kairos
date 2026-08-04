@@ -41,7 +41,7 @@ describe('complimentary Brotherhood entitlement', () => {
 
   it('returns database fields for the owner entitlement', () => {
     expect(getComplimentaryProfileFields('ldgmcdowell@gmail.com')).toEqual({
-      tier: 'brotherhood',
+      tier: 'lifechanger',
       subscription_status: 'active',
       cancel_at_period_end: false,
       current_period_end: null,
@@ -50,7 +50,7 @@ describe('complimentary Brotherhood entitlement', () => {
 
   it('upgrades the profile shape used by the app', () => {
     expect(applyComplimentaryBrotherhood('ldgmcdowell@gmail.com', baseProfile)).toMatchObject({
-      tier: 'brotherhood',
+      tier: 'lifechanger',
       subscriptionStatus: 'active',
       cancelAtPeriodEnd: false,
       currentPeriodEnd: null,
