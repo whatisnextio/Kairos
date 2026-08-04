@@ -41,9 +41,17 @@ function shouldShowVibeCheck(lastVibeCheckDate: string | null, dayInCycle: numbe
   return daysSince >= 7;
 }
 
+const PHASE_MILESTONE_MESSAGES: Record<string, string> = {
+  STABILISE: 'Gate closed. Floor set. Hold it for 49 days.',
+  BUILD: '7 weeks banked. Strength and running start now.',
+  PERFORM: 'Base built. Cambridge Half is in range. Perform.',
+  ELITE: '7 months in. The final phase. Finish what you started.',
+};
+
 // Module-level flags: prevent re-prompting within the same JS session even if HomeScreen remounts
 let vibeCheckShownThisSession = false;
 let domainSetupShownThisSession = false;
+let phaseTransitionShownThisSession = false;
 
 export default function HomeScreen() {
   const navigate = useNavigate();
@@ -62,16 +70,30 @@ export default function HomeScreen() {
   const setCelebrationPending = useAppStore((s) => s.setCelebrationPending);
   const levelUpPending = useAppStore((s) => s.levelUpPending);
   const setLevelUpPending = useAppStore((s) => s.setLevelUpPending);
+  const lastCelebrationPhase = useAppStore((s) => s.lastCelebrationPhase);
+  const setLastCelebrationPhase = useAppStore((s) => s.setLastCelebrationPhase);
   const [showVibeCheck, setShowVibeCheck] = useState(false);
   const [showDomainSetup, setShowDomainSetup] = useState(false);
+  const [showPhaseTransition, setShowPhaseTransition] = useState(false);
 
   const dayInCycle = profile && currentCycle ? getDayInCycle(currentCycle.startDate) : 1;
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies: setCelebrationPending is a stable Zustand setter; store setters never change between renders
+  // biome-ignore lint/correctness/useExhaustiveDependencies: Zustand setters are stable; lastCelebrationPhase intentionally excluded to avoid re-triggering after the silent first-load set
   useEffect(() => {
     if (!profile || !currentCycle) return;
     if (dayInCycle >= 365 && currentCycle.status === 'active') {
       setCelebrationPending(true);
+    } else if (
+      !phaseTransitionShownThisSession &&
+      phaseConfig.phase !== 'GATE'
+    ) {
+      if (lastCelebrationPhase === null) {
+        // First load after this feature shipped: silently record current phase, no banner.
+        setLastCelebrationPhase(phaseConfig.phase);
+      } else if (phaseConfig.phase !== lastCelebrationPhase) {
+        phaseTransitionShownThisSession = true;
+        setShowPhaseTransition(true);
+      }
     } else if (
       !vibeCheckShownThisSession &&
       shouldShowVibeCheck(lastVibeCheckDate, dayInCycle) &&
@@ -139,6 +161,31 @@ export default function HomeScreen() {
             </p>
             <p className="text-base-subtext text-sm mt-1 mb-3">You earned it. Keep building.</p>
             <Button size="sm" variant="ghost" onClick={() => setLevelUpPending(null)}>
+              Got it
+            </Button>
+          </div>
+        )}
+
+        {/* Phase transition milestone */}
+        {showPhaseTransition && (
+          <div className="rounded-xl border border-accent-green bg-accent-green/10 px-4 py-4">
+            <p className="font-heading text-xs text-accent-green tracking-widest uppercase mb-1">
+              Phase unlocked
+            </p>
+            <p className="font-heading text-xl font-bold text-base-text tracking-wide">
+              {phaseConfig.label}
+            </p>
+            <p className="text-base-subtext text-sm mt-1 mb-3">
+              {PHASE_MILESTONE_MESSAGES[phaseConfig.phase] ?? `${phaseConfig.label} begins.`}
+            </p>
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={() => {
+                setLastCelebrationPhase(phaseConfig.phase);
+                setShowPhaseTransition(false);
+              }}
+            >
               Got it
             </Button>
           </div>
