@@ -4,6 +4,7 @@ import { supabase } from '@/services/supabaseClient';
 import { useAppStore } from '@/store/useAppStore';
 import type { DailyCheckIn, DomainType, KairosCycle, Profile, UserDomainFocus } from '@/types';
 import { XP_PER_CHECK_IN_DONE, XP_PER_CHECK_IN_PARTIAL, getAvailableDomains } from '@/types';
+import { AUTH_COPY } from '@/utils/brandCopy';
 import {
   DEV_CYCLE_ID,
   DEV_EMAIL,
@@ -129,11 +130,9 @@ export default function LoginPage() {
         draggable={false}
       />
       <p className="text-base-text font-heading font-bold text-lg tracking-wide mb-1">
-        12 weeks. Four domains. Daily proof.
+        {AUTH_COPY.headline}
       </p>
-      <p className="text-base-subtext text-sm text-center max-w-xs mb-10">
-        Build body, fuel, self, and connection through small actions that repeat.
-      </p>
+      <p className="text-base-subtext text-sm text-center max-w-xs mb-10">{AUTH_COPY.body}</p>
 
       {sent ? (
         <div className="text-center">

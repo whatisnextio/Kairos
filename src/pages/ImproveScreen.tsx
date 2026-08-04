@@ -3,6 +3,7 @@ import Card from '@/components/common/Card';
 import { useNudge, useUpdateNudgeStatus } from '@/hooks/useNudge';
 import { useAppStore } from '@/store/useAppStore';
 import type { AiNudge, DomainType, ImproveCardSnapshot, NudgeCta, NudgeStatus } from '@/types';
+import { SUBSCRIPTION_COPY } from '@/utils/brandCopy';
 import { hasBrotherhoodAccess } from '@/utils/entitlements';
 import { buildFrameworkRecommendations } from '@/utils/frameworkRecommendations';
 import { getCurrentPhaseConfig, getDayInCycle } from '@/utils/kairos';
@@ -309,7 +310,7 @@ export default function ImproveScreen() {
               Improve cards are a Brotherhood feature.
             </p>
             <Button size="sm" onClick={() => navigate('/subscription')}>
-              Unlock Brotherhood, £7.99/mo
+              Unlock Brotherhood, {SUBSCRIPTION_COPY.price}/mo
             </Button>
             <p className="text-base-muted text-xs mt-3">Free tier gets one nudge on Sundays.</p>
           </div>

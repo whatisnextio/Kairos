@@ -1,6 +1,7 @@
 import Button from '@/components/common/Button';
 import Input from '@/components/common/Input';
 import { supabase } from '@/services/supabaseClient';
+import { AUTH_COPY } from '@/utils/brandCopy';
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 
@@ -55,11 +56,9 @@ export default function RegisterPage() {
         draggable={false}
       />
       <p className="text-base-text font-heading font-bold text-lg tracking-wide mb-1">
-        12 weeks. Four domains. Daily proof.
+        {AUTH_COPY.headline}
       </p>
-      <p className="text-base-subtext text-sm text-center max-w-xs mb-10">
-        Build body, fuel, self, and connection through small actions that repeat.
-      </p>
+      <p className="text-base-subtext text-sm text-center max-w-xs mb-10">{AUTH_COPY.body}</p>
 
       {sent ? (
         <div className="text-center">
