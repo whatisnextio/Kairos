@@ -12,7 +12,6 @@ import type {
 } from '@/types';
 import {
   applyComplimentaryBrotherhood,
-  getComplimentaryProfileFields,
   hasBrotherhoodAccess,
   hasComplimentaryBrotherhood,
 } from '@/utils/entitlements';
@@ -169,12 +168,9 @@ export function useBootstrap() {
         hasComplimentaryBrotherhood(authUser?.email) &&
         (!hasBrotherhoodAccess(mapped.tier) || mapped.subscriptionStatus !== 'active')
       ) {
-        const { data: updatedProfileRow, error: entitlementErr } = await supabase
-          .from('profiles')
-          .update(getComplimentaryProfileFields(authUser?.email))
-          .eq('id', authUser?.id)
-          .select('*')
-          .single();
+        const { data: updatedProfileRow, error: entitlementErr } = await supabase.rpc(
+          'claim_complimentary_lifechanger',
+        );
 
         if (updatedProfileRow) {
           mapped = mapProfile(updatedProfileRow as Record<string, unknown>);

@@ -161,10 +161,7 @@ export default function OnboardingFlow() {
           display_name: cleanName,
           identity_anchor_id: anchorId,
           custom_anchor_name: cleanCustomAnchor,
-          tier: 'free',
-          xp: xpAfterWin,
           date_of_birth: dobFromAuth,
-          ...complimentaryFields,
         })
         .select()
         .single();
@@ -215,6 +212,26 @@ export default function OnboardingFlow() {
         throw new Error(checkInErr?.message ?? 'Could not save your first action.');
       }
 
+      let entitledProfileRow = profileRow;
+      if ('tier' in complimentaryFields) {
+        const { data: claimedProfile, error: claimErr } = await supabase.rpc(
+          'claim_complimentary_lifechanger',
+        );
+        if (claimedProfile) {
+          entitledProfileRow = claimedProfile as Record<string, unknown>;
+        } else {
+          console.error('Complimentary entitlement claim failed:', claimErr?.message);
+        }
+      }
+
+      if (firstProofXp > 0) {
+        const { error: xpErr } = await supabase.rpc('increment_profile_xp', {
+          p_user_id: authUser.id,
+          p_delta: firstProofXp,
+        });
+        if (xpErr) console.error('First proof XP sync failed:', xpErr.message);
+      }
+
       const { error: linkErr } = await supabase
         .from('profiles')
         .update({ current_kairos_cycle_id: cycle.id })
@@ -242,18 +259,18 @@ export default function OnboardingFlow() {
         displayName: cleanName,
         identityAnchorId: anchorId,
         customAnchorName: cleanCustomAnchor ?? undefined,
-        tier: profileRow.tier as Profile['tier'],
+        tier: entitledProfileRow.tier as Profile['tier'],
         xp: xpAfterWin,
         currentKairosCycleId: cycle.id,
         dateOfBirth: dobFromAuth,
         squadId: null,
-        stripeCustomerId: profileRow.stripe_customer_id as string | null,
-        stripeSubscriptionId: profileRow.stripe_subscription_id as string | null,
-        subscriptionStatus: profileRow.subscription_status as string | null,
-        cancelAtPeriodEnd: (profileRow.cancel_at_period_end as boolean | null) ?? false,
-        currentPeriodEnd: profileRow.current_period_end as string | null,
-        createdAt: profileRow.created_at,
-        updatedAt: profileRow.updated_at,
+        stripeCustomerId: entitledProfileRow.stripe_customer_id as string | null,
+        stripeSubscriptionId: entitledProfileRow.stripe_subscription_id as string | null,
+        subscriptionStatus: entitledProfileRow.subscription_status as string | null,
+        cancelAtPeriodEnd: (entitledProfileRow.cancel_at_period_end as boolean | null) ?? false,
+        currentPeriodEnd: entitledProfileRow.current_period_end as string | null,
+        createdAt: entitledProfileRow.created_at as string,
+        updatedAt: entitledProfileRow.updated_at as string,
       });
       setCurrentCycle({
         id: cycle.id,
