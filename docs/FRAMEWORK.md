@@ -62,7 +62,7 @@ Kairos is a practical behaviour-change wrapper, not a clinical programme. It use
 - recovery after lapses,
 - social support where squad features exist.
 
-The core recovery rule is: a missed action is not a failed day. The app should offer a smaller catch-up path and let Partial be an honest score.
+The core recovery rule is: a missed action is not a failed day. The app should offer a smaller catch-up path and let Partial record a smaller useful version.
 
 ## AI and Nudges
 

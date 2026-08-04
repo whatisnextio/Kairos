@@ -55,8 +55,8 @@ describe('V1 acceptance framework', () => {
       FUEL: checkIn('FUEL', 'Done'),
     });
 
-    expect(path?.title).toBe('Catch-up path');
-    expect(path?.body).toContain('not failed');
+    expect(path?.title).toBe('Catch up today');
+    expect(path?.body).toContain('rescue the day');
     expect(path?.steps.join(' ')).toContain('Partial');
   });
 
@@ -160,10 +160,11 @@ describe('V1 acceptance framework', () => {
     expect(buildAccountabilityPrompt(1).level).toBe(2);
     expect(buildAccountabilityPrompt(2).level).toBe(3);
     expect(buildAccountabilityPrompt(1).body.toLowerCase()).not.toContain('ignored');
-    expect(buildAccountabilityPrompt(2).title).toBe('Evening reset');
-    expect(buildAccountabilityPrompt(2).body).toContain('A smaller version still counts');
+    expect(buildAccountabilityPrompt(2).title).toBe('End-of-day check');
+    expect(buildAccountabilityPrompt(2).body).toContain('A smaller useful version still counts');
     expect(buildAccountabilityPrompt(2).body).not.toContain('not another task');
     expect(buildAccountabilityPrompt(2).steps).toContain('Mark Done, Partial, or Missed.');
+    expect(buildAccountabilityPrompt(1).steps).toContain('Record what happened.');
   });
 
   it('schedules repeated structured notification prompts', () => {
@@ -172,7 +173,7 @@ describe('V1 acceptance framework', () => {
       'Kairos: early protocol',
       'Still open',
       'Quick reset',
-      'Evening reset',
+      'End-of-day check',
       'Kairos: catch-up',
       'Kairos: shutdown',
     ]);

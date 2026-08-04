@@ -26,7 +26,7 @@ export const REMINDER_INTENSITY_OPTIONS: {
   {
     id: 'standard',
     label: 'Standard',
-    description: 'Four prompts across early protocol, start, evening reset, and shutdown.',
+    description: 'Four prompts across early protocol, start, end-of-day check, and shutdown.',
   },
   {
     id: 'high',
@@ -50,7 +50,7 @@ export const NOTIFICATION_SLOTS = [
     hour: 5,
     minute: 0,
     title: 'Kairos: early protocol',
-    body: 'Water. No scroll. Pick one tiny floor action. Return to bed if recovery wins.',
+    body: 'Water. No scrolling. Choose one small action. Rest again if that is the right call.',
   },
   {
     id: 2,
@@ -78,14 +78,14 @@ export const NOTIFICATION_SLOTS = [
     hour: 17,
     minute: 0,
     title: 'Kairos: catch-up',
-    body: 'The day is still live. Mark Partial, protect tomorrow, close one loop.',
+    body: 'There is still time. Mark Partial, protect tomorrow, finish one useful action.',
   },
   {
     id: 6,
     hour: 20,
     minute: 30,
     title: 'Kairos: shutdown',
-    body: 'Reflect, plan tomorrow, close the loop.',
+    body: 'Reflect, set tomorrow, finish cleanly.',
   },
 ];
 

@@ -9,8 +9,8 @@ describe('Home journey language', () => {
     expect(home).toContain('alt={`${profile.displayName} profile`}');
     expect(home).toContain('12-week reset for {firstName}');
     expect(home).toContain('Day {displayDay} of {KAIROS_CYCLE_LENGTH_DAYS}');
-    expect(home).toContain('{phaseConfig.label} phase');
-    expect(home).toContain("Today's Kairos proof");
+    expect(home).toContain('{phaseConfig.label}');
+    expect(home).toContain("Today's plan");
     expect(home).toContain('Day {phaseDay} of {phaseLength}');
   });
 
@@ -20,6 +20,9 @@ describe('Home journey language', () => {
 
     expect(home).toContain('Mark Partial');
     expect(home).toContain('Partial means the smallest useful version was completed.');
+    expect(home).toContain('Record what happened');
+    expect(home).not.toContain('honest status');
+    expect(home).not.toContain('stop the drift');
     expect(you).toContain('Open weekly check-in');
     expect(you).not.toContain('>Open check-in<');
   });
