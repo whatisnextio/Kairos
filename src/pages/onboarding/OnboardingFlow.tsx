@@ -575,7 +575,7 @@ export default function OnboardingFlow() {
                     }
                   }
                 } catch {
-                  // Permission denied or push not supported — continue anyway
+                  // Permission denied or push not supported, continue anyway
                 }
                 setOnboardingComplete(true);
               }}
