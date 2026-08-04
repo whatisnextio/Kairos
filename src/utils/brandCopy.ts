@@ -68,7 +68,7 @@ export const HELP_FAQS = [
   },
   {
     q: 'What is Kairos Plus?',
-    a: 'Kairos Plus unlocks the full V1 loop: daily AI nudges, paid progress depth, cloud sync, custom routes, push reminders, anonymous squad signals, and the Day 84 reflection.',
+    a: 'Kairos Plus unlocks the full V1 loop: daily AI nudges, paid progress depth, cloud sync, personal sub-routes, push reminders, anonymous squad signals, and the Day 84 reflection.',
   },
   {
     q: 'What is Lifechanger?',
@@ -76,7 +76,7 @@ export const HELP_FAQS = [
   },
   {
     q: 'Is my data private?',
-    a: 'Yes. Labels stay discreet, your private routes are not public defaults, and the app does not sell your data. See the Privacy Policy for the full position.',
+    a: 'Yes. Labels stay discreet, your private sub-routes are not public defaults, and the app does not sell your data. See the Privacy Policy for the full position.',
   },
   {
     q: 'Why can I not open checkout?',
@@ -92,7 +92,7 @@ export const SUBSCRIPTION_COPY = {
   priceSuffix: 'per month when checkout is live.',
   paidFeatures: [
     'Daily AI nudge, based on your 12K context',
-    'Personal routes under Body, Fuel, Self, or Connection',
+    'Personal sub-routes under Body, Fuel, Self, or Connection',
     'Cloud sync for daily actions and notes',
     'High-accountability PWA reminders',
     'Full Kairos Points, streak, badge, and history depth',
@@ -118,9 +118,9 @@ export const SUBSCRIPTION_COPY = {
 
 export const FEATURE_EXPLANATIONS = {
   personalRoutes:
-    'Add work, money, photography, family, or any private focus as a route under one core domain. The framework stays Body, Fuel, Self, and Connection; your routes make it personal.',
+    'Add work, money, photography, family, or any private focus as a sub-route under one core domain. The framework stays Body, Fuel, Self, and Connection; your sub-routes make it personal.',
   personalRoutesAction:
-    'After you add a route, it can appear in Home, Progress, and Improve as its own proof line.',
+    'After you add a sub-route, it can appear in Home, Progress, and Improve as its own proof line.',
   squad:
     'Squad is anonymous accountability, not chat. The match action places you with people in the same Kairos phase and shows a weekly pulse when one is available.',
   notifications:

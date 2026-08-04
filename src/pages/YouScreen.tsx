@@ -328,8 +328,8 @@ export default function YouScreen() {
     if (!result.ok) {
       setRouteError(
         result.reason === 'upgrade'
-          ? 'Personal routes are included in Kairos Plus and Lifechanger.'
-          : 'Route could not be saved. Check the name and focus, then try again.',
+          ? 'Personal sub-routes are included in Kairos Plus and Lifechanger.'
+          : 'Sub-route could not be saved. Check the name and focus, then try again.',
       );
       return;
     }
@@ -430,10 +430,10 @@ export default function YouScreen() {
         </div>
       </Card>
 
-      {/* Personal routes */}
+      {/* Personal sub-routes */}
       <Card>
         <p className="text-base-subtext text-xs font-heading tracking-widest uppercase mb-3">
-          Personal routes
+          Personal sub-routes
         </p>
         <p className="text-base-subtext text-sm mb-2">{FEATURE_EXPLANATIONS.personalRoutes}</p>
         <p className="text-base-muted text-xs mb-4">{FEATURE_EXPLANATIONS.personalRoutesAction}</p>
@@ -441,12 +441,10 @@ export default function YouScreen() {
           <div className="rounded border border-accent-green/30 bg-accent-green/5 p-3 mb-4">
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0">
-                <p className="font-heading text-sm font-medium text-base-text">
-                  Liam Transformation
-                </p>
+                <p className="font-heading text-sm font-medium text-base-text">Liam sub-routes</p>
                 <p className="text-base-subtext text-xs mt-1">
-                  Adds SHOT, Lens, Nest, and Roots under the core framework, then sets high
-                  accountability prompts.
+                  Adds SHOT, Lens, Nest, and Roots under the normal Kairos categories, then sets
+                  high accountability prompts.
                 </p>
               </div>
               <Button
@@ -472,7 +470,7 @@ export default function YouScreen() {
         )}
         <div className="flex flex-col gap-2 mb-4">
           {activeCustomRoutes.length === 0 ? (
-            <p className="text-base-muted text-sm">No custom routes active.</p>
+            <p className="text-base-muted text-sm">No personal sub-routes active.</p>
           ) : (
             activeCustomRoutes.map((route) => (
               <div
@@ -502,10 +500,11 @@ export default function YouScreen() {
         {!hasPaidAccess ? (
           <div className="rounded border border-status-partial/40 bg-status-partial/5 p-3">
             <p className="text-base-subtext text-sm mb-3">
-              Kairos Plus unlocks personal routes, cloud sync, and Improve options for those routes.
+              Kairos Plus unlocks personal sub-routes, cloud sync, and Improve options for those
+              routes.
             </p>
             <Link to="/subscription">
-              <Button size="sm">Unlock personal routes</Button>
+              <Button size="sm">Unlock sub-routes</Button>
             </Link>
           </div>
         ) : (
@@ -546,7 +545,7 @@ export default function YouScreen() {
               onClick={() => void handleAddCustomRoute()}
               disabled={!routeLabel.trim() || !routeFocus.trim() || isAddingRoute}
             >
-              {isAddingRoute ? 'Adding...' : 'Add route'}
+              {isAddingRoute ? 'Adding...' : 'Add sub-route'}
             </Button>
           </div>
         )}
@@ -917,9 +916,9 @@ export default function YouScreen() {
                 This is permanent.
               </p>
               <p className="text-base-subtext text-xs mb-3">
-                This deletes your profile, journey history, check-ins, notes, custom routes, nudges,
-                squad link, push subscriptions, and auth account. Billing is handled separately in
-                Stripe.
+                This deletes your profile, journey history, check-ins, notes, personal sub-routes,
+                nudges, squad link, push subscriptions, and auth account. Billing is handled
+                separately in Stripe.
               </p>
               <label className="text-base-subtext text-xs font-heading tracking-widest uppercase">
                 Type DELETE to confirm

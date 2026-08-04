@@ -225,8 +225,11 @@ export default function ProgressScreen() {
         {activeCustomRoutes.length > 0 && (
           <Card>
             <h2 className="font-heading text-xs font-medium text-base-subtext tracking-widest uppercase mb-3">
-              Personal routes
+              Personal sub-routes
             </h2>
+            <p className="text-base-muted text-xs mb-3">
+              Tracked under the core categories, not as separate domains.
+            </p>
             <div className="flex flex-col gap-3">
               {activeCustomRoutes.map((route) => {
                 let done = 0;

@@ -42,6 +42,15 @@ describe('PWA UX shell', () => {
     expect(recommendations).toContain('getDailyDomainLabel(domain)');
   });
 
+  it('nests personal sub-routes under the core daily categories', () => {
+    const home = readFileSync('src/pages/HomeScreen.tsx', 'utf8');
+
+    expect(home).toContain('routesForDomain');
+    expect(home).toContain('route.parentDomainType === domain.type');
+    expect(home).toContain('Sub-route');
+    expect(home).not.toContain('domainLabels.get(route.parentDomainType)');
+  });
+
   it('keeps Improve AI fallback copy clear and intentional', () => {
     const improve = readFileSync('src/pages/ImproveScreen.tsx', 'utf8');
     const lifecycle = readFileSync('src/utils/improveLifecycle.ts', 'utf8');
