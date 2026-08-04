@@ -13,6 +13,28 @@ export interface NotificationPreferences {
   webPushEnabled: boolean;
 }
 
+export const REMINDER_INTENSITY_OPTIONS: {
+  id: ReminderIntensity;
+  label: string;
+  description: string;
+}[] = [
+  {
+    id: 'light',
+    label: 'Light',
+    description: 'Two check-ins: one useful prompt and one catch-up path.',
+  },
+  {
+    id: 'standard',
+    label: 'Standard',
+    description: 'Four prompts across early protocol, start, evening reset, and shutdown.',
+  },
+  {
+    id: 'high',
+    label: 'High accountability',
+    description: 'Repeated structured prompts through the day so missed cues stay visible.',
+  },
+];
+
 export const DEFAULT_NOTIFICATION_PREFERENCES: NotificationPreferences = {
   enabled: false,
   intensity: 'standard',

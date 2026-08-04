@@ -1,5 +1,6 @@
 import {
   DEFAULT_NOTIFICATION_PREFERENCES,
+  REMINDER_INTENSITY_OPTIONS,
   buildNotificationSchedule,
   normaliseNotificationPreferences,
 } from '@/services/localNotifications';
@@ -20,6 +21,20 @@ describe('notification preferences', () => {
     expect(
       buildNotificationSchedule({ enabled: true, intensity: 'high' }).map((s) => s.id),
     ).toEqual([1, 2, 3, 4, 5, 6]);
+  });
+
+  it('explains each onboarding intensity without diagnostic language', () => {
+    expect(REMINDER_INTENSITY_OPTIONS.map((option) => option.id)).toEqual([
+      'light',
+      'standard',
+      'high',
+    ]);
+    expect(
+      REMINDER_INTENSITY_OPTIONS.find((option) => option.id === 'high')?.description,
+    ).toContain('Repeated structured prompts');
+    expect(REMINDER_INTENSITY_OPTIONS.map((option) => option.description).join(' ')).not.toMatch(
+      /adhd|diagnos/i,
+    );
   });
 
   it('respects quiet hours and early protocol preference', () => {
