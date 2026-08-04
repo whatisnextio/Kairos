@@ -543,9 +543,7 @@ export const useAppStore = create<AppState & AppActions>()(
               newLevel.level > oldLevel.level
                 ? { level: newLevel.level, label: newLevel.label }
                 : state.levelUpPending,
-            streakProtectionPending: protectionApplied
-              ? domainType
-              : state.streakProtectionPending,
+            streakProtectionPending: protectionApplied ? domainType : state.streakProtectionPending,
           };
         });
 
