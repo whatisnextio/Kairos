@@ -381,7 +381,7 @@ export default function YouScreen() {
       : (anchor?.name ?? 'Unknown');
 
   return (
-    <div className="px-4 pt-6 pb-4 flex flex-col gap-4">
+    <div className="mx-auto flex w-full max-w-2xl flex-col gap-4 px-4 pb-4 pt-6 sm:px-6 sm:pt-8">
       <h1 className="font-heading text-2xl font-bold text-base-text tracking-wide">You</h1>
 
       {/* Profile */}

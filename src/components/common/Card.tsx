@@ -7,7 +7,7 @@ interface CardProps extends HTMLAttributes<HTMLDivElement> {
 
 export default function Card({ children, elevated, className = '', ...props }: CardProps) {
   return (
-    <div className={`card ${elevated ? 'bg-base-elevated' : ''} ${className}`} {...props}>
+    <div className={`card ${elevated ? 'bg-base-elevated/95' : ''} ${className}`} {...props}>
       {children}
     </div>
   );

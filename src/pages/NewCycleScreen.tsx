@@ -103,7 +103,7 @@ export default function NewCycleScreen() {
   }
 
   return (
-    <div className="px-4 pt-6 pb-4 flex flex-col gap-4">
+    <div className="mx-auto flex w-full max-w-2xl flex-col gap-4 px-4 pb-4 pt-6 sm:px-6 sm:pt-8">
       <div>
         <p className="font-heading text-xs text-accent-green tracking-widest uppercase mb-1">
           Cycle {cycleNumber}

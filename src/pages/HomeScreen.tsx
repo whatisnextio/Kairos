@@ -40,12 +40,20 @@ const STATUS_LABELS: Record<CheckInStatus, string> = {
   Protected: 'Protected',
 };
 
-const STATUS_COLOURS: Record<CheckInStatus, string> = {
-  Done: 'border-status-done text-status-done',
-  Partial: 'border-status-partial text-status-partial',
-  Missed: 'border-status-missed text-status-missed',
-  Pending: 'border-base-border text-base-subtext hover:border-base-muted',
-  Protected: 'border-base-muted text-base-muted',
+const STATUS_ROW_CLASSES: Record<CheckInStatus, string> = {
+  Done: 'border-white/10 bg-base-surface/90 hover:border-status-done/35',
+  Partial: 'border-white/10 bg-base-surface/90 hover:border-status-partial/35',
+  Missed: 'border-white/10 bg-base-surface/90 hover:border-status-missed/35',
+  Pending: 'border-white/10 bg-base-surface/90 hover:border-white/20',
+  Protected: 'border-white/10 bg-base-surface/90 hover:border-base-muted/40',
+};
+
+const STATUS_BADGE_CLASSES: Record<CheckInStatus, string> = {
+  Done: 'border-status-done/40 bg-status-done/5 text-status-done',
+  Partial: 'border-status-partial/40 bg-status-partial/5 text-status-partial',
+  Missed: 'border-status-missed/40 bg-status-missed/5 text-status-missed',
+  Pending: 'border-white/15 bg-white/[0.03] text-base-subtext',
+  Protected: 'border-base-muted/40 bg-base-muted/5 text-base-muted',
 };
 
 function shouldShowVibeCheck(lastVibeCheckDate: string | null, dayInCycle: number): boolean {
@@ -208,7 +216,7 @@ export default function HomeScreen() {
 
   return (
     <>
-      <div className="px-4 pt-6 pb-4 flex flex-col gap-4">
+      <div className="mx-auto flex w-full max-w-2xl flex-col gap-4 px-4 pb-4 pt-6 sm:px-6 sm:pt-8">
         {/* Header */}
         <div className="flex items-center gap-3">
           <div className="h-16 w-16 shrink-0 overflow-hidden rounded-full border border-accent-green/50 bg-base-surface flex items-center justify-center">
@@ -551,7 +559,7 @@ export default function HomeScreen() {
               return (
                 <div key={domain.type} className="flex flex-col gap-1.5">
                   <div
-                    className={`w-full flex rounded border transition-colors ${STATUS_COLOURS[status]} bg-base-surface`}
+                    className={`w-full flex rounded-lg border shadow-[0_12px_34px_rgba(0,0,0,0.18)] transition-colors ${STATUS_ROW_CLASSES[status]}`}
                   >
                     <button
                       type="button"
@@ -563,7 +571,9 @@ export default function HomeScreen() {
                         <span className={`font-heading font-medium tracking-wide ${domain.colour}`}>
                           {displayLabel}
                         </span>
-                        <span className="shrink-0 rounded border border-current/30 px-2 py-1 text-[11px] font-heading uppercase tracking-wider">
+                        <span
+                          className={`shrink-0 rounded-md border px-2 py-1 text-[11px] font-heading uppercase tracking-wider ${STATUS_BADGE_CLASSES[status]}`}
+                        >
                           {STATUS_LABELS[status]}
                         </span>
                       </div>
@@ -580,7 +590,7 @@ export default function HomeScreen() {
                     </button>
                     <button
                       type="button"
-                      className="px-3 flex items-center text-base-muted hover:text-base-subtext transition-colors border-l border-current/20"
+                      className="flex items-center border-l border-white/10 px-3 text-base-muted transition-colors hover:text-base-subtext"
                       onClick={() => navigate(`/detail/${getDomainRouteSlug(domain.type)}`)}
                       aria-label={`Open ${displayLabel} detail`}
                     >
@@ -610,7 +620,7 @@ export default function HomeScreen() {
                           <button
                             key={route.id}
                             type="button"
-                            className={`w-full rounded border px-3 py-2 text-left transition-colors ${STATUS_COLOURS[routeStatus]} bg-base-black/20`}
+                            className={`w-full rounded-lg border px-3 py-2 text-left transition-colors ${STATUS_ROW_CLASSES[routeStatus]}`}
                             onClick={() => handleCustomRouteCheckIn(route.id, routeStatus)}
                             aria-label={`Check in ${route.label}`}
                           >
@@ -618,7 +628,9 @@ export default function HomeScreen() {
                               <span className="font-heading text-sm font-medium tracking-wide text-base-text truncate">
                                 {route.label}
                               </span>
-                              <span className="shrink-0 text-[11px]">
+                              <span
+                                className={`shrink-0 rounded-md border px-2 py-1 text-[11px] font-heading uppercase tracking-wider ${STATUS_BADGE_CLASSES[routeStatus]}`}
+                              >
                                 {STATUS_LABELS[routeStatus]}
                               </span>
                             </div>
