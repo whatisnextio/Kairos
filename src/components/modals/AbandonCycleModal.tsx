@@ -93,7 +93,7 @@ export default function AbandonCycleModal({ onClose }: Props) {
             </h2>
             <p className="text-base-subtext text-sm mb-6">
               This starts onboarding again. Your active journey and progress reset, but previous
-              history, XP, profile, and memory stay intact.
+              history, KP, profile, and memory stay intact.
             </p>
             <div className="flex gap-3">
               <Button variant="ghost" onClick={onClose} className="flex-1">

@@ -1,8 +1,10 @@
+import { formatKairosPoints } from '@/utils/gamification';
 import type { FlywheelSummary } from '@/utils/v1Framework';
 
 export interface SharePrivacyPreferences {
   includeName: boolean;
   includePhoto: boolean;
+  includeBadges: boolean;
   includeDomainDetail: boolean;
   includeStats: boolean;
 }
@@ -10,6 +12,7 @@ export interface SharePrivacyPreferences {
 export const DEFAULT_SHARE_PRIVACY: SharePrivacyPreferences = {
   includeName: false,
   includePhoto: false,
+  includeBadges: true,
   includeDomainDetail: false,
   includeStats: true,
 };
@@ -51,11 +54,13 @@ export function buildProgressSharePreview(input: ProgressShareInput): SharePrevi
   const owner = preferences.includeName ? `${input.displayName.trim() || 'I'}: ` : '';
   const lines = [
     `${owner}12K progress, Day ${input.dayInCycle} of 84.`,
-    input.earnedBadgeLabel ? `Milestone: ${input.earnedBadgeLabel}.` : 'Still in the daily loop.',
+    preferences.includeBadges && input.earnedBadgeLabel
+      ? `Milestone: ${input.earnedBadgeLabel}.`
+      : 'Still in the daily loop.',
   ];
 
   if (preferences.includeStats) {
-    lines.push(`Level: ${input.levelLabel}. XP: ${input.xp}.`);
+    lines.push(`Level: ${input.levelLabel}. Kairos Points: ${formatKairosPoints(input.xp)}.`);
   }
 
   if (preferences.includeDomainDetail) {

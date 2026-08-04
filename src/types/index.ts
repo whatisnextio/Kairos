@@ -605,6 +605,7 @@ export interface EarnedBadge {
   id: BadgeId;
   label: string;
   description: string;
+  trigger: string;
   earned: boolean;
 }
 

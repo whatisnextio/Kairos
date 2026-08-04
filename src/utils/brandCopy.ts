@@ -87,7 +87,7 @@ export const SUBSCRIPTION_COPY = {
     'Custom routes under Body, Fuel, Self, or Connection',
     'Cloud sync for daily actions and notes',
     'High-accountability PWA reminders',
-    'Full XP, streak, badge, and history depth',
+    'Full Kairos Points, streak, badge, and history depth',
     'Anonymous squad signals when matched',
     'Day 84 cycle reflection',
   ],
@@ -112,7 +112,7 @@ export const PRIVACY_COPY = {
   intro:
     '12K is private by design. It stores only what is needed to run your 84-day journey, sync paid features, and keep the app useful.',
   collected:
-    'Email, date of birth for 18+ checks, profile setup, check-ins, route choices, notes, XP, streaks, notification preferences, and cycle state.',
+    'Email, date of birth for 18+ checks, profile setup, check-ins, route choices, notes, Kairos Points, streaks, notification preferences, and cycle state.',
   notDone:
     'We do not sell your data, use advertising networks, or make private route labels public. Supabase stores app data, Stripe handles payments when billing is live, and Plausible measures usage without cookies.',
   rights:

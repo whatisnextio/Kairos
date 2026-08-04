@@ -6,6 +6,7 @@ import type { AiNudge, DomainType, ImproveCardSnapshot, NudgeCta, NudgeStatus } 
 import { SUBSCRIPTION_COPY } from '@/utils/brandCopy';
 import { hasBrotherhoodAccess } from '@/utils/entitlements';
 import { buildFrameworkRecommendations } from '@/utils/frameworkRecommendations';
+import { formatKairosPoints } from '@/utils/gamification';
 import { getCurrentPhaseConfig, getDayInCycle } from '@/utils/kairos';
 import { Zap } from 'lucide-react';
 import { useState } from 'react';
@@ -85,7 +86,9 @@ function ImproveCardContent({
           {STATUS_LABELS[card.status]}
         </span>
         {card.xpReward > 0 && (
-          <span className="text-accent-green text-[11px] font-heading">+{card.xpReward} XP</span>
+          <span className="text-accent-green text-[11px] font-heading">
+            +{formatKairosPoints(card.xpReward)}
+          </span>
         )}
       </div>
 
@@ -103,7 +106,8 @@ function ImproveCardContent({
 
       {card.status === 'completed' ? (
         <p className="text-accent-green text-xs">
-          Complete{rewarded && card.xpReward > 0 ? `. ${card.xpReward} XP awarded.` : '.'}
+          Complete
+          {rewarded && card.xpReward > 0 ? `. ${formatKairosPoints(card.xpReward)} awarded.` : '.'}
         </p>
       ) : (
         <div className="flex gap-2 flex-wrap">
