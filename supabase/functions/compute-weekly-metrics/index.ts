@@ -14,10 +14,18 @@ const PAID_TIERS = ["brotherhood", "lifechanger"];
 const CORS_ALLOWED_HEADERS = "authorization, content-type, x-service-role";
 // Comma-separated list of admin emails allowed to trigger manual computation.
 const ADMIN_EMAILS = new Set(
-  (Deno.env.get("ADMIN_EMAILS") ?? "liam@whatisnext.io").split(",").map((e) =>
-    e.trim()
-  ),
+  (Deno.env.get("ADMIN_EMAILS") ?? "").split(",").map((e) =>
+    e.trim().toLowerCase()
+  ).filter(Boolean),
 );
+
+function isAdminUser(user: { email?: string; app_metadata?: { role?: unknown } }) {
+  const role = typeof user.app_metadata?.role === "string"
+    ? user.app_metadata.role
+    : "";
+  const email = user.email?.trim().toLowerCase() ?? "";
+  return role === "admin" || (email !== "" && ADMIN_EMAILS.has(email));
+}
 
 async function fetchMrrPence(): Promise<number> {
   if (!STRIPE_SECRET_KEY) return 0;
@@ -80,7 +88,7 @@ Deno.serve(async (req: Request) => {
   const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
   // Cron path: service role key in header.
-  // Admin UI path: valid JWT belonging to an admin email.
+  // Admin UI path: valid JWT with an admin role claim or explicitly configured admin email.
   if (serviceRole !== SUPABASE_SERVICE_ROLE_KEY) {
     if (!authHeader) {
       return jsonResponse(
@@ -94,7 +102,7 @@ Deno.serve(async (req: Request) => {
       data: { user },
       error: authErr,
     } = await supabase.auth.getUser(authHeader.replace("Bearer ", ""));
-    if (authErr || !user || !user.email || !ADMIN_EMAILS.has(user.email)) {
+    if (authErr || !user || !isAdminUser(user)) {
       return jsonResponse(
         req,
         { error: "Forbidden" },
