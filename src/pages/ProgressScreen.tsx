@@ -14,7 +14,12 @@ import {
 } from '@/utils/gamification';
 import { KAIROS_PHASES, getCurrentPhaseConfig, getDayInCycle } from '@/utils/kairos';
 import { buildProgressSharePreview, shareOrCopyProgress } from '@/utils/shareProgress';
-import { buildWeeklyFlywheel, getDailyDomainLabel, toLocalIsoDate } from '@/utils/v1Framework';
+import {
+  buildWeeklyFlywheel,
+  buildWeeklyReview,
+  getDailyDomainLabel,
+  toLocalIsoDate,
+} from '@/utils/v1Framework';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
@@ -39,6 +44,9 @@ export default function ProgressScreen() {
   const navigate = useNavigate();
   const [showDay84Modal, setShowDay84Modal] = useState(false);
   const [showSharePreview, setShowSharePreview] = useState(false);
+  const [showWeeklyReview, setShowWeeklyReview] = useState(false);
+  const [weeklyReviewDraft, setWeeklyReviewDraft] = useState('');
+  const [weeklyReviewStatus, setWeeklyReviewStatus] = useState<string | null>(null);
   const [shareStatus, setShareStatus] = useState<string | null>(null);
   const {
     profile,
@@ -56,16 +64,17 @@ export default function ProgressScreen() {
     profileImageDataUrl,
     sharePrivacyPreferences,
     journeyArchive,
+    updateDomainFocus,
   } = useAppStore();
   const { data: remoteStreaks } = useStreaks();
 
   // Compute before early return so hooks are never called conditionally.
   const dayInCycle = profile && currentCycle ? getDayInCycle(currentCycle.startDate) : 0;
   const cycleComplete = dayInCycle >= KAIROS_CYCLE_LENGTH_DAYS;
+  const currentPhase = getCurrentPhaseConfig(dayInCycle || 1);
   const { data: aiReflection } = useCycleReflection(cycleComplete);
 
   if (!profile || !currentCycle) return null;
-  const currentPhase = getCurrentPhaseConfig(dayInCycle);
   const availableDomains = getAvailableDomains(authUser?.email);
   const domainLabels = new Map(availableDomains.map((domain) => [domain.type, domain.label]));
   const activeCustomRoutes = customRoutes.filter((route) => !route.archivedAt);
@@ -78,6 +87,17 @@ export default function ProgressScreen() {
     checkInHistory,
     todayCheckIns,
   });
+  const weeklyReview = buildWeeklyReview({
+    email: authUser?.email,
+    checkInHistory,
+    todayCheckIns,
+    customRoutes,
+    customRouteCheckInHistory,
+    todayCustomRouteCheckIns,
+    phase: currentPhase,
+    dayInCycle,
+  });
+  const weeklyReviewDue = dayInCycle > 0 && dayInCycle % 7 === 0;
   const badges = deriveEarnedBadges({
     profile,
     checkInHistory,
@@ -112,6 +132,21 @@ export default function ProgressScreen() {
     } catch {
       setShareStatus('Sharing failed. Copy the preview text manually.');
     }
+  }
+
+  function openWeeklyReview() {
+    setWeeklyReviewDraft(weeklyReview.recommendation.editableText);
+    setWeeklyReviewStatus(null);
+    setShowWeeklyReview(true);
+  }
+
+  async function handleSaveWeeklyReview() {
+    const nextFocus = weeklyReviewDraft.trim();
+    if (!nextFocus) return;
+
+    setWeeklyReviewStatus('Saving next-week focus...');
+    await updateDomainFocus(weeklyReview.recommendation.targetDomainType, nextFocus);
+    setWeeklyReviewStatus('Next-week focus saved.');
   }
 
   return (
@@ -200,6 +235,113 @@ export default function ProgressScreen() {
           <p className="text-base-muted text-xs mt-2">
             {level.level < 10 ? `${xpProgress}% to Level ${level.level + 1}` : 'Max level reached'}
           </p>
+        </Card>
+
+        {weeklyReviewDue && !showWeeklyReview && (
+          <Card className="border-accent-green/40">
+            <p className="text-accent-green text-xs font-heading tracking-widest uppercase mb-2">
+              Weekly review due
+            </p>
+            <p className="text-base-subtext text-sm mb-3">
+              Week {weeklyReview.weekNumber}: score, pattern, next decision.
+            </p>
+            <Button size="sm" onClick={openWeeklyReview} type="button">
+              Open weekly review
+            </Button>
+          </Card>
+        )}
+
+        <Card>
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <h2 className="font-heading text-xs font-medium text-base-subtext tracking-widest uppercase mb-2">
+                Weekly mentor review
+              </h2>
+              <p className="text-base-subtext text-sm">
+                Week {weeklyReview.weekNumber} - {weeklyReview.phaseLabel}
+              </p>
+            </div>
+            <Button size="sm" variant="ghost" onClick={openWeeklyReview} type="button">
+              {showWeeklyReview ? 'Refresh' : 'Review'}
+            </Button>
+          </div>
+
+          {showWeeklyReview && (
+            <div className="mt-4 border-t border-base-border pt-4">
+              <div className="grid grid-cols-2 gap-2 mb-4 sm:grid-cols-4">
+                <div className="rounded border border-base-border p-2">
+                  <p className="font-heading text-base-text text-lg">{weeklyReview.score}%</p>
+                  <p className="text-base-muted text-[11px]">score</p>
+                </div>
+                <div className="rounded border border-base-border p-2">
+                  <p className="font-heading text-base-text text-lg">
+                    {formatKairosPoints(profile.xp)}
+                  </p>
+                  <p className="text-base-muted text-[11px]">KP</p>
+                </div>
+                <div className="rounded border border-base-border p-2">
+                  <p className="font-heading text-base-text text-lg">{weeklyReview.proofCount}</p>
+                  <p className="text-base-muted text-[11px]">proof</p>
+                </div>
+                <div className="rounded border border-base-border p-2">
+                  <p className="font-heading text-base-text text-lg">{weeklyReview.slipCount}</p>
+                  <p className="text-base-muted text-[11px]">slips</p>
+                </div>
+              </div>
+
+              <details className="mb-4 rounded border border-base-border bg-base-black/20 px-3 py-2">
+                <summary className="cursor-pointer text-base-subtext text-xs font-heading tracking-widest uppercase">
+                  Flywheel proof
+                </summary>
+                <div className="mt-3 flex flex-col gap-3">
+                  {weeklyReview.entries.map((entry) => (
+                    <div
+                      key={entry.domainType}
+                      className="border-b border-base-border pb-3 last:border-b-0"
+                    >
+                      <div className="flex items-center justify-between gap-2">
+                        <p className="font-heading text-sm text-base-text">{entry.label}</p>
+                        <p className="font-heading text-sm text-base-subtext">{entry.score}%</p>
+                      </div>
+                      <p className="text-base-muted text-[11px] mt-1">
+                        {entry.done} done - {entry.partial} partial - {entry.missed} missed
+                      </p>
+                      {entry.routes.length > 0 && (
+                        <div className="mt-2 flex flex-col gap-1">
+                          {entry.routes.map((route) => (
+                            <p key={route.id} className="text-base-muted text-[11px]">
+                              {route.label}: {route.score}% under {entry.label}
+                            </p>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </details>
+
+              <p className="text-base-subtext text-xs font-heading tracking-widest uppercase mb-1">
+                Next decision
+              </p>
+              <p className="text-base-muted text-xs mb-2">{weeklyReview.recommendation.reason}</p>
+              <textarea
+                className="input-field h-24 resize-none text-sm mb-3"
+                value={weeklyReviewDraft}
+                onChange={(event) => setWeeklyReviewDraft(event.target.value)}
+              />
+              <Button
+                size="sm"
+                onClick={handleSaveWeeklyReview}
+                disabled={!weeklyReviewDraft.trim()}
+                type="button"
+              >
+                Save next-week focus
+              </Button>
+              {weeklyReviewStatus && (
+                <p className="text-base-muted text-xs mt-2">{weeklyReviewStatus}</p>
+              )}
+            </div>
+          )}
         </Card>
 
         {activeCustomRoutes.length > 0 && (

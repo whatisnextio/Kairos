@@ -1,4 +1,12 @@
-import type { CheckInStatus, DailyCheckIn, DomainConfig, DomainType } from '@/types';
+import type {
+  CheckInStatus,
+  CustomRoute,
+  CustomRouteCheckIn,
+  DailyCheckIn,
+  DomainConfig,
+  DomainType,
+  KairosPhaseConfig,
+} from '@/types';
 import { getAvailableDomains } from '@/types';
 
 export interface EarlyWakeProtocol {
@@ -36,6 +44,42 @@ export interface FlywheelEntry {
 export interface FlywheelSummary {
   title: string;
   entries: FlywheelEntry[];
+}
+
+export interface WeeklyReviewRouteEntry {
+  id: string;
+  label: string;
+  parentDomainType: DomainType;
+  done: number;
+  partial: number;
+  missed: number;
+  total: number;
+  score: number;
+  state: FlywheelEntry['state'];
+}
+
+export interface WeeklyReviewEntry extends FlywheelEntry {
+  routes: WeeklyReviewRouteEntry[];
+}
+
+export interface WeeklyReviewRecommendation {
+  state: 'recover' | 'protect' | 'increase';
+  targetDomainType: DomainType;
+  targetLabel: string;
+  reason: string;
+  editableText: string;
+}
+
+export interface WeeklyReviewSummary {
+  title: string;
+  weekNumber: number;
+  phaseLabel: string;
+  score: number;
+  proofCount: number;
+  slipCount: number;
+  partialCount: number;
+  entries: WeeklyReviewEntry[];
+  recommendation: WeeklyReviewRecommendation;
 }
 
 export type ConnectionRecipientId = 'partner' | 'family' | 'friend' | 'community';
@@ -371,5 +415,139 @@ export function buildWeeklyFlywheel({
         state,
       };
     }),
+  };
+}
+
+function countStatuses(statuses: Array<CheckInStatus | undefined>) {
+  let done = 0;
+  let partial = 0;
+  let missed = 0;
+  let score = 0;
+
+  for (const status of statuses) {
+    if (status === 'Done') done += 1;
+    if (status === 'Partial' || status === 'Protected') partial += 1;
+    if (status === 'Missed') missed += 1;
+    score += scoreStatus(status);
+  }
+
+  const pct = Math.round((score / Math.max(statuses.length, 1)) * 100);
+  const state: FlywheelEntry['state'] =
+    pct >= 70 ? 'steady' : pct >= 40 ? 'thin' : 'needs_attention';
+
+  return { done, partial, missed, total: statuses.length, score: pct, state };
+}
+
+function buildWeeklyReviewRecommendation(
+  entries: WeeklyReviewEntry[],
+  phase: KairosPhaseConfig,
+): WeeklyReviewRecommendation {
+  const missedHeavy = [...entries].sort((a, b) => b.missed - a.missed || a.score - b.score)[0];
+  if (missedHeavy && (missedHeavy.missed >= 3 || missedHeavy.score < 40)) {
+    return {
+      state: 'recover',
+      targetDomainType: missedHeavy.domainType,
+      targetLabel: missedHeavy.label,
+      reason: `${missedHeavy.label} had the clearest slip pattern this week.`,
+      editableText: `Lower ${missedHeavy.label} action size or change the cue. Next week, make the smallest useful version the default.`,
+    };
+  }
+
+  const partialHeavy = [...entries].sort((a, b) => b.partial - a.partial || a.score - b.score)[0];
+  if (partialHeavy && (partialHeavy.partial >= 3 || partialHeavy.score < 70)) {
+    return {
+      state: 'protect',
+      targetDomainType: partialHeavy.domainType,
+      targetLabel: partialHeavy.label,
+      reason: `${partialHeavy.label} was live but thin.`,
+      editableText: `Protect ${partialHeavy.label} rhythm by making Partial explicit and moving the cue earlier.`,
+    };
+  }
+
+  const target = entries[0];
+  const increasePhase = phase.phase === 'INCREASE' || phase.phase === 'RHYTHM';
+  if (target && increasePhase) {
+    return {
+      state: 'increase',
+      targetDomainType: target.domainType,
+      targetLabel: target.label,
+      reason: `${phase.label} supports one controlled load increase after a strong week.`,
+      editableText: `Increase one controlled ${target.label} load this week while keeping the current floor.`,
+    };
+  }
+
+  return {
+    state: 'protect',
+    targetDomainType: target?.domainType ?? 'BODY',
+    targetLabel: target?.label ?? 'Body',
+    reason: `${phase.label} favours protecting the rhythm before adding more.`,
+    editableText: 'Protect the rhythm this week; keep the current floor before adding load.',
+  };
+}
+
+export function buildWeeklyReview({
+  email,
+  checkInHistory,
+  todayCheckIns,
+  customRoutes = [],
+  customRouteCheckInHistory = {},
+  todayCustomRouteCheckIns = {},
+  phase,
+  dayInCycle,
+  today = new Date(),
+}: {
+  email?: string | null;
+  checkInHistory: Record<string, Partial<Record<DomainType, CheckInStatus>>>;
+  todayCheckIns: Partial<Record<DomainType, DailyCheckIn>>;
+  customRoutes?: CustomRoute[];
+  customRouteCheckInHistory?: Record<string, Record<string, CheckInStatus>>;
+  todayCustomRouteCheckIns?: Record<string, CustomRouteCheckIn>;
+  phase: KairosPhaseConfig;
+  dayInCycle: number;
+  today?: Date;
+}): WeeklyReviewSummary {
+  const dates = last7Dates(today);
+  const todayIso = toLocalIsoDate(today);
+  const flywheel = buildWeeklyFlywheel({ email, checkInHistory, todayCheckIns, today });
+  const activeRoutes = customRoutes.filter((route) => !route.archivedAt);
+
+  const entries: WeeklyReviewEntry[] = flywheel.entries.map((entry) => {
+    const routes = activeRoutes
+      .filter((route) => route.parentDomainType === entry.domainType)
+      .map((route) => {
+        const statuses = dates.map((date) =>
+          date === todayIso
+            ? (todayCustomRouteCheckIns[route.id]?.status ??
+              customRouteCheckInHistory[date]?.[route.id])
+            : customRouteCheckInHistory[date]?.[route.id],
+        );
+        return {
+          id: route.id,
+          label: route.label,
+          parentDomainType: route.parentDomainType,
+          ...countStatuses(statuses),
+        };
+      });
+
+    return { ...entry, routes };
+  });
+
+  const proofCount = entries.reduce((sum, entry) => sum + entry.done + entry.partial, 0);
+  const slipCount = entries.reduce((sum, entry) => sum + entry.missed, 0);
+  const partialCount = entries.reduce((sum, entry) => sum + entry.partial, 0);
+  const score = Math.round(
+    entries.reduce((sum, entry) => sum + entry.score, 0) / Math.max(entries.length, 1),
+  );
+
+  return {
+    title: 'Weekly mentor review',
+    weekNumber: Math.max(1, Math.ceil(dayInCycle / 7)),
+    phaseLabel: phase.label,
+    score,
+    proofCount,
+    slipCount,
+    partialCount,
+    entries,
+    recommendation: buildWeeklyReviewRecommendation(entries, phase),
   };
 }
