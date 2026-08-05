@@ -25,9 +25,10 @@ describe('Supabase magic-link email template', () => {
     const copy = `${html} ${text}`;
 
     expect(copy).toContain('Kairos means the right moment');
-    expect(copy).toContain('84-day reset');
-    expect(copy).toContain('four core domains');
-    expect(copy).toContain('Kickoff, Anchor, Increase, Rhythm, Own, and Sustain');
+    expect(copy).toContain('12 weeks powered by the Kairos framework');
+    expect(copy).toContain('84 days');
+    expect(copy).toContain('Body, Fuel, Self, and Connection');
+    expect(copy).toContain('daily proof loop');
     expect(copy).not.toMatch(/guarantee|cure|fix your life/i);
   });
 
