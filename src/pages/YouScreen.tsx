@@ -5,6 +5,11 @@ import AbandonCycleModal from '@/components/modals/AbandonCycleModal';
 import WeeklyVibeCheckModal from '@/components/modals/WeeklyVibeCheckModal';
 import { useMatchToSquad, useSquadPulse } from '@/hooks/useSquad';
 import {
+  INTENSITY_PREVIEW_COPY,
+  REMINDER_INTENSITY_OPTIONS,
+  getLocalNotificationDateKey,
+} from '@/services/localNotifications';
+import {
   isPushSupported,
   subscribeToPush,
   unsubscribeFromPush,
@@ -136,6 +141,8 @@ export default function YouScreen() {
   const [pushStatus, setPushStatus] = useState<
     'idle' | 'requesting' | 'done' | 'denied' | 'unsupported'
   >('idle');
+  const todayNotificationKey = getLocalNotificationDateKey(new Date());
+  const escalationPausedToday = notificationPreferences.pausedDate === todayNotificationKey;
 
   useEffect(() => {
     if (!isPushSupported()) {
@@ -185,6 +192,12 @@ export default function YouScreen() {
     await syncPushPreferences(next);
     setPushStatus(isPushSupported() ? 'idle' : 'unsupported');
   }, [notificationPreferences, setNotificationPreferences]);
+
+  const handlePauseEscalationToday = useCallback(() => {
+    updateNotificationPreferences({
+      pausedDate: escalationPausedToday ? null : todayNotificationKey,
+    });
+  }, [escalationPausedToday, todayNotificationKey, updateNotificationPreferences]);
 
   const [deleteConfirm, setDeleteConfirm] = useState(false);
   const [deletePhrase, setDeletePhrase] = useState('');
@@ -584,98 +597,149 @@ export default function YouScreen() {
         <p className="text-base-subtext text-xs font-heading tracking-widest uppercase mb-2">
           Notifications
         </p>
-        {pushStatus === 'unsupported' ? (
-          <p className="text-base-muted text-sm">
-            Web push is not supported here. Install the PWA or use a browser with notification
-            support.
-          </p>
-        ) : pushStatus === 'denied' ? (
-          <p className="text-base-muted text-sm">
-            Notifications are blocked. Re-enable them in browser settings, then return here.
-          </p>
-        ) : (
-          <>
-            <p className="text-base-subtext text-sm mb-4">{FEATURE_EXPLANATIONS.notifications}</p>
-            <div className="flex flex-col gap-3">
-              <label className="flex items-center justify-between gap-3 text-sm text-base-text">
-                <span>Reminders</span>
-                <input
-                  type="checkbox"
-                  checked={notificationPreferences.enabled}
-                  onChange={(e) =>
-                    e.target.checked
-                      ? void handleEnableNotifications()
-                      : void handleDisableNotifications()
-                  }
-                />
-              </label>
-              <label className="text-base-subtext text-xs font-heading tracking-widest uppercase">
-                Intensity
-                <select
-                  className="input-field mt-1"
-                  value={notificationPreferences.intensity}
-                  disabled={!notificationPreferences.enabled}
-                  onChange={(e) =>
-                    updateNotificationPreferences({
-                      intensity: e.target.value as typeof notificationPreferences.intensity,
-                    })
-                  }
+        <p className="text-base-subtext text-sm mb-4">{FEATURE_EXPLANATIONS.notifications}</p>
+        <div className="flex flex-col gap-3">
+          <div>
+            <p className="text-base-subtext text-xs font-heading tracking-widest uppercase mb-2">
+              Accountability preview
+            </p>
+            <div className="grid grid-cols-1 gap-2">
+              {REMINDER_INTENSITY_OPTIONS.map((option) => (
+                <button
+                  type="button"
+                  key={option.id}
+                  aria-pressed={notificationPreferences.intensity === option.id}
+                  onClick={() => updateNotificationPreferences({ intensity: option.id })}
+                  className={`min-h-11 rounded-lg border p-3 text-left transition-colors ${
+                    notificationPreferences.intensity === option.id
+                      ? 'border-accent-green bg-accent-green/10 text-base-text'
+                      : 'border-white/10 bg-white/[0.03] text-base-subtext hover:border-white/20'
+                  }`}
                 >
-                  <option value="light">Light</option>
-                  <option value="standard">Standard</option>
-                  <option value="high">High accountability</option>
-                </select>
-              </label>
-              <div className="grid grid-cols-2 gap-2">
-                <label className="text-base-subtext text-xs font-heading tracking-widest uppercase">
-                  Start
-                  <input
-                    className="input-field mt-1"
-                    type="time"
-                    value={`${String(notificationPreferences.startHour).padStart(2, '0')}:00`}
-                    disabled={!notificationPreferences.enabled}
-                    onChange={(e) =>
-                      updateNotificationPreferences({
-                        startHour: Number(e.target.value.split(':')[0]),
-                      })
-                    }
-                  />
-                </label>
-                <label className="text-base-subtext text-xs font-heading tracking-widest uppercase">
-                  End
-                  <input
-                    className="input-field mt-1"
-                    type="time"
-                    value={`${String(notificationPreferences.endHour).padStart(2, '0')}:00`}
-                    disabled={!notificationPreferences.enabled}
-                    onChange={(e) =>
-                      updateNotificationPreferences({
-                        endHour: Number(e.target.value.split(':')[0]),
-                      })
-                    }
-                  />
-                </label>
-              </div>
-              <label className="flex items-center justify-between gap-3 text-sm text-base-subtext">
-                <span>Early-wake protocol</span>
-                <input
-                  type="checkbox"
-                  checked={notificationPreferences.earlyProtocol}
-                  disabled={!notificationPreferences.enabled}
-                  onChange={(e) =>
-                    updateNotificationPreferences({ earlyProtocol: e.target.checked })
-                  }
-                />
-              </label>
-              {pushStatus === 'done' && (
-                <p className="text-accent-green text-xs">Web push is connected.</p>
-              )}
-              {pushStatus === 'requesting' && (
-                <p className="text-base-muted text-xs">Setting up notifications...</p>
-              )}
+                  <span className="block font-heading text-sm tracking-wide">{option.label}</span>
+                  <span className="block text-xs mt-1">{option.description}</span>
+                </button>
+              ))}
             </div>
-          </>
-        )}
+          </div>
+
+          <div className="rounded-lg border border-white/10 bg-white/[0.03] p-3">
+            <p className="font-heading text-sm text-base-text tracking-wide">
+              {notificationPreferences.intensity === 'high'
+                ? 'High accountability'
+                : 'Selected cadence'}
+            </p>
+            <ul className="mt-2 space-y-1 text-xs text-base-subtext">
+              {INTENSITY_PREVIEW_COPY[notificationPreferences.intensity].map((line) => (
+                <li key={line}>{line}</li>
+              ))}
+            </ul>
+          </div>
+
+          {pushStatus === 'unsupported' && (
+            <p className="rounded-lg border border-status-partial/40 bg-status-partial/10 p-3 text-sm text-base-subtext">
+              Web push is not supported here. 12K will keep in-app Home prompts available instead of
+              failing silently.
+            </p>
+          )}
+          {pushStatus === 'denied' && (
+            <p className="rounded-lg border border-status-missed/40 bg-status-missed/10 p-3 text-sm text-base-subtext">
+              Notifications are blocked. Re-enable them in browser settings, then return here.
+            </p>
+          )}
+
+          <label className="flex items-center justify-between gap-3 text-sm text-base-text">
+            <span>Reminders</span>
+            <input
+              type="checkbox"
+              checked={notificationPreferences.enabled}
+              disabled={pushStatus === 'unsupported' || pushStatus === 'denied'}
+              onChange={(e) =>
+                e.target.checked
+                  ? void handleEnableNotifications()
+                  : void handleDisableNotifications()
+              }
+            />
+          </label>
+
+          <div className="grid grid-cols-2 gap-2">
+            <label className="text-base-subtext text-xs font-heading tracking-widest uppercase">
+              Start
+              <input
+                className="input-field mt-1"
+                type="time"
+                value={`${String(notificationPreferences.startHour).padStart(2, '0')}:00`}
+                disabled={!notificationPreferences.enabled}
+                onChange={(e) =>
+                  updateNotificationPreferences({
+                    startHour: Number(e.target.value.split(':')[0]),
+                  })
+                }
+              />
+            </label>
+            <label className="text-base-subtext text-xs font-heading tracking-widest uppercase">
+              End
+              <input
+                className="input-field mt-1"
+                type="time"
+                value={`${String(notificationPreferences.endHour).padStart(2, '0')}:00`}
+                disabled={!notificationPreferences.enabled}
+                onChange={(e) =>
+                  updateNotificationPreferences({
+                    endHour: Number(e.target.value.split(':')[0]),
+                  })
+                }
+              />
+            </label>
+          </div>
+
+          <label className="flex items-center justify-between gap-3 text-sm text-base-subtext">
+            <span>Early-wake protocol</span>
+            <input
+              type="checkbox"
+              checked={notificationPreferences.earlyProtocol}
+              disabled={!notificationPreferences.enabled}
+              onChange={(e) => updateNotificationPreferences({ earlyProtocol: e.target.checked })}
+            />
+          </label>
+
+          <label className="flex items-center justify-between gap-3 text-sm text-base-subtext">
+            <span>Show route names in notifications</span>
+            <input
+              type="checkbox"
+              checked={notificationPreferences.revealRouteNames}
+              disabled={!notificationPreferences.enabled}
+              onChange={(e) =>
+                updateNotificationPreferences({ revealRouteNames: e.target.checked })
+              }
+            />
+          </label>
+
+          {notificationPreferences.enabled && notificationPreferences.intensity === 'high' && (
+            <div className="flex flex-col gap-2 rounded-lg border border-white/10 bg-white/[0.03] p-3 sm:flex-row sm:items-center sm:justify-between">
+              <p className="text-xs text-base-subtext">
+                {escalationPausedToday
+                  ? 'Escalation is paused today. Tomorrow still uses your saved cadence.'
+                  : 'Pause the repeated ladder for today without turning reminders off.'}
+              </p>
+              <Button
+                size="sm"
+                variant="secondary"
+                onClick={handlePauseEscalationToday}
+                className="w-full sm:w-auto"
+              >
+                {escalationPausedToday ? 'Resume today' : 'Pause today'}
+              </Button>
+            </div>
+          )}
+
+          {pushStatus === 'done' && (
+            <p className="text-accent-green text-xs">Web push is connected.</p>
+          )}
+          {pushStatus === 'requesting' && (
+            <p className="text-base-muted text-xs">Setting up notifications...</p>
+          )}
+        </div>
       </Card>
 
       <Card>

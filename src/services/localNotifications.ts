@@ -1,8 +1,23 @@
+import type {
+  CheckInStatus,
+  CustomRoute,
+  CustomRouteCheckIn,
+  DailyCheckIn,
+  DomainConfig,
+  DomainType,
+} from '@/types';
 import { buildAccountabilityPrompt } from '@/utils/v1Framework';
 import { Capacitor } from '@capacitor/core';
 import { LocalNotifications } from '@capacitor/local-notifications';
 
 export type ReminderIntensity = 'light' | 'standard' | 'high';
+export type NotificationStrategy =
+  | 'early'
+  | 'small_action'
+  | 'reset'
+  | 'status_choice'
+  | 'rescue'
+  | 'tomorrow';
 
 export interface NotificationPreferences {
   enabled: boolean;
@@ -11,6 +26,8 @@ export interface NotificationPreferences {
   endHour: number;
   earlyProtocol: boolean;
   webPushEnabled: boolean;
+  pausedDate: string | null;
+  revealRouteNames: boolean;
 }
 
 export const REMINDER_INTENSITY_OPTIONS: {
@@ -20,7 +37,7 @@ export const REMINDER_INTENSITY_OPTIONS: {
 }[] = [
   {
     id: 'light',
-    label: 'Light',
+    label: 'Gentle',
     description: 'Two check-ins: one useful prompt and one catch-up path.',
   },
   {
@@ -31,9 +48,44 @@ export const REMINDER_INTENSITY_OPTIONS: {
   {
     id: 'high',
     label: 'High accountability',
-    description: 'Repeated structured prompts through the day so missed cues stay visible.',
+    description:
+      'A consented ladder: smaller action, rescue prompt, Partial option, then tomorrow setup.',
   },
 ];
+
+export const INTENSITY_PREVIEW_COPY: Record<ReminderIntensity, string[]> = {
+  light: ['One discreet action prompt.', 'One catch-up route before shutdown.'],
+  standard: ['Early protocol if enabled.', 'Start, reset, and shutdown prompts in your hours.'],
+  high: [
+    'If the first cue is missed, Kairos asks for the smallest useful action.',
+    'If the day still drifts, it switches to rescue, Partial, or set tomorrow.',
+    'Quiet hours defer prompts, and route names stay hidden unless you opt in.',
+  ],
+};
+
+export interface NotificationOpenItem {
+  id: string;
+  label: string;
+  status?: CheckInStatus;
+  privateLabel?: string;
+}
+
+export interface NotificationScheduleContext {
+  today?: Date;
+  openItems?: NotificationOpenItem[];
+  lastInteractionAt?: string | Date | null;
+}
+
+export interface NotificationScheduleSlot {
+  id: number;
+  hour: number;
+  minute: number;
+  title: string;
+  body: string;
+  strategy: NotificationStrategy;
+  deferredFromHour?: number;
+  deferredFromMinute?: number;
+}
 
 export const DEFAULT_NOTIFICATION_PREFERENCES: NotificationPreferences = {
   enabled: false,
@@ -42,15 +94,18 @@ export const DEFAULT_NOTIFICATION_PREFERENCES: NotificationPreferences = {
   endHour: 21,
   earlyProtocol: true,
   webPushEnabled: false,
+  pausedDate: null,
+  revealRouteNames: false,
 };
 
-export const NOTIFICATION_SLOTS = [
+export const NOTIFICATION_SLOTS: NotificationScheduleSlot[] = [
   {
     id: 1,
     hour: 5,
     minute: 0,
     title: 'Kairos: early protocol',
     body: 'Water. No scrolling. Choose one small action. Rest again if that is the right call.',
+    strategy: 'early',
   },
   {
     id: 2,
@@ -58,6 +113,7 @@ export const NOTIFICATION_SLOTS = [
     minute: 30,
     title: buildAccountabilityPrompt(0).title,
     body: buildAccountabilityPrompt(0).body,
+    strategy: 'small_action',
   },
   {
     id: 3,
@@ -65,6 +121,7 @@ export const NOTIFICATION_SLOTS = [
     minute: 0,
     title: buildAccountabilityPrompt(1).title,
     body: buildAccountabilityPrompt(1).body,
+    strategy: 'reset',
   },
   {
     id: 4,
@@ -72,6 +129,7 @@ export const NOTIFICATION_SLOTS = [
     minute: 0,
     title: buildAccountabilityPrompt(2).title,
     body: buildAccountabilityPrompt(2).body,
+    strategy: 'status_choice',
   },
   {
     id: 5,
@@ -79,6 +137,7 @@ export const NOTIFICATION_SLOTS = [
     minute: 0,
     title: 'Kairos: catch-up',
     body: 'There is still time. Mark Partial, protect tomorrow, finish one useful action.',
+    strategy: 'rescue',
   },
   {
     id: 6,
@@ -86,6 +145,7 @@ export const NOTIFICATION_SLOTS = [
     minute: 30,
     title: 'Kairos: shutdown',
     body: 'Reflect, set tomorrow, finish cleanly.',
+    strategy: 'tomorrow',
   },
 ];
 
@@ -103,22 +163,192 @@ export function normaliseNotificationPreferences(
     ...next,
     startHour: Math.min(23, Math.max(0, Math.round(next.startHour))),
     endHour: Math.min(23, Math.max(0, Math.round(next.endHour))),
+    pausedDate: next.pausedDate ?? null,
+    revealRouteNames: !!next.revealRouteNames,
   };
+}
+
+export function getLocalNotificationDateKey(date: Date): string {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
+function isOpenStatus(status?: CheckInStatus): boolean {
+  return !status || status === 'Pending' || status === 'Missed';
+}
+
+function latestInteractionAt(
+  checkIns: Array<DailyCheckIn | CustomRouteCheckIn | undefined>,
+): string | null {
+  return (
+    checkIns
+      .map((checkIn) => checkIn?.updatedAt ?? checkIn?.createdAt)
+      .filter((date): date is string => !!date)
+      .sort()
+      .at(-1) ?? null
+  );
+}
+
+export function buildNotificationScheduleContext({
+  domains,
+  customRoutes,
+  todayCheckIns,
+  todayCustomRouteCheckIns,
+  revealRouteNames,
+}: {
+  domains: DomainConfig[];
+  customRoutes: CustomRoute[];
+  todayCheckIns: Partial<Record<DomainType, DailyCheckIn>>;
+  todayCustomRouteCheckIns: Record<string, CustomRouteCheckIn>;
+  revealRouteNames: boolean;
+}): NotificationScheduleContext {
+  const openDomainItems = domains
+    .map<NotificationOpenItem | null>((domain) => {
+      const checkIn = todayCheckIns[domain.type];
+      if (!isOpenStatus(checkIn?.status)) return null;
+      return {
+        id: domain.type,
+        label: domain.label,
+        status: checkIn?.status,
+      };
+    })
+    .filter((item): item is NotificationOpenItem => !!item);
+
+  const openRouteItems = customRoutes
+    .filter((route) => !route.archivedAt)
+    .map<NotificationOpenItem | null>((route) => {
+      const checkIn = todayCustomRouteCheckIns[route.id];
+      if (!isOpenStatus(checkIn?.status)) return null;
+      return {
+        id: route.id,
+        label: revealRouteNames ? route.label : 'Personal route',
+        privateLabel: route.label,
+        status: checkIn?.status,
+      };
+    })
+    .filter((item): item is NotificationOpenItem => !!item);
+
+  return {
+    openItems: [...openDomainItems, ...openRouteItems],
+    lastInteractionAt: latestInteractionAt([
+      ...Object.values(todayCheckIns),
+      ...Object.values(todayCustomRouteCheckIns),
+    ]),
+  };
+}
+
+function isWithinAllowedHours(hour: number, startHour: number, endHour: number): boolean {
+  if (startHour <= endHour) return hour >= startHour && hour <= endHour;
+  return hour >= startHour || hour <= endHour;
+}
+
+function deferSlotToAllowedHours(
+  slot: NotificationScheduleSlot,
+  prefs: NotificationPreferences,
+  usedTimes: Set<string>,
+): NotificationScheduleSlot {
+  if (isWithinAllowedHours(slot.hour, prefs.startHour, prefs.endHour)) {
+    usedTimes.add(`${slot.hour}:${slot.minute}`);
+    return slot;
+  }
+
+  const deferToStart =
+    prefs.startHour <= prefs.endHour
+      ? slot.hour < prefs.startHour
+      : slot.hour > prefs.endHour && slot.hour < prefs.startHour;
+  const targetHour = deferToStart ? prefs.startHour : prefs.endHour;
+  let targetMinute = deferToStart ? 0 : 55;
+
+  while (
+    usedTimes.has(`${targetHour}:${targetMinute}`) &&
+    targetMinute >= 0 &&
+    targetMinute <= 55
+  ) {
+    targetMinute += deferToStart ? 5 : -5;
+  }
+
+  const minute = Math.min(55, Math.max(0, targetMinute));
+  usedTimes.add(`${targetHour}:${minute}`);
+
+  return {
+    ...slot,
+    hour: targetHour,
+    minute,
+    deferredFromHour: slot.hour,
+    deferredFromMinute: slot.minute,
+  };
+}
+
+function getSlotTime(today: Date, slot: NotificationScheduleSlot): Date {
+  const slotTime = new Date(today);
+  slotTime.setHours(slot.hour, slot.minute, 0, 0);
+  return slotTime;
+}
+
+function parseInteraction(value: string | Date | null | undefined): Date | null {
+  if (!value) return null;
+  const date = value instanceof Date ? value : new Date(value);
+  return Number.isNaN(date.getTime()) ? null : date;
+}
+
+function applyContextualCopy(
+  slot: NotificationScheduleSlot,
+  openItems: NotificationOpenItem[] | undefined,
+): NotificationScheduleSlot {
+  if (!openItems || openItems.length === 0) return slot;
+  const first = openItems[0];
+  const target = first.label;
+  const suffix = openItems.length > 1 ? ` +${openItems.length - 1}` : '';
+  const label = `${target}${suffix}`;
+
+  if (slot.strategy === 'small_action') {
+    return {
+      ...slot,
+      body: `${label} is still open. Choose the smallest useful version or mark what happened.`,
+    };
+  }
+
+  if (slot.strategy === 'rescue') {
+    return {
+      ...slot,
+      body: `${label} can still become Partial. Rescue one piece or set tomorrow.`,
+    };
+  }
+
+  return slot;
 }
 
 export function buildNotificationSchedule(
   preferences: Partial<NotificationPreferences> | null | undefined,
-) {
+  context: NotificationScheduleContext = {},
+): NotificationScheduleSlot[] {
   const prefs = normaliseNotificationPreferences(preferences);
   if (!prefs.enabled) return [];
 
+  const today = context.today ?? new Date();
+  const todayKey = getLocalNotificationDateKey(today);
+  const pausedToday = prefs.pausedDate === todayKey;
+  const lastInteraction = parseInteraction(context.lastInteractionAt);
+  const openItems = context.openItems;
+  const hasOpenItems = !openItems || openItems.length > 0;
   const ids = new Set(INTENSITY_SLOT_IDS[prefs.intensity]);
+  const usedTimes = new Set<string>();
+
   return NOTIFICATION_SLOTS.filter((slot) => {
+    if (pausedToday && slot.strategy !== 'tomorrow') return false;
     if (!ids.has(slot.id)) return false;
     if (slot.id === 1 && !prefs.earlyProtocol) return false;
-    if (slot.hour < prefs.startHour || slot.hour > prefs.endHour) return false;
+    if (!hasOpenItems && slot.strategy !== 'tomorrow') return false;
+    if (lastInteraction && getLocalNotificationDateKey(lastInteraction) === todayKey) {
+      const slotTime = getSlotTime(today, slot);
+      if (slot.strategy !== 'tomorrow' && slotTime <= lastInteraction) return false;
+    }
     return true;
-  });
+  })
+    .map((slot) => applyContextualCopy(slot, openItems))
+    .map((slot) => deferSlotToAllowedHours(slot, prefs, usedTimes));
 }
 
 export async function requestNotificationPermission(): Promise<boolean> {
@@ -130,10 +360,11 @@ export async function requestNotificationPermission(): Promise<boolean> {
 
 export async function scheduleDailyNotifications(
   preferences: Partial<NotificationPreferences> | null | undefined,
+  context?: NotificationScheduleContext,
 ): Promise<void> {
   if (!Capacitor.isNativePlatform()) return;
 
-  const slots = buildNotificationSchedule(preferences);
+  const slots = buildNotificationSchedule(preferences, context);
   if (slots.length === 0) {
     await cancelDailyNotifications();
     return;

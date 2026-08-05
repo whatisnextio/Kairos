@@ -53,5 +53,5 @@ export async function unsubscribeFromPush(): Promise<void> {
 }
 
 export function isPushSupported(): boolean {
-  return 'PushManager' in window && 'serviceWorker' in navigator;
+  return 'Notification' in window && 'PushManager' in window && 'serviceWorker' in navigator;
 }
