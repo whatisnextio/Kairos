@@ -17,18 +17,19 @@ describe('PWA install prompt', () => {
     ).toBe(false);
   });
 
-  it('captures native install where supported and keeps an iOS/manual fallback', () => {
+  it('captures native install without auto-opening manual guidance over task flows', () => {
     const component = readFileSync('src/components/pwa/PwaInstallPrompt.tsx', 'utf8');
     const app = readFileSync('src/App.tsx', 'utf8');
     const utility = readFileSync('src/utils/pwaInstall.ts', 'utf8');
 
     expect(component).toContain('beforeinstallprompt');
     expect(component).toContain('appinstalled');
-    expect(component).toContain("setMode('native')");
-    expect(component).toContain('Add to Home Screen');
-    expect(component).toContain('getInstallMode');
+    expect(component).toContain('if (!installEvent');
+    expect(component).toContain('Install app');
     expect(component).toContain('hasOpenDialog');
-    expect(component).not.toContain('pendingMode.current === null || typeof window');
+    expect(component).not.toContain('Manual install');
+    expect(component).not.toContain('Add to Home Screen');
+    expect(component).not.toContain('getInstallMode');
     expect(utility).toContain(PWA_INSTALL_DISMISSED_UNTIL_KEY);
     expect(app).toContain('<PwaInstallPrompt />');
     expect(app).toContain('return withInstallPrompt(');

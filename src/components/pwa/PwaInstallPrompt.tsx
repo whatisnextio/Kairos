@@ -2,31 +2,21 @@ import Button from '@/components/common/Button';
 import {
   dismissInstallPrompt,
   getInstallDismissedUntil,
-  isMobileUserAgent,
   isStandaloneDisplay,
 } from '@/utils/pwaInstall';
-import { Download, Share, Smartphone, X } from 'lucide-react';
-import { useEffect, useRef, useState } from 'react';
+import { Download, Smartphone, X } from 'lucide-react';
+import { useEffect, useState } from 'react';
 
 interface BeforeInstallPromptEvent extends Event {
   prompt: () => Promise<void>;
   userChoice: Promise<{ outcome: 'accepted' | 'dismissed'; platform: string }>;
 }
 
-type InstallMode = 'native' | 'manual';
-const INSTALL_PROMPT_DELAY_MS = 2500;
 const INSTALL_SUPPRESSED_ROUTES = ['/you', '/onboarding', '/login', '/register'];
 
 function isInstallSuppressed(): boolean {
   if (typeof window === 'undefined') return true;
   return isStandaloneDisplay() || !!getInstallDismissedUntil();
-}
-
-function getInstallMode(): InstallMode | null {
-  if (typeof window === 'undefined') return null;
-  if (isInstallSuppressed()) return null;
-  if (!isMobileUserAgent(window.navigator.userAgent)) return null;
-  return /iPhone|iPad|iPod/i.test(window.navigator.userAgent) ? 'manual' : null;
 }
 
 function getCurrentRouteHash(): string {
@@ -40,39 +30,25 @@ function isRouteSuppressedForInstallPrompt(routeHash: string): boolean {
 
 export default function PwaInstallPrompt() {
   const [installEvent, setInstallEvent] = useState<BeforeInstallPromptEvent | null>(null);
-  const [mode, setMode] = useState<InstallMode | null>(null);
   const [hasOpenDialog, setHasOpenDialog] = useState(false);
   const [routeHash, setRouteHash] = useState(getCurrentRouteHash);
-  const pendingMode = useRef<InstallMode | null>(getInstallMode());
 
   useEffect(() => {
     if (typeof window === 'undefined' || isInstallSuppressed()) return;
 
-    const timer =
-      pendingMode.current === 'manual'
-        ? window.setTimeout(() => {
-            setMode(pendingMode.current);
-          }, INSTALL_PROMPT_DELAY_MS)
-        : null;
-
     const handleBeforeInstallPrompt = (event: Event) => {
       event.preventDefault();
       setInstallEvent(event as BeforeInstallPromptEvent);
-      pendingMode.current = 'native';
-      setMode('native');
     };
 
     const handleInstalled = () => {
       setInstallEvent(null);
-      setMode(null);
-      pendingMode.current = null;
     };
 
     window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
     window.addEventListener('appinstalled', handleInstalled);
 
     return () => {
-      if (timer) window.clearTimeout(timer);
       window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
       window.removeEventListener('appinstalled', handleInstalled);
     };
@@ -105,13 +81,11 @@ export default function PwaInstallPrompt() {
     return () => observer.disconnect();
   }, []);
 
-  if (mode === null || hasOpenDialog || isRouteSuppressedForInstallPrompt(routeHash)) return null;
+  if (!installEvent || hasOpenDialog || isRouteSuppressedForInstallPrompt(routeHash)) return null;
 
   const handleDismiss = () => {
     dismissInstallPrompt();
-    setMode(null);
     setInstallEvent(null);
-    pendingMode.current = null;
   };
 
   const handleInstall = async () => {
@@ -119,9 +93,7 @@ export default function PwaInstallPrompt() {
     await installEvent.prompt();
     const choice = await installEvent.userChoice;
     if (choice.outcome === 'dismissed') dismissInstallPrompt();
-    setMode(null);
     setInstallEvent(null);
-    pendingMode.current = null;
   };
 
   return (
@@ -152,17 +124,10 @@ export default function PwaInstallPrompt() {
           </button>
         </div>
 
-        {mode === 'native' && installEvent ? (
-          <Button className="mt-4 w-full gap-2" onClick={handleInstall}>
-            <Download size={16} aria-hidden="true" />
-            Install app
-          </Button>
-        ) : (
-          <div className="mt-4 flex items-start gap-2 rounded border border-base-border bg-base-black/40 p-3 text-xs text-base-subtext">
-            <Share size={16} className="mt-0.5 shrink-0 text-accent-green" aria-hidden="true" />
-            <p>Manual install: open Safari share, then choose Add to Home Screen.</p>
-          </div>
-        )}
+        <Button className="mt-4 w-full gap-2" onClick={handleInstall}>
+          <Download size={16} aria-hidden="true" />
+          Install app
+        </Button>
       </div>
     </aside>
   );
