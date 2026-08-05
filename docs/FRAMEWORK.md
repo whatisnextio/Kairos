@@ -10,7 +10,7 @@ Kairos is the source concept. Kairos means the right, fitting, critical, or oppo
 
 The product promise is:
 
-> 12 weeks. Four domains. Daily proof.
+> Start with one small action.
 
 The app should feel like a daily operating system:
 
@@ -18,7 +18,7 @@ The app should feel like a daily operating system:
 2. do the smallest honest version,
 3. check in,
 4. recover quickly if the day slips,
-5. review the flywheel weekly,
+5. review the week,
 6. finish the 84-day cycle deliberately.
 
 ## Public Framework
@@ -100,7 +100,7 @@ Potentially protectable commercial identifiers:
 - 12K,
 - Kairos 12K,
 - the Kairos/12K logo lock-up,
-- "12 weeks. Four domains. Daily proof.",
+- "Start with one small action.",
 - specific product copy and visual identity,
 - the particular named 84-day phase expression where distinctive enough.
 

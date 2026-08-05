@@ -1,8 +1,8 @@
 import { PRODUCT_POSITIONING } from '@/types';
 
 export const AUTH_COPY = {
-  headline: '12 weeks. Four domains. Daily proof.',
-  body: '12K uses Kairos to turn Body, Fuel, Self, and Connection into one clear daily operating loop.',
+  headline: 'Start with one small action.',
+  body: 'Choose Body, Fuel, Self, and Connection. Check in once a day and keep going.',
 } as const;
 
 export const HELP_FAQS = [
@@ -24,7 +24,7 @@ export const HELP_FAQS = [
   },
   {
     q: 'Is this a habit tracker?',
-    a: 'No. Check-ins are proof points. Choose a useful action, do it, mark what happened, and review the pattern each week.',
+    a: 'No. Choose a useful action, do it, mark what happened, and review the pattern each week.',
   },
   {
     q: 'What is the Kairos system?',
@@ -35,7 +35,7 @@ export const HELP_FAQS = [
     a: 'Kairos uses established behaviour-change ingredients: clear goals, prompts and cues, self-monitoring, feedback, repetition, rewards, and recovery after lapses. It is support, not medical advice.',
   },
   {
-    q: 'What are the core domains?',
+    q: 'What are the four areas?',
     a: PRODUCT_POSITIONING.categoryIntro,
   },
   {
@@ -60,7 +60,7 @@ export const HELP_FAQS = [
   },
   {
     q: 'How do notifications work?',
-    a: 'Reminders are opt-in where your device supports them. High accountability repeats simple prompts through the day, including early start, catch-up, and shutdown.',
+    a: 'Reminders are opt-in where your device supports them. High accountability repeats simple prompts through the day, including early start, catch-up, and evening planning.',
   },
   {
     q: 'How does the AI nudge work?',
@@ -76,7 +76,7 @@ export const FEATURE_EXPLANATIONS = {
   personalRoutes:
     'Add work, money, photography, family, study, or recovery as an extra action under one core area. The plan stays Body, Fuel, Self, and Connection.',
   personalRoutesAction:
-    'After you add an extra action, it can appear in Home, Progress, and Improve as its own proof line.',
+    'After you add an extra action, it can appear in Home, Progress, and Improve as its own line.',
   squad:
     'Squad is anonymous accountability, not chat. The match action places you with people in the same Kairos phase and shows a weekly pulse when one is available.',
   notifications:

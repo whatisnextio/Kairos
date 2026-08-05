@@ -15,6 +15,7 @@ interface BeforeInstallPromptEvent extends Event {
 
 type InstallMode = 'native' | 'manual';
 const INSTALL_PROMPT_DELAY_MS = 2500;
+const INSTALL_SUPPRESSED_ROUTES = ['/you', '/onboarding', '/login', '/register'];
 
 function isInstallSuppressed(): boolean {
   if (typeof window === 'undefined') return true;
@@ -28,10 +29,20 @@ function getInstallMode(): InstallMode | null {
   return /iPhone|iPad|iPod/i.test(window.navigator.userAgent) ? 'manual' : null;
 }
 
+function getCurrentRouteHash(): string {
+  if (typeof window === 'undefined') return '';
+  return window.location.hash.replace(/^#/, '') || '/';
+}
+
+function isRouteSuppressedForInstallPrompt(routeHash: string): boolean {
+  return INSTALL_SUPPRESSED_ROUTES.some((route) => routeHash.startsWith(route));
+}
+
 export default function PwaInstallPrompt() {
   const [installEvent, setInstallEvent] = useState<BeforeInstallPromptEvent | null>(null);
   const [mode, setMode] = useState<InstallMode | null>(null);
   const [hasOpenDialog, setHasOpenDialog] = useState(false);
+  const [routeHash, setRouteHash] = useState(getCurrentRouteHash);
   const pendingMode = useRef<InstallMode | null>(getInstallMode());
 
   useEffect(() => {
@@ -68,6 +79,19 @@ export default function PwaInstallPrompt() {
   }, []);
 
   useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    const updateRoute = () => setRouteHash(getCurrentRouteHash());
+    window.addEventListener('hashchange', updateRoute);
+    window.addEventListener('popstate', updateRoute);
+
+    return () => {
+      window.removeEventListener('hashchange', updateRoute);
+      window.removeEventListener('popstate', updateRoute);
+    };
+  }, []);
+
+  useEffect(() => {
     if (typeof document === 'undefined') return;
 
     const updateDialogState = () => {
@@ -81,7 +105,7 @@ export default function PwaInstallPrompt() {
     return () => observer.disconnect();
   }, []);
 
-  if (mode === null || hasOpenDialog) return null;
+  if (mode === null || hasOpenDialog || isRouteSuppressedForInstallPrompt(routeHash)) return null;
 
   const handleDismiss = () => {
     dismissInstallPrompt();
@@ -115,7 +139,7 @@ export default function PwaInstallPrompt() {
               Install Kairos
             </p>
             <p className="mt-1 text-sm text-base-subtext">
-              Add 12K to your home screen for faster check-ins and reminders.
+              Add 12K to your home screen for faster check-ins.
             </p>
           </div>
           <button

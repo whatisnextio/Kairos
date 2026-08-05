@@ -43,7 +43,7 @@ export const REMINDER_INTENSITY_OPTIONS: {
   {
     id: 'standard',
     label: 'Standard',
-    description: 'Four prompts across early protocol, start, end-of-day check, and shutdown.',
+    description: 'Four prompts: early start, start, afternoon check, and evening plan.',
   },
   {
     id: 'high',
@@ -54,8 +54,8 @@ export const REMINDER_INTENSITY_OPTIONS: {
 ];
 
 export const INTENSITY_PREVIEW_COPY: Record<ReminderIntensity, string[]> = {
-  light: ['One discreet action prompt.', 'One catch-up route before shutdown.'],
-  standard: ['Early protocol if enabled.', 'Start, reset, and shutdown prompts in your hours.'],
+  light: ['One discreet action prompt.', 'One catch-up prompt before evening.'],
+  standard: ['Early start if enabled.', 'Start, reset, and evening prompts in your hours.'],
   high: [
     'If the first cue is missed, Kairos asks for the smallest useful action.',
     'If the day still drifts, it switches to rescue, Part done, or set tomorrow.',
@@ -103,7 +103,7 @@ export const NOTIFICATION_SLOTS: NotificationScheduleSlot[] = [
     id: 1,
     hour: 5,
     minute: 0,
-    title: 'Kairos: early protocol',
+    title: 'Kairos: early start',
     body: 'Water. No scrolling. Choose one small action. Rest again if that is the right call.',
     strategy: 'early',
   },
@@ -143,7 +143,7 @@ export const NOTIFICATION_SLOTS: NotificationScheduleSlot[] = [
     id: 6,
     hour: 20,
     minute: 30,
-    title: 'Kairos: shutdown',
+    title: 'Kairos: plan tomorrow',
     body: 'Reflect, set tomorrow, finish cleanly.',
     strategy: 'tomorrow',
   },

@@ -36,8 +36,8 @@ export default function TermsServicePage() {
           Who can use 12K
         </h2>
         <p>
-          You must be 18 or over. 12K is an adult product. We verify age at signup and reserve the
-          right to terminate accounts that misrepresent age.
+          You must be 18 or over. We verify age at signup and reserve the right to terminate
+          accounts that misrepresent age.
         </p>
         <h2 className="font-heading font-medium text-base-text tracking-wide text-base">
           AI content

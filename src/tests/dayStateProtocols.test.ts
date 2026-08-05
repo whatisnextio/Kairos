@@ -76,7 +76,7 @@ describe('day-state protocols', () => {
 
     expect(protocol.type).toBe('catch_up');
     expect(protocol.body).toContain('still open');
-    expect(protocol.actions.map((action) => action.label)).toContain('Mark part done');
+    expect(protocol.actions.map((action) => action.label)).toContain('Part done');
   });
 
   it('selects shutdown late in the evening with open domains', () => {
@@ -106,7 +106,7 @@ describe('day-state protocols', () => {
     expect(protocol.actions.map((action) => action.label)).toContain('Do 10 minutes now');
   });
 
-  it('can target extra actions without changing the core domains', () => {
+  it('can target extra actions without changing the four areas', () => {
     const protocol = selectDayStateProtocol({
       now: new Date('2026-08-05T13:00:00'),
       domains,

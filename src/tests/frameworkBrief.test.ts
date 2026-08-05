@@ -8,7 +8,7 @@ describe('canonical Kairos framework brief', () => {
     expect(brief).toContain('12K is a guided 12-week reset powered by Kairos');
     expect(brief).toContain('not a 12-step programme');
     expect(brief).toContain('Kairos means the right, fitting, critical, or opportune moment');
-    expect(brief).toContain('12 weeks. Four domains. Daily proof.');
+    expect(brief).toContain('Start with one small action.');
     expect(brief).toContain('Body');
     expect(brief).toContain('Fuel');
     expect(brief).toContain('Self');

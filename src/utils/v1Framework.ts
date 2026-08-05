@@ -452,7 +452,7 @@ function protocolActions(
     return [
       { id: 'set-tomorrow', label: 'Plan tomorrow', kind: 'set_tomorrow' },
       ...(target
-        ? [{ id: 'mark-part-done', label: 'Mark part done', kind: 'mark_partial' } as const]
+        ? [{ id: 'mark-part-done', label: 'Part done', kind: 'mark_partial' } as const]
         : []),
       { id: 'dismiss', label: 'Not now', kind: 'dismiss' },
     ];
@@ -462,7 +462,7 @@ function protocolActions(
     return [
       { id: 'start-rescue', label: 'Do 10 minutes now', kind: 'start_rescue' },
       ...(target
-        ? [{ id: 'mark-part-done', label: 'Mark part done', kind: 'mark_partial' } as const]
+        ? [{ id: 'mark-part-done', label: 'Part done', kind: 'mark_partial' } as const]
         : []),
       { id: 'dismiss', label: 'Not now', kind: 'dismiss' },
     ];
@@ -537,7 +537,7 @@ export function selectDayStateProtocol({
       body: escalated
         ? `${targetLabel(
             target,
-          )} still needs a check-in. Record what happened; one small useful action can be Part done.`
+          )} still needs a check-in. Record what happened; a smaller useful action still counts.`
         : `${targetLabel(missedTarget ?? target)} is still open. Choose one small close.`,
       steps: [
         'Start with ten quiet minutes.',

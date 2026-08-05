@@ -92,9 +92,7 @@ export default function RegisterPage() {
                 onChange={(e) => setAgeConfirmed(e.target.checked)}
                 className="mt-0.5 accent-accent-green"
               />
-              <span className="text-sm text-base-subtext">
-                I confirm I am 18 years of age or over. 12K is an adult product.
-              </span>
+              <span className="text-sm text-base-subtext">I confirm I am 18 or over.</span>
             </label>
             {error && (
               <p role="alert" className="text-xs text-status-missed">

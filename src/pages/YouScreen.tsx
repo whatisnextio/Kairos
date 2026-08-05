@@ -87,7 +87,7 @@ const SHARE_PRIVACY_OPTIONS: Array<[keyof SharePrivacyPreferences, string]> = [
   ['includeName', 'Include display name'],
   ['includePhoto', 'Include profile photo in preview'],
   ['includeBadges', 'Include milestone badge'],
-  ['includeDomainDetail', 'Show core domain scores'],
+  ['includeDomainDetail', 'Show four area scores'],
   ['includeStats', 'Show level and KP'],
 ];
 

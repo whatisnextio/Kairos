@@ -186,12 +186,12 @@ describe('V1 acceptance framework', () => {
   it('schedules repeated structured notification prompts', () => {
     expect(NOTIFICATION_SLOTS).toHaveLength(6);
     expect(NOTIFICATION_SLOTS.map((slot) => slot.title)).toEqual([
-      'Kairos: early protocol',
+      'Kairos: early start',
       'Still open',
       'Quick reset',
       'End-of-day check',
       'Kairos: catch-up',
-      'Kairos: shutdown',
+      'Kairos: plan tomorrow',
     ]);
   });
 

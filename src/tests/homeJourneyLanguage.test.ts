@@ -14,34 +14,25 @@ describe('Home journey language', () => {
     expect(home).toContain('Day {phaseDay} of {phaseLength}');
   });
 
-  it('shows a dismissible Kairos explainer after first sign-in', () => {
+  it('keeps Home focused on action rather than an explainer before check-in', () => {
     const home = readFileSync('src/pages/HomeScreen.tsx', 'utf8');
 
-    expect(home).toContain('KAIROS_EXPLAINER_DISMISSED_KEY_PREFIX');
-    expect(home).toContain('readKairosExplainerDismissed(profile.id)');
-    expect(home).toContain('writeKairosExplainerDismissed(profile.id)');
-    expect(home).toContain('Why Kairos works');
-    expect(home).toContain('KAIROS in 12K');
-    expect(home).toContain('{phase.label.charAt(0)} - {phase.label}');
-    expect(home).toContain('PRODUCT_POSITIONING.kairosMeaning');
-    expect(home).toContain('PRODUCT_POSITIONING.proofLoop');
-    expect(home).toContain('clear goals, prompts');
-    expect(home).toContain('aria-label="Dismiss Kairos explainer"');
+    expect(home).not.toContain('KAIROS_EXPLAINER_DISMISSED_KEY_PREFIX');
+    expect(home).not.toContain('Why Kairos works');
+    expect(home).not.toContain('KAIROS in 12K');
+    expect(home).not.toContain('Framework tip');
   });
 
-  it('shows a permanently dismissible category tooltip on Home', () => {
+  it('keeps reusable tips simple away from the Home first screen', () => {
     const home = readFileSync('src/pages/HomeScreen.tsx', 'utf8');
     const tip = readFileSync('src/components/common/DismissibleTip.tsx', 'utf8');
     const tipStorage = readFileSync('src/utils/dismissibleTips.ts', 'utf8');
 
     expect(tipStorage).toContain('kairos_dismissible_tip_v1');
-    expect(tipStorage).toContain("'home-framework-categories'");
     expect(tip).toContain('writeDismissibleTip(profileId, tipId)');
-    expect(tip).toContain('aria-label={`Dismiss ${title} tip`}');
-    expect(home).toContain('CORE_CATEGORY_LABELS');
-    expect(home).toContain("['Body', 'Fuel', 'Self', 'Connection']");
-    expect(home).toContain('The four categories stay fixed');
-    expect(home).toMatch(/Extra actions sit\s+underneath/);
+    expect(tip).toContain('aria-label={`Hide ${title} tip`}');
+    expect(home).not.toContain('CORE_CATEGORY_LABELS');
+    expect(home).not.toContain('The four categories stay fixed');
   });
 
   it('explains Part done and opens the weekly check-in with explicit copy', () => {
@@ -50,8 +41,8 @@ describe('Home journey language', () => {
     const you = readFileSync('src/pages/YouScreen.tsx', 'utf8');
 
     expect(home).toContain('data-testid="day-state-protocol"');
-    expect(framework).toContain('Mark Part done');
-    expect(home + framework).toContain('one small useful action can be Part done');
+    expect(framework).toContain("label: 'Part done'");
+    expect(home + framework).toContain('a smaller useful action still counts');
     expect(framework).toContain('Record what happened');
     expect(home).not.toContain('honest status');
     expect(home).not.toContain('stop the drift');

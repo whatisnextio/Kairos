@@ -53,9 +53,9 @@ export default function DismissibleTip({
           type="button"
           onClick={dismiss}
           className="shrink-0 rounded border border-base-border px-2 py-1 text-base-muted text-[11px] transition-colors hover:border-base-muted hover:text-base-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-green"
-          aria-label={`Dismiss ${title} tip`}
+          aria-label={`Hide ${title} tip`}
         >
-          Dismiss
+          Hide
         </button>
       </div>
       <div className="mt-2 text-sm leading-snug text-base-subtext">{children}</div>

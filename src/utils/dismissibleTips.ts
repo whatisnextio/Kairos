@@ -1,4 +1,4 @@
-export type DismissibleTipId = 'home-framework-categories' | 'settings-sub-focus';
+export type DismissibleTipId = 'settings-sub-focus';
 
 export const DISMISSIBLE_TIP_STORAGE_PREFIX = 'kairos_dismissible_tip_v1';
 

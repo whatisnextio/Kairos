@@ -67,7 +67,7 @@ describe('notification preferences', () => {
     });
   });
 
-  it('lets early protocol remain optional', () => {
+  it('lets early start remain optional', () => {
     const slots = buildNotificationSchedule({
       enabled: true,
       intensity: 'high',

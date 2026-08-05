@@ -113,7 +113,7 @@ export function deriveEarnedBadges({
   const badges: EarnedBadge[] = [
     {
       id: 'first-proof',
-      label: 'First Proof',
+      label: 'First check-in',
       description: 'Logged the first useful action.',
       trigger: 'Complete one Done check-in.',
       earned: allStatuses.includes('Done'),
@@ -121,15 +121,15 @@ export function deriveEarnedBadges({
     {
       id: 'full-house',
       label: 'Full House',
-      description: 'Closed all four core domains in one day.',
+      description: 'Checked in all four areas in one day.',
       trigger: 'Check in Body, Fuel, Self, and Connection today.',
       earned: hasTodayFullHouse,
     },
     {
       id: 'seven-day-flywheel',
-      label: '7-Day Flywheel',
-      description: 'Kept every core domain live across a full week.',
-      trigger: 'Close all four core domains for a full week.',
+      label: '7-day week',
+      description: 'Checked in all four areas across a full week.',
+      trigger: 'Check in all four areas for a full week.',
       earned: Object.keys(awardedWeeklyBonuses).length > 0,
     },
     {
