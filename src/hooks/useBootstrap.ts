@@ -188,28 +188,65 @@ export function useBootstrap() {
           ? { ...mapped, xp: localProfile.xp }
           : mapped;
       setProfile(profile);
-      // Only mark onboarding complete if the user has a cycle.
+
+      let cycleId = profile.currentKairosCycleId;
+      let cycleRow: Record<string, unknown> | null = null;
+
+      if (cycleId) {
+        const { data } = await supabase
+          .from('kairos_cycles')
+          .select('*')
+          .eq('id', cycleId)
+          .single();
+        if (data) cycleRow = data as Record<string, unknown>;
+      }
+
+      if (!cycleRow) {
+        const { data: activeCycle } = await supabase
+          .from('kairos_cycles')
+          .select('*')
+          .eq('user_id', authUser?.id)
+          .eq('status', 'active')
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .maybeSingle();
+
+        if (activeCycle) {
+          cycleRow = activeCycle as Record<string, unknown>;
+          cycleId = cycleRow.id as string;
+
+          const repairedProfile = { ...profile, currentKairosCycleId: cycleId };
+          setProfile(repairedProfile);
+
+          const { error: linkErr } = await supabase
+            .from('profiles')
+            .update({ current_kairos_cycle_id: cycleId })
+            .eq('id', authUser?.id);
+
+          if (linkErr) {
+            console.error('Current cycle link repair failed:', linkErr.message);
+          }
+        }
+      }
+
+      // Only mark onboarding complete if a real cycle can be loaded or recovered.
       // The handle_new_user trigger creates a minimal profile with no cycle;
       // without this check, new users would bypass OnboardingFlow.
-      setOnboardingComplete(!!profile.currentKairosCycleId);
-
-      if (!profile.currentKairosCycleId) return;
-
-      const { data: cycleRow } = await supabase
-        .from('kairos_cycles')
-        .select('*')
-        .eq('id', profile.currentKairosCycleId)
-        .single();
-
-      if (cycleRow) {
-        setCurrentCycle(mapCycle(cycleRow as Record<string, unknown>));
+      if (!cycleId || !cycleRow) {
+        setCurrentCycle(null);
+        setOnboardingComplete(false);
+        return;
       }
+
+      const cycle = mapCycle(cycleRow);
+      setCurrentCycle(cycle);
+      setOnboardingComplete(true);
 
       const { data: focuses } = await supabase
         .from('user_domain_focuses')
         .select('*')
         .eq('user_id', authUser?.id)
-        .eq('cycle_id', profile.currentKairosCycleId);
+        .eq('cycle_id', cycle.id);
 
       if (focuses) {
         setDomainFocuses(focuses.map((f) => mapFocus(f as Record<string, unknown>)));
@@ -221,7 +258,7 @@ export function useBootstrap() {
           .from('custom_routes')
           .select('*')
           .eq('user_id', authUser?.id)
-          .eq('cycle_id', profile.currentKairosCycleId)
+          .eq('cycle_id', cycle.id)
           .order('created_at', { ascending: true });
 
         if (routeRows) {
@@ -233,7 +270,7 @@ export function useBootstrap() {
           .from('daily_check_ins')
           .select('*')
           .eq('user_id', authUser?.id)
-          .eq('cycle_id', profile.currentKairosCycleId)
+          .eq('cycle_id', cycle.id)
           .gte('date', sevenDaysAgo)
           .lte('date', today);
 
@@ -260,7 +297,7 @@ export function useBootstrap() {
           .from('custom_route_check_ins')
           .select('*')
           .eq('user_id', authUser?.id)
-          .eq('cycle_id', profile.currentKairosCycleId)
+          .eq('cycle_id', cycle.id)
           .gte('date', sevenDaysAgo)
           .lte('date', today);
 
