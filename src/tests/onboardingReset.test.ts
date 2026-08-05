@@ -71,9 +71,16 @@ describe('onboarding and reset contract', () => {
     expect(source).toContain('It is not 12 steps.');
     expect(source).toContain('PRODUCT_POSITIONING.proofLoop');
     expect(source).toContain('Six phases');
+    expect(source).toContain('Recovery rule');
+    expect(source).toContain('84 days is a useful reset period with individual variation');
+    expect(source).toMatch(/A\s+missed day is not a restart\./);
+    expect(source).toContain('Partial means the smallest useful version still counts');
+    expect(source).toContain('catch up with the next small proof');
+    expect(source).toContain('{phase.tagline}');
     expect(source).toContain('Set accountability intensity.');
     expect(source).toContain('not diagnosis');
     expect(source).toContain('setNotificationPreferences');
+    expect(source).not.toMatch(/cure|fixed guaranteed outcome|medical claim/i);
   });
 
   it('recovers a returning user when the profile is missing its active cycle link', () => {

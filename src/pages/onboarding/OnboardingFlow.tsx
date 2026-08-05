@@ -364,6 +364,16 @@ export default function OnboardingFlow() {
             <p className="text-base-subtext text-sm leading-relaxed mb-5">
               {PRODUCT_POSITIONING.proofLoop}
             </p>
+            <div className="mb-5 rounded border border-base-border bg-base-surface p-3">
+              <p className="text-base-subtext text-xs font-heading tracking-widest uppercase mb-1">
+                Recovery rule
+              </p>
+              <p className="text-base-subtext text-xs leading-relaxed">
+                84 days is a useful reset period with individual variation, not a fixed outcome. A
+                missed day is not a restart. Partial means the smallest useful version still counts;
+                catch up with the next small proof and keep going.
+              </p>
+            </div>
             <p className="text-base-muted text-xs leading-relaxed mb-5">
               {PRODUCT_POSITIONING.audience}
             </p>
@@ -383,7 +393,7 @@ export default function OnboardingFlow() {
               <p className="text-base-subtext text-xs font-heading tracking-widest uppercase mb-2">
                 Six phases
               </p>
-              <div className="grid grid-cols-2 gap-2">
+              <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
                 {KAIROS_PHASES.map((phase) => (
                   <div
                     key={phase.phase}
@@ -392,6 +402,9 @@ export default function OnboardingFlow() {
                     <p className="font-heading text-sm text-base-text">{phase.label}</p>
                     <p className="text-base-muted text-[11px] mt-0.5">
                       Days {phase.days[0]}-{phase.days[1]}
+                    </p>
+                    <p className="text-base-subtext text-[11px] mt-1 leading-snug">
+                      {phase.tagline}
                     </p>
                   </div>
                 ))}
