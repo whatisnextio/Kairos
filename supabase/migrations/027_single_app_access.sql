@@ -1,4 +1,4 @@
--- 025_single_app_access.sql
+-- 027_single_app_access.sql
 -- The current product has one app tier. Keep legacy tier keys for compatibility,
 -- but default every profile to app access and remove paid gates from custom routes.
 

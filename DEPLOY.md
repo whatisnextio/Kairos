@@ -1,15 +1,13 @@
-# DEPLOY — Kairos / 12K
+# DEPLOY - Kairos / 12K
 
 Steps to go from zero to live. In order.
 
----
-
 ## 1. Supabase Project
 
-1. Create project at supabase.com — **EU region (eu-west-2)**
-2. Copy `Project URL` → `VITE_SUPABASE_URL` in `.env`
-3. Copy `anon public` key → `VITE_SUPABASE_ANON_KEY` in `.env`
-4. Copy `service_role` key → used in Supabase Vault (NOT in .env)
+1. Create project at supabase.com in the EU region.
+2. Copy `Project URL` to `VITE_SUPABASE_URL` in `.env`.
+3. Copy the `anon public` key to `VITE_SUPABASE_ANON_KEY` in `.env`.
+4. Keep the `service_role` key out of `.env`; use it only in Supabase secrets or trusted server jobs.
 
 ## 2. Database Migrations
 
@@ -18,24 +16,31 @@ npx supabase link --project-ref YOUR_PROJECT_REF
 npx supabase db push
 ```
 
-This runs all 15 migrations in `supabase/migrations/` in order. Key ones:
-- `001_initial_schema.sql` — all core tables + RLS + triggers
-- `002_streak_update_function.sql` — update_streak() function
-- `005_squad_member_status.sql` — SECURITY DEFINER get_squad_members_status()
-- `013_atomic_xp_increment.sql` — increment_profile_xp() RPC
-- `014_increment_squad_member_count.sql` — increment_squad_member_count() RPC
-- `015_subscription_period.sql` — cancel_at_period_end + current_period_end columns
+This runs the migrations in `supabase/migrations/` in order. Key migrations:
 
-## 3. Supabase Vault Secrets
+- `001_initial_schema.sql` - core tables, RLS, triggers, and admin metrics.
+- `003_push_subscriptions.sql` - Web Push subscription storage.
+- `004_cycle_reflections.sql` - cycle reflection storage.
+- `013_atomic_xp_increment.sql` - `increment_profile_xp()` RPC.
+- `014_increment_squad_member_count.sql` - squad member count RPC.
+- `021_custom_routes.sql` - user custom route tables.
+- `022_notification_preferences.sql` - notification preferences.
+- `024_harden_profile_sensitive_updates.sql` - sensitive profile-field guard.
+- `026_harden_admin_metrics_auth.sql` - admin-only metrics reads.
+- `027_single_app_access.sql` - single app access defaults and custom-route policy cleanup.
 
-In Supabase dashboard → Project Settings → Edge Functions → Secrets:
+## 3. Supabase Edge Function Secrets
+
+In Supabase Dashboard > Project Settings > Edge Functions > Secrets:
 
 | Secret name | Value |
-|---|---|
-| `ANTHROPIC_API_KEY` | sk-ant-... |
-| `STRIPE_WEBHOOK_SECRET` | whsec_... |
-| `VAPID_PRIVATE_KEY` | (from npx web-push generate-vapid-keys) |
-| `STRIPE_SECRET_KEY` | sk_live_... (optional — used by compute-weekly-metrics for MRR; omit to show MRR as N/A) |
+| --- | --- |
+| `ANTHROPIC_API_KEY` | Anthropic API key for AI nudges/reflections |
+| `VAPID_PRIVATE_KEY` | Private key from `npx web-push generate-vapid-keys` |
+| `ADMIN_EMAILS` | Comma-separated admin email allowlist |
+| `STRIPE_WEBHOOK_SECRET` | Optional legacy secret only if old Stripe webhooks are still configured |
+
+The app currently has no paid/premium model. The legacy `stripe-webhook` function is a signed no-op so old deliveries can be acknowledged without changing profiles.
 
 ## 4. Edge Functions
 
@@ -44,65 +49,48 @@ npx supabase functions deploy generate-kairos-nudge
 npx supabase functions deploy generate-cycle-reflection
 npx supabase functions deploy match-to-squad
 npx supabase functions deploy generate-squad-pulse
-npx supabase functions deploy stripe-webhook
 npx supabase functions deploy save-push-subscription
 npx supabase functions deploy send-daily-push
 npx supabase functions deploy compute-weekly-metrics
 npx supabase functions deploy delete-account
+npx supabase functions deploy stripe-webhook
 ```
 
-## 5. Stripe
-
-1. Create product: "Brotherhood" — £7.99/month recurring
-2. Copy Checkout link → `VITE_STRIPE_CHECKOUT_URL` in `.env`
-3. Add webhook endpoint: `https://YOUR_PROJECT.supabase.co/functions/v1/stripe-webhook`
-4. Subscribe to events:
-   - `checkout.session.completed`
-   - `customer.subscription.created`
-   - `customer.subscription.updated`
-   - `customer.subscription.deleted`
-5. Copy webhook signing secret → `STRIPE_WEBHOOK_SECRET` in Supabase Vault
-
-## 6. Web Push VAPID
+## 5. Web Push VAPID
 
 ```bash
 npx web-push generate-vapid-keys
 ```
 
-- Public key → `VITE_VAPID_PUBLIC_KEY` in `.env`
-- Private key → `VAPID_PRIVATE_KEY` in Supabase Vault
+- Public key -> `VITE_VAPID_PUBLIC_KEY` in `.env`.
+- Private key -> `VAPID_PRIVATE_KEY` in Supabase Edge Function secrets.
 
-## 7. Supabase Cron Jobs
+## 6. Supabase Cron Jobs
 
-Run in Supabase SQL editor (requires pg_cron extension):
+Run in Supabase SQL editor after enabling `pg_cron` and `pg_net`:
 
 ```sql
--- Enable pg_cron
 CREATE EXTENSION IF NOT EXISTS pg_cron;
 CREATE EXTENSION IF NOT EXISTS pg_net;
 
--- Daily nudge (06:00 UTC)
 SELECT cron.schedule(
   'daily-nudge-cron',
   '0 6 * * *',
   $$ SELECT net.http_post(url := 'https://YOUR_PROJECT.supabase.co/functions/v1/generate-kairos-nudge', headers := '{"x-service-role": "YOUR_SERVICE_ROLE_KEY"}'::jsonb, body := '{}'::jsonb); $$
 );
 
--- Weekly squad pulse (Sundays 08:00 UTC)
 SELECT cron.schedule(
   'weekly-squad-pulse',
   '0 8 * * 0',
   $$ SELECT net.http_post(url := 'https://YOUR_PROJECT.supabase.co/functions/v1/generate-squad-pulse', headers := '{"x-service-role": "YOUR_SERVICE_ROLE_KEY"}'::jsonb, body := '{}'::jsonb); $$
 );
 
--- Daily push notifications (07:00 UTC — fires after nudge generation at 06:00)
 SELECT cron.schedule(
   'daily-push-cron',
   '0 7 * * *',
   $$ SELECT net.http_post(url := 'https://YOUR_PROJECT.supabase.co/functions/v1/send-daily-push', headers := '{"x-service-role": "YOUR_SERVICE_ROLE_KEY"}'::jsonb, body := '{}'::jsonb); $$
 );
 
--- Weekly metrics (Sundays 22:00 UTC)
 SELECT cron.schedule(
   'weekly-metrics',
   '0 22 * * 0',
@@ -110,28 +98,29 @@ SELECT cron.schedule(
 );
 ```
 
-## 8. Frontend Build and Deploy
+## 7. Frontend Build And Deploy
 
 ```bash
 npm run build
 ```
 
-Deploy `dist/` to Vercel, Netlify, or any static host.
+Deploy `dist/` to Vercel or the configured static host.
 
-Environment variables for production (in host dashboard):
+Production environment variables:
+
 - `VITE_SUPABASE_URL`
 - `VITE_SUPABASE_ANON_KEY`
-- `VITE_STRIPE_CHECKOUT_URL`
-- `VITE_STRIPE_PORTAL_URL`
 - `VITE_VAPID_PUBLIC_KEY`
+- `VITE_SENTRY_DSN` (optional)
 
-## 9. Verify
+## 8. Verify
 
-- [ ] Auth: register, magic link, sign out
-- [ ] Onboarding: complete Day 0 win flow, first XP awarded
-- [ ] Check-ins: all 4 domains, all statuses
-- [ ] Nudge: ImproveScreen loads nudge (brotherhood)
-- [ ] Stripe: checkout → subscription → tier upgrade synced
-- [ ] Squad: match-to-squad, pulse on Sunday
-- [ ] Push: opt-in, receive notification
-- [ ] GDPR: delete account removes all data
+- Auth: register, magic link, sign out.
+- Onboarding: complete Day 0 win flow, first XP awarded.
+- PWA restart: completed onboarding loads the active app, not onboarding again.
+- Check-ins: all four domains and all statuses.
+- AI nudge: Improve loads a nudge for app users.
+- Squad: match-to-squad and weekly pulse.
+- Push: opt in, save preferences, receive notification.
+- Custom routes: add, display, and check in against a personal route.
+- GDPR: delete account removes user data and clears local app state.
