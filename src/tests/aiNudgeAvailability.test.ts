@@ -29,9 +29,15 @@ describe('AI nudge availability', () => {
 
   it('uses a local Improve card when the Edge Function is unavailable', () => {
     const hook = readFileSync('src/hooks/useNudge.ts', 'utf8');
+    const improve = readFileSync('src/pages/ImproveScreen.tsx', 'utf8');
 
     expect(hook).toContain('buildLocalFallbackNudge');
     expect(hook).toContain('return fallbackNudge');
     expect(hook).toContain('LOCAL_FALLBACK_NUDGE_ID_PREFIX');
+    expect(improve).toContain('LOCAL_FALLBACK_NUDGE_ID_PREFIX');
+    expect(improve).toContain('isFallbackNudge');
+    expect(improve).toContain('Kairos fallback');
+    expect(improve).toContain('The card below is a Kairos fallback from your setup');
+    expect(improve).toContain('Retry AI card');
   });
 });
