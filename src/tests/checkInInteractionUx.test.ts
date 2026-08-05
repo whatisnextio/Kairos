@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 
 const checkInModal = readFileSync('src/components/modals/CheckInStatusModal.tsx', 'utf8');
 const homeScreen = readFileSync('src/pages/HomeScreen.tsx', 'utf8');
+const css = readFileSync('src/index.css', 'utf8');
 
 describe('check-in interaction UX', () => {
   it('hides Clear until there is an actual mark to remove', () => {
@@ -23,10 +24,10 @@ describe('check-in interaction UX', () => {
     expect(homeScreen).not.toContain('nextStatus');
   });
 
-  it('keeps the accountability prompt dismiss target at the 44px minimum', () => {
-    expect(homeScreen).toContain('aria-label="Dismiss accountability prompt"');
-    expect(homeScreen).toContain('w-11 h-11');
-    expect(homeScreen).toContain('aria-hidden="true"');
+  it('keeps day protocol actions at the 44px minimum', () => {
+    expect(homeScreen).toContain('data-testid="day-state-protocol"');
+    expect(homeScreen).toContain('className="w-full sm:w-auto"');
+    expect(css).toContain('inline-flex min-h-11');
     expect(homeScreen).not.toContain('px-1');
   });
 });

@@ -23,6 +23,54 @@ export interface CatchUpPath {
   steps: string[];
 }
 
+export type DayStateProtocolType = 'early_wake' | 'normal_start' | 'catch_up' | 'shutdown';
+export type DayStateProtocolActionKind =
+  | 'start_rescue'
+  | 'open_check_in'
+  | 'mark_partial'
+  | 'set_tomorrow'
+  | 'dismiss';
+
+export type DayStateProtocolTarget =
+  | {
+      kind: 'domain';
+      domainType: DomainType;
+      label: string;
+      status?: CheckInStatus;
+    }
+  | {
+      kind: 'custom_route';
+      routeId: string;
+      parentDomainType: DomainType;
+      label: string;
+      status?: CheckInStatus;
+    };
+
+export interface DayStateProtocolAction {
+  id: string;
+  label: string;
+  kind: DayStateProtocolActionKind;
+}
+
+export interface DayStateProtocol {
+  id: string;
+  type: DayStateProtocolType;
+  title: string;
+  body: string;
+  steps: string[];
+  target?: DayStateProtocolTarget;
+  actions: DayStateProtocolAction[];
+}
+
+export interface DayStateSelectorInput {
+  now?: Date;
+  domains: DomainConfig[];
+  todayCheckIns: Partial<Record<DomainType, DailyCheckIn>>;
+  customRoutes?: CustomRoute[];
+  todayCustomRouteCheckIns?: Record<string, CustomRouteCheckIn>;
+  dismissedProtocolId?: string | null;
+}
+
 export interface AccountabilityPrompt {
   level: 1 | 2 | 3;
   title: string;
@@ -334,6 +382,194 @@ export function buildCatchUpPath(
       `Do the smallest useful version of ${target.focusOptions[0].toLowerCase()}.`,
       'Use Partial when a smaller useful version happened.',
     ],
+  };
+}
+
+function isClosedStatus(status?: CheckInStatus): boolean {
+  return status === 'Done' || status === 'Partial' || status === 'Protected';
+}
+
+function buildDayStateTargets({
+  domains,
+  todayCheckIns,
+  customRoutes = [],
+  todayCustomRouteCheckIns = {},
+}: Pick<
+  DayStateSelectorInput,
+  'domains' | 'todayCheckIns' | 'customRoutes' | 'todayCustomRouteCheckIns'
+>): DayStateProtocolTarget[] {
+  const domainTargets = domains
+    .map<DayStateProtocolTarget | null>((domain) => {
+      const status = todayCheckIns[domain.type]?.status;
+      if (isClosedStatus(status)) return null;
+      return {
+        kind: 'domain',
+        domainType: domain.type,
+        label: domain.label,
+        status,
+      };
+    })
+    .filter((target): target is DayStateProtocolTarget => !!target);
+
+  const routeTargets = customRoutes
+    .filter((route) => !route.archivedAt)
+    .map<DayStateProtocolTarget | null>((route) => {
+      const status = todayCustomRouteCheckIns[route.id]?.status;
+      if (isClosedStatus(status)) return null;
+      return {
+        kind: 'custom_route',
+        routeId: route.id,
+        parentDomainType: route.parentDomainType,
+        label: route.label,
+        status,
+      };
+    })
+    .filter((target): target is DayStateProtocolTarget => !!target);
+
+  return [...domainTargets, ...routeTargets].sort(
+    (a, b) => statusPriority(a.status) - statusPriority(b.status),
+  );
+}
+
+function hasAnyStartedCheckIn({
+  todayCheckIns,
+  todayCustomRouteCheckIns = {},
+}: Pick<DayStateSelectorInput, 'todayCheckIns' | 'todayCustomRouteCheckIns'>): boolean {
+  return [...Object.values(todayCheckIns), ...Object.values(todayCustomRouteCheckIns)].some(
+    (checkIn) => !!checkIn && checkIn.status !== 'Pending',
+  );
+}
+
+function targetLabel(target: DayStateProtocolTarget | undefined): string {
+  return target?.label ?? 'one route';
+}
+
+function protocolActions(
+  type: DayStateProtocolType,
+  target?: DayStateProtocolTarget,
+): DayStateProtocolAction[] {
+  if (type === 'early_wake') {
+    return [
+      { id: 'start-floor', label: 'Start floor', kind: 'open_check_in' },
+      { id: 'dismiss', label: 'Dismiss', kind: 'dismiss' },
+    ];
+  }
+
+  if (type === 'shutdown') {
+    return [
+      { id: 'set-tomorrow', label: 'Set tomorrow', kind: 'set_tomorrow' },
+      ...(target
+        ? [{ id: 'mark-partial', label: 'Mark Partial', kind: 'mark_partial' } as const]
+        : []),
+      { id: 'dismiss', label: 'Dismiss', kind: 'dismiss' },
+    ];
+  }
+
+  if (type === 'catch_up') {
+    return [
+      { id: 'start-rescue', label: 'Start 10-minute rescue', kind: 'start_rescue' },
+      ...(target
+        ? [{ id: 'mark-partial', label: 'Mark Partial', kind: 'mark_partial' } as const]
+        : []),
+      { id: 'dismiss', label: 'Dismiss', kind: 'dismiss' },
+    ];
+  }
+
+  return [
+    {
+      id: 'open-check-in',
+      label: target ? `Open ${target.label}` : 'Review today',
+      kind: 'open_check_in',
+    },
+    { id: 'dismiss', label: 'Dismiss', kind: 'dismiss' },
+  ];
+}
+
+export function selectDayStateProtocol({
+  now = new Date(),
+  domains,
+  todayCheckIns,
+  customRoutes = [],
+  todayCustomRouteCheckIns = {},
+  dismissedProtocolId = null,
+}: DayStateSelectorInput): DayStateProtocol {
+  const hour = now.getHours();
+  const targets = buildDayStateTargets({
+    domains,
+    todayCheckIns,
+    customRoutes,
+    todayCustomRouteCheckIns,
+  });
+  const target = targets[0];
+  const missedTarget = targets.find((item) => item.status === 'Missed');
+  const dayStarted = hasAnyStartedCheckIn({ todayCheckIns, todayCustomRouteCheckIns });
+  const earlyWake = getEarlyWakeProtocol(now);
+
+  if (earlyWake && !dayStarted) {
+    return {
+      id: 'early-wake',
+      type: 'early_wake',
+      title: earlyWake.title,
+      body: earlyWake.body,
+      steps: earlyWake.steps,
+      target,
+      actions: protocolActions('early_wake', target),
+    };
+  }
+
+  if (hour >= 19 && target) {
+    return {
+      id: 'shutdown',
+      type: 'shutdown',
+      title: 'Shutdown protocol',
+      body: `${targetLabel(
+        target,
+      )} is still open. Close the loop gently, then leave the rest for tomorrow.`,
+      steps: [
+        'Choose one open item only.',
+        'Mark Done, Partial, or Missed.',
+        'Leave the rest for tomorrow after one next-day action.',
+      ],
+      target,
+      actions: protocolActions('shutdown', target),
+    };
+  }
+
+  if ((missedTarget || dismissedProtocolId || (hour >= 12 && target)) && target) {
+    const escalated = !!dismissedProtocolId;
+    return {
+      id: escalated ? 'catch-up-after-dismiss' : 'catch-up',
+      type: 'catch_up',
+      title: escalated ? '10-minute rescue' : 'Catch-up path',
+      body: escalated
+        ? `${targetLabel(
+            target,
+          )} still needs a check-in. Record what happened; a smaller useful version as Partial counts.`
+        : `${targetLabel(
+            missedTarget ?? target,
+          )} is recoverable. The day is not failed; choose one small close.`,
+      steps: [
+        'Start with ten quiet minutes.',
+        'Do the smallest useful version.',
+        'Use Partial when that smaller version happened.',
+      ],
+      target,
+      actions: protocolActions('catch_up', target),
+    };
+  }
+
+  return {
+    id: target ? 'normal-start' : 'normal-review',
+    type: 'normal_start',
+    title: target ? 'Start protocol' : 'Review protocol',
+    body: target
+      ? `${targetLabel(target)} is the next clean check-in. Keep it small and visible.`
+      : 'Today is marked. Review the pattern or protect tomorrow.',
+    steps: target
+      ? ['Pick the easiest first mark.', 'Record what happened.', 'Keep the next action visible.']
+      : ['Scan what worked.', 'Notice one friction point.', 'Set up tomorrow if needed.'],
+    target,
+    actions: protocolActions('normal_start', target),
   };
 }
 

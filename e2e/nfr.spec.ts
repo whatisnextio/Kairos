@@ -55,6 +55,10 @@ test.describe('NFR smoke gates', () => {
   test('daily dashboard stays within a 3-tap check-in path', async ({ page }) => {
     await loginAsLocalLiam(page);
 
+    await expect(page.getByTestId('day-state-protocol')).toBeVisible();
+    await expect(page.getByTestId('day-state-protocol')).toContainText(/protocol/i);
+    await expectNoHorizontalOverflow(page);
+
     await page.getByRole('button', { name: /check in body/i }).click();
     await page.getByRole('button', { name: /done full action completed/i }).click();
 

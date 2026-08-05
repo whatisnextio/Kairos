@@ -3,8 +3,11 @@ import { describe, expect, it } from 'vitest';
 
 describe('Home copy contract', () => {
   it('uses natural accountability prompt language for open domains', () => {
-    const source = readFileSync('src/pages/HomeScreen.tsx', 'utf8');
+    const home = readFileSync('src/pages/HomeScreen.tsx', 'utf8');
+    const framework = readFileSync('src/utils/v1Framework.ts', 'utf8');
+    const source = `${home}\n${framework}`;
 
+    expect(home).toContain('selectDayStateProtocol');
     expect(source).toContain('still needs a check-in');
     expect(source).toContain('Record what happened');
     expect(source).toContain('smaller useful version as Partial');
