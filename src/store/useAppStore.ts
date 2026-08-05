@@ -317,6 +317,40 @@ const initialState: AppState = {
   offlineSyncLastError: null,
 };
 
+function getAccountScopedInitialState(): Partial<AppState> {
+  return {
+    profile: null,
+    currentCycle: null,
+    domainFocuses: [],
+    customRoutes: [],
+    journeyArchive: [],
+    todayCheckIns: {},
+    todayCustomRouteCheckIns: {},
+    checkInHistory: {},
+    customRouteCheckInHistory: {},
+    checkInNoteOverrides: {},
+    streakProtectionHistory: {},
+    awardedWeeklyBonuses: {},
+    streaks: {},
+    lastVibeCheckDate: null,
+    onboardingComplete: false,
+    celebrationPending: false,
+    levelUpPending: null,
+    streakProtectionPending: null,
+    nextCycleIntention: null,
+    lastCelebrationPhase: null,
+    profileImageDataUrl: null,
+    improveCardStatuses: {},
+    improveCardSnapshots: {},
+    rewardedImproveCards: {},
+    notificationPreferences: DEFAULT_NOTIFICATION_PREFERENCES,
+    sharePrivacyPreferences: DEFAULT_SHARE_PRIVACY,
+    offlineSyncStatus: 'idle',
+    offlineQueueCount: 0,
+    offlineSyncLastError: null,
+  };
+}
+
 // ─── Store ───────────────────────────────────────────────────────────────────
 
 export const useAppStore = create<AppState & AppActions>()(
@@ -324,7 +358,23 @@ export const useAppStore = create<AppState & AppActions>()(
     (set, get) => ({
       ...initialState,
 
-      setAuthUser: (authUser) => set({ authUser, isAuthLoading: false }),
+      setAuthUser: (authUser) =>
+        set((state) => {
+          const nextAccountId = authUser?.id ?? null;
+          const currentAccountId = state.authUser?.id ?? state.profile?.id ?? null;
+          const accountChanged = currentAccountId !== nextAccountId;
+          const authSessionChanged = state.authUser?.id !== nextAccountId;
+
+          return {
+            ...(accountChanged ? getAccountScopedInitialState() : {}),
+            authUser,
+            isAuthLoading: false,
+            isBootstrapLoading: nextAccountId
+              ? authSessionChanged || state.isBootstrapLoading
+              : false,
+            bootstrapError: null,
+          };
+        }),
       setProfile: (profile) => set({ profile }),
       setIsBootstrapLoading: (isBootstrapLoading) => set({ isBootstrapLoading }),
       setBootstrapError: (bootstrapError) => set({ bootstrapError }),
