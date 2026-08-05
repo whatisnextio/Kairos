@@ -11,7 +11,7 @@ describe('contextual accountability prompt', () => {
     expect(source).toContain('DAY_PROTOCOL_DISMISSAL_KEY');
     expect(source).toContain('window.localStorage.setItem(DAY_PROTOCOL_DISMISSAL_KEY');
     expect(source).toContain('targetKey: getProtocolTargetKey(activeDayStateProtocol)');
-    expect(source).toContain('Dismiss hides this prompt on this device');
+    expect(source).toContain('Not now hides this prompt on this device');
     expect(source).toContain('data-testid="day-state-protocol"');
     expect(source).toContain('setSelectedDomainType(target.domainType)');
     expect(source).toContain('setSelectedCustomRouteId(target.routeId)');

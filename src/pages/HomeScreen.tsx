@@ -325,6 +325,53 @@ export default function HomeScreen() {
     openProtocolTarget();
   };
 
+  const dayStateProtocolCard = activeDayStateProtocol ? (
+    <Card
+      data-testid="day-state-protocol"
+      className={
+        activeDayStateProtocol.type === 'early_wake'
+          ? 'border-accent-green/40 bg-accent-green/5'
+          : activeDayStateProtocol.type === 'shutdown'
+            ? 'border-status-missed/45 bg-status-missed/5'
+            : activeDayStateProtocol.type === 'catch_up'
+              ? 'border-status-partial/50 bg-status-partial/5'
+              : 'border-white/10 bg-base-surface/90'
+      }
+    >
+      <p className="font-heading text-xs text-base-subtext tracking-widest uppercase mb-1">Today</p>
+      <p className="font-heading text-base-text text-lg tracking-wide">
+        {activeDayStateProtocol.title}
+      </p>
+      <p className="text-base-text text-sm leading-snug mt-1">{activeDayStateProtocol.body}</p>
+      <div className="flex flex-col gap-2 mt-3 sm:flex-row sm:flex-wrap">
+        {activeDayStateProtocol.actions.map((action, index) => (
+          <Button
+            key={action.id}
+            size="sm"
+            variant={index === 0 ? 'primary' : 'ghost'}
+            onClick={() => handleDayProtocolAction(action)}
+            className="w-full sm:w-auto"
+          >
+            {action.label}
+          </Button>
+        ))}
+      </div>
+      <div className="grid grid-cols-1 gap-2 mt-3 sm:grid-cols-3">
+        {activeDayStateProtocol.steps.map((step) => (
+          <div key={step} className="rounded border border-base-border bg-base-black/20 p-2">
+            <p className="text-base-subtext text-xs leading-snug">{step}</p>
+          </div>
+        ))}
+      </div>
+      {activeDayStateProtocol.actions.some((action) => action.kind === 'dismiss') && (
+        <p className="text-base-muted text-xs mt-3">
+          Not now hides this prompt on this device. If the same item stays open, Kairos may offer
+          one smaller option later today.
+        </p>
+      )}
+    </Card>
+  ) : null;
+
   return (
     <>
       <div className="mx-auto flex w-full max-w-2xl flex-col gap-4 px-4 pb-4 pt-6 sm:px-6 sm:pt-8">
@@ -367,6 +414,8 @@ export default function HomeScreen() {
             Focus: {anchorDisplayName}. Pick one useful action and keep it visible.
           </p>
         </div>
+
+        {dayStateProtocolCard}
 
         {/* Level-up celebration */}
         {levelUpPending && (
@@ -488,57 +537,6 @@ export default function HomeScreen() {
             {offlineSyncLastError && (
               <p className="text-base-muted text-xs mt-2">{offlineSyncLastError}</p>
             )}
-          </Card>
-        )}
-
-        {activeDayStateProtocol && (
-          <Card
-            data-testid="day-state-protocol"
-            className={
-              activeDayStateProtocol.type === 'early_wake'
-                ? 'border-accent-green/40 bg-accent-green/5'
-                : activeDayStateProtocol.type === 'shutdown'
-                  ? 'border-status-missed/45 bg-status-missed/5'
-                  : activeDayStateProtocol.type === 'catch_up'
-                    ? 'border-status-partial/50 bg-status-partial/5'
-                    : 'border-white/10 bg-base-surface/90'
-            }
-          >
-            <p className="font-heading text-xs text-base-subtext tracking-widest uppercase mb-1">
-              Today
-            </p>
-            <p className="font-heading text-base-text text-lg tracking-wide">
-              {activeDayStateProtocol.title}
-            </p>
-            <p className="text-base-text text-sm leading-snug mt-1">
-              {activeDayStateProtocol.body}
-            </p>
-            <div className="grid grid-cols-1 gap-2 mt-3 sm:grid-cols-3">
-              {activeDayStateProtocol.steps.map((step) => (
-                <div key={step} className="rounded border border-base-border bg-base-black/20 p-2">
-                  <p className="text-base-subtext text-xs leading-snug">{step}</p>
-                </div>
-              ))}
-            </div>
-            {activeDayStateProtocol.actions.some((action) => action.kind === 'dismiss') && (
-              <p className="text-base-muted text-xs mt-3">
-                Dismiss hides this prompt on this device. If the same item stays open, Kairos may
-                offer one smaller rescue later today.
-              </p>
-            )}
-            <div className="flex flex-col gap-2 mt-3 sm:flex-row sm:flex-wrap">
-              {activeDayStateProtocol.actions.map((action, index) => (
-                <Button
-                  key={action.id}
-                  size="sm"
-                  variant={index === 0 ? 'primary' : 'ghost'}
-                  onClick={() => handleDayProtocolAction(action)}
-                  className="w-full sm:w-auto"
-                >
-                  {action.label}
-                </Button>
-              ))}
-            </div>
           </Card>
         )}
 

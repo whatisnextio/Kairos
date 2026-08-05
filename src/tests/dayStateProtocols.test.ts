@@ -90,7 +90,7 @@ describe('day-state protocols', () => {
 
     expect(protocol.type).toBe('shutdown');
     expect(protocol.actions.map((action) => action.label)).toContain('Plan tomorrow');
-    expect(protocol.steps.join(' ')).toContain('Leave the rest for tomorrow');
+    expect(protocol.steps.join(' ')).toContain('Plan one small action for tomorrow');
   });
 
   it('escalates after a dismissed protocol without adding a second panel', () => {

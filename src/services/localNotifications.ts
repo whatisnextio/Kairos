@@ -136,7 +136,7 @@ export const NOTIFICATION_SLOTS: NotificationScheduleSlot[] = [
     hour: 17,
     minute: 0,
     title: 'Kairos: catch-up',
-    body: 'There is still time. Mark Part done, protect tomorrow, or finish one useful action.',
+    body: 'There is still time. Choose Part done, plan tomorrow, or finish one useful action.',
     strategy: 'rescue',
   },
   {

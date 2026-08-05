@@ -373,7 +373,7 @@ export function buildCatchUpPath(
     steps: [
       target.prepOptions[0],
       `Do the smallest useful version of ${target.focusOptions[0].toLowerCase()}.`,
-      'Mark Part done if a smaller useful action happened.',
+      'Choose Part done if you did a smaller version.',
     ],
   };
 }
@@ -515,13 +515,11 @@ export function selectDayStateProtocol({
       id: 'shutdown',
       type: 'shutdown',
       title: 'End-of-day check',
-      body: `${targetLabel(
-        target,
-      )} is still open. Close the loop gently, then leave the rest for tomorrow.`,
+      body: `${targetLabel(target)} still needs a check-in. Choose what happened, then plan tomorrow.`,
       steps: [
-        'Choose one open item only.',
-        'Mark Done, Part done, or Missed.',
-        'Leave the rest for tomorrow after one next-day action.',
+        'Pick one open item.',
+        'Choose Done, Part done, or Missed.',
+        'Plan one small action for tomorrow.',
       ],
       target,
       actions: protocolActions('shutdown', target),
@@ -538,11 +536,11 @@ export function selectDayStateProtocol({
         ? `${targetLabel(
             target,
           )} still needs a check-in. Record what happened; a smaller useful action still counts.`
-        : `${targetLabel(missedTarget ?? target)} is still open. Choose one small close.`,
+        : `${targetLabel(missedTarget ?? target)} is still open. Choose one small action.`,
       steps: [
         'Start with ten quiet minutes.',
         'Do the smallest useful version.',
-        'Mark Part done if a smaller useful action happened.',
+        'Choose Part done if you did a smaller version.',
       ],
       target,
       actions: protocolActions('catch_up', target),
