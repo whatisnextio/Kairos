@@ -14,6 +14,21 @@ describe('Home journey language', () => {
     expect(home).toContain('Day {phaseDay} of {phaseLength}');
   });
 
+  it('shows a dismissible Kairos explainer after first sign-in', () => {
+    const home = readFileSync('src/pages/HomeScreen.tsx', 'utf8');
+
+    expect(home).toContain('KAIROS_EXPLAINER_DISMISSED_KEY_PREFIX');
+    expect(home).toContain('readKairosExplainerDismissed(profile.id)');
+    expect(home).toContain('writeKairosExplainerDismissed(profile.id)');
+    expect(home).toContain('Why Kairos works');
+    expect(home).toContain('KAIROS in 12K');
+    expect(home).toContain('{phase.label.charAt(0)} - {phase.label}');
+    expect(home).toContain('PRODUCT_POSITIONING.kairosMeaning');
+    expect(home).toContain('PRODUCT_POSITIONING.proofLoop');
+    expect(home).toContain('clear goals, prompts');
+    expect(home).toContain('aria-label="Dismiss Kairos explainer"');
+  });
+
   it('explains Partial and opens the weekly check-in with explicit copy', () => {
     const home = readFileSync('src/pages/HomeScreen.tsx', 'utf8');
     const framework = readFileSync('src/utils/v1Framework.ts', 'utf8');

@@ -13,6 +13,8 @@ import {
   type DomainType,
   IDENTITY_ANCHORS,
   KAIROS_CYCLE_LENGTH_DAYS,
+  KAIROS_PHASES,
+  PRODUCT_POSITIONING,
   getAvailableDomains,
   getDomainRouteSlug,
 } from '@/types';
@@ -75,6 +77,7 @@ const PHASE_MILESTONE_MESSAGES: Record<string, string> = {
 };
 
 const DAY_PROTOCOL_DISMISSAL_KEY = 'kairos_day_protocol_dismissal_v1';
+const KAIROS_EXPLAINER_DISMISSED_KEY_PREFIX = 'kairos_explainer_dismissed_v1';
 
 interface DismissedDayProtocol {
   cycleId: string | null;
@@ -119,6 +122,20 @@ function writeDismissedDayProtocol(dismissal: DismissedDayProtocol): void {
   window.localStorage.setItem(DAY_PROTOCOL_DISMISSAL_KEY, JSON.stringify(dismissal));
 }
 
+function getKairosExplainerDismissedKey(profileId: string): string {
+  return `${KAIROS_EXPLAINER_DISMISSED_KEY_PREFIX}:${profileId}`;
+}
+
+function readKairosExplainerDismissed(profileId: string | null | undefined): boolean {
+  if (!profileId || typeof window === 'undefined') return true;
+  return window.localStorage.getItem(getKairosExplainerDismissedKey(profileId)) === '1';
+}
+
+function writeKairosExplainerDismissed(profileId: string): void {
+  if (typeof window === 'undefined') return;
+  window.localStorage.setItem(getKairosExplainerDismissedKey(profileId), '1');
+}
+
 // Module-level flags: prevent re-prompting within the same JS session even if HomeScreen remounts.
 let vibeCheckShownThisSession = false;
 let domainSetupShownThisSession = false;
@@ -161,6 +178,7 @@ export default function HomeScreen() {
   const [, setProtocolDismissVersion] = useState(0);
   const [selectedDomainType, setSelectedDomainType] = useState<DomainType | null>(null);
   const [selectedCustomRouteId, setSelectedCustomRouteId] = useState<string | null>(null);
+  const [showKairosExplainer, setShowKairosExplainer] = useState(false);
 
   const dayInCycle = profile && currentCycle ? getDayInCycle(currentCycle.startDate) : 1;
   const displayDay = Math.min(dayInCycle, KAIROS_CYCLE_LENGTH_DAYS);
@@ -211,6 +229,11 @@ export default function HomeScreen() {
     dismissedProtocolForCycle.targetKey === getProtocolTargetKey(dayStateProtocol)
       ? null
       : dayStateProtocol;
+
+  useEffect(() => {
+    if (!profile?.id) return;
+    setShowKairosExplainer(!readKairosExplainerDismissed(profile.id));
+  }, [profile?.id]);
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: Zustand setters are stable; lastCelebrationPhase intentionally excluded to avoid re-triggering after the silent first-load set
   useEffect(() => {
@@ -325,6 +348,11 @@ export default function HomeScreen() {
     openProtocolTarget();
   };
 
+  const dismissKairosExplainer = () => {
+    writeKairosExplainerDismissed(profile.id);
+    setShowKairosExplainer(false);
+  };
+
   return (
     <>
       <div className="mx-auto flex w-full max-w-2xl flex-col gap-4 px-4 pb-4 pt-6 sm:px-6 sm:pt-8">
@@ -367,6 +395,57 @@ export default function HomeScreen() {
             Focus: {anchorDisplayName}. Pick one useful action and keep it visible.
           </p>
         </div>
+
+        {showKairosExplainer && (
+          <Card className="border-accent-green/35 bg-accent-green/5">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <p className="font-heading text-xs text-accent-green tracking-widest uppercase mb-1">
+                  Start here
+                </p>
+                <h2 className="font-heading text-xl font-bold text-base-text tracking-wide">
+                  Why Kairos works
+                </h2>
+              </div>
+              <button
+                type="button"
+                onClick={dismissKairosExplainer}
+                className="rounded border border-base-border px-2 py-1 text-base-muted text-xs transition-colors hover:border-base-muted hover:text-base-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-green"
+                aria-label="Dismiss Kairos explainer"
+              >
+                Dismiss
+              </button>
+            </div>
+            <div className="mt-3 space-y-3 text-sm text-base-subtext">
+              <p>
+                {PRODUCT_POSITIONING.kairosMeaning} 12K uses that idea to turn attention into one
+                useful action today.
+              </p>
+              <div className="rounded border border-base-border bg-base-black/20 p-3">
+                <p className="font-heading text-xs uppercase tracking-widest text-base-muted mb-2">
+                  KAIROS in 12K
+                </p>
+                <div className="grid grid-cols-2 gap-2 text-xs sm:grid-cols-3">
+                  {KAIROS_PHASES.map((phase) => (
+                    <div key={phase.phase} className="rounded bg-base-surface/70 px-2 py-2">
+                      <span className="font-heading text-base-text">
+                        {phase.label.charAt(0)} - {phase.label}
+                      </span>
+                      <span className="block text-base-muted">
+                        Days {phase.days[0]}-{phase.days[1]}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              <p>
+                It is built this way because behaviour changes through clear goals, prompts,
+                self-monitoring, feedback, repetition, rewards, and recovery after lapses.
+              </p>
+              <p className="text-base-muted text-xs">{PRODUCT_POSITIONING.proofLoop}</p>
+            </div>
+          </Card>
+        )}
 
         {/* Level-up celebration */}
         {levelUpPending && (
