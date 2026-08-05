@@ -735,8 +735,8 @@ export default function YouScreen() {
           Account and data
         </p>
         <p className="text-base-subtext text-sm mb-4">
-          Export gives you a JSON copy of your 12K data. Delete is permanent and clears this account
-          from the app.
+          Export gives you a JSON copy of your 12K data, including any health-related notes you
+          chose to add. Delete is permanent and clears this account from the app.
         </p>
         <Button
           type="button"

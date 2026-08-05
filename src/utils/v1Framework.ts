@@ -75,6 +75,45 @@ export const CONNECTION_SUPPORT_OPTIONS = [
   'Pain day: reduce load first, then offer closeness if it helps.',
 ];
 
+const BODY_HEALTH_PATTERN =
+  /\b(pain|bleeding|severe fatigue|fatigue|medical|symptom|symptoms|injury|unwell|dizzy|chest|breathless|inactive|not exercised|health concern)\b/i;
+const FUEL_HEALTH_PATTERN =
+  /\b(alcohol|drinking|trigger food|trigger foods|allergy|intolerance|sick|vomit|diarrhoea|bloating|bleeding|severe fatigue|symptom|symptoms|medical|health concern)\b/i;
+
+export function buildHealthGuardrailRecommendation(
+  domainType: DomainType,
+  focusDescription?: string | null,
+): string | null {
+  const focus = focusDescription?.trim();
+  if (!focus) return null;
+
+  if (domainType === 'BODY' && BODY_HEALTH_PATTERN.test(focus)) {
+    return 'Choose a lower-intensity version such as easy walking, mobility, or rest. Kairos does not diagnose symptoms; speak to a GP or clinician if pain, bleeding, severe fatigue, or medical concerns continue.';
+  }
+
+  if (domainType === 'FUEL' && FUEL_HEALTH_PATTERN.test(focus)) {
+    return 'Reflect on the pattern without diagnosing it. If alcohol, trigger foods, bleeding, severe fatigue, or symptoms worry you or keep repeating, speak to a GP, clinician, or appropriate support service.';
+  }
+
+  return null;
+}
+
+export function buildHealthPatternReflection(
+  domainType: DomainType,
+  notes: Array<string | null | undefined>,
+): string | null {
+  if (domainType !== 'BODY' && domainType !== 'FUEL') return null;
+  const pattern = domainType === 'BODY' ? BODY_HEALTH_PATTERN : FUEL_HEALTH_PATTERN;
+  const repeatedNotes = notes.filter((note) => pattern.test(note ?? ''));
+  if (repeatedNotes.length < 2) return null;
+
+  if (domainType === 'BODY') {
+    return 'A Body pattern is repeating. Keep tracking if it helps, choose the lower-intensity version today, and take ongoing pain, bleeding, severe fatigue, or medical concerns to a GP or clinician.';
+  }
+
+  return 'A Fuel pattern is repeating. Keep the label discreet, reflect on what happened, and take ongoing alcohol concerns, trigger foods, or worrying symptoms to a GP, clinician, or appropriate support service.';
+}
+
 export const CONNECTION_RECIPIENT_OPTIONS: ConnectionRecipientOption[] = [
   { id: 'partner', label: 'Partner', focusLabel: 'Partner' },
   { id: 'family', label: 'Family', focusLabel: 'Family' },
