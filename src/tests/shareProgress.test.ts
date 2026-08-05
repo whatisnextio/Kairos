@@ -7,7 +7,7 @@ import type { FlywheelSummary } from '@/utils/v1Framework';
 import { describe, expect, it, vi } from 'vitest';
 
 const flywheel: FlywheelSummary = {
-  title: 'Core flywheel',
+  title: 'Weekly pattern',
   entries: [
     {
       domainType: 'BODY',
@@ -67,7 +67,7 @@ describe('progress sharing privacy', () => {
 
     expect(preview.text).not.toContain('Liam');
     expect(preview.text).not.toContain('Body 64%');
-    expect(preview.text).toContain('Core flywheel tracked privately.');
+    expect(preview.text).toContain('Weekly pattern tracked privately.');
     expect(preview.showPhoto).toBe(false);
   });
 

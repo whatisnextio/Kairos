@@ -14,7 +14,7 @@ describe('brand and help copy contract', () => {
         'What research is it based on?',
         'Why Self, not Mind?',
         'What does Connection include?',
-        'Can I add my own routes?',
+        'Can I add extra actions?',
         'What does reset do?',
         'How do notifications work?',
         'How does the AI nudge work?',
@@ -22,7 +22,7 @@ describe('brand and help copy contract', () => {
     );
     expect(kairosAnswer).toContain('Greek');
     expect(kairosAnswer).toContain('Kickoff, Anchor, Increase, Rhythm, Own, and Sustain');
-    expect(kairosAnswer).toContain('Choose one useful move');
+    expect(kairosAnswer).toContain('Choose one useful action');
     expect(kairosAnswer).not.toMatch(/latin|implement/i);
   });
 
@@ -32,7 +32,7 @@ describe('brand and help copy contract', () => {
 
     expect(standForAnswer).toContain('12 weeks powered by Kairos');
     expect(standForAnswer).toContain('not 12 steps');
-    expect(standForAnswer).toContain('six-phase, 84-day reset');
+    expect(standForAnswer).toContain('84 days');
     expect(researchAnswer).toContain('clear goals');
     expect(researchAnswer).toContain('prompts and cues');
     expect(researchAnswer).toContain('self-monitoring');
@@ -47,9 +47,9 @@ describe('brand and help copy contract', () => {
       ...Object.values(TERMS_COPY),
     ].join(' ');
 
-    expect(publicCopy).toContain('Routes such as photography, work, money, or family projects');
+    expect(publicCopy).toContain('work, money, photography');
     expect(publicCopy).toContain('AI acts as a Kairos accountability coach');
-    expect(publicCopy).toContain('identity anchor, phase, recent check-ins, streaks');
+    expect(publicCopy).toContain('reminder tone, phase, recent check-ins, streaks');
     expect(publicCopy).not.toMatch(/Kairos Plus|Lifechanger|checkout|billing portal|paid tier/i);
     expect(publicCopy).not.toContain('Brotherhood');
     expect(publicCopy).not.toMatch(/\bmen\b|\bman\b|male/i);
@@ -58,10 +58,10 @@ describe('brand and help copy contract', () => {
   it('explains app features without vague coming-soon language', () => {
     const featureCopy = Object.values(FEATURE_EXPLANATIONS).join(' ');
 
-    expect(FEATURE_EXPLANATIONS.personalRoutes).toContain('sub-route under one core domain');
+    expect(FEATURE_EXPLANATIONS.personalRoutes).toContain('extra action under one core area');
     expect(FEATURE_EXPLANATIONS.personalRoutesAction).toContain('Home, Progress, and Improve');
     expect(FEATURE_EXPLANATIONS.squad).toContain('anonymous accountability');
-    expect(FEATURE_EXPLANATIONS.notifications).toContain('opt-in PWA prompts');
+    expect(FEATURE_EXPLANATIONS.notifications).toContain('opt-in device prompts');
     expect(featureCopy).not.toMatch(/coming soon/i);
   });
 });

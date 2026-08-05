@@ -1,5 +1,5 @@
 import Button from '@/components/common/Button';
-import SetupOptionSections from '@/components/common/SetupOptionSections';
+import Input from '@/components/common/Input';
 import {
   DEFAULT_NOTIFICATION_PREFERENCES,
   REMINDER_INTENSITY_OPTIONS,
@@ -7,22 +7,24 @@ import {
 } from '@/services/localNotifications';
 import { supabase } from '@/services/supabaseClient';
 import { useAppStore } from '@/store/useAppStore';
-import type { DailyCheckIn, DomainType, IdentityAnchorId, Profile } from '@/types';
-import {
-  IDENTITY_ANCHORS,
-  KAIROS_PHASES,
-  PRODUCT_POSITIONING,
-  XP_PER_CHECK_IN_DONE,
-  getAvailableDomains,
-} from '@/types';
-import { AUTH_COPY } from '@/utils/brandCopy';
+import type { DomainConfig, DomainType, IdentityAnchorId, Profile } from '@/types';
+import { IDENTITY_ANCHORS, PRODUCT_POSITIONING, getAvailableDomains } from '@/types';
 import { getComplimentaryProfileFields } from '@/utils/entitlements';
 import { DEV_CYCLE_ID, isLocalDevUser } from '@/utils/localDevSession';
-import { buildDomainSetupOptionModel } from '@/utils/v1Framework';
 import { useEffect, useRef, useState } from 'react';
 
 type Step = 'framework' | 'identity' | 'focus' | 'accountability' | 'commit';
 const ONBOARDING_STEPS: Step[] = ['framework', 'identity', 'focus', 'accountability', 'commit'];
+
+function buildDefaultFocusSelections(domains: DomainConfig[]): Record<DomainType, string> {
+  return domains.reduce(
+    (acc, domain) => {
+      acc[domain.type] = domain.focusOptions[0] ?? '';
+      return acc;
+    },
+    {} as Record<DomainType, string>,
+  );
+}
 
 export default function OnboardingFlow() {
   const {
@@ -34,18 +36,19 @@ export default function OnboardingFlow() {
     setDomainFocuses,
     setOnboardingComplete,
     setTodayCheckIns,
-    mergeCheckInHistory,
     setNotificationPreferences,
     notificationPreferences,
   } = useAppStore();
 
+  const availableDomains = getAvailableDomains(authUser?.email);
   const [step, setStep] = useState<Step>('framework');
   const [anchorId, setAnchorId] = useState<IdentityAnchorId | null>(
     profile?.identityAnchorId ?? null,
   );
   const [customAnchor, setCustomAnchor] = useState(profile?.customAnchorName ?? '');
-  const [domain, setDomain] = useState<DomainType | null>(null);
-  const [microAction, setMicroAction] = useState('');
+  const [focusSelections, setFocusSelections] = useState<Record<DomainType, string>>(() =>
+    buildDefaultFocusSelections(availableDomains),
+  );
   const [displayName, setDisplayName] = useState(profile?.displayName ?? '');
   const [remindersEnabled, setRemindersEnabled] = useState(notificationPreferences.enabled);
   const [reminderIntensity, setReminderIntensity] = useState<ReminderIntensity>(
@@ -56,11 +59,15 @@ export default function OnboardingFlow() {
   const [submitError, setSubmitError] = useState<string | null>(null);
   const submitInFlight = useRef(false);
 
-  const availableDomains = getAvailableDomains(authUser?.email);
-  const selectedDomain = availableDomains.find((d) => d.type === domain);
-  const selectedSetupOptions = selectedDomain ? buildDomainSetupOptionModel(selectedDomain) : null;
   const stepNumber = ONBOARDING_STEPS.indexOf(step) + 1;
   const stepCount = ONBOARDING_STEPS.length;
+  const allFocusesSelected = availableDomains.every((domain) =>
+    focusSelections[domain.type]?.trim(),
+  );
+
+  useEffect(() => {
+    if (step) window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
+  }, [step]);
 
   useEffect(() => {
     document.documentElement.dataset.kairosRoute = 'onboarding';
@@ -95,29 +102,12 @@ export default function OnboardingFlow() {
     setStep('accountability');
   };
 
-  const completeLocally = ({
-    today,
-    now,
-    xpAfterWin,
-  }: {
-    today: string;
-    now: string;
-    xpAfterWin: number;
-  }) => {
-    if (!authUser || !anchorId || !domain) return;
+  const updateFocusSelection = (domainType: DomainType, value: string) => {
+    setFocusSelections((current) => ({ ...current, [domainType]: value }));
+  };
 
-    const ci: DailyCheckIn = {
-      id: `local-checkin-${domain.toLowerCase()}`,
-      userId: authUser.id,
-      cycleId: DEV_CYCLE_ID,
-      date: today,
-      domainType: domain,
-      status: 'Done',
-      notes: null,
-      xpAwarded: XP_PER_CHECK_IN_DONE,
-      createdAt: now,
-      updatedAt: now,
-    };
+  const completeLocally = ({ today, now }: { today: string; now: string }) => {
+    if (!authUser || !anchorId || !allFocusesSelected) return;
 
     setProfile({
       id: authUser.id,
@@ -125,7 +115,7 @@ export default function OnboardingFlow() {
       identityAnchorId: anchorId,
       customAnchorName: anchorId === 'custom' ? customAnchor.trim() : undefined,
       tier: 'brotherhood',
-      xp: xpAfterWin,
+      xp: profile?.xp ?? 0,
       currentKairosCycleId: DEV_CYCLE_ID,
       dateOfBirth: '1984-01-01',
       squadId: null,
@@ -143,22 +133,21 @@ export default function OnboardingFlow() {
       startDate: today,
       endDate: null,
       status: 'active',
-      totalXpEarned: XP_PER_CHECK_IN_DONE,
+      totalXpEarned: 0,
       completionPercentage: 0,
       createdAt: now,
     });
-    setDomainFocuses([
-      {
-        id: `local-focus-${domain.toLowerCase()}`,
+    setDomainFocuses(
+      availableDomains.map((domain) => ({
+        id: `local-focus-${domain.type.toLowerCase()}`,
         userId: authUser.id,
         cycleId: DEV_CYCLE_ID,
-        domainType: domain,
-        focusDescription: microAction.trim(),
+        domainType: domain.type,
+        focusDescription: focusSelections[domain.type].trim(),
         setAt: now,
-      },
-    ]);
-    setTodayCheckIns({ [domain]: ci });
-    mergeCheckInHistory({ [today]: { [domain]: 'Done' } });
+      })),
+    );
+    setTodayCheckIns({});
     setNotificationPreferences({
       enabled: remindersEnabled,
       intensity: reminderIntensity,
@@ -169,7 +158,7 @@ export default function OnboardingFlow() {
   };
 
   const handleCommit = async () => {
-    if (submitInFlight.current || !authUser || !anchorId || !domain || !microAction.trim()) return;
+    if (submitInFlight.current || !authUser || !anchorId || !allFocusesSelected) return;
     submitInFlight.current = true;
     setSubmitting(true);
     setSubmitError(null);
@@ -177,8 +166,6 @@ export default function OnboardingFlow() {
     const today = new Date().toISOString().split('T')[0];
     const now = new Date().toISOString();
     const complimentaryFields = getComplimentaryProfileFields(authUser.email);
-    const firstProofXp = XP_PER_CHECK_IN_DONE;
-    const xpAfterWin = (profile?.xp ?? 0) + firstProofXp;
 
     try {
       if (currentCycle?.status === 'active' || profile?.currentKairosCycleId) {
@@ -187,7 +174,7 @@ export default function OnboardingFlow() {
       }
 
       if (isLocalDevUser(authUser.id)) {
-        completeLocally({ today, now, xpAfterWin });
+        completeLocally({ today, now });
         return;
       }
 
@@ -197,7 +184,11 @@ export default function OnboardingFlow() {
       const dobFromAuth: string = fullUser?.user_metadata?.date_of_birth ?? today;
       const cleanName = displayName.trim() || 'Anonymous';
       const cleanCustomAnchor = anchorId === 'custom' ? customAnchor.trim() : null;
-      const cleanAction = microAction.trim();
+      const focusRows = availableDomains.map((domain) => ({
+        user_id: authUser.id,
+        domain_type: domain.type,
+        focus_description: focusSelections[domain.type].trim(),
+      }));
 
       const { data: profileRow, error: profileErr } = await supabase
         .from('profiles')
@@ -222,39 +213,16 @@ export default function OnboardingFlow() {
         .single();
 
       if (cycleErr || !cycle) {
-        throw new Error(cycleErr?.message ?? 'Could not create your cycle. Try again.');
+        throw new Error(cycleErr?.message ?? 'Could not create your 12K plan. Try again.');
       }
 
-      const { data: focus, error: focusErr } = await supabase
+      const { data: focusRowsSaved, error: focusErr } = await supabase
         .from('user_domain_focuses')
-        .insert({
-          user_id: authUser.id,
-          cycle_id: cycle.id,
-          domain_type: domain,
-          focus_description: cleanAction,
-        })
-        .select()
-        .single();
+        .insert(focusRows.map((row) => ({ ...row, cycle_id: cycle.id })))
+        .select();
 
-      if (focusErr || !focus) {
-        throw new Error(focusErr?.message ?? 'Could not save your starting focus.');
-      }
-
-      const { data: checkInRow, error: checkInErr } = await supabase
-        .from('daily_check_ins')
-        .insert({
-          user_id: authUser.id,
-          cycle_id: cycle.id,
-          date: today,
-          domain_type: domain,
-          status: 'Done',
-          xp_awarded: firstProofXp,
-        })
-        .select()
-        .single();
-
-      if (checkInErr || !checkInRow) {
-        throw new Error(checkInErr?.message ?? 'Could not save your first action.');
+      if (focusErr || !focusRowsSaved) {
+        throw new Error(focusErr?.message ?? 'Could not save your starter actions.');
       }
 
       let entitledProfileRow = profileRow;
@@ -269,14 +237,6 @@ export default function OnboardingFlow() {
         }
       }
 
-      if (firstProofXp > 0) {
-        const { error: xpErr } = await supabase.rpc('increment_profile_xp', {
-          p_user_id: authUser.id,
-          p_delta: firstProofXp,
-        });
-        if (xpErr) console.error('First proof XP sync failed:', xpErr.message);
-      }
-
       const { error: linkErr } = await supabase
         .from('profiles')
         .update({ current_kairos_cycle_id: cycle.id })
@@ -286,26 +246,13 @@ export default function OnboardingFlow() {
         throw new Error('Setup failed. Please try again.');
       }
 
-      const ci: DailyCheckIn = {
-        id: checkInRow.id,
-        userId: authUser.id,
-        cycleId: cycle.id,
-        date: today,
-        domainType: domain,
-        status: 'Done',
-        notes: null,
-        xpAwarded: firstProofXp,
-        createdAt: checkInRow.created_at,
-        updatedAt: checkInRow.updated_at,
-      };
-
       setProfile({
         id: authUser.id,
         displayName: cleanName,
         identityAnchorId: anchorId,
         customAnchorName: cleanCustomAnchor ?? undefined,
         tier: entitledProfileRow.tier as Profile['tier'],
-        xp: xpAfterWin,
+        xp: profile?.xp ?? 0,
         currentKairosCycleId: cycle.id,
         dateOfBirth: dobFromAuth,
         squadId: null,
@@ -323,22 +270,21 @@ export default function OnboardingFlow() {
         startDate: today,
         endDate: null,
         status: 'active',
-        totalXpEarned: firstProofXp,
+        totalXpEarned: 0,
         completionPercentage: 0,
         createdAt: cycle.created_at,
       });
-      setDomainFocuses([
-        {
+      setDomainFocuses(
+        focusRowsSaved.map((focus) => ({
           id: focus.id,
           userId: authUser.id,
           cycleId: cycle.id,
-          domainType: domain,
-          focusDescription: cleanAction,
+          domainType: focus.domain_type as DomainType,
+          focusDescription: focus.focus_description,
           setAt: focus.set_at,
-        },
-      ]);
-      setTodayCheckIns({ [domain]: ci });
-      mergeCheckInHistory({ [today]: { [domain]: 'Done' } });
+        })),
+      );
+      setTodayCheckIns({});
       setNotificationPreferences({
         enabled: remindersEnabled,
         intensity: reminderIntensity,
@@ -366,25 +312,14 @@ export default function OnboardingFlow() {
         {step === 'framework' && (
           <section>
             <h1 className="font-heading text-3xl font-bold text-base-text tracking-wide mb-2">
-              Start your 12-week reset.
+              Start your 12K plan.
             </h1>
             <p className="text-base-subtext text-sm leading-relaxed mb-4">
-              12K means 12 weeks powered by Kairos. It is not 12 steps.{' '}
-              {PRODUCT_POSITIONING.kairosMeaning}
+              12K helps you choose simple actions for Body, Fuel, Self, and Connection.
             </p>
             <p className="text-base-subtext text-sm leading-relaxed mb-5">
-              {PRODUCT_POSITIONING.proofLoop}
+              Set up your four starter actions now. Nothing is marked Done until you actually do it.
             </p>
-            <div className="mb-5 rounded border border-base-border bg-base-surface p-3">
-              <p className="text-base-subtext text-xs font-heading tracking-widest uppercase mb-1">
-                Recovery rule
-              </p>
-              <p className="text-base-subtext text-xs leading-relaxed">
-                84 days is a useful reset period with individual variation, not a fixed outcome. A
-                missed day is not a restart. Partial means the smallest useful version still counts;
-                catch up with the next small proof and keep going.
-              </p>
-            </div>
             <p className="text-base-muted text-xs leading-relaxed mb-5">
               {PRODUCT_POSITIONING.audience}
             </p>
@@ -400,28 +335,6 @@ export default function OnboardingFlow() {
               ))}
             </div>
 
-            <div className="mb-5">
-              <p className="text-base-subtext text-xs font-heading tracking-widest uppercase mb-2">
-                Six phases
-              </p>
-              <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-                {KAIROS_PHASES.map((phase) => (
-                  <div
-                    key={phase.phase}
-                    className="rounded border border-base-border bg-base-black/20 px-3 py-2"
-                  >
-                    <p className="font-heading text-sm text-base-text">{phase.label}</p>
-                    <p className="text-base-muted text-[11px] mt-0.5">
-                      Days {phase.days[0]}-{phase.days[1]}
-                    </p>
-                    <p className="text-base-subtext text-[11px] mt-1 leading-snug">
-                      {phase.tagline}
-                    </p>
-                  </div>
-                ))}
-              </div>
-            </div>
-
             <Button onClick={goToIdentity} className="w-full">
               Start setup
             </Button>
@@ -431,11 +344,10 @@ export default function OnboardingFlow() {
         {step === 'identity' && (
           <section>
             <h1 className="font-heading text-3xl font-bold text-base-text tracking-wide mb-2">
-              Choose who you are becoming.
+              Tell us your name.
             </h1>
             <p className="text-base-subtext text-sm leading-relaxed mb-5">
-              {AUTH_COPY.body} It gives you the next useful move, a check-in, and a recovery path
-              when the day slips.
+              This keeps the app personal. The role choice only changes the tone of your reminders.
             </p>
 
             <Input
@@ -448,11 +360,10 @@ export default function OnboardingFlow() {
             />
 
             <p className="text-base-subtext text-xs font-heading tracking-widest uppercase mb-2">
-              Identity anchor
+              Reminder tone
             </p>
             <p className="text-base-subtext text-xs leading-relaxed mb-3">
-              Pick the role that pulls you forward. This shapes the tone of your nudges; it is not a
-              personality test.
+              Pick the one that feels closest. You can change it later.
             </p>
             <div className="grid grid-cols-1 gap-2">
               {IDENTITY_ANCHORS.map((anchor) => (
@@ -504,37 +415,54 @@ export default function OnboardingFlow() {
         {step === 'focus' && (
           <section>
             <h1 className="font-heading text-3xl font-bold text-base-text tracking-wide mb-2">
-              Choose the first lever.
+              Choose your four actions.
             </h1>
             <p className="text-base-subtext text-sm leading-relaxed mb-5">
-              {PRODUCT_POSITIONING.categoryIntro} Routes such as work, money, family, or creative
-              practice sit underneath the same four-domain frame.
+              Pick one simple starter action in each area. These are your targets. They are not
+              marked Done yet.
             </p>
             <div className="grid grid-cols-1 gap-2">
               {availableDomains.map((d) => (
-                <button
-                  type="button"
-                  key={d.type}
-                  onClick={() => {
-                    setDomain(d.type);
-                    setMicroAction(buildDomainSetupOptionModel(d).focusOptions[0] ?? '');
-                  }}
-                  className={`w-full text-left p-3 rounded border transition-colors ${
-                    domain === d.type
-                      ? 'border-accent-green bg-accent-green/10'
-                      : 'border-base-border bg-base-surface hover:border-base-muted'
-                  }`}
-                >
+                <div key={d.type} className="rounded border border-base-border bg-base-surface p-3">
                   <p className={`font-heading font-medium tracking-wide ${d.colour}`}>{d.label}</p>
-                  <p className="text-base-subtext text-xs mt-1">{d.description}</p>
-                </button>
+                  <div className="mt-2 grid grid-cols-1 gap-2">
+                    {d.focusOptions.map((option) => (
+                      <button
+                        type="button"
+                        key={option}
+                        onClick={() => updateFocusSelection(d.type, option)}
+                        className={`rounded border px-3 py-2 text-left text-sm transition-colors ${
+                          focusSelections[d.type] === option
+                            ? 'border-accent-green bg-accent-green/10 text-base-text'
+                            : 'border-base-border bg-base-black/20 text-base-subtext hover:border-base-muted'
+                        }`}
+                      >
+                        {option}
+                      </button>
+                    ))}
+                  </div>
+                  <textarea
+                    className="input-field mt-2 h-16 resize-none text-sm"
+                    placeholder="Or write your own action"
+                    value={
+                      d.focusOptions.includes(focusSelections[d.type])
+                        ? ''
+                        : focusSelections[d.type]
+                    }
+                    onChange={(event) => updateFocusSelection(d.type, event.target.value)}
+                  />
+                </div>
               ))}
             </div>
             <div className="flex gap-3 mt-5">
               <Button variant="ghost" onClick={() => setStep('identity')} className="flex-1">
                 Back
               </Button>
-              <Button onClick={goToAccountability} disabled={!domain} className="flex-1">
+              <Button
+                onClick={goToAccountability}
+                disabled={!allFocusesSelected}
+                className="flex-1"
+              >
                 Continue
               </Button>
             </div>
@@ -544,11 +472,10 @@ export default function OnboardingFlow() {
         {step === 'accountability' && (
           <section>
             <h1 className="font-heading text-3xl font-bold text-base-text tracking-wide mb-2">
-              Set accountability intensity.
+              Choose reminder level.
             </h1>
             <p className="text-base-subtext text-sm leading-relaxed mb-5">
-              Choose how hard Kairos should keep the day visible. This is about prompt cadence and
-              tone, not diagnosis.
+              Choose how often 12K should nudge you. You can change this later.
             </p>
 
             <div className="grid grid-cols-1 gap-2 mb-5">
@@ -596,11 +523,9 @@ export default function OnboardingFlow() {
                 className="mt-0.5 accent-accent-green disabled:opacity-50"
               />
               <span>
-                <span className="block text-sm font-medium text-base-text">
-                  Include early-wake protocol
-                </span>
+                <span className="block text-sm font-medium text-base-text">Early morning help</span>
                 <span className="block text-xs text-base-subtext mt-0.5">
-                  Useful if early starts can turn into drift or scrolling.
+                  Useful if early starts turn into scrolling or lost time.
                 </span>
               </span>
             </label>
@@ -619,34 +544,29 @@ export default function OnboardingFlow() {
         {step === 'commit' && (
           <section>
             <h1 className="font-heading text-3xl font-bold text-base-text tracking-wide mb-2">
-              Make Day 0 count.
+              Ready to start.
             </h1>
             <p className="text-base-subtext text-sm leading-relaxed mb-5">
-              Pick one action you can complete now for{' '}
-              <span className="font-medium text-base-text">{selectedDomain?.label ?? 'today'}</span>
-              . This becomes your first focus and your first check-in.
+              Your four actions are set. Go to Home, do one action, then mark it Done.
             </p>
 
-            {selectedSetupOptions && (
-              <div className="mb-4">
-                <SetupOptionSections
-                  model={selectedSetupOptions}
-                  value={microAction}
-                  onSelect={setMicroAction}
-                />
-              </div>
-            )}
+            <div className="grid grid-cols-1 gap-2 mb-4" aria-label="Chosen actions">
+              {availableDomains.map((domain) => (
+                <div
+                  key={domain.type}
+                  className="rounded border border-base-border bg-base-surface p-3"
+                >
+                  <p className={`font-heading text-sm ${domain.colour}`}>{domain.label}</p>
+                  <p className="mt-1 text-sm text-base-text">{focusSelections[domain.type]}</p>
+                </div>
+              ))}
+            </div>
 
-            <textarea
-              className="input-field h-24 resize-none text-sm"
-              placeholder={
-                selectedDomain && selectedSetupOptions
-                  ? `Custom. ${selectedSetupOptions.customPlaceholder}. ${selectedDomain.focusPrompt}`
-                  : 'Write your first action.'
-              }
-              value={microAction}
-              onChange={(event) => setMicroAction(event.target.value)}
-            />
+            <div className="rounded border border-accent-green/40 bg-accent-green/10 p-3">
+              <p className="text-sm text-base-text">
+                Setup does not mark anything as Done. Your first tick happens after you take action.
+              </p>
+            </div>
 
             {submitError && (
               <p role="alert" className="text-status-missed text-sm mt-3">
@@ -665,7 +585,7 @@ export default function OnboardingFlow() {
               </Button>
               <Button
                 onClick={handleCommit}
-                disabled={!microAction.trim() || submitting}
+                disabled={!allFocusesSelected || submitting}
                 className="flex-1"
               >
                 {submitting ? (
@@ -677,7 +597,7 @@ export default function OnboardingFlow() {
                     Starting...
                   </span>
                 ) : (
-                  'Done, start 12K'
+                  'Start 12K'
                 )}
               </Button>
             </div>
@@ -689,26 +609,5 @@ export default function OnboardingFlow() {
         )}
       </div>
     </main>
-  );
-}
-
-function Input({
-  label,
-  className = '',
-  id,
-  ...props
-}: React.InputHTMLAttributes<HTMLInputElement> & { label?: string }) {
-  return (
-    <div className={`flex flex-col gap-1.5 w-full ${className}`}>
-      {label && (
-        <label
-          htmlFor={id}
-          className="text-sm font-medium text-base-subtext font-heading tracking-wider uppercase"
-        >
-          {label}
-        </label>
-      )}
-      <input id={id} className="input-field" {...props} />
-    </div>
   );
 }

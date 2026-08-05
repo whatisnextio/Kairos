@@ -505,7 +505,7 @@ export default function YouScreen() {
     setIsAddingRoute(false);
 
     if (!result.ok) {
-      setRouteError('Sub-route could not be saved. Check the name and focus, then try again.');
+      setRouteError('Extra action could not be saved. Check the name and focus, then try again.');
       return;
     }
 
@@ -636,10 +636,10 @@ export default function YouScreen() {
         </div>
       </Card>
 
-      {/* Personal sub-routes */}
+      {/* Extra actions */}
       <Card>
         <p className="text-base-subtext text-xs font-heading tracking-widest uppercase mb-3">
-          Personal sub-routes
+          Extra actions
         </p>
         <p className="text-base-subtext text-sm mb-2">{FEATURE_EXPLANATIONS.personalRoutes}</p>
         <p className="text-base-muted text-xs mb-4">{FEATURE_EXPLANATIONS.personalRoutesAction}</p>
@@ -647,18 +647,18 @@ export default function YouScreen() {
           profileId={profile.id}
           tipId="settings-sub-focus"
           eyebrow="Settings tip"
-          title="Create your own sub-focus areas"
+          title="Create your own extra actions"
           className="mb-4"
         >
           <p>
             Body, Fuel, Self, and Connection never change. Use this settings area to add your own
-            sub-focus areas underneath them, such as work, money, family, photography, study, or
+            extra actions underneath them, such as work, money, family, photography, study, or
             recovery.
           </p>
         </DismissibleTip>
         <div className="flex flex-col gap-2 mb-4">
           {activeCustomRoutes.length === 0 ? (
-            <p className="text-base-muted text-sm">No personal sub-routes active.</p>
+            <p className="text-base-muted text-sm">No extra actions active.</p>
           ) : (
             activeCustomRoutes.map((route) => (
               <div
@@ -687,7 +687,7 @@ export default function YouScreen() {
         </div>
         <div className="flex flex-col gap-2">
           <label className="text-base-subtext text-xs font-heading tracking-widest uppercase">
-            Core category
+            Core area
             <select
               className="input-field mt-1"
               value={routeParent}
@@ -702,7 +702,7 @@ export default function YouScreen() {
           </label>
           <input
             className="input-field"
-            placeholder="Route name, e.g. Lens"
+            placeholder="Action name, e.g. Lens"
             value={routeLabel}
             onChange={(e) => setRouteLabel(e.target.value)}
           />
@@ -733,7 +733,7 @@ export default function YouScreen() {
             onClick={() => void handleAddCustomRoute()}
             disabled={!routeLabel.trim() || !routeFocus.trim() || isAddingRoute}
           >
-            {isAddingRoute ? 'Adding...' : 'Add sub-route'}
+            {isAddingRoute ? 'Adding...' : 'Add action'}
           </Button>
         </div>
       </Card>
@@ -892,7 +892,7 @@ export default function YouScreen() {
           </div>
 
           <label className="flex items-center justify-between gap-3 text-sm text-base-subtext">
-            <span>Early-wake protocol</span>
+            <span>Early start help</span>
             <input
               type="checkbox"
               checked={notificationPreferences.earlyProtocol}
@@ -1063,8 +1063,8 @@ export default function YouScreen() {
                 This is permanent.
               </p>
               <p className="text-base-subtext text-xs mb-3">
-                This deletes your profile, journey history, check-ins, notes, personal sub-routes,
-                nudges, squad link, push subscriptions, and auth account.
+                This deletes your profile, journey history, check-ins, notes, extra actions, nudges,
+                squad link, push subscriptions, and auth account.
               </p>
               <label className="text-base-subtext text-xs font-heading tracking-widest uppercase">
                 Type DELETE to confirm

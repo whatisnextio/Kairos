@@ -67,18 +67,15 @@ describe('onboarding and reset contract', () => {
       "const ONBOARDING_STEPS: Step[] = ['framework', 'identity', 'focus', 'accountability', 'commit'];",
     );
     expect(source).toContain('{stepNumber} of {stepCount}');
-    expect(source).toContain('12K means 12 weeks powered by Kairos.');
-    expect(source).toContain('It is not 12 steps.');
-    expect(source).toContain('PRODUCT_POSITIONING.proofLoop');
-    expect(source).toContain('Six phases');
-    expect(source).toContain('Recovery rule');
-    expect(source).toContain('84 days is a useful reset period with individual variation');
-    expect(source).toMatch(/A\s+missed day is not a restart\./);
-    expect(source).toContain('Partial means the smallest useful version still counts');
-    expect(source).toContain('catch up with the next small proof');
-    expect(source).toContain('{phase.tagline}');
-    expect(source).toContain('Set accountability intensity.');
-    expect(source).toContain('not diagnosis');
+    expect(source).toContain('Start your 12K plan.');
+    expect(source).toContain('Set up your four starter actions now.');
+    expect(source).toContain('Nothing is marked Done until you actually do');
+    expect(source).toContain('Choose your four actions.');
+    expect(source).toContain('Pick one simple starter action in each area.');
+    expect(source).toMatch(/They are not\s+marked Done yet\./);
+    expect(source).toContain('Choose reminder level.');
+    expect(source).toContain('Your four actions are set.');
+    expect(source).toContain('mark it Done');
     expect(source).toContain('setNotificationPreferences');
     expect(source).not.toMatch(/cure|fixed guaranteed outcome|medical claim/i);
   });

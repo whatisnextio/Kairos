@@ -36,21 +36,20 @@ function focus(domainType: DomainType, focusDescription: string): UserDomainFocu
 }
 
 describe('Body and Fuel health guardrails', () => {
-  it('adds safe lower-intensity alternatives to Body and Fuel setup', () => {
+  it('keeps Body and Fuel starter setup simple and non-diagnostic', () => {
     const body = getDomainConfig('BODY');
     const fuel = getDomainConfig('FUEL');
 
-    expect(body?.focusOptions).toEqual(
-      expect.arrayContaining(['Take an easy 10-minute walk', 'Choose pain-free mobility only']),
-    );
-    expect(body?.prepOptions).toContain('Choose the lower-intensity version first');
-    expect(fuel?.focusOptions).toEqual(
-      expect.arrayContaining([
-        'Swap alcohol for a no-alcohol option',
-        'Note a food or drink trigger without diagnosing it',
-      ]),
-    );
+    expect(body?.focusOptions).toEqual(['Walk for 20 minutes', 'Protect an earlier bedtime']);
+    expect(body?.recoveryOptions).toContain('Use an easy walk instead of a session');
+    expect(fuel?.focusOptions).toEqual([
+      'Drink water before caffeine',
+      'Make the next meal protein-first',
+    ]);
     expect(fuel?.prepOptions).toContain('Plan the alcohol-free option before evening');
+    expect(`${body?.focusOptions.join(' ')} ${fuel?.focusOptions.join(' ')}`).not.toMatch(
+      /diagnos/i,
+    );
   });
 
   it('returns calm non-diagnostic signposts for Body and Fuel concerns', () => {

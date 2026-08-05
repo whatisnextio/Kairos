@@ -38,7 +38,7 @@ import { useNavigate } from 'react-router-dom';
 
 const STATUS_LABELS: Record<CheckInStatus, string> = {
   Done: 'Done',
-  Partial: 'Partial',
+  Partial: 'Part done',
   Missed: 'Missed',
   Pending: 'Check in',
   Protected: 'Protected',
@@ -71,10 +71,10 @@ function shouldShowVibeCheck(lastVibeCheckDate: string | null, dayInCycle: numbe
 
 const PHASE_MILESTONE_MESSAGES: Record<string, string> = {
   ANCHOR: 'The start is real. Now make it easier to repeat.',
-  INCREASE: 'The floor is set. Add load carefully.',
+  INCREASE: 'The action is set. Add a little more carefully.',
   RHYTHM: 'Patterns matter now. Make the week predictable.',
   OWN: 'Remove friction. Make the action yours.',
-  SUSTAIN: 'Hold the gain. Prepare the next cycle deliberately.',
+  SUSTAIN: 'Keep what works and choose what comes next.',
 };
 
 const DAY_PROTOCOL_DISMISSAL_KEY = 'kairos_day_protocol_dismissal_v1';
@@ -263,7 +263,7 @@ export default function HomeScreen() {
       configuredDomainCount < availableDomains.length &&
       dayInCycle >= configuredDomainCount
     ) {
-      // Show domain setup modal one domain at a time after the Day 0 win.
+      // Show domain setup modal one area at a time when older profiles are missing focuses.
       domainSetupShownThisSession = true;
       setShowDomainSetup(true);
     }
@@ -314,7 +314,7 @@ export default function HomeScreen() {
     navigate(`/detail/${getDomainRouteSlug(domainType)}`);
   };
 
-  const markProtocolTargetPartial = () => {
+  const markProtocolTargetPartDone = () => {
     const target = activeDayStateProtocol?.target;
     if (!target) return;
     if (target.kind === 'domain') {
@@ -344,7 +344,7 @@ export default function HomeScreen() {
       return;
     }
     if (action.kind === 'mark_partial') {
-      markProtocolTargetPartial();
+      markProtocolTargetPartDone();
       return;
     }
     openProtocolTarget();
@@ -405,9 +405,8 @@ export default function HomeScreen() {
           title="The four categories stay fixed"
         >
           <p>
-            12K always uses {CORE_CATEGORY_LABELS.join(', ')}. Your personal sub-focus areas sit
-            underneath those categories, so the daily check-in stays simple while the work stays
-            personal.
+            12K always uses {CORE_CATEGORY_LABELS.join(', ')}. Extra actions sit underneath those
+            categories, so the daily check-in stays simple while the work stays personal.
           </p>
         </DismissibleTip>
 
@@ -533,7 +532,7 @@ export default function HomeScreen() {
           <div className="flex flex-col gap-3">
             <div>
               <div className="flex justify-between text-xs text-base-subtext mb-1.5">
-                <span>Cycle</span>
+                <span>84-day plan</span>
                 <span>{cyclePct}%</span>
               </div>
               <div className="h-1.5 bg-base-border rounded-full overflow-hidden">
@@ -599,7 +598,7 @@ export default function HomeScreen() {
             }
           >
             <p className="font-heading text-xs text-base-subtext tracking-widest uppercase mb-1">
-              Day protocol
+              Today
             </p>
             <p className="font-heading text-base-text text-lg tracking-wide">
               {activeDayStateProtocol.title}
@@ -614,11 +613,6 @@ export default function HomeScreen() {
                 </div>
               ))}
             </div>
-            {activeDayStateProtocol.actions.some((action) => action.kind === 'mark_partial') && (
-              <p className="text-base-muted text-xs mt-3">
-                Partial means the smallest useful version was completed.
-              </p>
-            )}
             {activeDayStateProtocol.actions.some((action) => action.kind === 'dismiss') && (
               <p className="text-base-muted text-xs mt-3">
                 Dismiss hides this prompt on this device. If the same item stays open, Kairos may
@@ -630,9 +624,7 @@ export default function HomeScreen() {
                 <Button
                   key={action.id}
                   size="sm"
-                  variant={
-                    index === 0 ? 'primary' : action.kind === 'mark_partial' ? 'secondary' : 'ghost'
-                  }
+                  variant={index === 0 ? 'primary' : 'ghost'}
                   onClick={() => handleDayProtocolAction(action)}
                   className="w-full sm:w-auto"
                 >
@@ -745,7 +737,7 @@ export default function HomeScreen() {
                       )}
                       {!focus && (
                         <p className="text-base-muted text-xs mt-1.5">
-                          Check in now, or open details to set tomorrow.
+                          Open details to choose an action for this area.
                         </p>
                       )}
                       {status === 'Protected' && (
@@ -758,10 +750,16 @@ export default function HomeScreen() {
                       <button
                         type="button"
                         className="min-h-10 rounded-md border border-accent-green/50 bg-accent-green/10 px-3 py-2 text-center font-heading text-xs font-semibold uppercase tracking-wider text-accent-green transition-colors hover:bg-accent-green/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-green"
-                        onClick={() => setSelectedDomainType(domain.type)}
-                        aria-label={`Check in ${displayLabel}`}
+                        onClick={() =>
+                          focus
+                            ? setSelectedDomainType(domain.type)
+                            : navigate(`/detail/${getDomainRouteSlug(domain.type)}`)
+                        }
+                        aria-label={
+                          focus ? `Check in ${displayLabel}` : `Set ${displayLabel} action`
+                        }
                       >
-                        Check in
+                        {focus ? 'Check in' : 'Set action'}
                       </button>
                       <button
                         type="button"
@@ -801,7 +799,7 @@ export default function HomeScreen() {
                             <p className="text-base-subtext text-xs mt-1 truncate">
                               {route.focusDescription}
                             </p>
-                            <p className="text-base-muted text-[11px] mt-0.5">Sub-route</p>
+                            <p className="text-base-muted text-[11px] mt-0.5">Extra action</p>
                           </button>
                         );
                       })}

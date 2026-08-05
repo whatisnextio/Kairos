@@ -148,9 +148,9 @@ export function deriveEarnedBadges({
     },
     {
       id: 'cycle-finisher',
-      label: 'Cycle Finisher',
-      description: 'Reached the end of an 84-day cycle.',
-      trigger: 'Reach Day 84 and close the cycle.',
+      label: 'Round Finisher',
+      description: 'Reached the end of an 84-day round.',
+      trigger: 'Reach Day 84 and close the round.',
       earned: dayInCycle >= 84,
     },
   ];

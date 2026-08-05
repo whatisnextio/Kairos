@@ -13,7 +13,7 @@ const setupSources = () =>
   ].join('\n');
 
 describe('guided domain setup model', () => {
-  it('gives every core category enough action, prep, and recovery options', () => {
+  it('keeps every core category focused to a small starter choice set', () => {
     const coreDomains = DOMAINS.filter((domain) =>
       ['BODY', 'FUEL', 'METIME', 'USTIME'].includes(domain.type),
     );
@@ -27,34 +27,35 @@ describe('guided domain setup model', () => {
     for (const domain of coreDomains) {
       const model = buildDomainSetupOptionModel(domain);
 
-      expect(model.focusOptions.length).toBeGreaterThanOrEqual(6);
+      expect(model.focusOptions.length).toBeGreaterThanOrEqual(2);
+      expect(model.focusOptions.length).toBeLessThanOrEqual(3);
       expect(model.prepOptions.length).toBeGreaterThanOrEqual(3);
       expect(model.recoveryOptions.length).toBeGreaterThanOrEqual(3);
     }
   });
 
-  it('keeps onboarding, Detail, progressive setup, and sub-routes on the same option model', () => {
+  it('keeps onboarding simple while detailed setup paths reuse the option model', () => {
     const source = setupSources();
 
-    expect(source.match(/buildDomainSetupOptionModel/g)?.length).toBeGreaterThanOrEqual(4);
-    expect(source.match(/SetupOptionSections/g)?.length).toBeGreaterThanOrEqual(4);
+    expect(source).toContain('Choose your four actions.');
+    expect(source).toContain('Pick one simple starter action in each area.');
+    expect(source.match(/buildDomainSetupOptionModel/g)?.length).toBeGreaterThanOrEqual(3);
+    expect(source.match(/SetupOptionSections/g)?.length).toBeGreaterThanOrEqual(2);
     expect(source).toContain('Action options');
     expect(source).toContain('Prep options');
     expect(source).toContain('Recovery options');
   });
 
-  it('keeps custom input available but secondary in setup paths', () => {
+  it('keeps custom input available in setup paths', () => {
     const source = setupSources();
-    const firstGuidedIndex = source.indexOf('SetupOptionSections');
-    const firstCustomIndex = source.indexOf('Custom.');
 
-    expect(firstGuidedIndex).toBeGreaterThan(-1);
-    expect(firstCustomIndex).toBeGreaterThan(-1);
-    expect(firstGuidedIndex).toBeLessThan(firstCustomIndex);
+    expect(source).toContain('Or write your own action');
+    expect(source).toContain('Or write your own');
+    expect(source).toContain('Custom.');
     expect(source).not.toMatch(/freeform-only|freeform first/i);
   });
 
-  it('lets personal sub-routes inherit parent options and add route-specific choices', () => {
+  it('lets extra actions inherit parent options and add route-specific choices', () => {
     const parent = getDomainConfig('METIME');
     expect(parent).toBeDefined();
     if (!parent) throw new Error('Self domain missing');
@@ -75,7 +76,7 @@ describe('guided domain setup model', () => {
     ]);
   });
 
-  it('keeps Connection recipient and context options guided but discreet', () => {
+  it('keeps Connection options guided but discreet', () => {
     const connection = getDomainConfig('USTIME');
     expect(connection).toBeDefined();
     if (!connection) throw new Error('Connection domain missing');
@@ -83,7 +84,7 @@ describe('guided domain setup model', () => {
     const partnerContextIds = getConnectionContextOptions('partner').map((option) => option.id);
     const familyContextIds = getConnectionContextOptions('family').map((option) => option.id);
 
-    expect(model.focusOptions).toContain('Offer warmth with no agenda');
+    expect(model.focusOptions).toContain('Have a no-phone conversation');
     expect(partnerContextIds).toContain('warmth');
     expect(partnerContextIds).not.toContain('consent_led_closeness');
     expect(familyContextIds).not.toContain('comfort_first');

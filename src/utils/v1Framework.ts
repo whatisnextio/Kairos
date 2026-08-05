@@ -334,8 +334,8 @@ export function getEarlyWakeProtocol(now = new Date()): EarlyWakeProtocol | null
   if (hour < 4 || hour >= 7) return null;
 
   return {
-    title: 'Early-wake protocol',
-    body: 'Do the floor, then decide whether the day starts now or you recover more sleep.',
+    title: 'Early start',
+    body: 'Do one tiny useful action, then decide whether the day starts now or you recover more sleep.',
     steps: [
       'Water first.',
       'No scrolling for the first ten minutes.',
@@ -373,7 +373,7 @@ export function buildCatchUpPath(
     steps: [
       target.prepOptions[0],
       `Do the smallest useful version of ${target.focusOptions[0].toLowerCase()}.`,
-      'Use Partial when a smaller useful version happened.',
+      'Mark Part done if a smaller useful action happened.',
     ],
   };
 }
@@ -434,7 +434,7 @@ function hasAnyStartedCheckIn({
 }
 
 function targetLabel(target: DayStateProtocolTarget | undefined): string {
-  return target?.label ?? 'one route';
+  return target?.label ?? 'one action';
 }
 
 function protocolActions(
@@ -443,7 +443,7 @@ function protocolActions(
 ): DayStateProtocolAction[] {
   if (type === 'early_wake') {
     return [
-      { id: 'start-floor', label: 'Start floor', kind: 'open_check_in' },
+      { id: 'start-small', label: 'Start small', kind: 'open_check_in' },
       { id: 'dismiss', label: 'Dismiss', kind: 'dismiss' },
     ];
   }
@@ -452,7 +452,7 @@ function protocolActions(
     return [
       { id: 'set-tomorrow', label: 'Set tomorrow', kind: 'set_tomorrow' },
       ...(target
-        ? [{ id: 'mark-partial', label: 'Mark Partial', kind: 'mark_partial' } as const]
+        ? [{ id: 'mark-part-done', label: 'Mark Part done', kind: 'mark_partial' } as const]
         : []),
       { id: 'dismiss', label: 'Dismiss', kind: 'dismiss' },
     ];
@@ -462,7 +462,7 @@ function protocolActions(
     return [
       { id: 'start-rescue', label: 'Start 10-minute rescue', kind: 'start_rescue' },
       ...(target
-        ? [{ id: 'mark-partial', label: 'Mark Partial', kind: 'mark_partial' } as const]
+        ? [{ id: 'mark-part-done', label: 'Mark Part done', kind: 'mark_partial' } as const]
         : []),
       { id: 'dismiss', label: 'Dismiss', kind: 'dismiss' },
     ];
@@ -514,13 +514,13 @@ export function selectDayStateProtocol({
     return {
       id: 'shutdown',
       type: 'shutdown',
-      title: 'Shutdown protocol',
+      title: 'End-of-day check',
       body: `${targetLabel(
         target,
       )} is still open. Close the loop gently, then leave the rest for tomorrow.`,
       steps: [
         'Choose one open item only.',
-        'Mark Done, Partial, or Missed.',
+        'Mark Done, Part done, or Missed.',
         'Leave the rest for tomorrow after one next-day action.',
       ],
       target,
@@ -537,14 +537,14 @@ export function selectDayStateProtocol({
       body: escalated
         ? `${targetLabel(
             target,
-          )} still needs a check-in. Record what happened; a smaller useful version as Partial counts.`
+          )} still needs a check-in. Record what happened; one small useful action can be Part done.`
         : `${targetLabel(
             missedTarget ?? target,
           )} is recoverable. The day is not failed; choose one small close.`,
       steps: [
         'Start with ten quiet minutes.',
         'Do the smallest useful version.',
-        'Use Partial when that smaller version happened.',
+        'Mark Part done if a smaller useful action happened.',
       ],
       target,
       actions: protocolActions('catch_up', target),
@@ -554,7 +554,7 @@ export function selectDayStateProtocol({
   return {
     id: target ? 'normal-start' : 'normal-review',
     type: 'normal_start',
-    title: target ? 'Start protocol' : 'Review protocol',
+    title: target ? 'Start today' : 'Review today',
     body: target
       ? `${targetLabel(target)} is the next clean check-in. Keep it small and visible.`
       : 'Today is marked. Review the pattern or protect tomorrow.',
@@ -574,7 +574,7 @@ export function buildAccountabilityPrompt(ignoredCount: number): AccountabilityP
       body: 'Pick one open item and record what happened. A smaller useful version still counts.',
       steps: [
         'Choose one open item.',
-        'Mark Done, Partial, or Missed.',
+        'Mark Done, Part done, or Missed.',
         'Leave the rest for tomorrow if needed.',
       ],
     };
@@ -640,7 +640,7 @@ export function buildWeeklyFlywheel({
   const todayIso = toLocalIsoDate(today);
 
   return {
-    title: 'Core flywheel',
+    title: 'Weekly pattern',
     entries: rows.map((row) => {
       let done = 0;
       let partial = 0;
@@ -717,7 +717,7 @@ function buildWeeklyReviewRecommendation(
       targetDomainType: partialHeavy.domainType,
       targetLabel: partialHeavy.label,
       reason: `${partialHeavy.label} was live but thin.`,
-      editableText: `Protect ${partialHeavy.label} rhythm by making Partial explicit and moving the cue earlier.`,
+      editableText: `Protect ${partialHeavy.label} rhythm by making Part done clear and moving the cue earlier.`,
     };
   }
 
@@ -729,7 +729,7 @@ function buildWeeklyReviewRecommendation(
       targetDomainType: target.domainType,
       targetLabel: target.label,
       reason: `${phase.label} supports one controlled load increase after a strong week.`,
-      editableText: `Increase one controlled ${target.label} load this week while keeping the current floor.`,
+      editableText: `Increase one controlled ${target.label} action this week while keeping it realistic.`,
     };
   }
 
@@ -738,7 +738,7 @@ function buildWeeklyReviewRecommendation(
     targetDomainType: target?.domainType ?? 'BODY',
     targetLabel: target?.label ?? 'Body',
     reason: `${phase.label} favours protecting the rhythm before adding more.`,
-    editableText: 'Protect the rhythm this week; keep the current floor before adding load.',
+    editableText: 'Protect the rhythm this week; keep the action realistic before adding more.',
   };
 }
 

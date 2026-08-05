@@ -2,11 +2,11 @@ import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 
 describe('single app tier UX copy', () => {
-  it('keeps Personal sub-routes visible without upgrade controls', () => {
+  it('keeps extra actions visible without upgrade controls', () => {
     const source = readFileSync('src/pages/YouScreen.tsx', 'utf8');
     const oldOwnerSetupTitle = ['Liam', 'Transformation'].join(' ');
 
-    expect(source).toContain('Personal sub-routes');
+    expect(source).toContain('Extra actions');
     expect(source).not.toContain(oldOwnerSetupTitle);
     expect(source).not.toContain('Liam sub-routes');
     expect(source).not.toContain('high accountability prompts');
@@ -15,7 +15,7 @@ describe('single app tier UX copy', () => {
     expect(source).toContain('FEATURE_EXPLANATIONS.personalRoutes');
     expect(source).toContain('FEATURE_EXPLANATIONS.personalRoutesAction');
     expect(source).toContain('tipId="settings-sub-focus"');
-    expect(source).toContain('Create your own sub-focus areas');
+    expect(source).toContain('Create your own extra actions');
     expect(source).toContain('Body, Fuel, Self, and Connection never change');
     expect(source).not.toContain('Billing portal');
     expect(source).not.toContain('Manage billing');

@@ -1,16 +1,16 @@
 Welcome to 12K.
 
-12K means 12 weeks powered by the Kairos framework. Kairos means the right moment: the point where intention becomes action, and action becomes visible change. Twelve weeks is long enough to prove change to yourself, and short enough to keep the work visible.
+12K means 12 weeks powered by Kairos. Kairos means the right moment: the point where attention becomes action.
 
-Over 84 days, the framework helps you build proof across four areas that shape a life:
-- Body: movement and physical standards.
-- Fuel: food, drink, sleep, and energy.
-- Self: attention, recovery, confidence, and identity.
-- Connection: the people and relationships that keep life real.
+Over 84 days, the app helps you choose simple actions across four areas:
+- Body: movement, sleep, and physical energy.
+- Fuel: food, drink, and choices that affect energy.
+- Self: attention, recovery, confidence, and reflection.
+- Connection: family, friends, partners, and practical support.
 
-Each day asks for the smallest useful action, then records what actually happened so change becomes something you can see, not just something you meant to do.
+Each day asks for one useful action. Then you mark what happened: Done, Part done, or Missed.
 
-Your first link opens the app so you can start the Kickoff phase, choose your first focus, and begin the daily proof loop. No perfect-day pressure, just a clear next step.
+Your first link opens the app so you can set your four starter actions and begin. No perfect-day pressure, just a clear next step.
 
 Open Kairos:
 {{ .ConfirmationURL }}

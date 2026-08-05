@@ -96,7 +96,7 @@ describe('weekly mentor review', () => {
 
     expect(review.recommendation.state).toBe('protect');
     expect(review.recommendation.targetLabel).toBe('Fuel');
-    expect(review.recommendation.editableText).toContain('making Partial explicit');
+    expect(review.recommendation.editableText).toContain('making Part done clear');
   });
 
   it('uses the current phase to decide whether a strong week should increase or protect', () => {
@@ -121,7 +121,7 @@ describe('weekly mentor review', () => {
     expect(kickoffReview.recommendation.reason).toContain('Kickoff');
   });
 
-  it('shows active personal sub-routes under their parent categories', () => {
+  it('shows active extra actions under their parent categories', () => {
     const review = buildWeeklyReview({
       checkInHistory: history({}),
       todayCheckIns: { USTIME: checkIn('USTIME', 'Done') },

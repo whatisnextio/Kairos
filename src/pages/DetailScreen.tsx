@@ -38,7 +38,7 @@ const STATUS_DOT: Record<string, string> = {
 
 const STATUS_LABEL: Record<string, string> = {
   Done: 'Done',
-  Partial: 'Partial',
+  Partial: 'Part done',
   Missed: 'Missed',
   Pending: 'Pending',
   Protected: 'Protected',
@@ -313,7 +313,7 @@ export default function DetailScreen() {
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
             <p className="text-base-subtext text-xs font-heading tracking-widest uppercase mb-1">
-              This cycle's focus
+              Current focus
             </p>
             <p className="text-base-text text-sm">
               {focus?.focusDescription ?? 'No focus set yet.'}
@@ -536,7 +536,7 @@ export default function DetailScreen() {
                 </span>
                 <span className="flex items-center gap-1 text-xs text-base-muted">
                   <span className="w-2 h-2 rounded-sm bg-status-partial inline-block" />
-                  Partial
+                  Part done
                 </span>
                 <span className="flex items-center gap-1 text-xs text-base-muted">
                   <span className="w-2 h-2 rounded-sm bg-status-missed inline-block" />

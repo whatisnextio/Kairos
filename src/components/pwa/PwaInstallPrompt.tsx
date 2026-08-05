@@ -21,17 +21,18 @@ function isInstallSuppressed(): boolean {
   return isStandaloneDisplay() || !!getInstallDismissedUntil();
 }
 
-function getManualInstallMode(): InstallMode | null {
+function getInstallMode(): InstallMode | null {
   if (typeof window === 'undefined') return null;
   if (isInstallSuppressed()) return null;
   if (!isMobileUserAgent(window.navigator.userAgent)) return null;
-  return 'manual';
+  return /iPhone|iPad|iPod/i.test(window.navigator.userAgent) ? 'manual' : null;
 }
 
 export default function PwaInstallPrompt() {
   const [installEvent, setInstallEvent] = useState<BeforeInstallPromptEvent | null>(null);
   const [mode, setMode] = useState<InstallMode | null>(null);
-  const pendingMode = useRef<InstallMode | null>(getManualInstallMode());
+  const [hasOpenDialog, setHasOpenDialog] = useState(false);
+  const pendingMode = useRef<InstallMode | null>(getInstallMode());
 
   useEffect(() => {
     if (typeof window === 'undefined' || isInstallSuppressed()) return;
@@ -66,7 +67,21 @@ export default function PwaInstallPrompt() {
     };
   }, []);
 
-  if (mode === null) return null;
+  useEffect(() => {
+    if (typeof document === 'undefined') return;
+
+    const updateDialogState = () => {
+      setHasOpenDialog(document.querySelector('[role="dialog"], dialog[open]') !== null);
+    };
+
+    updateDialogState();
+    const observer = new MutationObserver(updateDialogState);
+    observer.observe(document.body, { childList: true, subtree: true });
+
+    return () => observer.disconnect();
+  }, []);
+
+  if (mode === null || hasOpenDialog) return null;
 
   const handleDismiss = () => {
     dismissInstallPrompt();
@@ -100,7 +115,7 @@ export default function PwaInstallPrompt() {
               Install Kairos
             </p>
             <p className="mt-1 text-sm text-base-subtext">
-              Add 12K to your home screen for faster check-ins and PWA reminders.
+              Add 12K to your home screen for faster check-ins and reminders.
             </p>
           </div>
           <button
@@ -121,7 +136,7 @@ export default function PwaInstallPrompt() {
         ) : (
           <div className="mt-4 flex items-start gap-2 rounded border border-base-border bg-base-black/40 p-3 text-xs text-base-subtext">
             <Share size={16} className="mt-0.5 shrink-0 text-accent-green" aria-hidden="true" />
-            <p>Open your browser menu, then choose Add to Home Screen.</p>
+            <p>Manual install: open Safari share, then choose Add to Home Screen.</p>
           </div>
         )}
       </div>

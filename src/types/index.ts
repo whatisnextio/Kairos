@@ -28,7 +28,7 @@ export const KAIROS_PHASES: KairosPhaseConfig[] = [
     phase: 'INCREASE',
     label: 'Increase',
     days: [29, 42],
-    tagline: 'Add controlled load without breaking the floor.',
+    tagline: 'Add a bit more without making it too hard.',
   },
   {
     phase: 'RHYTHM',
@@ -46,7 +46,7 @@ export const KAIROS_PHASES: KairosPhaseConfig[] = [
     phase: 'SUSTAIN',
     label: 'Sustain',
     days: [71, 84],
-    tagline: 'Hold the gain and choose the next cycle deliberately.',
+    tagline: 'Keep what works and choose what comes next.',
   },
 ];
 
@@ -99,17 +99,17 @@ export const PRODUCT_POSITIONING = {
   appName: '12K',
   systemName: 'Kairos',
   headline: 'Your 12-week transformation. Powered by the Kairos System.',
-  what: '12K is a guided 12-week / 84-day operating system for turning daily action into visible change.',
+  what: '12K is a guided 12-week plan for turning small daily actions into visible change.',
   kairosMeaning:
     'Kairos is Greek for the right or opportune moment: the point where attention becomes action.',
-  why: 'It gives you a clear goal, prompts and cues, one check-in, feedback, and a recovery path when the day slips.',
+  why: 'It gives you a clear goal, simple prompts, one check-in, feedback, and a way back when the day slips.',
   audience: 'Built for adults who need a simple guided reset, not a gender-specific programme.',
   designedFor:
     'Designed for real life: inconsistent energy, busy work, family pressure, missed days, and the need to rebuild without shame.',
   categoryIntro:
-    'Start with Body, Fuel, Self, and Connection. Add private sub-routes when your life needs them.',
+    'Start with Body, Fuel, Self, and Connection. Add private extra actions when your life needs them.',
   proofLoop:
-    'Choose one useful move, do the smallest honest version, check in, recover quickly, and review the flywheel weekly.',
+    'Choose one useful action, do what you can, check in, recover quickly, and review the week.',
 } as const;
 
 export interface DomainConfig {
@@ -135,30 +135,22 @@ export const DOMAINS: DomainConfig[] = [
     colour: 'text-domain-body',
     audience: 'public',
     description: 'Movement, sleep, recovery, strength, and physical energy.',
-    focusPrompt: 'Choose one physical action you can repeat without drama.',
-    question: 'What physical action would make today harder to waste?',
-    focusOptions: [
-      'Walk for 20 minutes',
-      'Take an easy 10-minute walk',
-      'Do a simple strength session',
-      'Stretch or mobilise for 10 minutes',
-      'Choose pain-free mobility only',
-      'Protect an earlier bedtime',
-    ],
+    focusPrompt: 'Choose one body action you can repeat.',
+    question: 'What body action helps today?',
+    focusOptions: ['Walk for 20 minutes', 'Protect an earlier bedtime'],
     prepOptions: [
-      'Put kit where you will see it',
-      'Choose the lower-intensity version first',
+      'Make sure your gear is ready',
       'Block a 20-minute window',
-      'Choose the easiest route',
+      'Choose the easiest walk',
     ],
     recoveryOptions: [
-      'Make it a 5-minute mobility floor',
+      'Do 5 minutes only',
       'Use an easy walk instead of a session',
-      'Protect sleep and mark Partial',
+      'Protect sleep and mark Part done if needed',
     ],
     reflectPrompt: 'What did your body need today, and did you answer it?',
     coachPrompt: 'If energy is low, shrink the action before you skip it.',
-    feedbackPrompt: 'Body is not punishment. It is the daily signal that you are in the game.',
+    feedbackPrompt: 'Body is not punishment. It is a daily signal that you showed up.',
   },
   {
     type: 'FUEL',
@@ -167,15 +159,8 @@ export const DOMAINS: DomainConfig[] = [
     audience: 'public',
     description: 'Food, water, alcohol, caffeine, and choices that affect mood and energy.',
     focusPrompt: 'Pick the next food or drink decision that helps future you.',
-    question: 'What fuel choice gives you the cleanest next few hours?',
-    focusOptions: [
-      'Drink water before caffeine',
-      'Make the next meal protein-first',
-      'Avoid alcohol today',
-      'Swap alcohol for a no-alcohol option',
-      'Note a food or drink trigger without diagnosing it',
-      "Prepare tomorrow's first meal",
-    ],
+    question: 'What food or drink choice helps the next few hours?',
+    focusOptions: ['Drink water before caffeine', 'Make the next meal protein-first'],
     prepOptions: [
       'Fill a bottle now',
       'Move the better option into reach',
@@ -189,7 +174,7 @@ export const DOMAINS: DomainConfig[] = [
     ],
     reflectPrompt: 'Which choice gave you energy, and which choice took it?',
     coachPrompt: 'Do not negotiate with hunger late. Set the next choice while you are clear.',
-    feedbackPrompt: 'Fuel is a leverage point. One better choice changes the next decision.',
+    feedbackPrompt: 'Fuel is one useful choice at a time.',
   },
   {
     type: 'METIME',
@@ -197,17 +182,9 @@ export const DOMAINS: DomainConfig[] = [
     colour: 'text-domain-metime',
     audience: 'public',
     description: 'Attention, recovery, identity, reflection, confidence, and emotional regulation.',
-    focusPrompt:
-      'Pick the reset, reflection, or private check-in that helps you take yourself back.',
-    question: 'What would make you feel more in control of yourself today?',
-    focusOptions: [
-      'Take a 10-minute reset',
-      'Write one honest line',
-      'Name one visible win',
-      'Put the phone away for 30 minutes',
-      'Plan a quiet recovery block',
-      'Do your private check-in',
-    ],
+    focusPrompt: 'Pick one reset or private check-in that helps you feel steady.',
+    question: 'What helps you feel steady today?',
+    focusOptions: ['Take a 10-minute reset', 'Write one honest line'],
     prepOptions: ['Choose the place', 'Set a short timer', 'Remove the phone from reach'],
     recoveryOptions: [
       'Take a 3-minute breathing reset',
@@ -217,25 +194,17 @@ export const DOMAINS: DomainConfig[] = [
     reflectPrompt: 'What pulled you off centre, and what brought you back?',
     coachPrompt:
       'Self is broader than mindset. Protect attention, recovery, confidence, and identity.',
-    feedbackPrompt: 'Self is the base layer. When you are regulated, the other choices get easier.',
+    feedbackPrompt: 'Self helps the other choices feel easier.',
   },
   {
     type: 'USTIME',
     label: 'Connection',
     colour: 'text-domain-ustime',
     audience: 'public',
-    description:
-      'Family, friends, partners, community, communication, warmth, and practical support.',
+    description: 'Partner, family, friends, communication, warmth, and practical support.',
     focusPrompt: 'Choose one relationship action that makes connection easier.',
-    question: 'Who needs a more present version of you today?',
-    focusOptions: [
-      'Check their energy first',
-      'Have a no-phone conversation',
-      'Do one useful household action',
-      'Offer warmth with no agenda',
-      'Ask a better question and listen',
-      'Be present with family for 15 minutes',
-    ],
+    question: 'Who needs a bit of your attention today?',
+    focusOptions: ['Have a no-phone conversation', 'Do one useful household action'],
     prepOptions: ['Name the person', 'Choose the moment', 'Keep it small and specific'],
     recoveryOptions: [
       'Send one low-pressure check-in',
@@ -244,7 +213,7 @@ export const DOMAINS: DomainConfig[] = [
     ],
     reflectPrompt: 'Where did you create warmth, safety, or attention?',
     coachPrompt: 'Connection starts with the other person as they are today.',
-    feedbackPrompt: 'The point is not pressure or grand gestures. It is reliable presence.',
+    feedbackPrompt: 'The point is not grand gestures. It is steady presence.',
   },
   {
     type: 'SHOT',

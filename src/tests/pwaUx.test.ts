@@ -48,21 +48,21 @@ describe('PWA UX shell', () => {
 
     expect(home).toContain("Pending: 'Check in'");
     expect(home).toContain('data-testid={`daily-domain-row-${domain.type}`}');
-    expect(home).toContain('aria-label={`Check in ${displayLabel}`}');
+    expect(home).toContain('`Check in ${displayLabel}`');
     expect(home).toContain('Check in');
     expect(home).toContain('aria-label={`Open ${displayLabel} details`}');
     expect(home).toContain('Details');
-    expect(home).toContain('Check in now, or open details to set tomorrow.');
+    expect(home).toContain('Open details to choose an action for this area.');
     expect(home).not.toContain('aria-label={`Open ${displayLabel} detail`}');
     expect(recommendations).toContain('getDailyDomainLabel(domain)');
   });
 
-  it('nests personal sub-routes under the core daily categories', () => {
+  it('nests extra actions under the core daily categories', () => {
     const home = readFileSync('src/pages/HomeScreen.tsx', 'utf8');
 
     expect(home).toContain('routesForDomain');
     expect(home).toContain('route.parentDomainType === domain.type');
-    expect(home).toContain('Sub-route');
+    expect(home).toContain('Extra action');
     expect(home).not.toContain('domainLabels.get(route.parentDomainType)');
   });
 

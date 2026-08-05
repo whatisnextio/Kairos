@@ -3,7 +3,7 @@ import Input from '@/components/common/Input';
 import { supabase } from '@/services/supabaseClient';
 import { useAppStore } from '@/store/useAppStore';
 import type { DailyCheckIn, DomainType, KairosCycle, Profile, UserDomainFocus } from '@/types';
-import { XP_PER_CHECK_IN_DONE, XP_PER_CHECK_IN_PARTIAL, getAvailableDomains } from '@/types';
+import { XP_PER_CHECK_IN_DONE, getAvailableDomains } from '@/types';
 import { AUTH_COPY } from '@/utils/brandCopy';
 import {
   DEV_CYCLE_ID,
@@ -69,9 +69,9 @@ export default function LoginPage() {
           cycleId: DEV_CYCLE_ID,
           date: today,
           domainType: domain.type,
-          status: index === 0 ? 'Done' : 'Partial',
+          status: index === 0 ? 'Done' : 'Pending',
           notes: null,
-          xpAwarded: index === 0 ? XP_PER_CHECK_IN_DONE : XP_PER_CHECK_IN_PARTIAL,
+          xpAwarded: index === 0 ? XP_PER_CHECK_IN_DONE : 0,
           createdAt: now,
           updatedAt: now,
         };
@@ -83,7 +83,7 @@ export default function LoginPage() {
       displayName: 'Liam',
       identityAnchorId: 'builder',
       tier: 'lifechanger',
-      xp: XP_PER_CHECK_IN_DONE + XP_PER_CHECK_IN_PARTIAL,
+      xp: XP_PER_CHECK_IN_DONE,
       currentKairosCycleId: DEV_CYCLE_ID,
       dateOfBirth: '1984-01-01',
       squadId: null,
@@ -102,7 +102,7 @@ export default function LoginPage() {
       startDate: today,
       endDate: null,
       status: 'active',
-      totalXpEarned: XP_PER_CHECK_IN_DONE + XP_PER_CHECK_IN_PARTIAL,
+      totalXpEarned: XP_PER_CHECK_IN_DONE,
       completionPercentage: 0,
       createdAt: now,
     };

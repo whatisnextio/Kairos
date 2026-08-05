@@ -23,7 +23,7 @@ describe('contextual accountability prompt', () => {
     const copies = NOTIFICATION_SLOTS.map((slot) => `${slot.title} ${slot.body}`).join(' ');
     const notificationSource = readFileSync('src/services/localNotifications.ts', 'utf8');
 
-    expect(copies).toContain('Partial');
+    expect(copies).toContain('Part done');
     expect(copies).not.toMatch(/sex|masturb|wife|husband/i);
     expect(notificationSource).toContain("url: slot.id === 6 ? '/#/improve' : '/#/'");
   });

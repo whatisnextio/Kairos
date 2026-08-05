@@ -26,7 +26,8 @@ describe('PWA install prompt', () => {
     expect(component).toContain('appinstalled');
     expect(component).toContain("setMode('native')");
     expect(component).toContain('Add to Home Screen');
-    expect(component).toContain('getManualInstallMode');
+    expect(component).toContain('getInstallMode');
+    expect(component).toContain('hasOpenDialog');
     expect(component).not.toContain('pendingMode.current === null || typeof window');
     expect(utility).toContain(PWA_INSTALL_DISMISSED_UNTIL_KEY);
     expect(app).toContain('<PwaInstallPrompt />');

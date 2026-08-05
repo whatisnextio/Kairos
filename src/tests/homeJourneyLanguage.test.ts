@@ -41,17 +41,17 @@ describe('Home journey language', () => {
     expect(home).toContain('CORE_CATEGORY_LABELS');
     expect(home).toContain("['Body', 'Fuel', 'Self', 'Connection']");
     expect(home).toContain('The four categories stay fixed');
-    expect(home).toContain('personal sub-focus areas sit');
+    expect(home).toMatch(/Extra actions sit\s+underneath/);
   });
 
-  it('explains Partial and opens the weekly check-in with explicit copy', () => {
+  it('explains Part done and opens the weekly check-in with explicit copy', () => {
     const home = readFileSync('src/pages/HomeScreen.tsx', 'utf8');
     const framework = readFileSync('src/utils/v1Framework.ts', 'utf8');
     const you = readFileSync('src/pages/YouScreen.tsx', 'utf8');
 
     expect(home).toContain('data-testid="day-state-protocol"');
-    expect(framework).toContain('Mark Partial');
-    expect(home + framework).toContain('Partial means the smallest useful version was completed.');
+    expect(framework).toContain('Mark Part done');
+    expect(home + framework).toContain('one small useful action can be Part done');
     expect(framework).toContain('Record what happened');
     expect(home).not.toContain('honest status');
     expect(home).not.toContain('stop the drift');

@@ -66,7 +66,7 @@ function buildAiWhyText(nudge: AiNudge, domainLabel: string, phaseLabel: string)
           : 'one next action';
   const domainContext = domainLabel === 'Kairos' ? 'your current 12K context' : domainLabel;
 
-  return `Based on your ${phaseLabel} phase, ${domainContext}, ${ctaContext}, and available Kairos history such as recent check-ins, streaks, vibe checks, and active personal routes.`;
+  return `Based on your ${phaseLabel} phase, ${domainContext}, ${ctaContext}, and available Kairos history such as recent check-ins, streaks, vibe checks, and active extra actions.`;
 }
 
 function buildFallbackWhyText(domainLabel: string, phaseLabel: string): string {
@@ -84,7 +84,7 @@ function buildFrameworkWhyText(
   phaseLabel: string,
 ): string {
   const routeContext = recommendation.customRouteId
-    ? 'your personal sub-route'
+    ? 'your extra action'
     : `${recommendation.domainLabel} setup`;
 
   return `Based on your ${phaseLabel} phase, ${routeContext}, today's check-in state, and the next useful option in the Kairos framework.`;
@@ -446,7 +446,7 @@ export default function ImproveScreen() {
             Generating your coach card
           </p>
           <p className="text-base-subtext text-sm">
-            Using your phase, focus, recent proof, and active routes.
+            Using your phase, focus, recent proof, and active extra actions.
           </p>
         </Card>
       )}

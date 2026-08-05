@@ -33,26 +33,25 @@ test.describe('NFR smoke gates', () => {
     await page.addInitScript(() => localStorage.setItem('kairos_dev_session', '1'));
     await page.goto('/');
 
-    await expect(page.getByRole('heading', { name: /start your 12-week reset/i })).toBeVisible();
+    await expect(page.getByRole('heading', { name: /start your 12k plan/i })).toBeVisible();
     await expect(page.getByText('1 of 5')).toBeVisible();
-    await expect(page.getByText(/kairos is greek/i)).toBeVisible();
-    await expect(page.getByText(/six phases/i)).toBeVisible();
+    await expect(page.getByText(/set up your four starter actions now/i)).toBeVisible();
+    await expect(page.getByText(/nothing is marked done/i)).toBeVisible();
     await page.getByRole('button', { name: /start setup/i }).click();
-    await expect(page.getByRole('heading', { name: /choose who you are becoming/i })).toBeVisible();
+    await expect(page.getByRole('heading', { name: /tell us your name/i })).toBeVisible();
     await page.getByLabel(/name/i).fill('Alex');
     await page.getByRole('button', { name: /the builder/i }).click();
     await page.getByRole('button', { name: /continue/i }).click();
-    await page.getByRole('button', { name: /body/i }).click();
+    await expect(page.getByRole('heading', { name: /choose your four actions/i })).toBeVisible();
+    await expect(page.getByRole('button', { name: /walk for 20 minutes/i })).toBeVisible();
     await page.getByRole('button', { name: /continue/i }).click();
-    await expect(
-      page.getByRole('heading', { name: /set accountability intensity/i }),
-    ).toBeVisible();
+    await expect(page.getByRole('heading', { name: /choose reminder level/i })).toBeVisible();
     await expect(page.getByRole('button', { name: /high accountability/i })).toBeVisible();
     await expectNoHorizontalOverflow(page);
     await expectNoA11yViolations(page);
   });
 
-  test('mobile onboarding final step scrolls the document to the start action', async ({
+  test('mobile onboarding scrolls to the top after tapping Continue', async ({
     page,
   }, testInfo) => {
     test.skip(testInfo.project.name !== 'Mobile Chrome', 'Scroll regression runs once.');
@@ -67,11 +66,7 @@ test.describe('NFR smoke gates', () => {
     await page.getByLabel(/name/i).fill('Liam');
     await page.getByRole('button', { name: /the builder/i }).click();
     await page.getByRole('button', { name: /continue/i }).click();
-    await page.getByRole('button', { name: /^body/i }).click();
-    await page.getByRole('button', { name: /continue/i }).click();
-    await page.getByRole('button', { name: /continue/i }).click();
-
-    await expect(page.getByRole('heading', { name: /make day 0 count/i })).toBeVisible();
+    await expect(page.getByRole('heading', { name: /choose your four actions/i })).toBeVisible();
     const before = await page.evaluate(() => {
       const scrollElement = document.scrollingElement ?? document.documentElement;
       const main = document.querySelector('main');
@@ -90,7 +85,12 @@ test.describe('NFR smoke gates', () => {
 
     await page.mouse.wheel(0, 900);
     await page.mouse.wheel(0, 900);
+    const scrolled = await page.evaluate(
+      () => (document.scrollingElement ?? document.documentElement).scrollTop,
+    );
+    expect(scrolled).toBeGreaterThan(0);
 
+    await page.getByRole('button', { name: /continue/i }).click();
     const after = await page.evaluate(() => {
       const scrollElement = document.scrollingElement ?? document.documentElement;
 
@@ -100,19 +100,21 @@ test.describe('NFR smoke gates', () => {
         clientHeight: scrollElement.clientHeight,
       };
     });
-    expect(after.scrollTop).toBeGreaterThan(before.scrollTop);
-    await expect(page.getByRole('button', { name: /done, start 12k/i })).toBeInViewport();
+    expect(after.scrollTop).toBeLessThanOrEqual(1);
+    await expect(page.getByRole('heading', { name: /choose reminder level/i })).toBeInViewport();
+    await page.getByRole('button', { name: /continue/i }).click();
+    await expect(page.getByRole('button', { name: /start 12k/i })).toBeInViewport();
   });
 
   test('daily dashboard stays within a 3-tap check-in path', async ({ page }) => {
     await loginAsLocalLiam(page);
 
     await expect(page.getByTestId('day-state-protocol')).toBeVisible();
-    await expect(page.getByTestId('day-state-protocol')).toContainText(/protocol/i);
+    await expect(page.getByTestId('day-state-protocol')).toContainText(/today|check|rescue/i);
     await expectNoHorizontalOverflow(page);
 
     await page.getByRole('button', { name: /check in body/i }).click();
-    await page.getByRole('button', { name: /done full action completed/i }).click();
+    await page.getByRole('button', { name: /done action completed/i }).click();
 
     await expect(page.getByTestId('daily-domain-row-BODY')).toContainText('Done');
     await expect(page.getByRole('button', { name: /check in body/i })).toBeVisible();
@@ -126,7 +128,7 @@ test.describe('NFR smoke gates', () => {
     await loginAsLocalLiam(page);
 
     await page.getByRole('button', { name: /check in body/i }).click();
-    await page.getByRole('button', { name: /done full action completed/i }).click();
+    await page.getByRole('button', { name: /done action completed/i }).click();
     await page.reload();
     await expect(page.getByTestId('daily-domain-row-BODY')).toContainText('Done');
     await expect(page.getByRole('button', { name: /check in body/i })).toBeVisible();
@@ -135,9 +137,9 @@ test.describe('NFR smoke gates', () => {
     await page.getByRole('button', { name: /check in fuel/i }).click();
     await page
       .getByRole('dialog')
-      .getByRole('button', { name: /partial smaller version/i })
+      .getByRole('button', { name: /part done.*smaller useful action/i })
       .click();
-    await expect(page.getByTestId('daily-domain-row-FUEL')).toContainText('Partial');
+    await expect(page.getByTestId('daily-domain-row-FUEL')).toContainText('Part done');
     await expect(page.getByRole('button', { name: /check in fuel/i })).toBeVisible();
     await context.setOffline(false);
 

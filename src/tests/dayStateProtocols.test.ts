@@ -47,7 +47,7 @@ describe('day-state protocols', () => {
     });
 
     expect(protocol.type).toBe('early_wake');
-    expect(protocol.title).toBe('Early-wake protocol');
+    expect(protocol.title).toBe('Early start');
     expect(protocol.steps.length).toBeGreaterThanOrEqual(2);
     expect(protocol.steps.length).toBeLessThanOrEqual(4);
   });
@@ -60,7 +60,7 @@ describe('day-state protocols', () => {
     });
 
     expect(protocol.type).toBe('normal_start');
-    expect(protocol.title).toBe('Start protocol');
+    expect(protocol.title).toBe('Start today');
     expect(protocol.actions.map((action) => action.label)).toContain('Open Body');
   });
 
@@ -76,7 +76,7 @@ describe('day-state protocols', () => {
 
     expect(protocol.type).toBe('catch_up');
     expect(protocol.body).toContain('not failed');
-    expect(protocol.actions.map((action) => action.label)).toContain('Mark Partial');
+    expect(protocol.actions.map((action) => action.label)).toContain('Mark Part done');
   });
 
   it('selects shutdown late in the evening with open domains', () => {
@@ -106,7 +106,7 @@ describe('day-state protocols', () => {
     expect(protocol.actions.map((action) => action.label)).toContain('Start 10-minute rescue');
   });
 
-  it('can target personal sub-routes without changing the core domains', () => {
+  it('can target extra actions without changing the core domains', () => {
     const protocol = selectDayStateProtocol({
       now: new Date('2026-08-05T13:00:00'),
       domains,

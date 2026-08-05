@@ -8,7 +8,7 @@ describe('AI trust controls', () => {
 
     expect(source).toContain('Why this?');
     expect(source).toContain('buildAiWhyText');
-    expect(source).toContain('recent check-ins, streaks, vibe checks, and active personal routes');
+    expect(source).toContain('recent check-ins, streaks, vibe checks, and active extra actions');
     expect(source).toContain('buildFrameworkWhyText');
     expect(source).toContain('AI_BOUNDARY_COPY');
     expect(source).toContain('Kairos coaching only');

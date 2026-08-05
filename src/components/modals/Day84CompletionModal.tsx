@@ -125,7 +125,7 @@ export default function Day84CompletionModal({ onClose }: Props) {
             ) : (
               <>
                 <p className="text-base-subtext text-sm leading-relaxed mb-8">
-                  Before you close the cycle, take a moment to reflect on who you became.
+                  Before you close this round, take a moment to reflect on who you became.
                 </p>
                 <Button onClick={() => setStep('your_words')} className="w-full mb-3">
                   Reflect
@@ -157,7 +157,7 @@ export default function Day84CompletionModal({ onClose }: Props) {
         {step === 'reflection' && aiReflection && (
           <div className="px-6 py-8">
             <p className="font-heading text-xs text-accent-green tracking-widest uppercase mb-4">
-              Cycle Reflection
+              84-day reflection
             </p>
 
             {/* Headline */}
@@ -213,7 +213,7 @@ export default function Day84CompletionModal({ onClose }: Props) {
               </div>
             )}
 
-            {/* Next cycle intention */}
+            {/* Next round intention */}
             {aiReflection.next_cycle_intention && (
               <p className="text-base-muted text-xs italic border-l-2 border-accent-green/40 pl-3 mb-6">
                 {aiReflection.next_cycle_intention}
@@ -260,7 +260,7 @@ export default function Day84CompletionModal({ onClose }: Props) {
                 </Button>
               )}
               <Button onClick={handleComplete} disabled={saving} className="flex-1" type="button">
-                {saving ? 'Saving…' : 'Close the cycle'}
+                {saving ? 'Saving...' : 'Finish round'}
               </Button>
             </div>
           </div>
@@ -270,15 +270,17 @@ export default function Day84CompletionModal({ onClose }: Props) {
         {step === 'celebrate' && (
           <div className="px-6 py-8 text-center">
             <p className="font-heading text-xs text-accent-green tracking-widest uppercase mb-4">
-              Cycle complete
+              84 days complete
             </p>
             <p className="font-heading text-5xl font-bold text-accent-green mb-2 tracking-widest">
               +{formatKairosPoints(XP_PER_CYCLE_COMPLETE)}
             </p>
-            <p className="text-base-muted text-xs mb-6">Kairos Points for completing your cycle</p>
+            <p className="text-base-muted text-xs mb-6">
+              Kairos Points for completing the 84-day plan
+            </p>
 
             <h2 className="font-heading text-2xl font-bold text-base-text mb-4 tracking-wide">
-              One cycle done.
+              One round done.
             </h2>
 
             {aiReflection?.stats && (
@@ -305,7 +307,7 @@ export default function Day84CompletionModal({ onClose }: Props) {
             )}
 
             <p className="text-base-subtext text-sm mb-8">
-              When you're ready, start Cycle {nextCycleNumber}. The work you laid down doesn't
+              When you're ready, start round {nextCycleNumber}. The work you laid down doesn't
               disappear.
             </p>
             <Button
@@ -316,7 +318,7 @@ export default function Day84CompletionModal({ onClose }: Props) {
               className="w-full mb-3"
               type="button"
             >
-              Start Cycle {nextCycleNumber}
+              Start round {nextCycleNumber}
             </Button>
             <Button variant="ghost" onClick={onClose} className="w-full" type="button">
               Take a break first

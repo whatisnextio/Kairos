@@ -49,7 +49,7 @@ export const REMINDER_INTENSITY_OPTIONS: {
     id: 'high',
     label: 'High accountability',
     description:
-      'An opted-in ladder: smaller action, rescue prompt, Partial option, then tomorrow setup.',
+      'An opted-in ladder: smaller action, rescue prompt, Part done option, then tomorrow setup.',
   },
 ];
 
@@ -58,7 +58,7 @@ export const INTENSITY_PREVIEW_COPY: Record<ReminderIntensity, string[]> = {
   standard: ['Early protocol if enabled.', 'Start, reset, and shutdown prompts in your hours.'],
   high: [
     'If the first cue is missed, Kairos asks for the smallest useful action.',
-    'If the day still drifts, it switches to rescue, Partial, or set tomorrow.',
+    'If the day still drifts, it switches to rescue, Part done, or set tomorrow.',
     'Quiet hours defer prompts, and route names stay hidden unless you opt in.',
   ],
 };
@@ -136,7 +136,7 @@ export const NOTIFICATION_SLOTS: NotificationScheduleSlot[] = [
     hour: 17,
     minute: 0,
     title: 'Kairos: catch-up',
-    body: 'There is still time. Mark Partial, protect tomorrow, finish one useful action.',
+    body: 'There is still time. Mark Part done, protect tomorrow, or finish one useful action.',
     strategy: 'rescue',
   },
   {
@@ -313,7 +313,7 @@ function applyContextualCopy(
   if (slot.strategy === 'rescue') {
     return {
       ...slot,
-      body: `${label} can still become Partial. Rescue one piece or set tomorrow.`,
+      body: `${label} can still become Part done. Rescue one piece or set tomorrow.`,
     };
   }
 

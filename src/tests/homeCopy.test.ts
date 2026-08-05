@@ -10,7 +10,7 @@ describe('Home copy contract', () => {
     expect(home).toContain('selectDayStateProtocol');
     expect(source).toContain('still needs a check-in');
     expect(source).toContain('Record what happened');
-    expect(source).toContain('smaller useful version as Partial');
+    expect(source).toContain('one small useful action can be Part done');
     expect(source).not.toContain('Choose the honest status');
     expect(source).not.toContain('Partial is fine for a smaller version');
   });

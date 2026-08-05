@@ -65,9 +65,9 @@ export function buildProgressSharePreview(input: ProgressShareInput): SharePrevi
 
   if (preferences.includeDomainDetail) {
     const core = input.flywheel.entries.map((entry) => `${entry.label} ${entry.score}%`).join(', ');
-    lines.push(`Core flywheel: ${core}.`);
+    lines.push(`Weekly pattern: ${core}.`);
   } else {
-    lines.push('Core flywheel tracked privately.');
+    lines.push('Weekly pattern tracked privately.');
   }
 
   lines.push('Powered by Kairos.');

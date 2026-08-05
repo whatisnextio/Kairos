@@ -39,7 +39,7 @@ describe('V1 acceptance framework', () => {
   it('gives an early-wake protocol before the normal start window', () => {
     const protocol = getEarlyWakeProtocol(new Date('2026-08-04T05:10:00'));
 
-    expect(protocol?.title).toBe('Early-wake protocol');
+    expect(protocol?.title).toBe('Early start');
     expect(protocol?.steps).toContain('Water first.');
     expect(protocol?.steps.join(' ')).toContain('return to bed');
   });
@@ -59,7 +59,7 @@ describe('V1 acceptance framework', () => {
 
     expect(path?.title).toBe('Choose one check-in');
     expect(path?.body).toContain('easiest open item');
-    expect(path?.steps.join(' ')).toContain('Partial');
+    expect(path?.steps.join(' ')).toContain('Part done');
   });
 
   it('does not show catch-up path when all domains are explicitly marked', () => {
@@ -119,16 +119,16 @@ describe('V1 acceptance framework', () => {
 
   it('keeps onboarding and help positioning aligned to the category contract', () => {
     expect(PRODUCT_POSITIONING.headline).toContain('12-week transformation');
-    expect(PRODUCT_POSITIONING.what).toContain('guided 12-week / 84-day operating system');
+    expect(PRODUCT_POSITIONING.what).toContain('guided 12-week plan');
     expect(PRODUCT_POSITIONING.kairosMeaning).toContain('Greek');
     expect(PRODUCT_POSITIONING.kairosMeaning).toContain('opportune moment');
     expect(PRODUCT_POSITIONING.kairosMeaning).not.toMatch(/latin|implement/i);
     expect(PRODUCT_POSITIONING.audience).toContain('not a gender-specific programme');
     expect(PRODUCT_POSITIONING.audience).not.toMatch(/\bmen\b|\bman\b|male/i);
-    expect(PRODUCT_POSITIONING.why).toContain('prompts and cues');
-    expect(PRODUCT_POSITIONING.why).toContain('recovery path');
+    expect(PRODUCT_POSITIONING.why).toContain('simple prompts');
+    expect(PRODUCT_POSITIONING.why).toContain('way back');
     expect(PRODUCT_POSITIONING.categoryIntro).toContain('Body, Fuel, Self, and Connection');
-    expect(PRODUCT_POSITIONING.proofLoop).toContain('smallest honest version');
+    expect(PRODUCT_POSITIONING.proofLoop).toContain('review the week');
   });
 
   it('keeps identity anchors distinct and plain-English', () => {
@@ -179,7 +179,7 @@ describe('V1 acceptance framework', () => {
     expect(buildAccountabilityPrompt(2).title).toBe('End-of-day check');
     expect(buildAccountabilityPrompt(2).body).toContain('A smaller useful version still counts');
     expect(buildAccountabilityPrompt(2).body).not.toContain('not another task');
-    expect(buildAccountabilityPrompt(2).steps).toContain('Mark Done, Partial, or Missed.');
+    expect(buildAccountabilityPrompt(2).steps).toContain('Mark Done, Part done, or Missed.');
     expect(buildAccountabilityPrompt(1).steps).toContain('Record what happened.');
   });
 
@@ -208,7 +208,7 @@ describe('V1 acceptance framework', () => {
       checkInHistory: {},
     });
 
-    expect(flywheel.title).toBe('Core flywheel');
+    expect(flywheel.title).toBe('Weekly pattern');
     expect(flywheel.entries.map((entry) => entry.label)).toEqual([
       'Body',
       'Fuel',

@@ -9,8 +9,8 @@ interface Props {
 }
 
 const OPTIONS: Array<{ status: CheckInStatus; title: string; body: string }> = [
-  { status: 'Done', title: 'Done', body: 'Full action completed.' },
-  { status: 'Partial', title: 'Partial', body: 'Smaller version completed.' },
+  { status: 'Done', title: 'Done', body: 'Action completed.' },
+  { status: 'Partial', title: 'Part done', body: 'A smaller useful action happened.' },
   { status: 'Missed', title: 'Missed', body: 'Did not happen today.' },
   { status: 'Pending', title: 'Clear', body: "Remove today's mark." },
 ];

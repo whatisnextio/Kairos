@@ -61,7 +61,7 @@ export default function NewCycleScreen() {
       .single();
 
     if (cycleErr || !cycle) {
-      setError(cycleErr?.message ?? 'Failed to start cycle');
+      setError(cycleErr?.message ?? 'Failed to start round');
       setStarting(false);
       return;
     }
@@ -110,19 +110,19 @@ export default function NewCycleScreen() {
     <div className="mx-auto flex w-full max-w-2xl flex-col gap-4 px-4 pb-4 pt-6 sm:px-6 sm:pt-8">
       <div>
         <p className="font-heading text-xs text-accent-green tracking-widest uppercase mb-1">
-          Cycle {cycleNumber}
+          Round {cycleNumber}
         </p>
         <h1 className="font-heading text-2xl font-bold text-base-text tracking-wide">
           Start fresh.
         </h1>
-        <p className="text-base-subtext text-sm mt-1">Same system. New cycle.</p>
+        <p className="text-base-subtext text-sm mt-1">Same system. Fresh start.</p>
       </div>
 
-      {/* Seed from previous cycle's AI reflection */}
+      {/* Seed from previous round's AI reflection */}
       {nextCycleIntention && (
         <div className="rounded-xl border border-accent-green/30 bg-accent-green/5 px-4 py-4">
           <p className="font-heading text-xs text-accent-green tracking-widest uppercase mb-2">
-            From your last cycle
+            From your last round
           </p>
           <p className="text-base-text text-sm italic">{nextCycleIntention}</p>
         </div>
@@ -133,7 +133,7 @@ export default function NewCycleScreen() {
           Your identity anchor
         </p>
         <p className="text-base-subtext text-xs mb-4">
-          You can keep the same role or choose the one that best fits this cycle.
+          You can keep the same role or choose the one that best fits this round.
         </p>
         <div className="flex flex-col gap-2">
           {IDENTITY_ANCHORS.map((anchor) => (
@@ -179,11 +179,11 @@ export default function NewCycleScreen() {
         disabled={!anchorId || (anchorId === 'custom' && !customAnchor.trim()) || starting}
         className="w-full"
       >
-        {starting ? 'Starting…' : `Begin Cycle ${cycleNumber}`}
+        {starting ? 'Starting...' : `Begin round ${cycleNumber}`}
       </Button>
 
       <p className="text-base-muted text-xs text-center">
-        Your domain focuses will be set progressively over the first 7 days.
+        Your four areas will be ready when you start.
       </p>
     </div>
   );
