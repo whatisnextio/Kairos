@@ -552,7 +552,7 @@ export function selectDayStateProtocol({
     type: 'normal_start',
     title: target ? 'Start today' : 'Review today',
     body: target
-      ? `${targetLabel(target)} is the next clean check-in. Keep it small and visible.`
+      ? `${targetLabel(target)} is next. Keep it small.`
       : 'Today is marked. Review the pattern or protect tomorrow.',
     steps: target
       ? ['Pick the easiest first mark.', 'Record what happened.', 'Keep the next action visible.']

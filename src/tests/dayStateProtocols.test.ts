@@ -61,6 +61,7 @@ describe('day-state protocols', () => {
 
     expect(protocol.type).toBe('normal_start');
     expect(protocol.title).toBe('Start today');
+    expect(protocol.body).toBe('Body is next. Keep it small.');
     expect(protocol.actions.map((action) => action.label)).toContain('Open Body');
   });
 
@@ -89,8 +90,44 @@ describe('day-state protocols', () => {
     });
 
     expect(protocol.type).toBe('shutdown');
+    expect(protocol.title).toBe('End-of-day check');
     expect(protocol.actions.map((action) => action.label)).toContain('Plan tomorrow');
     expect(protocol.steps.join(' ')).toContain('Plan one small action for tomorrow');
+  });
+
+  it('keeps old protocol wording out of user-facing day prompts', () => {
+    const source = [
+      selectDayStateProtocol({
+        now: new Date('2026-08-05T05:10:00'),
+        domains,
+        todayCheckIns: {},
+      }),
+      selectDayStateProtocol({
+        now: new Date('2026-08-05T08:30:00'),
+        domains,
+        todayCheckIns: {},
+      }),
+      selectDayStateProtocol({
+        now: new Date('2026-08-05T13:00:00'),
+        domains,
+        todayCheckIns: { BODY: checkIn('BODY', 'Missed') },
+      }),
+      selectDayStateProtocol({
+        now: new Date('2026-08-05T20:30:00'),
+        domains,
+        todayCheckIns: { BODY: checkIn('BODY', 'Done') },
+      }),
+    ]
+      .map((protocol) => `${protocol.title} ${protocol.body} ${protocol.steps.join(' ')}`)
+      .join(' ');
+
+    expect(source).not.toContain('Shutdown protocol');
+    expect(source).not.toContain('Start protocol');
+    expect(source).not.toContain('Review protocol');
+    expect(source).not.toContain('Catch-up path');
+    expect(source).not.toContain('10-minute rescue');
+    expect(source).not.toContain('Early-wake protocol');
+    expect(source).not.toContain('clean check-in');
   });
 
   it('escalates after a dismissed protocol without adding a second panel', () => {
