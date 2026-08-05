@@ -8,7 +8,7 @@ import type {
   UserDomainFocus,
 } from '@/types';
 import { getAvailableDomains, getDomainConfig } from '@/types';
-import { getDailyDomainLabel } from '@/utils/v1Framework';
+import { buildConnectionRecommendation, getDailyDomainLabel } from '@/utils/v1Framework';
 
 export type FrameworkLens = 'Prep' | 'Reflect' | 'Coach' | 'Feedback';
 
@@ -76,13 +76,17 @@ export function buildFrameworkRecommendations({
   );
   const primary = rankedTargets[0] ?? domainTargets[0];
   const secondary = rankedTargets[1] ?? primary;
+  const primaryConnectionBody =
+    primary.domain.type === 'USTIME' ? buildConnectionRecommendation(primary.action) : null;
+  const secondaryConnectionBody =
+    secondary.domain.type === 'USTIME' ? buildConnectionRecommendation(secondary.action) : null;
 
   const recommendations: FrameworkRecommendation[] = [
     {
       id: `${primary.id}-prep`,
       lens: 'Prep',
       title: `Prep ${primary.label}`,
-      body: primary.domain.prepOptions[0],
+      body: primaryConnectionBody ?? primary.domain.prepOptions[0],
       domainType: primary.domain.type,
       customRouteId: primary.customRouteId,
       domainLabel: primary.label,
@@ -92,7 +96,7 @@ export function buildFrameworkRecommendations({
       id: `${secondary.id}-coach`,
       lens: 'Coach',
       title: `Choose ${secondary.label}`,
-      body: secondary.domain.coachPrompt,
+      body: secondaryConnectionBody ?? secondary.domain.coachPrompt,
       domainType: secondary.domain.type,
       customRouteId: secondary.customRouteId,
       domainLabel: secondary.label,
@@ -112,7 +116,7 @@ export function buildFrameworkRecommendations({
       id: `${secondary.id}-feedback`,
       lens: 'Feedback',
       title: `${secondary.label} signal`,
-      body: secondary.domain.feedbackPrompt,
+      body: secondaryConnectionBody ?? secondary.domain.feedbackPrompt,
       domainType: secondary.domain.type,
       customRouteId: secondary.customRouteId,
       domainLabel: secondary.label,
