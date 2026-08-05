@@ -23,10 +23,9 @@ import {
   getPhaseProgressPct,
 } from '@/utils/kairos';
 import {
-  buildAccountabilityPrompt,
-  buildCatchUpPath,
+  type DayStateProtocolAction,
   getDailyDomainLabel,
-  getEarlyWakeProtocol,
+  selectDayStateProtocol,
   toLocalIsoDate,
 } from '@/utils/v1Framework';
 import { useEffect, useState } from 'react';
@@ -74,12 +73,15 @@ const PHASE_MILESTONE_MESSAGES: Record<string, string> = {
 };
 
 // Module-level flags: prevent re-prompting within the same JS session even if HomeScreen remounts.
-// Catch-up and accountability are keyed by cycle ID so they reset automatically on cycle change.
+// Day protocols are keyed by cycle ID so they reset automatically on cycle change.
 let vibeCheckShownThisSession = false;
 let domainSetupShownThisSession = false;
 let phaseTransitionShownThisSession = false;
-let accountabilitySuppressedCycleId: string | null = null;
-let catchUpSuppressedCycleId: string | null = null;
+let dismissedDayProtocol: {
+  cycleId: string | null;
+  protocolId: string;
+  dismissedAt: string;
+} | null = null;
 
 export default function HomeScreen() {
   const navigate = useNavigate();
@@ -113,9 +115,8 @@ export default function HomeScreen() {
   const [showVibeCheck, setShowVibeCheck] = useState(false);
   const [showDomainSetup, setShowDomainSetup] = useState(false);
   const [showPhaseTransition, setShowPhaseTransition] = useState(false);
-  const [showAccountabilityPrompt, setShowAccountabilityPrompt] = useState(false);
   const cycleId = currentCycle?.id ?? null;
-  const [catchUpVisible, setCatchUpVisible] = useState(catchUpSuppressedCycleId !== cycleId);
+  const [, setProtocolDismissVersion] = useState(0);
   const [selectedDomainType, setSelectedDomainType] = useState<DomainType | null>(null);
   const [selectedCustomRouteId, setSelectedCustomRouteId] = useState<string | null>(null);
 
@@ -129,24 +130,30 @@ export default function HomeScreen() {
   const configuredDomainCount = domainFocuses.filter((focus) =>
     availableDomainTypes.has(focus.domainType),
   ).length;
-  const earlyWakeProtocol = getEarlyWakeProtocol();
-  const catchUpPath = buildCatchUpPath(availableDomains, todayCheckIns);
-  const openDomainCount = availableDomains.filter((domain) => {
-    const status = todayCheckIns[domain.type]?.status;
-    return status === 'Missed' || status === 'Pending' || !status;
-  }).length;
-  const currentHour = new Date().getHours();
-  const shouldShowAccountability =
-    (currentHour >= 15 && openDomainCount >= 2) || (currentHour >= 18 && openDomainCount > 0);
-  const accountabilityPrompt = showAccountabilityPrompt
-    ? buildAccountabilityPrompt(Math.min(2, Math.max(0, openDomainCount - 1)))
-    : null;
-  const accountabilityTarget = accountabilityPrompt
-    ? availableDomains.find((domain) => {
-        const status = todayCheckIns[domain.type]?.status;
-        return status === 'Missed' || status === 'Pending' || !status;
-      })
-    : null;
+  const now = new Date();
+  const dismissedProtocolForCycle =
+    dismissedDayProtocol?.cycleId === cycleId ? dismissedDayProtocol : null;
+  const dismissedProtocolAgeMinutes = dismissedProtocolForCycle
+    ? (now.getTime() - new Date(dismissedProtocolForCycle.dismissedAt).getTime()) / 60_000
+    : 0;
+  const shouldEscalateDismissedProtocol =
+    !!dismissedProtocolForCycle && dismissedProtocolAgeMinutes >= 60;
+  const dayStateProtocol = selectDayStateProtocol({
+    now,
+    domains: availableDomains,
+    todayCheckIns,
+    customRoutes: activeCustomRoutes,
+    todayCustomRouteCheckIns,
+    dismissedProtocolId: shouldEscalateDismissedProtocol
+      ? dismissedProtocolForCycle.protocolId
+      : null,
+  });
+  const activeDayStateProtocol =
+    dismissedProtocolForCycle &&
+    !shouldEscalateDismissedProtocol &&
+    dismissedProtocolForCycle.protocolId === dayStateProtocol.id
+      ? null
+      : dayStateProtocol;
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: Zustand setters are stable; lastCelebrationPhase intentionally excluded to avoid re-triggering after the silent first-load set
   useEffect(() => {
@@ -188,15 +195,6 @@ export default function HomeScreen() {
     phaseConfig.phase,
   ]);
 
-  useEffect(() => {
-    if (!shouldShowAccountability || accountabilitySuppressedCycleId === cycleId) {
-      setShowAccountabilityPrompt(false);
-      return;
-    }
-
-    setShowAccountabilityPrompt(true);
-  }, [shouldShowAccountability, cycleId]);
-
   if (!profile || !currentCycle) return null;
 
   const cyclePct = getCycleProgressPct(dayInCycle);
@@ -210,6 +208,61 @@ export default function HomeScreen() {
       : (anchor?.name ?? 'Your identity');
   const firstName = profile.displayName.trim().split(/\s+/)[0] || 'You';
   const avatarInitial = firstName.charAt(0).toUpperCase() || 'K';
+
+  const openProtocolTarget = () => {
+    const target = activeDayStateProtocol?.target;
+    if (!target) {
+      navigate('/progress');
+      return;
+    }
+    if (target.kind === 'domain') {
+      setSelectedDomainType(target.domainType);
+      return;
+    }
+    setSelectedCustomRouteId(target.routeId);
+  };
+
+  const setProtocolTargetTomorrow = () => {
+    const target = activeDayStateProtocol?.target;
+    if (!target) {
+      navigate('/progress');
+      return;
+    }
+    const domainType = target.kind === 'domain' ? target.domainType : target.parentDomainType;
+    navigate(`/detail/${getDomainRouteSlug(domainType)}`);
+  };
+
+  const markProtocolTargetPartial = () => {
+    const target = activeDayStateProtocol?.target;
+    if (!target) return;
+    if (target.kind === 'domain') {
+      void setDailyCheckIn(target.domainType, 'Partial');
+    } else {
+      void setCustomRouteCheckIn(target.routeId, 'Partial');
+    }
+  };
+
+  const handleDayProtocolAction = (action: DayStateProtocolAction) => {
+    if (!activeDayStateProtocol) return;
+    if (action.kind === 'dismiss') {
+      dismissedDayProtocol = {
+        cycleId,
+        protocolId: activeDayStateProtocol.id,
+        dismissedAt: new Date().toISOString(),
+      };
+      setProtocolDismissVersion((version) => version + 1);
+      return;
+    }
+    if (action.kind === 'set_tomorrow') {
+      setProtocolTargetTomorrow();
+      return;
+    }
+    if (action.kind === 'mark_partial') {
+      markProtocolTargetPartial();
+      return;
+    }
+    openProtocolTarget();
+  };
 
   return (
     <>
@@ -377,148 +430,55 @@ export default function HomeScreen() {
           </Card>
         )}
 
-        {earlyWakeProtocol && (
-          <Card className="border-accent-green/40 bg-accent-green/5">
-            <p className="font-heading text-xs text-accent-green tracking-widest uppercase mb-1">
-              {earlyWakeProtocol.title}
+        {activeDayStateProtocol && (
+          <Card
+            data-testid="day-state-protocol"
+            className={
+              activeDayStateProtocol.type === 'early_wake'
+                ? 'border-accent-green/40 bg-accent-green/5'
+                : activeDayStateProtocol.type === 'shutdown'
+                  ? 'border-status-missed/45 bg-status-missed/5'
+                  : activeDayStateProtocol.type === 'catch_up'
+                    ? 'border-status-partial/50 bg-status-partial/5'
+                    : 'border-white/10 bg-base-surface/90'
+            }
+          >
+            <p className="font-heading text-xs text-base-subtext tracking-widest uppercase mb-1">
+              Day protocol
             </p>
-            <p className="text-base-text text-sm leading-snug">{earlyWakeProtocol.body}</p>
-            <div className="grid grid-cols-2 gap-2 mt-3">
-              {earlyWakeProtocol.steps.map((step) => (
+            <p className="font-heading text-base-text text-lg tracking-wide">
+              {activeDayStateProtocol.title}
+            </p>
+            <p className="text-base-text text-sm leading-snug mt-1">
+              {activeDayStateProtocol.body}
+            </p>
+            <div className="grid grid-cols-1 gap-2 mt-3 sm:grid-cols-3">
+              {activeDayStateProtocol.steps.map((step) => (
                 <div key={step} className="rounded border border-base-border bg-base-black/20 p-2">
                   <p className="text-base-subtext text-xs leading-snug">{step}</p>
                 </div>
               ))}
             </div>
-          </Card>
-        )}
-
-        {catchUpPath && catchUpVisible && (
-          <Card className="border-status-partial/50 bg-status-partial/5">
-            <div className="flex items-start justify-between gap-3">
-              <div className="min-w-0">
-                <p className="font-heading text-xs text-status-partial tracking-widest uppercase mb-1">
-                  {catchUpPath.title}
-                </p>
-                <p className="text-base-text text-sm leading-snug">{catchUpPath.body}</p>
-                <p className="text-base-muted text-xs mt-2">
-                  Start with{' '}
-                  {getDailyDomainLabel(
-                    availableDomains.find((d) => d.type === catchUpPath.domainType) ??
-                      availableDomains[0],
-                  )}
-                  .
-                </p>
-              </div>
-              <div className="flex items-center gap-1 shrink-0">
+            {activeDayStateProtocol.actions.some((action) => action.kind === 'mark_partial') && (
+              <p className="text-base-muted text-xs mt-3">
+                Partial means the smallest useful version was completed.
+              </p>
+            )}
+            <div className="flex flex-col gap-2 mt-3 sm:flex-row sm:flex-wrap">
+              {activeDayStateProtocol.actions.map((action, index) => (
                 <Button
+                  key={action.id}
                   size="sm"
-                  variant="ghost"
-                  aria-label={`Mark ${catchUpPath.domainLabel} Partial`}
-                  onClick={() => setDailyCheckIn(catchUpPath.domainType, 'Partial')}
+                  variant={
+                    index === 0 ? 'primary' : action.kind === 'mark_partial' ? 'secondary' : 'ghost'
+                  }
+                  onClick={() => handleDayProtocolAction(action)}
+                  className="w-full sm:w-auto"
                 >
-                  Mark Partial
+                  {action.label}
                 </Button>
-                <button
-                  type="button"
-                  aria-label="Dismiss"
-                  className="flex items-center justify-center w-11 h-11 text-base-muted hover:text-base-text transition-colors rounded"
-                  onClick={() => {
-                    catchUpSuppressedCycleId = cycleId;
-                    setCatchUpVisible(false);
-                  }}
-                >
-                  <svg
-                    aria-hidden="true"
-                    width="14"
-                    height="14"
-                    viewBox="0 0 14 14"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="1.5"
-                    strokeLinecap="round"
-                  >
-                    <path d="M2 2l10 10M12 2L2 12" />
-                  </svg>
-                </button>
-              </div>
-            </div>
-            <p className="text-base-muted text-xs mt-3">
-              Partial means the smallest useful version was completed.
-            </p>
-            <div className="flex flex-col gap-1.5 mt-3">
-              {catchUpPath.steps.map((step) => (
-                <p key={step} className="text-base-subtext text-xs">
-                  {step}
-                </p>
               ))}
             </div>
-          </Card>
-        )}
-
-        {accountabilityPrompt && (
-          <Card className="border-status-partial/50 bg-status-partial/5">
-            <div className="flex items-start justify-between gap-3">
-              <div className="min-w-0">
-                <p className="font-heading text-xs text-status-partial tracking-widest uppercase mb-1">
-                  {accountabilityPrompt.title}
-                </p>
-                <p className="text-base-text text-sm leading-snug">
-                  {accountabilityTarget
-                    ? `${getDailyDomainLabel(
-                        accountabilityTarget,
-                      )} still needs a check-in. Record what happened, or count a smaller useful version as Partial.`
-                    : accountabilityPrompt.body}
-                </p>
-              </div>
-              <button
-                type="button"
-                aria-label="Dismiss accountability prompt"
-                className="flex items-center justify-center w-11 h-11 shrink-0 text-base-muted hover:text-base-text transition-colors rounded"
-                onClick={() => {
-                  accountabilitySuppressedCycleId = cycleId;
-                  setShowAccountabilityPrompt(false);
-                }}
-              >
-                <svg
-                  aria-hidden="true"
-                  width="14"
-                  height="14"
-                  viewBox="0 0 14 14"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="1.5"
-                  strokeLinecap="round"
-                >
-                  <path d="M2 2l10 10M12 2L2 12" />
-                </svg>
-              </button>
-            </div>
-            {accountabilityTarget && (
-              <div className="flex gap-2 mt-3">
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  onClick={() => {
-                    accountabilitySuppressedCycleId = cycleId;
-                    setShowAccountabilityPrompt(false);
-                    setSelectedDomainType(accountabilityTarget.type);
-                  }}
-                >
-                  Check in {getDailyDomainLabel(accountabilityTarget)}
-                </Button>
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  onClick={() => {
-                    accountabilitySuppressedCycleId = cycleId;
-                    setShowAccountabilityPrompt(false);
-                  }}
-                >
-                  Later
-                </Button>
-              </div>
-            )}
           </Card>
         )}
 

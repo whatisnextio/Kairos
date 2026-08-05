@@ -3,13 +3,16 @@ import { NOTIFICATION_SLOTS } from '@/services/localNotifications';
 import { describe, expect, it } from 'vitest';
 
 describe('contextual accountability prompt', () => {
-  it('is suppressed per-cycle after dismissing or opening the target check-in', () => {
+  it('uses one per-cycle day protocol that can dismiss and escalate', () => {
     const source = readFileSync('src/pages/HomeScreen.tsx', 'utf8');
+    const framework = readFileSync('src/utils/v1Framework.ts', 'utf8');
 
-    expect(source).toContain('accountabilitySuppressedCycleId');
-    expect(source).toContain('Dismiss accountability prompt');
-    expect(source).toContain('setShowAccountabilityPrompt(false)');
-    expect(source).toContain('setSelectedDomainType(accountabilityTarget.type)');
+    expect(source).toContain('dismissedDayProtocol');
+    expect(source).toContain('data-testid="day-state-protocol"');
+    expect(source).toContain('setSelectedDomainType(target.domainType)');
+    expect(source).toContain('setSelectedCustomRouteId(target.routeId)');
+    expect(framework).toContain('dismissedProtocolId');
+    expect(framework).toContain('catch-up-after-dismiss');
   });
 
   it('keeps scheduled accountability reminder copy discreet and action-linked', () => {

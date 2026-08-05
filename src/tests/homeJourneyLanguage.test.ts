@@ -16,11 +16,13 @@ describe('Home journey language', () => {
 
   it('explains Partial and opens the weekly check-in with explicit copy', () => {
     const home = readFileSync('src/pages/HomeScreen.tsx', 'utf8');
+    const framework = readFileSync('src/utils/v1Framework.ts', 'utf8');
     const you = readFileSync('src/pages/YouScreen.tsx', 'utf8');
 
-    expect(home).toContain('Mark Partial');
-    expect(home).toContain('Partial means the smallest useful version was completed.');
-    expect(home).toContain('Record what happened');
+    expect(home).toContain('data-testid="day-state-protocol"');
+    expect(framework).toContain('Mark Partial');
+    expect(home + framework).toContain('Partial means the smallest useful version was completed.');
+    expect(framework).toContain('Record what happened');
     expect(home).not.toContain('honest status');
     expect(home).not.toContain('stop the drift');
     expect(you).toContain('Open weekly check-in');
