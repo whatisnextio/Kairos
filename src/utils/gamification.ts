@@ -5,7 +5,6 @@ import {
   type Profile,
   type XpLevel,
 } from '@/types';
-import { hasBrotherhoodAccess } from '@/utils/entitlements';
 
 const LEVELS: XpLevel[] = [
   { level: 1, label: 'Starter', minXp: 0, maxXp: 199 },
@@ -39,8 +38,8 @@ export function getXpProgressInLevel(xp: number): number {
   return Math.round((progress / range) * 100);
 }
 
-export function getXpForCheckInStatus(status: CheckInStatus | undefined, paid: boolean): number {
-  if (!paid) return 0;
+export function getXpForCheckInStatus(status: CheckInStatus | undefined, active: boolean): number {
+  if (!active) return 0;
   if (status === 'Done') return 25;
   if (status === 'Partial') return 10;
   return 0;
@@ -66,15 +65,15 @@ export function getWeekKey(dateIso: string): string {
 export function shouldAwardWeeklyBonus({
   weekDates,
   history,
-  paid,
+  active,
   alreadyAwarded,
 }: {
   weekDates: string[];
   history: Record<string, Partial<Record<string, CheckInStatus>>>;
-  paid: boolean;
+  active: boolean;
   alreadyAwarded: boolean;
 }): boolean {
-  if (!paid || alreadyAwarded || weekDates.length !== 7) return false;
+  if (!active || alreadyAwarded || weekDates.length !== 7) return false;
   return weekDates.every((date) =>
     PUBLIC_DOMAIN_TYPES.every((domain) => {
       const status = history[date]?.[domain];
@@ -84,7 +83,7 @@ export function shouldAwardWeeklyBonus({
 }
 
 export function deriveEarnedBadges({
-  profile,
+  profile: _profile,
   checkInHistory,
   todayCheckIns,
   rewardedImproveCards,
@@ -100,7 +99,6 @@ export function deriveEarnedBadges({
   awardedWeeklyBonuses?: Record<string, true>;
   dayInCycle: number;
 }): EarnedBadge[] {
-  const paid = hasBrotherhoodAccess(profile.tier);
   const allStatuses = [
     ...Object.values(checkInHistory).flatMap((day) => Object.values(day)),
     ...Object.values(todayCheckIns).map((checkIn) => checkIn?.status),
@@ -112,7 +110,7 @@ export function deriveEarnedBadges({
   const hasProtectedDay =
     Object.keys(streakProtectionHistory).length > 0 || allStatuses.includes('Protected');
 
-  const badges: Array<EarnedBadge & { paidOnly?: boolean }> = [
+  const badges: EarnedBadge[] = [
     {
       id: 'first-proof',
       label: 'First Proof',
@@ -133,7 +131,6 @@ export function deriveEarnedBadges({
       description: 'Kept every core domain live across a full week.',
       trigger: 'Close all four core domains for a full week.',
       earned: Object.keys(awardedWeeklyBonuses).length > 0,
-      paidOnly: true,
     },
     {
       id: 'protected-rhythm',
@@ -141,7 +138,6 @@ export function deriveEarnedBadges({
       description: 'Used protection without breaking the rhythm.',
       trigger: 'Use streak protection on a disrupted day.',
       earned: hasProtectedDay,
-      paidOnly: true,
     },
     {
       id: 'challenge-closed',
@@ -149,7 +145,6 @@ export function deriveEarnedBadges({
       description: 'Completed an Improve challenge.',
       trigger: 'Accept and complete one Improve card.',
       earned: Object.keys(rewardedImproveCards).length > 0,
-      paidOnly: true,
     },
     {
       id: 'cycle-finisher',
@@ -157,19 +152,8 @@ export function deriveEarnedBadges({
       description: 'Reached the end of an 84-day cycle.',
       trigger: 'Reach Day 84 and close the cycle.',
       earned: dayInCycle >= 84,
-      paidOnly: true,
-    },
-    {
-      id: 'brotherhood',
-      label: 'Kairos Plus',
-      description: 'Unlocked the full 12K status system.',
-      trigger: 'Unlock Kairos Plus or Lifechanger access.',
-      earned: paid,
-      paidOnly: true,
     },
   ];
 
-  return badges
-    .filter((badge) => paid || !badge.paidOnly)
-    .map(({ paidOnly: _paidOnly, ...badge }) => badge);
+  return badges;
 }

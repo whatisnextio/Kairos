@@ -41,20 +41,19 @@ describe('security hardening', () => {
 
     expect(source).toContain('verifyStripeSignature');
     expect(source).toMatch(/req\.headers\.get\(["']stripe-signature["']\)/);
+    expect(source).toContain('billing_disabled');
+    expect(source).not.toContain('.from("profiles")');
     expect(source).not.toMatch(/from ["']\.\.\/_shared\/cors\.ts["']/);
   });
 
-  it('keeps backend enforcement for client-visible premium state', () => {
-    const profileGuard = readFileSync(
-      'supabase/migrations/024_harden_profile_sensitive_updates.sql',
-      'utf8',
-    );
-    const customRoutes = readFileSync('supabase/migrations/021_custom_routes.sql', 'utf8');
+  it('keeps backend enforcement for client-visible app access state', () => {
+    const profileGuard = readFileSync('supabase/migrations/025_single_app_access.sql', 'utf8');
+    const customRoutes = readFileSync('supabase/migrations/025_single_app_access.sql', 'utf8');
 
     expect(profileGuard).toContain('guard_profile_sensitive_fields');
-    expect(profileGuard).toContain('Profile entitlement fields cannot be changed directly');
-    expect(profileGuard).toContain('claim_complimentary_lifechanger');
-    expect(customRoutes).toContain("p.tier in ('brotherhood', 'lifechanger')");
+    expect(profileGuard).toContain('Profile app access fields cannot be changed directly');
+    expect(profileGuard).toContain("new.tier <> 'brotherhood'");
+    expect(customRoutes).not.toContain("p.tier in ('brotherhood', 'lifechanger')");
     expect(customRoutes).toContain('auth.uid() = user_id');
   });
 
@@ -86,7 +85,7 @@ describe('security hardening', () => {
       .map((entry) => entry.name);
 
     expect(review).toContain('Row Level Security');
-    expect(review).toContain('Client-visible entitlement checks versus backend enforcement');
+    expect(review).toContain('Client-visible app-access checks versus backend enforcement');
     expect(review).toContain('Local persistence');
     expect(review).toContain('Hosted Supabase migration state was not re-read');
     expect(functionNames).toContain('stripe-webhook');

@@ -22,14 +22,6 @@ registerRoute(
   }),
 );
 
-registerRoute(
-  /^https:\/\/js\.stripe\.com\/.*/i,
-  new CacheFirst({
-    cacheName: 'stripe-js',
-    plugins: [new ExpirationPlugin({ maxAgeSeconds: 60 * 60 * 24 * 7, maxEntries: 1 })],
-  }),
-);
-
 self.addEventListener('push', (event: PushEvent) => {
   let title = '12K';
   let body = 'Time to check in.';

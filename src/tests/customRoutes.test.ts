@@ -65,7 +65,7 @@ describe('custom routes', () => {
     });
   });
 
-  it('blocks free users from adding personal routes', async () => {
+  it('lets legacy free profiles add personal routes in the single app tier', async () => {
     const { useAppStore } = await import('@/store/useAppStore');
 
     useAppStore.getState().reset();
@@ -81,11 +81,11 @@ describe('custom routes', () => {
       focusDescription: 'Edit one keeper',
     });
 
-    expect(result).toEqual({ ok: false, reason: 'upgrade' });
-    expect(useAppStore.getState().customRoutes).toEqual([]);
+    expect(result).toEqual({ ok: true });
+    expect(useAppStore.getState().customRoutes).toHaveLength(1);
   });
 
-  it('tracks paid custom route check-ins in route history', async () => {
+  it('tracks custom route check-ins in route history', async () => {
     const { useAppStore } = await import('@/store/useAppStore');
 
     useAppStore.getState().reset();
@@ -107,7 +107,7 @@ describe('custom routes', () => {
 
   it('keeps archived routes out of recommendations while active routes can be targeted', () => {
     const recommendations = buildFrameworkRecommendations({
-      email: 'paid@example.com',
+      email: 'app@example.com',
       domainFocuses: [],
       todayCheckIns: {
         BODY: {

@@ -126,7 +126,7 @@ describe('offline sync store contract', () => {
     });
   });
 
-  it('updates paid daily check-ins immediately offline and replays them once online', async () => {
+  it('updates daily check-ins immediately offline and replays them once online', async () => {
     const { useAppStore } = await import('@/store/useAppStore');
 
     useAppStore.getState().reset();

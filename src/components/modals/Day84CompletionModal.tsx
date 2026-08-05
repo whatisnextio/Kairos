@@ -43,7 +43,7 @@ export default function Day84CompletionModal({ onClose }: Props) {
   } = useCycleReflection(fetchReflection);
   const { mutate: markViewed } = useMarkReflectionViewed();
 
-  const isPaidTier = hasBrotherhoodAccess(profile?.tier);
+  const hasReflectionAccess = hasBrotherhoodAccess(profile?.tier);
   const availableDomains = getAvailableDomains(authUser?.email);
   const nextCycleNumber = (journeyArchive?.length ?? 0) + 2;
   const domainColours: Record<string, string> = Object.fromEntries(
@@ -112,7 +112,7 @@ export default function Day84CompletionModal({ onClose }: Props) {
               one full campaign of the KAIROS framework completed. Most people never finish what
               they start. You did.
             </p>
-            {isPaidTier ? (
+            {hasReflectionAccess ? (
               <>
                 <p className="text-base-subtext text-sm leading-relaxed mb-8">
                   We've built your campaign reflection from {KAIROS_CYCLE_LENGTH_DAYS} days of data.
@@ -249,7 +249,7 @@ export default function Day84CompletionModal({ onClose }: Props) {
             />
             <p className="text-base-muted text-xs mb-6">Optional, but it matters.</p>
             <div className="flex gap-3">
-              {isPaidTier && (
+              {hasReflectionAccess && (
                 <Button
                   variant="ghost"
                   onClick={() => setStep('reflection')}

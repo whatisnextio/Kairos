@@ -17,7 +17,6 @@ const ANTHROPIC_API_KEY = Deno.env.get("ANTHROPIC_API_KEY") ?? "";
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ??
   "";
-const PAID_TIERS = new Set(["brotherhood", "lifechanger"]);
 
 const SYSTEM_PROMPT =
   `You are the KAIROS cycle reflection engine. You write one deeply personal summary for someone who has just completed a 12-week behavioural action framework.
@@ -263,15 +262,6 @@ Deno.serve(async (req: Request) => {
       );
     }
 
-    // Paid V1 tiers get the AI reflection.
-    if (!PAID_TIERS.has(profile.tier)) {
-      return jsonResponse(
-        req,
-        { error: "Cycle reflection requires paid access", tier_gate: true },
-        { status: 403 },
-      );
-    }
-
     // Load all check-ins for this cycle
     const { data: allCheckIns } = await supabase
       .from("daily_check_ins")
@@ -306,7 +296,7 @@ Deno.serve(async (req: Request) => {
       .eq("cycle_id", cycle.id)
       .order("date", { ascending: true });
 
-    // Compute stats across the public framework plus user-created paid personal routes.
+    // Compute stats across the public framework plus user-created personal routes.
     const DOMAIN_TYPES = ["BODY", "FUEL", "METIME", "USTIME"];
     const cycleStart = new Date(cycle.start_date);
     const today = new Date();

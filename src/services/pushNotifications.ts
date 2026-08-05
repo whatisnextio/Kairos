@@ -1,6 +1,6 @@
 // Push notification service (Web Push API)
 // VAPID public key comes from environment. Backend uses the private key to send.
-// Only requests permission when the user explicitly opts in (brotherhood tier).
+// Only requests permission when the user explicitly opts in.
 
 const VAPID_PUBLIC_KEY = import.meta.env.VITE_VAPID_PUBLIC_KEY ?? '';
 

@@ -351,18 +351,6 @@ export default function HomeScreen() {
           <p className="text-base-subtext text-xs mt-3 italic">{phaseConfig.tagline}</p>
         </Card>
 
-        {profile.tier === 'free' && (
-          <Card className="border-status-partial/40 bg-status-partial/5">
-            <p className="font-heading text-xs text-status-partial tracking-widest uppercase mb-1">
-              Local data
-            </p>
-            <p className="text-base-subtext text-xs leading-snug">
-              Free progress lives on this device. Export before clearing browser data or changing
-              phone.
-            </p>
-          </Card>
-        )}
-
         {offlineSyncStatus !== 'idle' && (
           <Card
             className={
@@ -566,7 +554,7 @@ export default function HomeScreen() {
           </button>
         )}
 
-        {/* Squad: paid tiers only */}
+        {/* Squad */}
         {hasBrotherhoodAccess(profile.tier) && profile.squadId && (
           <Card>
             <p className="font-heading text-xs text-base-subtext tracking-widest uppercase mb-3">

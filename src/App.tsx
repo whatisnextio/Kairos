@@ -1,5 +1,4 @@
 import { useBootstrap } from '@/hooks/useBootstrap';
-import { useSubscriptionVerification } from '@/hooks/useSubscriptionVerification';
 import {
   cancelDailyNotifications,
   scheduleDailyNotifications,
@@ -25,7 +24,6 @@ import OnboardingFlow from '@/pages/onboarding/OnboardingFlow';
 
 // Non-critical: lazy loaded
 const DetailScreen = lazy(() => import('@/pages/DetailScreen'));
-const SubscriptionScreen = lazy(() => import('@/pages/SubscriptionScreen'));
 const PrivacyPolicyPage = lazy(() => import('@/pages/PrivacyPolicyPage'));
 const TermsServicePage = lazy(() => import('@/pages/TermsServicePage'));
 const HelpFAQPage = lazy(() => import('@/pages/HelpFAQPage'));
@@ -61,7 +59,6 @@ export default function App() {
   } = useAppStore();
 
   useBootstrap();
-  const { isVerifying } = useSubscriptionVerification();
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
@@ -108,19 +105,6 @@ export default function App() {
 
   if (isAuthLoading || isBootstrapLoading) return <SplashScreen />;
 
-  if (isVerifying) {
-    return (
-      <div className="min-h-screen bg-base-bg flex flex-col items-center justify-center gap-3 px-6 text-center">
-        <div className="w-8 h-8 border-2 border-accent-green border-t-transparent rounded-full animate-spin" />
-        <p className="font-heading text-base-text font-bold">Verifying your subscription</p>
-        <p className="text-base-subtext text-sm">This usually takes a few seconds.</p>
-      </div>
-    );
-  }
-
-  // timedOut: webhook not fired within ~30s. User proceeds as free tier;
-  // YouScreen subscription card will show their current status on next load.
-
   if (!authUser) {
     return withInstallPrompt(
       <HashRouter>
@@ -164,7 +148,7 @@ export default function App() {
               <Route path="/detail/:domain" element={<DetailScreen />} />
               <Route path="/improve" element={<ImproveScreen />} />
               <Route path="/you" element={<YouScreen />} />
-              <Route path="/subscription" element={<SubscriptionScreen />} />
+              <Route path="/subscription" element={<Navigate to="/you" replace />} />
               <Route path="/privacy" element={<PrivacyPolicyPage />} />
               <Route path="/terms" element={<TermsServicePage />} />
               <Route path="/help" element={<HelpFAQPage />} />

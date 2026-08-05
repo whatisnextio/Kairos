@@ -1,12 +1,9 @@
 import type { Profile } from '@/types';
-import { SUBSCRIPTION_TIER_CONFIGS } from '@/types';
 import {
   applyComplimentaryBrotherhood,
   getComplimentaryProfileFields,
-  getSubscriptionTierLabel,
   hasBrotherhoodAccess,
   hasComplimentaryBrotherhood,
-  hasPaidAccess,
 } from '@/utils/entitlements';
 import { describe, expect, it } from 'vitest';
 
@@ -28,7 +25,7 @@ const baseProfile: Profile = {
   updatedAt: '2026-01-01T00:00:00Z',
 };
 
-describe('complimentary paid entitlement', () => {
+describe('complimentary app access compatibility', () => {
   it('matches the owner email case-insensitively', () => {
     expect(hasComplimentaryBrotherhood('LDGMCDOWELL@gmail.com')).toBe(true);
     expect(hasComplimentaryBrotherhood(' ldgmcdowell@gmail.com ')).toBe(true);
@@ -59,21 +56,9 @@ describe('complimentary paid entitlement', () => {
 });
 
 describe('subscription tier contract', () => {
-  it('keeps database tier keys stable while exposing general-audience labels', () => {
-    expect(Object.keys(SUBSCRIPTION_TIER_CONFIGS)).toEqual(['free', 'brotherhood', 'lifechanger']);
-  });
-
-  it('treats Kairos Plus and Lifechanger as paid V1 access', () => {
-    expect(hasPaidAccess('free')).toBe(false);
-    expect(hasPaidAccess('brotherhood')).toBe(true);
-    expect(hasPaidAccess('lifechanger')).toBe(true);
+  it('keeps legacy database tier keys on the same app access path', () => {
+    expect(hasBrotherhoodAccess('free')).toBe(true);
     expect(hasBrotherhoodAccess('brotherhood')).toBe(true);
     expect(hasBrotherhoodAccess('lifechanger')).toBe(true);
-  });
-
-  it('exposes stable tier labels for account UI', () => {
-    expect(getSubscriptionTierLabel('free')).toBe('Free');
-    expect(getSubscriptionTierLabel('brotherhood')).toBe('Kairos Plus');
-    expect(getSubscriptionTierLabel('lifechanger')).toBe('Lifechanger');
   });
 });

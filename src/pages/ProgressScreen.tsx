@@ -6,9 +6,7 @@ import { useStreaks } from '@/hooks/useStreaks';
 import { useAppStore } from '@/store/useAppStore';
 import type { KairosPhaseConfig } from '@/types';
 import { KAIROS_CYCLE_LENGTH_DAYS, getAvailableDomains, getDomainRouteSlug } from '@/types';
-import { hasBrotherhoodAccess } from '@/utils/entitlements';
 import {
-  POINTS_FULL_LABEL,
   deriveEarnedBadges,
   formatKairosPoints,
   getLevelForXp,
@@ -64,9 +62,7 @@ export default function ProgressScreen() {
   // Compute before early return so hooks are never called conditionally.
   const dayInCycle = profile && currentCycle ? getDayInCycle(currentCycle.startDate) : 0;
   const cycleComplete = dayInCycle >= KAIROS_CYCLE_LENGTH_DAYS;
-  const { data: aiReflection } = useCycleReflection(
-    cycleComplete && hasBrotherhoodAccess(profile?.tier),
-  );
+  const { data: aiReflection } = useCycleReflection(cycleComplete);
 
   if (!profile || !currentCycle) return null;
   const currentPhase = getCurrentPhaseConfig(dayInCycle);
@@ -75,7 +71,6 @@ export default function ProgressScreen() {
   const activeCustomRoutes = customRoutes.filter((route) => !route.archivedAt);
   const level = getLevelForXp(profile.xp);
   const xpProgress = getXpProgressInLevel(profile.xp);
-  const hasPaidAccess = hasBrotherhoodAccess(profile.tier);
   const last7 = getLast7Days();
   const today = toLocalIsoDate(new Date());
   const flywheel = buildWeeklyFlywheel({
@@ -159,16 +154,14 @@ export default function ProgressScreen() {
               )}
             </div>
             <div className="flex gap-2">
-              {hasBrotherhoodAccess(profile.tier) && (
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  onClick={() => setShowDay84Modal(true)}
-                  type="button"
-                >
-                  View reflection
-                </Button>
-              )}
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={() => setShowDay84Modal(true)}
+                type="button"
+              >
+                View reflection
+              </Button>
               <Button size="sm" onClick={() => navigate('/new-cycle')} type="button">
                 Start Cycle {nextCycleNumber}
               </Button>
@@ -176,53 +169,38 @@ export default function ProgressScreen() {
           </div>
         )}
 
-        {hasPaidAccess ? (
-          <Card>
-            <p className="text-base-subtext text-xs font-heading tracking-widest uppercase mb-1">
-              Status
-            </p>
-            <p className="font-heading text-xl font-bold text-base-text">
-              Level {level.level}: {level.label}
-            </p>
-            <p className="text-base-subtext text-xs mt-1">{formatKairosPoints(profile.xp)} total</p>
-            <div className="mt-3 h-1.5 bg-base-border rounded-full overflow-hidden">
-              <div
-                className="h-full bg-accent-green rounded-full transition-all"
-                style={{ width: `${xpProgress}%` }}
-              />
+        <Card>
+          <p className="text-base-subtext text-xs font-heading tracking-widest uppercase mb-1">
+            Status
+          </p>
+          <p className="font-heading text-xl font-bold text-base-text">
+            Level {level.level}: {level.label}
+          </p>
+          <p className="text-base-subtext text-xs mt-1">{formatKairosPoints(profile.xp)} total</p>
+          <div className="mt-3 h-1.5 bg-base-border rounded-full overflow-hidden">
+            <div
+              className="h-full bg-accent-green rounded-full transition-all"
+              style={{ width: `${xpProgress}%` }}
+            />
+          </div>
+          <div className="grid grid-cols-2 gap-2 mt-4">
+            <div className="rounded border border-base-border p-2">
+              <p className="font-heading text-base-text text-sm">
+                {Object.keys(streakProtectionHistory).length}
+              </p>
+              <p className="text-base-muted text-[11px]">protection used</p>
             </div>
-            <div className="grid grid-cols-2 gap-2 mt-4">
-              <div className="rounded border border-base-border p-2">
-                <p className="font-heading text-base-text text-sm">
-                  {Object.keys(streakProtectionHistory).length}
-                </p>
-                <p className="text-base-muted text-[11px]">protection used</p>
-              </div>
-              <div className="rounded border border-base-border p-2">
-                <p className="font-heading text-base-text text-sm">
-                  {Object.keys(awardedWeeklyBonuses).length}
-                </p>
-                <p className="text-base-muted text-[11px]">weekly bonuses</p>
-              </div>
+            <div className="rounded border border-base-border p-2">
+              <p className="font-heading text-base-text text-sm">
+                {Object.keys(awardedWeeklyBonuses).length}
+              </p>
+              <p className="text-base-muted text-[11px]">weekly bonuses</p>
             </div>
-            <p className="text-base-muted text-xs mt-2">
-              {level.level < 10
-                ? `${xpProgress}% to Level ${level.level + 1}`
-                : 'Max level reached'}
-            </p>
-          </Card>
-        ) : (
-          <Card>
-            <p className="text-base-subtext text-xs font-heading tracking-widest uppercase mb-1">
-              Basic progress
-            </p>
-            <p className="font-heading text-xl font-bold text-base-text">No KP on Free</p>
-            <p className="text-base-subtext text-xs mt-1">
-              Free keeps your visual check-in history on this device. Status, {POINTS_FULL_LABEL},
-              streak protection, weekly bonuses, and badges unlock with Kairos Plus.
-            </p>
-          </Card>
-        )}
+          </div>
+          <p className="text-base-muted text-xs mt-2">
+            {level.level < 10 ? `${xpProgress}% to Level ${level.level + 1}` : 'Max level reached'}
+          </p>
+        </Card>
 
         {activeCustomRoutes.length > 0 && (
           <Card>
@@ -351,85 +329,81 @@ export default function ProgressScreen() {
           </div>
         </Card>
 
-        {hasPaidAccess && (
-          <Card>
-            <h2 className="font-heading text-xs font-medium text-base-subtext tracking-widest uppercase mb-3">
-              Badges
-            </h2>
-            <div className="grid grid-cols-2 gap-2">
-              {[...earnedBadges, ...unearnedBadges].map((badge) => (
-                <div
-                  key={badge.id}
-                  className={`rounded border p-3 ${
-                    badge.earned
-                      ? 'border-accent-green/50 bg-accent-green/5'
-                      : 'border-base-border bg-base-black/20 opacity-70'
-                  }`}
-                >
-                  <p className="font-heading text-sm font-medium text-base-text">{badge.label}</p>
-                  <p className="text-base-muted text-[11px] mt-1">{badge.description}</p>
-                  <p className="text-base-subtext text-[11px] mt-2">
-                    {badge.earned ? 'Earned' : 'Unlock'}: {badge.trigger}
-                  </p>
-                </div>
-              ))}
-            </div>
-          </Card>
-        )}
-
-        {hasPaidAccess && (
-          <Card>
-            <h2 className="font-heading text-xs font-medium text-base-subtext tracking-widest uppercase mb-2">
-              Controlled share
-            </h2>
-            <p className="text-base-subtext text-sm mb-3">
-              Preview exactly what leaves the app. Private routes and notes stay out unless you
-              change your sharing privacy in You.
-            </p>
-
-            {!showSharePreview ? (
-              <Button size="sm" onClick={() => setShowSharePreview(true)} type="button">
-                Preview share
-              </Button>
-            ) : (
-              <div className="flex flex-col gap-3">
-                <div className="rounded border border-base-border bg-base-black/20 p-3">
-                  {sharePreview.showPhoto && profileImageDataUrl && (
-                    <img
-                      src={profileImageDataUrl}
-                      alt=""
-                      className="w-12 h-12 rounded-full object-cover mb-3"
-                    />
-                  )}
-                  <p className="font-heading text-sm font-medium text-base-text mb-2">
-                    {sharePreview.title}
-                  </p>
-                  <pre className="whitespace-pre-wrap font-body text-sm text-base-subtext leading-relaxed">
-                    {sharePreview.text}
-                  </pre>
-                </div>
-                <div className="flex gap-2">
-                  <Button size="sm" onClick={handleShareProgress} type="button" className="flex-1">
-                    Share or copy
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    onClick={() => {
-                      setShowSharePreview(false);
-                      setShareStatus(null);
-                    }}
-                    type="button"
-                    className="flex-1"
-                  >
-                    Cancel
-                  </Button>
-                </div>
-                {shareStatus && <p className="text-base-muted text-xs">{shareStatus}</p>}
+        <Card>
+          <h2 className="font-heading text-xs font-medium text-base-subtext tracking-widest uppercase mb-3">
+            Badges
+          </h2>
+          <div className="grid grid-cols-2 gap-2">
+            {[...earnedBadges, ...unearnedBadges].map((badge) => (
+              <div
+                key={badge.id}
+                className={`rounded border p-3 ${
+                  badge.earned
+                    ? 'border-accent-green/50 bg-accent-green/5'
+                    : 'border-base-border bg-base-black/20 opacity-70'
+                }`}
+              >
+                <p className="font-heading text-sm font-medium text-base-text">{badge.label}</p>
+                <p className="text-base-muted text-[11px] mt-1">{badge.description}</p>
+                <p className="text-base-subtext text-[11px] mt-2">
+                  {badge.earned ? 'Earned' : 'Target'}: {badge.trigger}
+                </p>
               </div>
-            )}
-          </Card>
-        )}
+            ))}
+          </div>
+        </Card>
+
+        <Card>
+          <h2 className="font-heading text-xs font-medium text-base-subtext tracking-widest uppercase mb-2">
+            Controlled share
+          </h2>
+          <p className="text-base-subtext text-sm mb-3">
+            Preview exactly what leaves the app. Private routes and notes stay out unless you change
+            your sharing privacy in You.
+          </p>
+
+          {!showSharePreview ? (
+            <Button size="sm" onClick={() => setShowSharePreview(true)} type="button">
+              Preview share
+            </Button>
+          ) : (
+            <div className="flex flex-col gap-3">
+              <div className="rounded border border-base-border bg-base-black/20 p-3">
+                {sharePreview.showPhoto && profileImageDataUrl && (
+                  <img
+                    src={profileImageDataUrl}
+                    alt=""
+                    className="w-12 h-12 rounded-full object-cover mb-3"
+                  />
+                )}
+                <p className="font-heading text-sm font-medium text-base-text mb-2">
+                  {sharePreview.title}
+                </p>
+                <pre className="whitespace-pre-wrap font-body text-sm text-base-subtext leading-relaxed">
+                  {sharePreview.text}
+                </pre>
+              </div>
+              <div className="flex gap-2">
+                <Button size="sm" onClick={handleShareProgress} type="button" className="flex-1">
+                  Share or copy
+                </Button>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => {
+                    setShowSharePreview(false);
+                    setShareStatus(null);
+                  }}
+                  type="button"
+                  className="flex-1"
+                >
+                  Cancel
+                </Button>
+              </div>
+              {shareStatus && <p className="text-base-muted text-xs">{shareStatus}</p>}
+            </div>
+          )}
+        </Card>
 
         {/* 7-day domain grid */}
         <Card>
@@ -492,9 +466,8 @@ export default function ProgressScreen() {
           </h2>
           <div className="flex flex-col gap-2">
             {availableDomains.map((d) => {
-              const streak = hasPaidAccess
-                ? remoteStreaks?.find((s) => s.domainType === d.type)
-                : localStreaks[d.type];
+              const streak =
+                remoteStreaks?.find((s) => s.domainType === d.type) ?? localStreaks[d.type];
               return (
                 <div key={d.type} className="flex items-center justify-between">
                   <span className={`text-xs font-heading font-medium ${d.colour}`}>

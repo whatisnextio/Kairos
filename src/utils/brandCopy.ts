@@ -48,7 +48,7 @@ export const HELP_FAQS = [
   },
   {
     q: 'Can I add my own routes?',
-    a: 'Yes on paid tiers. Routes such as photography, work, money, or family projects sit under the four core domains so the public framework stays consistent.',
+    a: 'Yes. Routes such as photography, work, money, or family projects sit under the four core domains so the public framework stays consistent.',
   },
   {
     q: 'What happens if I miss a day?',
@@ -60,61 +60,17 @@ export const HELP_FAQS = [
   },
   {
     q: 'How do notifications work?',
-    a: 'Paid users can opt into discreet PWA reminders. High accountability repeats structured prompts through the day, including early protocol, catch-up, and shutdown.',
+    a: 'Notifications are opt-in PWA prompts where your browser supports them. High accountability repeats structured prompts through the day, including early protocol, catch-up, and shutdown.',
   },
   {
     q: 'How does the AI nudge work?',
-    a: 'AI nudges use your identity anchor, phase, recent check-ins, streaks, and active routes. Kairos Plus gets daily nudges. Lifechanger can add grounded pattern signals when there is enough history. Free gets a Sunday nudge.',
-  },
-  {
-    q: 'What is Kairos Plus?',
-    a: 'Kairos Plus unlocks the full V1 loop: daily AI nudges, paid progress depth, cloud sync, personal sub-routes, push reminders, anonymous squad signals, and the Day 84 reflection.',
-  },
-  {
-    q: 'What is Lifechanger?',
-    a: 'Lifechanger adds advanced pattern support on top of Kairos Plus. It can use trends, vibe movement, streaks, notes, and cross-domain signals when your history is strong enough. If the data is thin, it falls back to standard Kairos support.',
+    a: 'AI nudges use your identity anchor, phase, recent check-ins, streaks, and active routes. They stay short, supportive, and grounded in your current 12K context.',
   },
   {
     q: 'Is my data private?',
     a: 'Yes. Labels stay discreet, your private sub-routes are not public defaults, and the app does not sell your data. See the Privacy Policy for the full position.',
   },
-  {
-    q: 'Why can I not open checkout?',
-    a: 'If checkout is unavailable, the app will show an error instead of failing silently. Billing becomes live when the Stripe checkout URL is configured.',
-  },
 ] as const;
-
-export const SUBSCRIPTION_COPY = {
-  title: 'Upgrade 12K',
-  intro: 'Choose the level of guided support that matches how much accountability you want.',
-  price: '£7.99',
-  lifechangerPrice: '£19.99',
-  priceSuffix: 'per month when checkout is live.',
-  paidFeatures: [
-    'Daily AI nudge, based on your 12K context',
-    'Personal sub-routes under Body, Fuel, Self, or Connection',
-    'Cloud sync for daily actions and notes',
-    'High-accountability PWA reminders',
-    'Full Kairos Points, streak, badge, and history depth',
-    'Anonymous squad matching and weekly pulse when matched',
-    'Day 84 cycle reflection',
-  ],
-  lifechangerFeatures: [
-    'Everything in Kairos Plus',
-    'Advanced AI pattern support when history is strong enough',
-    'Trend, vibe, streak, note, and cross-domain signals',
-    'Fallback to standard Kairos support when data is thin',
-  ],
-  freeFeatures: [
-    'Track the four core domains',
-    'Local device progress',
-    'Basic progress rings',
-    'Weekly Vibe Check',
-    'Sunday AI nudge',
-  ],
-  lifechanger:
-    'Lifechanger adds deeper personalisation without becoming open-ended chat or making diagnostic claims.',
-} as const;
 
 export const FEATURE_EXPLANATIONS = {
   personalRoutes:
@@ -125,24 +81,20 @@ export const FEATURE_EXPLANATIONS = {
     'Squad is anonymous accountability, not chat. The match action places you with people in the same Kairos phase and shows a weekly pulse when one is available.',
   notifications:
     'Notifications are opt-in PWA prompts. High accountability repeats discreet check-in prompts inside your chosen hours.',
-  lifechanger:
-    'Lifechanger is the deeper support tier. It adds pattern-aware AI only when there is enough history; otherwise it behaves like Kairos Plus.',
 } as const;
 
 export const PRIVACY_COPY = {
   intro:
-    '12K is private by design. It stores only what is needed to run your 84-day journey, sync paid features, and keep the app useful.',
+    '12K is private by design. It stores only what is needed to run your 84-day journey, sync the app, and keep it useful.',
   collected:
     'Email, date of birth for 18+ checks, profile setup, check-ins, route choices, notes, Kairos Points, streaks, notification preferences, and cycle state.',
   notDone:
-    'We do not sell your data, use advertising networks, or make private route labels public. Supabase stores app data, Stripe handles payments when billing is live, and Plausible measures usage without cookies.',
+    'We do not sell your data, use advertising networks, or make private route labels public. Supabase stores app data, and Plausible measures usage without cookies.',
   rights:
     'You can export your data and request account deletion from the You screen. For access questions or support-led requests, contact support and we will respond within 30 days.',
 } as const;
 
 export const TERMS_COPY = {
   intro: 'By using 12K you agree to use it as a personal operating system, not medical advice.',
-  subscriptions:
-    'Paid access is managed through Stripe when checkout is configured. Prices, cancellation, and refund terms are shown at checkout or confirmed by support.',
   ai: 'AI nudges are supportive prompts generated from your 12K context. They are not medical, psychological, financial, or legal advice.',
 } as const;

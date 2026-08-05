@@ -3,7 +3,7 @@ import { XP_PER_CHECK_IN_DONE, XP_PER_WEEK_COMPLETE } from '@/types';
 import { DEV_CYCLE_ID } from '@/utils/localDevSession';
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 
-const paidProfile: Profile = {
+const appProfile: Profile = {
   id: 'user-1',
   displayName: 'Test User',
   identityAnchorId: 'builder',
@@ -53,27 +53,27 @@ describe('gamification store contract', () => {
     vi.useRealTimers();
   });
 
-  it('does not award XP to Free users', async () => {
+  it('awards XP to legacy free profiles in the single app tier', async () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date('2026-08-04T09:00:00Z'));
     const { useAppStore } = await import('@/store/useAppStore');
 
     useAppStore.getState().reset();
-    useAppStore.setState({ profile: { ...paidProfile, tier: 'free' }, currentCycle: cycle });
+    useAppStore.setState({ profile: { ...appProfile, tier: 'free' }, currentCycle: cycle });
 
     await useAppStore.getState().setDailyCheckIn('BODY', 'Done');
 
-    expect(useAppStore.getState().profile?.xp).toBe(0);
-    expect(useAppStore.getState().todayCheckIns.BODY?.xpAwarded).toBe(0);
+    expect(useAppStore.getState().profile?.xp).toBe(XP_PER_CHECK_IN_DONE);
+    expect(useAppStore.getState().todayCheckIns.BODY?.xpAwarded).toBe(XP_PER_CHECK_IN_DONE);
   });
 
-  it('awards the paid Done XP once through status deltaing', async () => {
+  it('awards the Done XP once through status deltaing', async () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date('2026-08-04T09:00:00Z'));
     const { useAppStore } = await import('@/store/useAppStore');
 
     useAppStore.getState().reset();
-    useAppStore.setState({ profile: paidProfile, currentCycle: cycle });
+    useAppStore.setState({ profile: appProfile, currentCycle: cycle });
 
     await useAppStore.getState().setDailyCheckIn('BODY', 'Done');
     await useAppStore.getState().setDailyCheckIn('BODY', 'Done');
@@ -81,13 +81,13 @@ describe('gamification store contract', () => {
     expect(useAppStore.getState().profile?.xp).toBe(XP_PER_CHECK_IN_DONE);
   });
 
-  it('protects one missed paid check-in per 14-day block', async () => {
+  it('protects one missed check-in per 14-day block', async () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date('2026-08-04T09:00:00Z'));
     const { useAppStore } = await import('@/store/useAppStore');
 
     useAppStore.getState().reset();
-    useAppStore.setState({ profile: paidProfile, currentCycle: cycle });
+    useAppStore.setState({ profile: appProfile, currentCycle: cycle });
 
     await useAppStore.getState().setDailyCheckIn('BODY', 'Missed');
     await useAppStore.getState().setDailyCheckIn('BODY', 'Missed');
@@ -109,7 +109,7 @@ describe('gamification store contract', () => {
 
     useAppStore.getState().reset();
     useAppStore.setState({
-      profile: paidProfile,
+      profile: appProfile,
       currentCycle: cycle,
       checkInHistory: {
         ...weekHistory,

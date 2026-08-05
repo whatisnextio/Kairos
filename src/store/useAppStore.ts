@@ -172,8 +172,8 @@ interface AppState {
   todayCheckIns: Partial<Record<DomainType, DailyCheckIn>>;
   todayCustomRouteCheckIns: Record<string, CustomRouteCheckIn>;
   streaks: Partial<Record<DomainType, UserStreak>>;
-  // Persisted history for local streak computation (free tier)
-  // Key: ISO date string. Pruned to 90 days; paid history is fetched from Supabase on bootstrap.
+  // Persisted history for local streak computation and offline recovery.
+  // Key: ISO date string. Pruned to 90 days; remote history is fetched from Supabase on bootstrap.
   checkInHistory: Record<string, Partial<Record<DomainType, CheckInStatus>>>;
   customRouteCheckInHistory: Record<string, Record<string, CheckInStatus>>;
   checkInNoteOverrides: Record<string, CheckInNoteOverride>;
@@ -233,7 +233,7 @@ interface AppActions {
     focusDescription: string;
   }) => Promise<{
     ok: boolean;
-    reason?: 'upgrade' | 'invalid' | 'missing-context' | 'sync-failed';
+    reason?: 'invalid' | 'missing-context';
   }>;
   updateCustomRoute: (
     routeId: string,
@@ -406,7 +406,7 @@ export const useAppStore = create<AppState & AppActions>()(
             : [...state.domainFocuses, optimisticFocus],
         }));
 
-        if (profile.tier === 'free' || currentCycle.id === DEV_CYCLE_ID) return;
+        if (!hasBrotherhoodAccess(profile.tier) || currentCycle.id === DEV_CYCLE_ID) return;
 
         const { data, error } = await supabase
           .from('user_domain_focuses')
@@ -451,13 +451,13 @@ export const useAppStore = create<AppState & AppActions>()(
         if (!profile || !currentCycle) return;
 
         const today = toLocalIsoDate(new Date());
-        const paid = hasBrotherhoodAccess(profile.tier);
+        const appAccess = hasBrotherhoodAccess(profile.tier);
         const previousStatus = todayCheckIns[domainType]?.status;
         let nextStatus = status;
         let protectionApplied = false;
         let weeklyBonusAwardedNow = false;
 
-        if (paid && status === 'Missed') {
+        if (appAccess && status === 'Missed') {
           const protectionKey = `${domainType}-${getFortnightBlockKey(today)}`;
           if (!get().streakProtectionHistory[protectionKey]) {
             nextStatus = 'Protected';
@@ -466,7 +466,8 @@ export const useAppStore = create<AppState & AppActions>()(
         }
 
         const xpDelta =
-          getXpForCheckInStatus(nextStatus, paid) - getXpForCheckInStatus(previousStatus, paid);
+          getXpForCheckInStatus(nextStatus, appAccess) -
+          getXpForCheckInStatus(previousStatus, appAccess);
 
         // Optimistic update
         const optimisticCheckIn: DailyCheckIn = {
@@ -500,7 +501,7 @@ export const useAppStore = create<AppState & AppActions>()(
           const awardWeeklyBonus = shouldAwardWeeklyBonus({
             weekDates,
             history,
-            paid,
+            active: appAccess,
             alreadyAwarded: !!state.awardedWeeklyBonuses[weekKey],
           });
           weeklyBonusAwardedNow = awardWeeklyBonus;
@@ -547,7 +548,7 @@ export const useAppStore = create<AppState & AppActions>()(
           };
         });
 
-        if (profile.tier === 'free' || currentCycle.id === DEV_CYCLE_ID) return;
+        if (!hasBrotherhoodAccess(profile.tier) || currentCycle.id === DEV_CYCLE_ID) return;
 
         const mutation: OfflineMutation<DailyCheckInMutationPayload> = {
           id: crypto.randomUUID(),
@@ -636,7 +637,7 @@ export const useAppStore = create<AppState & AppActions>()(
           };
         });
 
-        if (profile.tier === 'free' || currentCycle.id === DEV_CYCLE_ID) return;
+        if (!hasBrotherhoodAccess(profile.tier) || currentCycle.id === DEV_CYCLE_ID) return;
 
         const mutation: OfflineMutation<DailyCheckInNoteMutationPayload> = {
           id: crypto.randomUUID(),
@@ -688,7 +689,6 @@ export const useAppStore = create<AppState & AppActions>()(
       addCustomRoute: async ({ parentDomainType, label, description, focusDescription }) => {
         const { profile, currentCycle } = get();
         if (!profile || !currentCycle) return { ok: false, reason: 'missing-context' };
-        if (!hasBrotherhoodAccess(profile.tier)) return { ok: false, reason: 'upgrade' };
 
         const now = new Date().toISOString();
         const route: CustomRoute = {
@@ -724,11 +724,11 @@ export const useAppStore = create<AppState & AppActions>()(
           .single();
 
         if (error || !data) {
-          console.error('Custom route sync failed:', error?.message ?? 'No row returned');
-          set((state) => ({
-            customRoutes: state.customRoutes.filter((existing) => existing.id !== route.id),
-          }));
-          return { ok: false, reason: 'sync-failed' };
+          console.error(
+            'Custom route remote sync failed; kept locally:',
+            error?.message ?? 'No row returned',
+          );
+          return { ok: true };
         }
 
         set((state) => ({
@@ -820,11 +820,12 @@ export const useAppStore = create<AppState & AppActions>()(
 
         const today = toLocalIsoDate(new Date());
         const now = new Date().toISOString();
-        const paid = hasBrotherhoodAccess(profile.tier);
+        const appAccess = hasBrotherhoodAccess(profile.tier);
         const previous = todayCustomRouteCheckIns[routeId];
         const previousStatus = previous?.date === today ? previous.status : undefined;
         const xpDelta =
-          getXpForCheckInStatus(status, paid) - getXpForCheckInStatus(previousStatus, paid);
+          getXpForCheckInStatus(status, appAccess) -
+          getXpForCheckInStatus(previousStatus, appAccess);
         const oldXp = profile.xp;
         const newXp = Math.max(0, oldXp + xpDelta);
         const oldLevel = getLevelForXp(oldXp);
@@ -1030,7 +1031,7 @@ export const useAppStore = create<AppState & AppActions>()(
         const today = toLocalIsoDate(new Date());
         set({ lastVibeCheckDate: today });
 
-        if (profile.tier === 'free' || currentCycle.id === DEV_CYCLE_ID) return;
+        if (!hasBrotherhoodAccess(profile.tier) || currentCycle.id === DEV_CYCLE_ID) return;
 
         const { error } = await supabase.from('vibe_checks').insert({
           user_id: profile.id,

@@ -107,8 +107,8 @@ export default function AdminMetricsPage() {
             Latest: {latest.snapshot_date}
           </p>
           <MetricRow label="Total Users" value={latest.total_users.toLocaleString()} />
-          <MetricRow label="Kairos Plus (Paid)" value={latest.paid_users.toLocaleString()} />
-          <MetricRow label="Conversion Rate" value={`${latest.conversion_rate.toFixed(1)}%`} />
+          <MetricRow label="App Access" value={latest.paid_users.toLocaleString()} />
+          <MetricRow label="Activation Rate" value={`${latest.conversion_rate.toFixed(1)}%`} />
           <MetricRow label="Day-7 Retention" value={`${latest.day7_retention.toFixed(1)}%`} />
           <MetricRow label="Day-84 Completion" value={`${latest.day84_completion.toFixed(1)}%`} />
           <MetricRow
@@ -129,8 +129,8 @@ export default function AdminMetricsPage() {
                 <tr className="text-base-muted border-b border-base-border">
                   <th className="pb-2 pr-3 font-medium">Date</th>
                   <th className="pb-2 pr-3 font-medium text-right">Users</th>
-                  <th className="pb-2 pr-3 font-medium text-right">Paid</th>
-                  <th className="pb-2 pr-3 font-medium text-right">Conv%</th>
+                  <th className="pb-2 pr-3 font-medium text-right">Access</th>
+                  <th className="pb-2 pr-3 font-medium text-right">Act%</th>
                   <th className="pb-2 pr-3 font-medium text-right">D7 Ret%</th>
                   <th className="pb-2 font-medium text-right">D84%</th>
                 </tr>

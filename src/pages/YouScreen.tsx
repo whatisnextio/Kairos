@@ -12,7 +12,7 @@ import { supabase } from '@/services/supabaseClient';
 import { useAppStore } from '@/store/useAppStore';
 import { type DomainType, IDENTITY_ANCHORS, getAvailableDomains } from '@/types';
 import { FEATURE_EXPLANATIONS } from '@/utils/brandCopy';
-import { getSubscriptionTierLabel, hasBrotherhoodAccess } from '@/utils/entitlements';
+import { hasBrotherhoodAccess } from '@/utils/entitlements';
 import { deriveEarnedBadges, formatKairosPoints, getLevelForXp } from '@/utils/gamification';
 import { getDayInCycle } from '@/utils/kairos';
 import { type ChangeEvent, useCallback, useEffect, useState } from 'react';
@@ -36,7 +36,6 @@ function resizeImageDataUrl(dataUrl: string, maxPx = 400, quality = 0.72): Promi
 
 const SAVE_PUSH_ENDPOINT = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/save-push-subscription`;
 const DELETE_ACCOUNT_ENDPOINT = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/delete-account`;
-const STRIPE_PORTAL_URL = import.meta.env.VITE_STRIPE_PORTAL_URL;
 
 async function syncPushPreferences(preferences: Record<string, unknown>): Promise<boolean> {
   try {
@@ -163,7 +162,6 @@ export default function YouScreen() {
   const [routeParent, setRouteParent] = useState<DomainType>('METIME');
   const [routeError, setRouteError] = useState<string | null>(null);
   const [isAddingRoute, setIsAddingRoute] = useState(false);
-  const hasPaidAccess = hasBrotherhoodAccess(profile?.tier);
   const availableDomains = getAvailableDomains(authUser?.email);
   const domainLabels = new Map(availableDomains.map((domain) => [domain.type, domain.label]));
   const activeCustomRoutes = customRoutes.filter((route) => !route.archivedAt);
@@ -324,11 +322,7 @@ export default function YouScreen() {
     setIsAddingRoute(false);
 
     if (!result.ok) {
-      setRouteError(
-        result.reason === 'upgrade'
-          ? 'Personal sub-routes are included in Kairos Plus and Lifechanger.'
-          : 'Sub-route could not be saved. Check the name and focus, then try again.',
-      );
+      setRouteError('Sub-route could not be saved. Check the name and focus, then try again.');
       return;
     }
 
@@ -434,155 +428,76 @@ export default function YouScreen() {
             ))
           )}
         </div>
-        {!hasPaidAccess ? (
-          <div className="rounded border border-status-partial/40 bg-status-partial/5 p-3">
-            <p className="text-base-subtext text-sm mb-3">
-              Kairos Plus unlocks personal sub-routes, cloud sync, and Improve options for those
-              routes.
-            </p>
-            <Link to="/subscription">
-              <Button size="sm">Unlock sub-routes</Button>
-            </Link>
-          </div>
-        ) : (
-          <div className="flex flex-col gap-2">
-            <label className="text-base-subtext text-xs font-heading tracking-widest uppercase">
-              Core category
-              <select
-                className="input-field mt-1"
-                value={routeParent}
-                onChange={(e) => setRouteParent(e.target.value as DomainType)}
-              >
-                {availableDomains.map((domain) => (
-                  <option key={domain.type} value={domain.type}>
-                    {domain.label}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <input
-              className="input-field"
-              placeholder="Route name, e.g. Lens"
-              value={routeLabel}
-              onChange={(e) => setRouteLabel(e.target.value)}
-            />
-            <textarea
-              className="input-field h-20 resize-none"
-              placeholder="What does a small win look like?"
-              value={routeFocus}
-              onChange={(e) => setRouteFocus(e.target.value)}
-            />
-            {routeError && (
-              <p role="alert" className="text-status-missed text-xs">
-                {routeError}
-              </p>
-            )}
-            <Button
-              size="sm"
-              onClick={() => void handleAddCustomRoute()}
-              disabled={!routeLabel.trim() || !routeFocus.trim() || isAddingRoute}
+        <div className="flex flex-col gap-2">
+          <label className="text-base-subtext text-xs font-heading tracking-widest uppercase">
+            Core category
+            <select
+              className="input-field mt-1"
+              value={routeParent}
+              onChange={(e) => setRouteParent(e.target.value as DomainType)}
             >
-              {isAddingRoute ? 'Adding...' : 'Add sub-route'}
-            </Button>
-          </div>
-        )}
+              {availableDomains.map((domain) => (
+                <option key={domain.type} value={domain.type}>
+                  {domain.label}
+                </option>
+              ))}
+            </select>
+          </label>
+          <input
+            className="input-field"
+            placeholder="Route name, e.g. Lens"
+            value={routeLabel}
+            onChange={(e) => setRouteLabel(e.target.value)}
+          />
+          <textarea
+            className="input-field h-20 resize-none"
+            placeholder="What does a small win look like?"
+            value={routeFocus}
+            onChange={(e) => setRouteFocus(e.target.value)}
+          />
+          {routeError && (
+            <p role="alert" className="text-status-missed text-xs">
+              {routeError}
+            </p>
+          )}
+          <Button
+            size="sm"
+            onClick={() => void handleAddCustomRoute()}
+            disabled={!routeLabel.trim() || !routeFocus.trim() || isAddingRoute}
+          >
+            {isAddingRoute ? 'Adding...' : 'Add sub-route'}
+          </Button>
+        </div>
       </Card>
 
-      {/* Squad: paid tiers only */}
-      {hasPaidAccess && (
-        <Card>
-          <p className="text-base-subtext text-xs font-heading tracking-widest uppercase mb-2">
-            Squad
-          </p>
-          <p className="text-base-subtext text-sm mb-3">{FEATURE_EXPLANATIONS.squad}</p>
-          {profile.squadId ? (
-            <>
-              {squadPulse ? (
-                <>
-                  <p className="text-base-subtext text-xs mb-1">
-                    Week {squadPulse.weekNumber} pulse
-                  </p>
-                  <p className="text-base-text text-sm italic">{squadPulse.message}</p>
-                </>
-              ) : (
-                <p className="text-base-subtext text-sm">
-                  You are matched. The weekly pulse appears after the next pulse run.
-                </p>
-              )}
-            </>
-          ) : (
-            <>
-              <p className="text-base-subtext text-sm mb-3">
-                You have not been matched yet. Tapping below creates or joins an anonymous phase
-                squad.
-              </p>
-              <Button size="sm" onClick={() => matchToSquad()} disabled={isMatching}>
-                {isMatching ? 'Matching...' : 'Find anonymous squad'}
-              </Button>
-            </>
-          )}
-        </Card>
-      )}
-
-      {/* Subscription */}
+      {/* Squad */}
       <Card>
         <p className="text-base-subtext text-xs font-heading tracking-widest uppercase mb-2">
-          Subscription
+          Squad
         </p>
-        <p className="font-heading font-medium text-base-text">
-          {getSubscriptionTierLabel(profile.tier)}
-        </p>
-        {profile.tier === 'free' && (
+        <p className="text-base-subtext text-sm mb-3">{FEATURE_EXPLANATIONS.squad}</p>
+        {profile.squadId ? (
           <>
-            <div className="rounded border border-status-partial/40 bg-status-partial/5 p-3 mt-3">
-              <p className="font-heading text-xs text-status-partial tracking-widest uppercase mb-1">
-                Local data
+            {squadPulse ? (
+              <>
+                <p className="text-base-subtext text-xs mb-1">Week {squadPulse.weekNumber} pulse</p>
+                <p className="text-base-text text-sm italic">{squadPulse.message}</p>
+              </>
+            ) : (
+              <p className="text-base-subtext text-sm">
+                You are matched. The weekly pulse appears after the next pulse run.
               </p>
-              <p className="text-base-subtext text-xs">
-                Free progress lives on this device. Export before clearing browser data or changing
-                phone.
-              </p>
-            </div>
-            <Link to="/subscription">
-              <Button size="sm" className="mt-3">
-                Upgrade to Kairos Plus
-              </Button>
-            </Link>
+            )}
           </>
-        )}
-        {hasPaidAccess && (
+        ) : (
           <>
-            {profile.subscriptionStatus === 'past_due' ? (
-              <p className="text-status-missed text-xs mt-1 font-medium">
-                Payment failed. Update your payment method to keep paid access.
-              </p>
-            ) : profile.cancelAtPeriodEnd && profile.currentPeriodEnd ? (
-              <p className="text-base-subtext text-xs mt-1">
-                Cancels on{' '}
-                {new Date(profile.currentPeriodEnd).toLocaleDateString('en-GB', {
-                  day: 'numeric',
-                  month: 'long',
-                  year: 'numeric',
-                })}
-                .
-              </p>
-            ) : (
-              <p className="text-base-subtext text-xs mt-1">
-                {getSubscriptionTierLabel(profile.tier)} active.
-              </p>
-            )}
-            {STRIPE_PORTAL_URL ? (
-              <a
-                href={`${STRIPE_PORTAL_URL}?prefilled_email=${encodeURIComponent(authUser?.email ?? '')}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-xs text-base-muted hover:text-base-subtext underline mt-2 inline-block"
-              >
-                Manage billing
-              </a>
-            ) : (
-              <p className="text-base-muted text-xs mt-2">Billing portal is not configured yet.</p>
-            )}
+            <p className="text-base-subtext text-sm mb-3">
+              You have not been matched yet. Tapping below creates or joins an anonymous phase
+              squad.
+            </p>
+            <Button size="sm" onClick={() => matchToSquad()} disabled={isMatching}>
+              {isMatching ? 'Matching...' : 'Find anonymous squad'}
+            </Button>
           </>
         )}
       </Card>
@@ -605,143 +520,138 @@ export default function YouScreen() {
         </Button>
       </Card>
 
-      {/* Notifications: paid tiers only */}
-      {hasPaidAccess && (
-        <Card>
-          <p className="text-base-subtext text-xs font-heading tracking-widest uppercase mb-2">
-            Notifications
+      {/* Notifications */}
+      <Card>
+        <p className="text-base-subtext text-xs font-heading tracking-widest uppercase mb-2">
+          Notifications
+        </p>
+        {pushStatus === 'unsupported' ? (
+          <p className="text-base-muted text-sm">
+            Web push is not supported here. Install the PWA or use a browser with notification
+            support.
           </p>
-          {pushStatus === 'unsupported' ? (
-            <p className="text-base-muted text-sm">
-              Web push is not supported here. Install the PWA or use a browser with notification
-              support.
-            </p>
-          ) : pushStatus === 'denied' ? (
-            <p className="text-base-muted text-sm">
-              Notifications are blocked. Re-enable them in browser settings, then return here.
-            </p>
-          ) : (
-            <>
-              <p className="text-base-subtext text-sm mb-4">{FEATURE_EXPLANATIONS.notifications}</p>
-              <div className="flex flex-col gap-3">
-                <label className="flex items-center justify-between gap-3 text-sm text-base-text">
-                  <span>Reminders</span>
+        ) : pushStatus === 'denied' ? (
+          <p className="text-base-muted text-sm">
+            Notifications are blocked. Re-enable them in browser settings, then return here.
+          </p>
+        ) : (
+          <>
+            <p className="text-base-subtext text-sm mb-4">{FEATURE_EXPLANATIONS.notifications}</p>
+            <div className="flex flex-col gap-3">
+              <label className="flex items-center justify-between gap-3 text-sm text-base-text">
+                <span>Reminders</span>
+                <input
+                  type="checkbox"
+                  checked={notificationPreferences.enabled}
+                  onChange={(e) =>
+                    e.target.checked
+                      ? void handleEnableNotifications()
+                      : void handleDisableNotifications()
+                  }
+                />
+              </label>
+              <label className="text-base-subtext text-xs font-heading tracking-widest uppercase">
+                Intensity
+                <select
+                  className="input-field mt-1"
+                  value={notificationPreferences.intensity}
+                  disabled={!notificationPreferences.enabled}
+                  onChange={(e) =>
+                    updateNotificationPreferences({
+                      intensity: e.target.value as typeof notificationPreferences.intensity,
+                    })
+                  }
+                >
+                  <option value="light">Light</option>
+                  <option value="standard">Standard</option>
+                  <option value="high">High accountability</option>
+                </select>
+              </label>
+              <div className="grid grid-cols-2 gap-2">
+                <label className="text-base-subtext text-xs font-heading tracking-widest uppercase">
+                  Start
                   <input
-                    type="checkbox"
-                    checked={notificationPreferences.enabled}
+                    className="input-field mt-1"
+                    type="time"
+                    value={`${String(notificationPreferences.startHour).padStart(2, '0')}:00`}
+                    disabled={!notificationPreferences.enabled}
                     onChange={(e) =>
-                      e.target.checked
-                        ? void handleEnableNotifications()
-                        : void handleDisableNotifications()
+                      updateNotificationPreferences({
+                        startHour: Number(e.target.value.split(':')[0]),
+                      })
                     }
                   />
                 </label>
                 <label className="text-base-subtext text-xs font-heading tracking-widest uppercase">
-                  Intensity
-                  <select
+                  End
+                  <input
                     className="input-field mt-1"
-                    value={notificationPreferences.intensity}
+                    type="time"
+                    value={`${String(notificationPreferences.endHour).padStart(2, '0')}:00`}
                     disabled={!notificationPreferences.enabled}
                     onChange={(e) =>
                       updateNotificationPreferences({
-                        intensity: e.target.value as typeof notificationPreferences.intensity,
+                        endHour: Number(e.target.value.split(':')[0]),
                       })
-                    }
-                  >
-                    <option value="light">Light</option>
-                    <option value="standard">Standard</option>
-                    <option value="high">High accountability</option>
-                  </select>
-                </label>
-                <div className="grid grid-cols-2 gap-2">
-                  <label className="text-base-subtext text-xs font-heading tracking-widest uppercase">
-                    Start
-                    <input
-                      className="input-field mt-1"
-                      type="time"
-                      value={`${String(notificationPreferences.startHour).padStart(2, '0')}:00`}
-                      disabled={!notificationPreferences.enabled}
-                      onChange={(e) =>
-                        updateNotificationPreferences({
-                          startHour: Number(e.target.value.split(':')[0]),
-                        })
-                      }
-                    />
-                  </label>
-                  <label className="text-base-subtext text-xs font-heading tracking-widest uppercase">
-                    End
-                    <input
-                      className="input-field mt-1"
-                      type="time"
-                      value={`${String(notificationPreferences.endHour).padStart(2, '0')}:00`}
-                      disabled={!notificationPreferences.enabled}
-                      onChange={(e) =>
-                        updateNotificationPreferences({
-                          endHour: Number(e.target.value.split(':')[0]),
-                        })
-                      }
-                    />
-                  </label>
-                </div>
-                <label className="flex items-center justify-between gap-3 text-sm text-base-subtext">
-                  <span>Early-wake protocol</span>
-                  <input
-                    type="checkbox"
-                    checked={notificationPreferences.earlyProtocol}
-                    disabled={!notificationPreferences.enabled}
-                    onChange={(e) =>
-                      updateNotificationPreferences({ earlyProtocol: e.target.checked })
                     }
                   />
                 </label>
-                {pushStatus === 'done' && (
-                  <p className="text-accent-green text-xs">Web push is connected.</p>
-                )}
-                {pushStatus === 'requesting' && (
-                  <p className="text-base-muted text-xs">Setting up notifications...</p>
-                )}
               </div>
-            </>
-          )}
-        </Card>
-      )}
-
-      {hasPaidAccess && (
-        <Card>
-          <p className="text-base-subtext text-xs font-heading tracking-widest uppercase mb-2">
-            Sharing privacy
-          </p>
-          <p className="text-base-subtext text-sm mb-4">
-            Defaults for controlled progress shares. You still preview before anything leaves the
-            app.
-          </p>
-          <div className="flex flex-col gap-3">
-            {[
-              ['includeName', 'Include display name'],
-              ['includePhoto', 'Include profile photo in preview'],
-              ['includeBadges', 'Include milestone badge'],
-              ['includeDomainDetail', 'Show core domain scores'],
-              ['includeStats', 'Show level and KP'],
-            ].map(([key, label]) => (
-              <label
-                key={key}
-                className="flex items-center justify-between gap-3 text-sm text-base-subtext"
-              >
-                <span>{label}</span>
+              <label className="flex items-center justify-between gap-3 text-sm text-base-subtext">
+                <span>Early-wake protocol</span>
                 <input
                   type="checkbox"
-                  checked={sharePrivacyPreferences[key as keyof typeof sharePrivacyPreferences]}
+                  checked={notificationPreferences.earlyProtocol}
+                  disabled={!notificationPreferences.enabled}
                   onChange={(e) =>
-                    setSharePrivacyPreferences({
-                      [key]: e.target.checked,
-                    })
+                    updateNotificationPreferences({ earlyProtocol: e.target.checked })
                   }
                 />
               </label>
-            ))}
-          </div>
-        </Card>
-      )}
+              {pushStatus === 'done' && (
+                <p className="text-accent-green text-xs">Web push is connected.</p>
+              )}
+              {pushStatus === 'requesting' && (
+                <p className="text-base-muted text-xs">Setting up notifications...</p>
+              )}
+            </div>
+          </>
+        )}
+      </Card>
+
+      <Card>
+        <p className="text-base-subtext text-xs font-heading tracking-widest uppercase mb-2">
+          Sharing privacy
+        </p>
+        <p className="text-base-subtext text-sm mb-4">
+          Defaults for controlled progress shares. You still preview before anything leaves the app.
+        </p>
+        <div className="flex flex-col gap-3">
+          {[
+            ['includeName', 'Include display name'],
+            ['includePhoto', 'Include profile photo in preview'],
+            ['includeBadges', 'Include milestone badge'],
+            ['includeDomainDetail', 'Show core domain scores'],
+            ['includeStats', 'Show level and KP'],
+          ].map(([key, label]) => (
+            <label
+              key={key}
+              className="flex items-center justify-between gap-3 text-sm text-base-subtext"
+            >
+              <span>{label}</span>
+              <input
+                type="checkbox"
+                checked={sharePrivacyPreferences[key as keyof typeof sharePrivacyPreferences]}
+                onChange={(e) =>
+                  setSharePrivacyPreferences({
+                    [key]: e.target.checked,
+                  })
+                }
+              />
+            </label>
+          ))}
+        </div>
+      </Card>
 
       {/* Settings */}
       <Card>
@@ -824,8 +734,7 @@ export default function YouScreen() {
               </p>
               <p className="text-base-subtext text-xs mb-3">
                 This deletes your profile, journey history, check-ins, notes, personal sub-routes,
-                nudges, squad link, push subscriptions, and auth account. Billing is handled
-                separately in Stripe.
+                nudges, squad link, push subscriptions, and auth account.
               </p>
               <label className="text-base-subtext text-xs font-heading tracking-widest uppercase">
                 Type DELETE to confirm

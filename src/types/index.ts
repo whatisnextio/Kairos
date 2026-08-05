@@ -301,37 +301,9 @@ export const DOMAINS: DomainConfig[] = [
   },
 ];
 
-// ─── Subscription ────────────────────────────────────────────────────────────
+// ─── Account access ──────────────────────────────────────────────────────────
 
 export type SubscriptionTier = 'free' | 'brotherhood' | 'lifechanger';
-
-export interface SubscriptionTierConfig {
-  tier: SubscriptionTier;
-  label: string;
-  accessLevel: 'free' | 'paid';
-  description: string;
-}
-
-export const SUBSCRIPTION_TIER_CONFIGS: Record<SubscriptionTier, SubscriptionTierConfig> = {
-  free: {
-    tier: 'free',
-    label: 'Free',
-    accessLevel: 'free',
-    description: 'Core 12K tracking, local progress, weekly check-in, and Sunday AI nudge.',
-  },
-  brotherhood: {
-    tier: 'brotherhood',
-    label: 'Kairos Plus',
-    accessLevel: 'paid',
-    description: 'Full V1 12K system with daily AI nudges, cloud sync, squads, and reflections.',
-  },
-  lifechanger: {
-    tier: 'lifechanger',
-    label: 'Lifechanger',
-    accessLevel: 'paid',
-    description: 'Kairos Plus access plus deeper AI pattern support when there is enough history.',
-  },
-};
 
 export function isOwnerAccount(email?: string | null): boolean {
   return email?.trim().toLowerCase() === 'ldgmcdowell@gmail.com';
@@ -631,8 +603,7 @@ export type BadgeId =
   | 'seven-day-flywheel'
   | 'protected-rhythm'
   | 'challenge-closed'
-  | 'cycle-finisher'
-  | 'brotherhood';
+  | 'cycle-finisher';
 
 export interface EarnedBadge {
   id: BadgeId;
