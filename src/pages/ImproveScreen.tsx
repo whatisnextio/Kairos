@@ -239,6 +239,7 @@ export default function ImproveScreen() {
   const [activeCardId, setActiveCardId] = useState<string | null>(null);
   const [ctaExpanded, setCtaExpanded] = useState(false);
   const [reflectionDrafts, setReflectionDrafts] = useState<Record<string, string>>({});
+  const [showHiddenCards, setShowHiddenCards] = useState(false);
 
   const frameworkRecommendations = buildFrameworkRecommendations({
     email: authUser?.email,
@@ -335,11 +336,7 @@ export default function ImproveScreen() {
     });
   }
 
-  function setCardStatus(
-    card: ImproveCard,
-    status: 'accepted' | 'completed' | 'dismissed',
-    reflectionText?: string,
-  ) {
+  function setCardStatus(card: ImproveCard, status: NudgeStatus, reflectionText?: string) {
     const snapshot = toSnapshot(card, reflectionText);
 
     if (card.kind === 'ai' && card.nudge) {
@@ -348,9 +345,14 @@ export default function ImproveScreen() {
       return;
     }
 
-    if (status === 'accepted' || status === 'completed' || status === 'dismissed') {
-      void setImproveCardStatus(card.id, status, card.xpReward, snapshot);
-    }
+    void setImproveCardStatus(card.id, status, card.xpReward, snapshot);
+  }
+
+  function restoreCard(card: ImproveCard) {
+    setCardStatus(card, 'new');
+    clearReflectionDraft(card.id);
+    setActiveCardId((current) => (current === card.id ? null : current));
+    setCtaExpanded(false);
   }
 
   function completeCard(card: ImproveCard) {
@@ -406,8 +408,13 @@ export default function ImproveScreen() {
 
   return (
     <div className="mx-auto flex w-full max-w-2xl flex-col gap-4 px-4 pb-4 pt-6 sm:px-6 sm:pt-8">
-      <div className="flex items-center justify-between">
-        <h1 className="font-heading text-2xl font-bold text-base-text tracking-wide">Improve</h1>
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <h1 className="font-heading text-2xl font-bold text-base-text tracking-wide">Improve</h1>
+          <p className="mt-1 max-w-xl text-sm text-base-subtext">
+            AI acts as a Kairos accountability coach for short prompts, not chat.
+          </p>
+        </div>
         {canSeeNudge && (
           <button
             type="button"
@@ -423,7 +430,7 @@ export default function ImproveScreen() {
       {canSeeNudge && isLoading && (
         <Card>
           <p className="font-heading text-sm font-medium text-base-text mb-1">
-            Generating your AI card
+            Generating your coach card
           </p>
           <p className="text-base-subtext text-sm">
             Using your phase, focus, recent proof, and active routes.
@@ -434,11 +441,11 @@ export default function ImproveScreen() {
       {canSeeNudge && isError && !isLoading && (
         <Card>
           <p className="font-heading text-sm font-medium text-status-partial mb-1">
-            AI card not ready
+            Coach card not ready
           </p>
           <p className="text-base-subtext text-sm mb-3">{normaliseNudgeErrorMessage(nudgeError)}</p>
           <Button size="sm" variant="ghost" onClick={() => refetch()} disabled={isFetching}>
-            {isFetching ? 'Retrying...' : 'Retry AI card'}
+            {isFetching ? 'Retrying...' : 'Retry coach card'}
           </Button>
         </Card>
       )}
@@ -446,14 +453,14 @@ export default function ImproveScreen() {
       {canSeeNudge && isFallbackNudge && !isLoading && !isError && (
         <Card>
           <p className="font-heading text-sm font-medium text-status-partial mb-1">
-            AI card not ready
+            Coach card not ready
           </p>
           <p className="text-base-subtext text-sm mb-3">
             The card below is a Kairos fallback from your setup. Retry AI when you want the
             generated card.
           </p>
           <Button size="sm" variant="ghost" onClick={() => refetch()} disabled={isFetching}>
-            {isFetching ? 'Retrying...' : 'Retry AI card'}
+            {isFetching ? 'Retrying...' : 'Retry coach card'}
           </Button>
         </Card>
       )}
@@ -461,22 +468,57 @@ export default function ImproveScreen() {
       {canSeeNudge && !nudge && !isLoading && !isError && (
         <Card>
           <p className="text-base-subtext text-sm mb-3">
-            No AI card yet today. Generate one, or choose a Kairos option below.
+            No coach card yet today. Generate one, or choose a Kairos option below.
           </p>
           <Button size="sm" onClick={() => refetch()}>
-            {isFetching ? 'Generating...' : 'Generate AI card'}
+            {isFetching ? 'Generating...' : 'Generate coach card'}
           </Button>
         </Card>
       )}
 
       {dismissedCards.length > 0 && (
         <Card>
-          <p className="font-heading text-xs font-medium text-base-subtext tracking-widest uppercase mb-2">
-            Hidden today
-          </p>
-          <p className="text-base-subtext text-sm">
-            {getDismissedCardsMessage(dismissedCards.length)}
-          </p>
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <p className="font-heading text-xs font-medium text-base-subtext tracking-widest uppercase mb-2">
+                Hidden today
+              </p>
+              <p className="text-base-subtext text-sm">
+                {getDismissedCardsMessage(dismissedCards.length)}
+              </p>
+            </div>
+            <Button size="sm" variant="ghost" onClick={() => setShowHiddenCards((open) => !open)}>
+              {showHiddenCards ? 'Hide' : 'Show'}
+            </Button>
+          </div>
+          {showHiddenCards && (
+            <div className="mt-4 divide-y divide-base-border border-t border-base-border">
+              {dismissedCards.map((card) => (
+                <div
+                  key={`hidden:${card.id}`}
+                  className="flex items-center justify-between gap-3 py-3"
+                >
+                  <div className="min-w-0">
+                    <p className="text-accent-green text-[11px] font-heading uppercase tracking-widest">
+                      {card.lens}
+                    </p>
+                    <p className="truncate font-heading text-sm text-base-text">{card.title}</p>
+                    <p className="text-xs text-base-muted">
+                      {card.domainLabel} - {card.phaseLabel}
+                    </p>
+                  </div>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => restoreCard(card)}
+                    disabled={isUpdatingNudge && card.kind === 'ai'}
+                  >
+                    Restore
+                  </Button>
+                </div>
+              ))}
+            </div>
+          )}
         </Card>
       )}
 
