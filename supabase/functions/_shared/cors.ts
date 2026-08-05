@@ -18,7 +18,7 @@ export function isAllowedCorsOrigin(origin: string | null): boolean {
 
 export function buildCorsHeaders(
   req: Request,
-  allowedHeaders = "authorization, content-type",
+  allowedHeaders = "authorization, content-type, apikey, x-client-info",
 ): Record<string, string> {
   const origin = req.headers.get("origin");
   const headers: Record<string, string> = {
@@ -36,7 +36,7 @@ export function buildCorsHeaders(
 
 export function preflightResponse(
   req: Request,
-  allowedHeaders = "authorization, content-type",
+  allowedHeaders = "authorization, content-type, apikey, x-client-info",
 ): Response {
   const allowed = isAllowedCorsOrigin(req.headers.get("origin"));
   return new Response(null, {
@@ -49,7 +49,7 @@ export function jsonResponse(
   req: Request,
   body: unknown,
   init: ResponseInit = {},
-  allowedHeaders = "authorization, content-type",
+  allowedHeaders = "authorization, content-type, apikey, x-client-info",
 ): Response {
   return new Response(JSON.stringify(body), {
     ...init,
@@ -65,7 +65,7 @@ export function textResponse(
   req: Request,
   body: string,
   init: ResponseInit = {},
-  allowedHeaders = "authorization, content-type",
+  allowedHeaders = "authorization, content-type, apikey, x-client-info",
 ): Response {
   return new Response(body, {
     ...init,
