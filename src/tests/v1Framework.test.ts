@@ -135,18 +135,20 @@ describe('V1 acceptance framework', () => {
   it('keeps identity anchors distinct and plain-English', () => {
     const anchorNames = IDENTITY_ANCHORS.map((anchor) => anchor.name);
     const descriptions = IDENTITY_ANCHORS.map((anchor) => anchor.description);
+    const provider = IDENTITY_ANCHORS.find((anchor) => anchor.id === 'provider');
     const builder = IDENTITY_ANCHORS.find((anchor) => anchor.id === 'builder');
-    const creator = IDENTITY_ANCHORS.find((anchor) => anchor.id === 'creator');
+    const guardian = IDENTITY_ANCHORS.find((anchor) => anchor.id === 'guardian');
     const custom = IDENTITY_ANCHORS.find((anchor) => anchor.id === 'custom');
 
     expect(new Set(anchorNames).size).toBe(IDENTITY_ANCHORS.length);
     expect(new Set(descriptions).size).toBe(IDENTITY_ANCHORS.length);
-    expect(descriptions.every((description) => description.split(' ').length >= 7)).toBe(true);
-    expect(builder?.description).toContain('systems');
-    expect(builder?.description).toContain('shipped work');
-    expect(creator?.description).toContain('art');
-    expect(creator?.description).toContain('photos');
-    expect(creator?.description.toLowerCase()).not.toContain('build');
+    expect(anchorNames).toEqual(
+      expect.arrayContaining(['Gentle', 'Practical', 'Direct', 'Custom']),
+    );
+    expect(provider?.description).toContain('calm support');
+    expect(builder?.description).toContain('next small step');
+    expect(guardian?.description).toContain('firmer push');
+    expect(anchorNames.join(' ')).not.toMatch(/The Provider|The Builder|The Guardian/i);
     expect(custom?.description).toContain('own words');
   });
 

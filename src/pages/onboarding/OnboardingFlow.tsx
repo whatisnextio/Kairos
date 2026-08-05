@@ -15,6 +15,7 @@ import { useEffect, useRef, useState } from 'react';
 
 type Step = 'framework' | 'identity' | 'focus' | 'accountability' | 'commit';
 const ONBOARDING_STEPS: Step[] = ['framework', 'identity', 'focus', 'accountability', 'commit'];
+const STARTER_REMINDER_STYLE_IDS: IdentityAnchorId[] = ['provider', 'builder', 'guardian'];
 
 function buildDefaultFocusSelections(domains: DomainConfig[]): Record<DomainType, string> {
   return domains.reduce(
@@ -366,7 +367,9 @@ export default function OnboardingFlow() {
               Pick the one that feels closest. You can change it later.
             </p>
             <div className="grid grid-cols-1 gap-2">
-              {IDENTITY_ANCHORS.map((anchor) => (
+              {IDENTITY_ANCHORS.filter((anchor) =>
+                STARTER_REMINDER_STYLE_IDS.includes(anchor.id),
+              ).map((anchor) => (
                 <button
                   type="button"
                   key={anchor.id}

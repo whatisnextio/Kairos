@@ -377,35 +377,35 @@ export interface IdentityAnchor {
 export const IDENTITY_ANCHORS: IdentityAnchor[] = [
   {
     id: 'provider',
-    name: 'The Provider',
-    description: 'You create stability through money, energy, and daily presence.',
+    name: 'Gentle',
+    description: 'Friendly reminders when you want calm support.',
   },
   {
     id: 'builder',
-    name: 'The Builder',
-    description: 'You turn plans into systems, shipped work, and visible progress.',
+    name: 'Practical',
+    description: 'Clear reminders that focus on the next small step.',
   },
   {
     id: 'guardian',
-    name: 'The Guardian',
-    description: 'You protect health, family, boundaries, and the standards that hold.',
+    name: 'Direct',
+    description: 'Short reminders when you need a firmer push.',
   },
   {
     id: 'leader',
-    name: 'The Leader',
-    description: 'You set direction, make decisions, and bring others with you.',
+    name: 'Lead',
+    description: 'Reminders that keep the direction clear.',
   },
   {
     id: 'mentor',
-    name: 'The Mentor',
-    description: 'You use earned lessons to guide, teach, and steady someone else.',
+    name: 'Supportive',
+    description: 'Reminders that feel steady and encouraging.',
   },
   {
     id: 'creator',
-    name: 'The Creator',
-    description: 'You make art, stories, photos, or content that carries meaning.',
+    name: 'Creative',
+    description: 'Reminders that leave room for ideas and expression.',
   },
-  { id: 'custom', name: 'Custom', description: 'Use your own words if none of these fit.' },
+  { id: 'custom', name: 'Custom', description: 'Use your own words.' },
 ];
 
 // ─── Profile ─────────────────────────────────────────────────────────────────

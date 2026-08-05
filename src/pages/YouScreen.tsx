@@ -555,7 +555,7 @@ export default function YouScreen() {
           <div className="min-w-0 flex-1">
             <p className="font-heading text-lg font-bold text-base-text">{profile.displayName}</p>
             <p className="text-accent-green text-sm font-heading tracking-wider mt-0.5">
-              {anchorName}
+              Reminder style: {anchorName}
             </p>
           </div>
         </div>

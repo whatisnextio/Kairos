@@ -411,7 +411,7 @@ export default function HomeScreen() {
             </p>
           </div>
           <p className="text-base-muted text-xs mt-1">
-            Style: {anchorDisplayName}. Pick one useful action and keep it visible.
+            Reminder style: {anchorDisplayName}. Pick one useful action and keep it visible.
           </p>
         </div>
 

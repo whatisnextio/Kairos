@@ -66,7 +66,11 @@ test.describe('NFR smoke gates', () => {
     await page.getByRole('button', { name: /start setup/i }).click();
     await expect(page.getByRole('heading', { name: /tell us your name/i })).toBeVisible();
     await page.getByLabel(/name/i).fill('Alex');
-    await page.getByRole('button', { name: /the builder/i }).click();
+    await expect(page.getByRole('button', { name: /gentle/i })).toBeVisible();
+    await expect(page.getByRole('button', { name: /practical/i })).toBeVisible();
+    await expect(page.getByRole('button', { name: /direct/i })).toBeVisible();
+    await expect(page.getByText(/the builder|the provider|the guardian/i)).toHaveCount(0);
+    await page.getByRole('button', { name: /practical/i }).click();
     await page.getByRole('button', { name: /continue/i }).click();
     await expect(page.getByRole('heading', { name: /choose your four actions/i })).toBeVisible();
     await expect(page.getByRole('button', { name: /walk for 20 minutes/i })).toBeVisible();
@@ -90,7 +94,7 @@ test.describe('NFR smoke gates', () => {
     await page.goto('/#/onboarding');
     await page.getByRole('button', { name: /start setup/i }).click();
     await page.getByLabel(/name/i).fill('Liam');
-    await page.getByRole('button', { name: /the builder/i }).click();
+    await page.getByRole('button', { name: /practical/i }).click();
     await page.getByRole('button', { name: /continue/i }).click();
     await expect(page.getByRole('heading', { name: /choose your four actions/i })).toBeVisible();
     const before = await page.evaluate(() => {
