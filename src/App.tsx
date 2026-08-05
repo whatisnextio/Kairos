@@ -106,25 +106,25 @@ export default function App() {
   if (isAuthLoading || isBootstrapLoading) return <SplashScreen />;
 
   if (!authUser) {
-    return withInstallPrompt(
+    return (
       <HashRouter>
         <Routes>
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
           <Route path="*" element={<Navigate to="/login" replace />} />
         </Routes>
-      </HashRouter>,
+      </HashRouter>
     );
   }
 
   if (!onboardingComplete || !profile) {
-    return withInstallPrompt(
+    return (
       <HashRouter>
         <Routes>
           <Route path="/onboarding/*" element={<OnboardingFlow />} />
           <Route path="*" element={<Navigate to="/onboarding" replace />} />
         </Routes>
-      </HashRouter>,
+      </HashRouter>
     );
   }
 

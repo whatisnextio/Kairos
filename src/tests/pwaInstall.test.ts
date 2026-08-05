@@ -27,5 +27,7 @@ describe('PWA install prompt', () => {
     expect(component).toContain('Add to Home Screen');
     expect(utility).toContain(PWA_INSTALL_DISMISSED_UNTIL_KEY);
     expect(app).toContain('<PwaInstallPrompt />');
+    expect(app).toContain('return withInstallPrompt(');
+    expect(app).toContain('if (!onboardingComplete || !profile)');
   });
 });
