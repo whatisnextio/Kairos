@@ -137,7 +137,7 @@ test.describe('NFR smoke gates', () => {
     await page.getByRole('button', { name: /check in fuel/i }).click();
     await page
       .getByRole('dialog')
-      .getByRole('button', { name: /part done.*smaller useful action/i })
+      .getByRole('button', { name: /part done.*smaller useful version/i })
       .click();
     await expect(page.getByTestId('daily-domain-row-FUEL')).toContainText('Part done');
     await expect(page.getByRole('button', { name: /check in fuel/i })).toBeVisible();
