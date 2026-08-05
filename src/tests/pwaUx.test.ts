@@ -47,8 +47,13 @@ describe('PWA UX shell', () => {
     const recommendations = readFileSync('src/utils/frameworkRecommendations.ts', 'utf8');
 
     expect(home).toContain("Pending: 'Check in'");
+    expect(home).toContain('data-testid={`daily-domain-row-${domain.type}`}');
     expect(home).toContain('aria-label={`Check in ${displayLabel}`}');
+    expect(home).toContain('Check in');
+    expect(home).toContain('aria-label={`Open ${displayLabel} details`}');
+    expect(home).toContain('Details');
     expect(home).toContain('Check in now, or open details to set tomorrow.');
+    expect(home).not.toContain('aria-label={`Open ${displayLabel} detail`}');
     expect(recommendations).toContain('getDailyDomainLabel(domain)');
   });
 

@@ -114,7 +114,8 @@ test.describe('NFR smoke gates', () => {
     await page.getByRole('button', { name: /check in body/i }).click();
     await page.getByRole('button', { name: /done full action completed/i }).click();
 
-    await expect(page.getByRole('button', { name: /check in body/i })).toContainText('Done');
+    await expect(page.getByTestId('daily-domain-row-BODY')).toContainText('Done');
+    await expect(page.getByRole('button', { name: /check in body/i })).toBeVisible();
     await expectNoHorizontalOverflow(page);
   });
 
@@ -127,7 +128,8 @@ test.describe('NFR smoke gates', () => {
     await page.getByRole('button', { name: /check in body/i }).click();
     await page.getByRole('button', { name: /done full action completed/i }).click();
     await page.reload();
-    await expect(page.getByRole('button', { name: /check in body/i })).toContainText('Done');
+    await expect(page.getByTestId('daily-domain-row-BODY')).toContainText('Done');
+    await expect(page.getByRole('button', { name: /check in body/i })).toBeVisible();
 
     await context.setOffline(true);
     await page.getByRole('button', { name: /check in fuel/i }).click();
@@ -135,7 +137,8 @@ test.describe('NFR smoke gates', () => {
       .getByRole('dialog')
       .getByRole('button', { name: /partial smaller version/i })
       .click();
-    await expect(page.getByRole('button', { name: /check in fuel/i })).toContainText('Partial');
+    await expect(page.getByTestId('daily-domain-row-FUEL')).toContainText('Partial');
+    await expect(page.getByRole('button', { name: /check in fuel/i })).toBeVisible();
     await context.setOffline(false);
 
     await expectNoHorizontalOverflow(page);

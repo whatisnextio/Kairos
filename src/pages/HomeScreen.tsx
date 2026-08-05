@@ -630,15 +630,11 @@ export default function HomeScreen() {
               return (
                 <div key={domain.type} className="flex flex-col gap-1.5">
                   <div
-                    className={`w-full flex rounded-lg border shadow-[0_12px_34px_rgba(0,0,0,0.18)] transition-colors ${STATUS_ROW_CLASSES[status]}`}
+                    data-testid={`daily-domain-row-${domain.type}`}
+                    className={`w-full rounded-lg border p-3 shadow-[0_12px_34px_rgba(0,0,0,0.18)] transition-colors ${STATUS_ROW_CLASSES[status]}`}
                   >
-                    <button
-                      type="button"
-                      className="flex-1 text-left p-4"
-                      onClick={() => setSelectedDomainType(domain.type)}
-                      aria-label={`Check in ${displayLabel}`}
-                    >
-                      <div className="flex items-center justify-between gap-3">
+                    <div className="text-left">
+                      <div className="flex items-start justify-between gap-3">
                         <span className={`font-heading font-medium tracking-wide ${domain.colour}`}>
                           {displayLabel}
                         </span>
@@ -649,41 +645,39 @@ export default function HomeScreen() {
                         </span>
                       </div>
                       {focus && (
-                        <p className="text-base-subtext text-xs mt-1 truncate">
+                        <p className="text-base-subtext text-xs mt-1.5 truncate">
                           {focus.focusDescription}
                         </p>
                       )}
                       {!focus && (
-                        <p className="text-base-muted text-xs mt-1">
+                        <p className="text-base-muted text-xs mt-1.5">
                           Check in now, or open details to set tomorrow.
                         </p>
                       )}
                       {status === 'Protected' && (
-                        <p className="text-base-muted text-xs mt-1">
+                        <p className="text-base-muted text-xs mt-1.5">
                           Streak protected. Counts as a recovery day.
                         </p>
                       )}
-                    </button>
-                    <button
-                      type="button"
-                      className="flex items-center border-l border-white/10 px-3 text-base-muted transition-colors hover:text-base-subtext"
-                      onClick={() => navigate(`/detail/${getDomainRouteSlug(domain.type)}`)}
-                      aria-label={`Open ${displayLabel} detail`}
-                    >
-                      <svg
-                        aria-hidden="true"
-                        width="14"
-                        height="14"
-                        viewBox="0 0 14 14"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="1.5"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
+                    </div>
+                    <div className="mt-3 grid grid-cols-2 gap-2">
+                      <button
+                        type="button"
+                        className="min-h-10 rounded-md border border-accent-green/50 bg-accent-green/10 px-3 py-2 text-center font-heading text-xs font-semibold uppercase tracking-wider text-accent-green transition-colors hover:bg-accent-green/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-green"
+                        onClick={() => setSelectedDomainType(domain.type)}
+                        aria-label={`Check in ${displayLabel}`}
                       >
-                        <path d="M5 2l5 5-5 5" />
-                      </svg>
-                    </button>
+                        Check in
+                      </button>
+                      <button
+                        type="button"
+                        className="min-h-10 rounded-md border border-base-border bg-base-black/20 px-3 py-2 text-center font-heading text-xs font-semibold uppercase tracking-wider text-base-subtext transition-colors hover:border-base-muted hover:text-base-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-green"
+                        onClick={() => navigate(`/detail/${getDomainRouteSlug(domain.type)}`)}
+                        aria-label={`Open ${displayLabel} details`}
+                      >
+                        Details
+                      </button>
+                    </div>
                   </div>
                   {routesForDomain.length > 0 && (
                     <div className="ml-3 flex flex-col gap-1.5 border-l border-base-border pl-3">
