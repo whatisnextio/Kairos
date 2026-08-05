@@ -130,9 +130,9 @@ export default function LoginPage() {
           className="mb-6 h-auto w-48"
           draggable={false}
         />
-        <p className="mb-1 font-heading text-lg font-bold tracking-wide text-base-text">
-          {AUTH_COPY.headline}
-        </p>
+        <h1 className="mb-1 font-heading text-lg font-bold tracking-wide text-base-text">
+          Sign in to 12K
+        </h1>
         <p className="mb-8 text-sm leading-relaxed text-base-subtext">{AUTH_COPY.body}</p>
 
         {sent ? (
