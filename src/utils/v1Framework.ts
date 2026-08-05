@@ -444,27 +444,27 @@ function protocolActions(
   if (type === 'early_wake') {
     return [
       { id: 'start-small', label: 'Start small', kind: 'open_check_in' },
-      { id: 'dismiss', label: 'Dismiss', kind: 'dismiss' },
+      { id: 'dismiss', label: 'Not now', kind: 'dismiss' },
     ];
   }
 
   if (type === 'shutdown') {
     return [
-      { id: 'set-tomorrow', label: 'Set tomorrow', kind: 'set_tomorrow' },
+      { id: 'set-tomorrow', label: 'Plan tomorrow', kind: 'set_tomorrow' },
       ...(target
-        ? [{ id: 'mark-part-done', label: 'Mark Part done', kind: 'mark_partial' } as const]
+        ? [{ id: 'mark-part-done', label: 'Mark part done', kind: 'mark_partial' } as const]
         : []),
-      { id: 'dismiss', label: 'Dismiss', kind: 'dismiss' },
+      { id: 'dismiss', label: 'Not now', kind: 'dismiss' },
     ];
   }
 
   if (type === 'catch_up') {
     return [
-      { id: 'start-rescue', label: 'Start 10-minute rescue', kind: 'start_rescue' },
+      { id: 'start-rescue', label: 'Do 10 minutes now', kind: 'start_rescue' },
       ...(target
-        ? [{ id: 'mark-part-done', label: 'Mark Part done', kind: 'mark_partial' } as const]
+        ? [{ id: 'mark-part-done', label: 'Mark part done', kind: 'mark_partial' } as const]
         : []),
-      { id: 'dismiss', label: 'Dismiss', kind: 'dismiss' },
+      { id: 'dismiss', label: 'Not now', kind: 'dismiss' },
     ];
   }
 
@@ -474,7 +474,7 @@ function protocolActions(
       label: target ? `Open ${target.label}` : 'Review today',
       kind: 'open_check_in',
     },
-    { id: 'dismiss', label: 'Dismiss', kind: 'dismiss' },
+    { id: 'dismiss', label: 'Not now', kind: 'dismiss' },
   ];
 }
 
@@ -533,14 +533,12 @@ export function selectDayStateProtocol({
     return {
       id: escalated ? 'catch-up-after-dismiss' : 'catch-up',
       type: 'catch_up',
-      title: escalated ? '10-minute rescue' : 'Catch-up path',
+      title: escalated ? 'Do 10 minutes now' : 'Still time today',
       body: escalated
         ? `${targetLabel(
             target,
           )} still needs a check-in. Record what happened; one small useful action can be Part done.`
-        : `${targetLabel(
-            missedTarget ?? target,
-          )} is recoverable. The day is not failed; choose one small close.`,
+        : `${targetLabel(missedTarget ?? target)} is still open. Choose one small close.`,
       steps: [
         'Start with ten quiet minutes.',
         'Do the smallest useful version.',
@@ -797,7 +795,7 @@ export function buildWeeklyReview({
   );
 
   return {
-    title: 'Weekly mentor review',
+    title: 'Weekly review',
     weekNumber: Math.max(1, Math.ceil(dayInCycle / 7)),
     phaseLabel: phase.label,
     score,

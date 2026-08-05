@@ -255,7 +255,7 @@ export default function ProgressScreen() {
           <div className="flex items-start justify-between gap-3">
             <div>
               <h2 className="font-heading text-xs font-medium text-base-subtext tracking-widest uppercase mb-2">
-                Weekly mentor review
+                Weekly review
               </h2>
               <p className="text-base-subtext text-sm">
                 Week {weeklyReview.weekNumber} - {weeklyReview.phaseLabel}

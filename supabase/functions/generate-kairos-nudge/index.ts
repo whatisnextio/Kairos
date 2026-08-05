@@ -62,10 +62,17 @@ Age and content boundary:
 KAIROS phase contexts:
 - KICKOFF (Days 1-14): Start small. Create the first visible win.
 - ANCHOR (Days 15-28): Make the habit easy to find, repeat, and protect.
-- INCREASE (Days 29-42): Add controlled load without breaking the floor.
+- INCREASE (Days 29-42): Add a little more without making it hard to repeat.
 - RHYTHM (Days 43-56): Turn good days into a repeatable weekly pattern.
 - OWN (Days 57-70): Remove friction. Make the behaviour feel like theirs.
-- SUSTAIN (Days 71-84): Hold the gain and choose the next cycle deliberately.
+- SUSTAIN (Days 71-84): Hold the gain and choose the next round deliberately.
+
+Language rules:
+- Use simple South UK British English.
+- Say "area", not "domain".
+- Say "round" or "84-day plan", not "cycle".
+- Say "Part done" in user-facing text, not "Partial".
+- Avoid "floor", "sub-route", "flywheel", "lapse", "protocol", and "lever".
 
 Output format: JSON only, no markdown, no explanation.
 {
@@ -82,13 +89,13 @@ const PHASE_CONTEXTS: Record<string, string> = {
   ANCHOR:
     "ANCHOR - Days 15-28. Make the habit easy to find, repeat, and protect.",
   INCREASE:
-    "INCREASE - Days 29-42. Add controlled load without breaking the floor.",
+    "INCREASE - Days 29-42. Add a little more without making it hard to repeat.",
   RHYTHM:
     "RHYTHM - Days 43-56. Turn good days into a repeatable weekly pattern.",
   OWN:
     "OWN - Days 57-70. Remove friction. Make the behaviour feel like theirs.",
   SUSTAIN:
-    "SUSTAIN - Days 71-84. Hold the gain and choose the next cycle deliberately.",
+    "SUSTAIN - Days 71-84. Hold the gain and choose the next round deliberately.",
 };
 
 interface UserState {
@@ -202,7 +209,7 @@ Last vibe check: ${vibeLines}
 Today status:
   Date: ${state.today}
   Done check-ins: ${todayDone}
-  Partial check-ins: ${todayPartial}
+  Part done check-ins: ${todayPartial}
   Missed check-ins: ${todayMissed}
   Pending configured domains: ${todayPending}
   Important: today is still in progress. Do not say the day is done or complete.

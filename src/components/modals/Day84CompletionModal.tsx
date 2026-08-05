@@ -94,7 +94,7 @@ export default function Day84CompletionModal({ onClose }: Props) {
         {step === 'intro' && (
           <div className="px-6 py-8">
             <p className="font-heading text-xs text-accent-green tracking-widest uppercase mb-4">
-              Campaign Complete
+              84 days complete
             </p>
             <h2
               id="day84-modal-title"
@@ -109,14 +109,14 @@ export default function Day84CompletionModal({ onClose }: Props) {
               {currentCycle?.totalXpEarned
                 ? `${formatKairosPoints(currentCycle.totalXpEarned)} earned and `
                 : ''}
-              one full campaign of the KAIROS framework completed. Most people never finish what
-              they start. You did.
+              one full round of the KAIROS framework completed. Most people never finish what they
+              start. You did.
             </p>
             {hasReflectionAccess ? (
               <>
                 <p className="text-base-subtext text-sm leading-relaxed mb-8">
-                  We've built your campaign reflection from {KAIROS_CYCLE_LENGTH_DAYS} days of data.
-                  It's ready.
+                  We've built your reflection from {KAIROS_CYCLE_LENGTH_DAYS} days of data. It's
+                  ready.
                 </p>
                 <Button onClick={handleGetReflection} className="w-full mb-3">
                   See my reflection
@@ -145,8 +145,7 @@ export default function Day84CompletionModal({ onClose }: Props) {
               Building your reflection
             </p>
             <p className="text-base-subtext text-sm mb-2">
-              {KAIROS_CYCLE_LENGTH_DAYS} days of data. {availableDomains.length} domains. Six
-              phases.
+              {KAIROS_CYCLE_LENGTH_DAYS} days of data. {availableDomains.length} areas. Six phases.
             </p>
             <p className="text-base-muted text-xs mb-4">This takes a few seconds.</p>
             <PulsingDots />

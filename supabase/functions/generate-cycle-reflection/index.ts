@@ -21,7 +21,7 @@ const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ??
 const CLAUDE_SONNET_MODEL = "claude-sonnet-4-6";
 
 const SYSTEM_PROMPT =
-  `You are the KAIROS cycle reflection engine. You write one deeply personal summary for someone who has just completed a 12-week behavioural action framework.
+  `You are the KAIROS reflection engine. You write one simple, personal summary for someone who has just completed a 12-week behavioural action framework.
 
 Voice rules:
 - South UK British English. No em dashes, use commas or full stops.
@@ -30,8 +30,11 @@ Voice rules:
 - Direct, honest, data-driven. Reference the actual numbers you are given.
 - Sound like a trusted mentor who has been watching all 84 days. Not a chatbot. Not a coach running a script.
 - Acknowledge the hard parts. Don't just celebrate. Real growth has friction.
+- Say "area", not "domain".
+- Say "round" or "84-day plan", not "cycle".
+- Say "Part done" in user-facing text, not "Partial".
 
-This is a once-per-cycle moment. It should feel earned.
+This is a once-per-round moment. It should feel earned.
 
 Output format: JSON only, no markdown, no explanation.
 {
@@ -47,7 +50,7 @@ Output format: JSON only, no markdown, no explanation.
     "NEST": "string (one sharp line, 80 chars max)",
     "ROOTS": "string (one sharp line, 80 chars max)"
   },
-  "next_cycle_intention": "string (one sharp line to seed Cycle 2, under 80 chars)"
+  "next_cycle_intention": "string (one sharp line to seed the next round, under 80 chars)"
 }`;
 
 interface DomainStats {
@@ -84,7 +87,7 @@ function buildPrompt(stats: CycleStats): string {
   const domainLines = stats.domains
     .map(
       (d) =>
-        `  ${d.domain}: ${d.doneCount} Done, ${d.partialCount} Partial, ${d.missedCount} Missed` +
+        `  ${d.domain}: ${d.doneCount} Done, ${d.partialCount} Part done, ${d.missedCount} Missed` +
         ` (${
           Math.round(d.completionRate * 100)
         }% completion, ${d.bestStreak} day best streak)`,
@@ -92,7 +95,7 @@ function buildPrompt(stats: CycleStats): string {
     .join("\n");
 
   return `Identity anchor: ${stats.identityAnchor}
-Cycle: ${stats.cycleNumber} of their journey
+Round: ${stats.cycleNumber} of their journey
 Total days tracked: ${stats.totalDays}
 Total XP earned: ${stats.totalXp}
 Overall check-in completion: ${
@@ -104,10 +107,10 @@ Strongest domain: ${stats.strongestDomain}
 Weakest domain: ${stats.weakestDomain}
 ${vibeLine}
 
-Domain breakdown:
+Area breakdown:
 ${domainLines}
 
-Write their cycle reflection.`;
+Write their 84-day reflection.`;
 }
 
 async function callClaude(prompt: string): Promise<{
@@ -170,7 +173,7 @@ async function callClaude(prompt: string): Promise<{
         NEST: "The family work is never wasted.",
         ROOTS: "The foundation gets stronger.",
       },
-      next_cycle_intention: "Cycle 2 starts with everything you learned here.",
+      next_cycle_intention: "The next round starts with what you learned here.",
       _costPence: costPence,
     };
   }

@@ -75,8 +75,8 @@ describe('day-state protocols', () => {
     });
 
     expect(protocol.type).toBe('catch_up');
-    expect(protocol.body).toContain('not failed');
-    expect(protocol.actions.map((action) => action.label)).toContain('Mark Part done');
+    expect(protocol.body).toContain('still open');
+    expect(protocol.actions.map((action) => action.label)).toContain('Mark part done');
   });
 
   it('selects shutdown late in the evening with open domains', () => {
@@ -89,7 +89,7 @@ describe('day-state protocols', () => {
     });
 
     expect(protocol.type).toBe('shutdown');
-    expect(protocol.actions.map((action) => action.label)).toContain('Set tomorrow');
+    expect(protocol.actions.map((action) => action.label)).toContain('Plan tomorrow');
     expect(protocol.steps.join(' ')).toContain('Leave the rest for tomorrow');
   });
 
@@ -102,8 +102,8 @@ describe('day-state protocols', () => {
     });
 
     expect(protocol.id).toBe('catch-up-after-dismiss');
-    expect(protocol.title).toBe('10-minute rescue');
-    expect(protocol.actions.map((action) => action.label)).toContain('Start 10-minute rescue');
+    expect(protocol.title).toBe('Do 10 minutes now');
+    expect(protocol.actions.map((action) => action.label)).toContain('Do 10 minutes now');
   });
 
   it('can target extra actions without changing the core domains', () => {
