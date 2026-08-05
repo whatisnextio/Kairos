@@ -16,6 +16,7 @@ import {
   resolveImproveCompletionTarget,
 } from '@/utils/improveLifecycle';
 import { getCurrentPhaseConfig, getDayInCycle } from '@/utils/kairos';
+import { LOCAL_FALLBACK_NUDGE_ID_PREFIX } from '@/utils/nudgeFallback';
 import { toLocalIsoDate } from '@/utils/v1Framework';
 import { Zap } from 'lucide-react';
 import { useState } from 'react';
@@ -66,6 +67,11 @@ function buildAiWhyText(nudge: AiNudge, domainLabel: string, phaseLabel: string)
   const domainContext = domainLabel === 'Kairos' ? 'your current 12K context' : domainLabel;
 
   return `Based on your ${phaseLabel} phase, ${domainContext}, ${ctaContext}, and available Kairos history such as recent check-ins, streaks, vibe checks, and active personal routes.`;
+}
+
+function buildFallbackWhyText(domainLabel: string, phaseLabel: string): string {
+  const domainContext = domainLabel === 'Kairos' ? 'your current 12K setup' : domainLabel;
+  return `Built from your ${phaseLabel} phase and ${domainContext} setup while the AI service is unavailable. Retry AI when the service is back.`;
 }
 
 function getNudgeDomainLabel(domainType: DomainType | null, email?: string | null): string {
@@ -228,6 +234,7 @@ export default function ImproveScreen() {
 
   const { data: nudge, isLoading, isFetching, isError, error: nudgeError, refetch } = useNudge();
   const { mutate: updateStatus, isPending: isUpdatingNudge } = useUpdateNudgeStatus();
+  const isFallbackNudge = nudge?.id.startsWith(LOCAL_FALLBACK_NUDGE_ID_PREFIX) ?? false;
 
   const [activeCardId, setActiveCardId] = useState<string | null>(null);
   const [ctaExpanded, setCtaExpanded] = useState(false);
@@ -247,16 +254,25 @@ export default function ImproveScreen() {
           id: nudge.id,
           kind: 'ai',
           status: nudge.status,
-          lens: nudge.type === 'weekly_challenge' ? 'Challenge' : "Today's nudge",
+          lens: isFallbackNudge
+            ? 'Kairos fallback'
+            : nudge.type === 'weekly_challenge'
+              ? 'Challenge'
+              : "Today's nudge",
           title: nudge.title,
           body: nudge.body,
           domainLabel: getNudgeDomainLabel(nudge.domainType, authUser?.email),
           phaseLabel: nudge.kairosPhase ?? phaseConfig.label,
-          whyText: buildAiWhyText(
-            nudge,
-            getNudgeDomainLabel(nudge.domainType, authUser?.email),
-            nudge.kairosPhase ?? phaseConfig.label,
-          ),
+          whyText: isFallbackNudge
+            ? buildFallbackWhyText(
+                getNudgeDomainLabel(nudge.domainType, authUser?.email),
+                nudge.kairosPhase ?? phaseConfig.label,
+              )
+            : buildAiWhyText(
+                nudge,
+                getNudgeDomainLabel(nudge.domainType, authUser?.email),
+                nudge.kairosPhase ?? phaseConfig.label,
+              ),
           actionText:
             nudge.cta === 'reflect'
               ? 'Write one honest line'
@@ -421,6 +437,21 @@ export default function ImproveScreen() {
             AI card not ready
           </p>
           <p className="text-base-subtext text-sm mb-3">{normaliseNudgeErrorMessage(nudgeError)}</p>
+          <Button size="sm" variant="ghost" onClick={() => refetch()} disabled={isFetching}>
+            {isFetching ? 'Retrying...' : 'Retry AI card'}
+          </Button>
+        </Card>
+      )}
+
+      {canSeeNudge && isFallbackNudge && !isLoading && !isError && (
+        <Card>
+          <p className="font-heading text-sm font-medium text-status-partial mb-1">
+            AI card not ready
+          </p>
+          <p className="text-base-subtext text-sm mb-3">
+            The card below is a Kairos fallback from your setup. Retry AI when you want the
+            generated card.
+          </p>
           <Button size="sm" variant="ghost" onClick={() => refetch()} disabled={isFetching}>
             {isFetching ? 'Retrying...' : 'Retry AI card'}
           </Button>
