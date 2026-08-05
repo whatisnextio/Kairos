@@ -180,11 +180,11 @@ export function useBootstrap() {
           mapped = applyComplimentaryBrotherhood(authUser?.email, mapped);
         }
       }
-      // Free users never sync XP to Supabase. Preserve locally accumulated XP
-      // so logins don't reset it back to the Supabase default.
+      // Preserve locally accumulated XP if the remote row is behind, so reloads
+      // do not make progress appear to go backwards.
       const localProfile = useAppStore.getState().profile;
       const profile =
-        mapped.tier === 'free' && localProfile?.id === mapped.id && localProfile.xp > mapped.xp
+        localProfile?.id === mapped.id && localProfile.xp > mapped.xp
           ? { ...mapped, xp: localProfile.xp }
           : mapped;
       setProfile(profile);

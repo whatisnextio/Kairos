@@ -31,9 +31,9 @@ describe('Improve lifecycle helpers', () => {
   it('gives specific AI generation failure copy', () => {
     expect(normaliseNudgeErrorMessage(new Error('No session'))).toContain('Sign in again');
     expect(normaliseNudgeErrorMessage(new Error('No session'))).toContain('Kairos options');
-    expect(
-      normaliseNudgeErrorMessage(new Error('Free tier gets nudges on Sundays only')),
-    ).toContain('included in the app');
+    expect(normaliseNudgeErrorMessage(new Error('Tier gate rejected'))).toContain(
+      'included in the app',
+    );
     expect(normaliseNudgeErrorMessage(new Error('Failed to store nudge'))).toContain(
       'could not save',
     );

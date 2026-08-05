@@ -8,9 +8,9 @@ Reviewed for issue #52 after the MVP flow changes.
   custom routes, push subscriptions, and admin metrics.
 - Edge Function authentication for AI nudges, cycle reflections, squad matching,
   push subscription storage, account deletion, metrics, squad pulse generation,
-  and Stripe webhooks.
+  and the legacy Stripe webhook.
 - CORS behaviour for browser-callable and admin-callable Edge Functions.
-- Client-visible entitlement checks versus backend enforcement.
+- Client-visible app-access checks versus backend enforcement.
 - Local persistence, export/delete controls, notification copy, and progress
   sharing privacy.
 
@@ -18,14 +18,14 @@ Reviewed for issue #52 after the MVP flow changes.
 
 - RLS is enabled on user-owned tables, and policies restrict user data to
   `auth.uid()`.
-- Profile entitlement fields are protected by `guard_profile_sensitive_fields`,
+- Profile app-access fields are protected by `guard_profile_sensitive_fields`,
   so client tampering cannot directly set tier, XP, squad, or Stripe state.
-- Paid custom routes are enforced in Postgres policies, not only in the UI.
+- Custom routes are user-owned in Postgres policies, not only in the UI.
 - AI nudge, cycle reflection, squad matching, push subscription, account
   deletion, and admin metrics functions validate either a user JWT or the
   service-role header before using the service-role client.
-- Stripe webhook handling verifies the Stripe signature and timestamp before
-  changing subscription state.
+- The legacy Stripe webhook verifies the Stripe signature and timestamp, then
+  acknowledges and ignores events while billing is disabled.
 - Share defaults keep name, photo, and domain details private unless the user
   explicitly opts in.
 - Notification payloads use coded Kairos language and do not expose private
@@ -46,7 +46,7 @@ Reviewed for issue #52 after the MVP flow changes.
 - Added CORS headers to normal JSON and text responses, not only preflight
   responses, so browser errors remain readable while origins stay restricted.
 - Kept the Stripe webhook out of browser CORS handling because it is a signed
-  server-to-server endpoint.
+  server-to-server endpoint, and changed it to a no-op while billing is off.
 
 ## Residual Risk
 
@@ -58,13 +58,13 @@ Reviewed for issue #52 after the MVP flow changes.
   sensitivity.
 - Hosted Supabase migration state was not re-read in this review environment, so
   live RLS proof still depends on Supabase project access.
-- Hosted Stripe checkout, portal URLs, and webhook secrets still need live
-  environment verification before billing can be called production-complete.
+- The legacy Stripe webhook remains a signed server-to-server no-op, so old
+  Stripe deliveries are acknowledged without changing app access.
 
 ## Recommendation
 
 - Treat this as MVP hardening, not a penetration test.
-- Before paid launch, run a live Supabase audit with project credentials:
+- Before any future paid launch, run a live Supabase audit with project credentials:
   `pg_policies`, function env presence, Edge Function deployment versions, and a
   real non-owner tampering test.
 - Keep all future browser-callable functions on the shared CORS helper and add a

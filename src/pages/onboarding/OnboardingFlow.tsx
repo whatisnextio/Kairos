@@ -161,8 +161,7 @@ export default function OnboardingFlow() {
     const today = new Date().toISOString().split('T')[0];
     const now = new Date().toISOString();
     const complimentaryFields = getComplimentaryProfileFields(authUser.email);
-    const isPaidOnboarding = isLocalDevUser(authUser.id) || 'tier' in complimentaryFields;
-    const firstProofXp = isPaidOnboarding ? XP_PER_CHECK_IN_DONE : 0;
+    const firstProofXp = XP_PER_CHECK_IN_DONE;
     const xpAfterWin = (profile?.xp ?? 0) + firstProofXp;
 
     try {

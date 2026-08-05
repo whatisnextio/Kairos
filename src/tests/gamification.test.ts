@@ -7,7 +7,7 @@ import {
 } from '@/utils/gamification';
 import { describe, expect, it } from 'vitest';
 
-const paidProfile: Profile = {
+const appProfile: Profile = {
   id: 'user-1',
   displayName: 'Test User',
   identityAnchorId: 'builder',
@@ -131,7 +131,7 @@ describe('Kairos Points rewards', () => {
 
   it('explains how every badge is earned', () => {
     const badges = deriveEarnedBadges({
-      profile: paidProfile,
+      profile: appProfile,
       checkInHistory: {},
       todayCheckIns: {},
       rewardedImproveCards: {},

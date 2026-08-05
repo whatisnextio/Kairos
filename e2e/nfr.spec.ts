@@ -85,7 +85,7 @@ test.describe('NFR smoke gates', () => {
     await expectNoHorizontalOverflow(page);
   });
 
-  test('paid core screens are accessible on mobile', async ({ page }) => {
+  test('core app screens are accessible on mobile', async ({ page }) => {
     await loginAsLocalLiam(page);
 
     for (const route of ['/', '/#/progress', '/#/improve', '/#/you']) {

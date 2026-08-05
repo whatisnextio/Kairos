@@ -3,12 +3,12 @@ import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 
 const migration = readFileSync(
-  join(process.cwd(), 'supabase/migrations/024_harden_profile_sensitive_updates.sql'),
+  join(process.cwd(), 'supabase/migrations/025_single_app_access.sql'),
   'utf8',
 );
 
 describe('profile security migration', () => {
-  it('blocks direct entitlement, billing, XP, and squad field changes', () => {
+  it('blocks direct app access, billing, XP, and squad field changes', () => {
     for (const column of [
       'tier',
       'xp',
@@ -23,9 +23,10 @@ describe('profile security migration', () => {
     }
   });
 
-  it('keeps trusted RPC paths for XP and complimentary Lifechanger access', () => {
-    expect(migration).toContain("set_config('app.profile_trusted_update', 'true', true)");
-    expect(migration).toContain('claim_complimentary_lifechanger');
-    expect(migration).toContain("user_email <> 'ldgmcdowell@gmail.com'");
+  it('defaults profiles to app access while keeping trusted update protection', () => {
+    expect(migration).toContain("alter column tier set default 'brotherhood'");
+    expect(migration).toContain("alter column subscription_status set default 'active'");
+    expect(migration).toContain("new.tier <> 'brotherhood'");
+    expect(migration).toContain('Profile app access fields cannot be set directly');
   });
 });

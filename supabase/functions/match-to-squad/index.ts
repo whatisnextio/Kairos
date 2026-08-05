@@ -16,7 +16,6 @@ import { jsonResponse, preflightResponse } from "../_shared/cors.ts";
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ??
   "";
-const PAID_TIERS = new Set(["brotherhood", "lifechanger"]);
 
 const PHASE_DAYS: Array<{ phase: string; start: number; end: number }> = [
   { phase: "KICKOFF", start: 1, end: 14 },
@@ -69,14 +68,6 @@ Deno.serve(async (req: Request) => {
 
     if (profileErr || !profile) {
       return jsonResponse(req, { error: "Profile not found" }, { status: 404 });
-    }
-
-    // Paid V1 tiers get squads.
-    if (!PAID_TIERS.has(profile.tier)) {
-      return jsonResponse(req, {
-        error: "Squads require paid access",
-        tier_gate: true,
-      }, { status: 403 });
     }
 
     // Already in a squad

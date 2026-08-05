@@ -11,7 +11,6 @@ const TABS = [
 // Sub-pages that belong to a parent tab but don't share its path prefix
 const SUB_PAGE_TAB: Record<string, string> = {
   '/detail': '/progress',
-  '/subscription': '/you',
   '/privacy': '/you',
   '/terms': '/you',
   '/help': '/you',

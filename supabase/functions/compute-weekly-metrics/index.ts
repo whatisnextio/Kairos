@@ -2,6 +2,7 @@
 // Supabase Edge Function (Deno runtime)
 // Called by: weekly cron (Sunday 22:00 UTC)
 // Aggregates platform metrics and writes one row to metrics_snapshots.
+// Legacy metric column names are kept for compatibility while the app has one tier.
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { jsonResponse, preflightResponse } from "../_shared/cors.ts";
@@ -9,8 +10,6 @@ import { jsonResponse, preflightResponse } from "../_shared/cors.ts";
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ??
   "";
-const STRIPE_SECRET_KEY = Deno.env.get("STRIPE_SECRET_KEY") ?? "";
-const PAID_TIERS = ["brotherhood", "lifechanger"];
 const CORS_ALLOWED_HEADERS = "authorization, content-type, x-service-role";
 // Comma-separated list of admin emails allowed to trigger manual computation.
 const ADMIN_EMAILS = new Set(
@@ -25,56 +24,6 @@ function isAdminUser(user: { email?: string; app_metadata?: { role?: unknown } }
     : "";
   const email = user.email?.trim().toLowerCase() ?? "";
   return role === "admin" || (email !== "" && ADMIN_EMAILS.has(email));
-}
-
-async function fetchMrrPence(): Promise<number> {
-  if (!STRIPE_SECRET_KEY) return 0;
-  let mrr = 0;
-  let startingAfter: string | null = null;
-  // Paginate through all active subscriptions
-  while (true) {
-    const params = new URLSearchParams({ status: "active", limit: "100" });
-    if (startingAfter) params.set("starting_after", startingAfter);
-    const res = await fetch(
-      `https://api.stripe.com/v1/subscriptions?${params}`,
-      {
-        headers: { Authorization: `Bearer ${STRIPE_SECRET_KEY}` },
-      },
-    );
-    if (!res.ok) return 0;
-    const body = (await res.json()) as {
-      data: Array<{
-        id: string;
-        items: {
-          data: Array<{
-            price: {
-              unit_amount: number;
-              currency: string;
-              recurring: { interval: string };
-            };
-          }>;
-        };
-      }>;
-      has_more: boolean;
-    };
-    for (const sub of body.data) {
-      for (const item of sub.items.data) {
-        const price = item.price;
-        // Normalise to monthly pence (GBP)
-        if (price.currency !== "gbp") continue;
-        const amount = price.unit_amount ?? 0;
-        if (price.recurring.interval === "month") mrr += amount;
-        else if (price.recurring.interval === "year") {
-          mrr += Math.round(amount / 12);
-        }
-      }
-    }
-    if (!body.has_more) break;
-    const lastId = body.data[body.data.length - 1]?.id;
-    if (!lastId) break;
-    startingAfter = lastId;
-  }
-  return mrr;
 }
 
 Deno.serve(async (req: Request) => {
@@ -119,17 +68,16 @@ Deno.serve(async (req: Request) => {
       .from("profiles")
       .select("*", { count: "exact", head: true });
 
-    // Paid users
-    const { count: paidUsers } = await supabase
+    // App access users. Stored in the legacy paid_users column for compatibility.
+    const { count: appAccessUsers } = await supabase
       .from("profiles")
       .select("*", { count: "exact", head: true })
-      .in("tier", PAID_TIERS)
-      .eq("subscription_status", "active");
+      .in("tier", ["free", "brotherhood", "lifechanger"]);
 
     const total = totalUsers ?? 0;
-    const paid = paidUsers ?? 0;
+    const access = appAccessUsers ?? 0;
     const conversionRate = total > 0
-      ? Math.round((paid / total) * 10000) / 100
+      ? Math.round((access / total) * 10000) / 100
       : 0;
 
     // Day 7 retention: users whose cycle started 5-7 days ago and have a check-in in that window
@@ -182,7 +130,7 @@ Deno.serve(async (req: Request) => {
         100
       : 0;
 
-    const mrrPence = await fetchMrrPence();
+    const mrrPence = 0;
 
     // Upsert snapshot
     const { error: upsertErr } = await supabase.from("metrics_snapshots")
@@ -190,7 +138,7 @@ Deno.serve(async (req: Request) => {
         {
           snapshot_date: today,
           total_users: total,
-          paid_users: paid,
+          paid_users: access,
           conversion_rate: conversionRate,
           day7_retention: day7Retention,
           day84_completion: day84Completion,
@@ -207,7 +155,7 @@ Deno.serve(async (req: Request) => {
       {
         snapshot_date: today,
         total_users: total,
-        paid_users: paid,
+        paid_users: access,
         conversion_rate: conversionRate,
         day7_retention: day7Retention,
         day84_completion: day84Completion,

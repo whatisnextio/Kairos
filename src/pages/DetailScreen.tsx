@@ -36,14 +36,6 @@ const STATUS_LABEL: Record<string, string> = {
   Protected: 'Protected',
 };
 
-function getLast7Days(): string[] {
-  const days: string[] = [];
-  for (let i = 6; i >= 0; i--) {
-    days.push(toLocalIsoDate(new Date(Date.now() - i * 86_400_000)));
-  }
-  return days;
-}
-
 // ─── SVG Sparkline ────────────────────────────────────────────────────────────
 
 type SparkStatus = CheckInStatus | undefined;
@@ -206,7 +198,6 @@ export default function DetailScreen() {
     updateDomainFocus,
     streaks: localStreaks,
     todayCheckIns,
-    checkInHistory,
     checkInNoteOverrides,
     updateDailyCheckInNote,
   } = useAppStore();
@@ -225,11 +216,9 @@ export default function DetailScreen() {
   const HISTORY_LIMIT = 28;
   const { data: history } = useDomainCheckIns(queryDomainType, HISTORY_LIMIT);
 
-  const streak = hasBrotherhoodAccess(profile?.tier)
-    ? remoteStreaks?.find((s) => s.domainType === domainType)
-    : domainType
-      ? localStreaks[domainType]
-      : undefined;
+  const streak =
+    remoteStreaks?.find((s) => s.domainType === domainType) ??
+    (domainType ? localStreaks[domainType] : undefined);
 
   useEffect(() => {
     if (!domainType) return;
@@ -246,7 +235,7 @@ export default function DetailScreen() {
     );
   }
 
-  // Build sparkline data for Brotherhood (28 days oldest → newest)
+  // Build sparkline data for 28 days oldest to newest.
   const sparklineData: SparkStatus[] = (() => {
     if (!hasBrotherhoodAccess(profile?.tier) || !history) return [];
     const days: string[] = [];
@@ -435,7 +424,7 @@ export default function DetailScreen() {
         </div>
       </Card>
 
-      {/* Brotherhood: sparkline + notes history */}
+      {/* Full history */}
       {profile && hasBrotherhoodAccess(profile.tier) && (
         <Card>
           <p className="text-base-subtext text-xs font-heading tracking-widest uppercase mb-3">
@@ -482,47 +471,6 @@ export default function DetailScreen() {
           ) : (
             <p className="text-base-muted text-sm">No check-in history yet.</p>
           )}
-        </Card>
-      )}
-
-      {/* Free tier: 7-day list */}
-      {profile?.tier === 'free' && (
-        <Card>
-          <p className="text-base-subtext text-xs font-heading tracking-widest uppercase mb-3">
-            Last 7 days
-          </p>
-          <div className="flex flex-col gap-1.5">
-            {getLast7Days().map((date) => {
-              const status: CheckInStatus | undefined =
-                date === today
-                  ? (todayCheckIns[domainType]?.status ?? undefined)
-                  : (checkInHistory[date]?.[domainType] ?? undefined);
-              const dotClass = status
-                ? (STATUS_DOT[status] ?? 'bg-base-border')
-                : 'bg-base-border/40';
-              const d = new Date(`${date}T00:00:00`);
-              const dayLabel = d.toLocaleDateString('en-GB', {
-                weekday: 'short',
-                day: 'numeric',
-                month: 'short',
-              });
-              return (
-                <div key={date} className="flex items-center justify-between">
-                  <span className="text-base-subtext text-xs">{dayLabel}</span>
-                  <div className="flex items-center gap-1.5">
-                    <div className={`w-1.5 h-1.5 rounded-full ${dotClass}`} />
-                    <span className="text-base-muted text-xs">
-                      {status ? STATUS_LABEL[status] : 'No data'}
-                    </span>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-          <p className="text-base-muted text-xs mt-3 border-t border-base-border pt-2">
-            Upgrade to Kairos Plus for your full 28-day history, sparkline trends, and per-day
-            notes.
-          </p>
         </Card>
       )}
     </div>

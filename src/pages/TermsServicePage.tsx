@@ -40,10 +40,6 @@ export default function TermsServicePage() {
           right to terminate accounts that misrepresent age.
         </p>
         <h2 className="font-heading font-medium text-base-text tracking-wide text-base">
-          Subscriptions
-        </h2>
-        <p>{TERMS_COPY.subscriptions}</p>
-        <h2 className="font-heading font-medium text-base-text tracking-wide text-base">
           AI content
         </h2>
         <p>{TERMS_COPY.ai}</p>

@@ -31,7 +31,7 @@ export function normaliseNudgeErrorMessage(error: unknown): string {
     return 'Sign in again for an AI card. Your Kairos options are ready below.';
   }
 
-  if (lower.includes('free tier') || lower.includes('tier')) {
+  if (lower.includes('tier')) {
     return 'AI cards are included in the app. Retry, or choose a Kairos option below.';
   }
 

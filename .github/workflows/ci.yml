@@ -61,8 +61,6 @@ jobs:
         env:
           VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL || 'http://127.0.0.1:54321' }}
           VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY || 'test-anon-key' }}
-          VITE_STRIPE_CHECKOUT_URL: ${{ secrets.VITE_STRIPE_CHECKOUT_URL }}
-          VITE_STRIPE_PORTAL_URL: ${{ secrets.VITE_STRIPE_PORTAL_URL }}
           VITE_VAPID_PUBLIC_KEY: ${{ secrets.VITE_VAPID_PUBLIC_KEY }}
 
   e2e:
@@ -106,8 +104,6 @@ jobs:
         env:
           VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL || 'http://127.0.0.1:54321' }}
           VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY || 'test-anon-key' }}
-          VITE_STRIPE_CHECKOUT_URL: ${{ secrets.VITE_STRIPE_CHECKOUT_URL }}
-          VITE_STRIPE_PORTAL_URL: ${{ secrets.VITE_STRIPE_PORTAL_URL }}
           VITE_VAPID_PUBLIC_KEY: ${{ secrets.VITE_VAPID_PUBLIC_KEY }}
 
       - name: Lighthouse CI
