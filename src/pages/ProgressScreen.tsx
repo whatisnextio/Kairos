@@ -57,6 +57,7 @@ export default function ProgressScreen() {
     streaks: localStreaks,
     profileImageDataUrl,
     sharePrivacyPreferences,
+    journeyArchive,
   } = useAppStore();
   const { data: remoteStreaks } = useStreaks();
 
@@ -93,6 +94,7 @@ export default function ProgressScreen() {
   });
   const earnedBadges = badges.filter((badge) => badge.earned);
   const unearnedBadges = badges.filter((badge) => !badge.earned);
+  const nextCycleNumber = journeyArchive.length + 2;
   const sharePreview = buildProgressSharePreview({
     displayName: profile.displayName,
     dayInCycle,
@@ -168,7 +170,7 @@ export default function ProgressScreen() {
                 </Button>
               )}
               <Button size="sm" onClick={() => navigate('/new-cycle')} type="button">
-                Start Cycle 2
+                Start Cycle {nextCycleNumber}
               </Button>
             </div>
           </div>
