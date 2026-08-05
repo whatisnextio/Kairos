@@ -86,6 +86,19 @@ describe('onboarding and reset contract', () => {
     expect(source).toContain('setOnboardingComplete(true)');
   });
 
+  it('keeps onboarding navigable and visibly recoverable during final setup', () => {
+    const source = readFileSync('src/pages/onboarding/OnboardingFlow.tsx', 'utf8');
+
+    expect(source).toContain('const goToFramework = () =>');
+    expect(source).toContain("setStep('framework')");
+    expect(source).toContain('animate-spin');
+    expect(source).toContain('aria-hidden="true"');
+    expect(source).toContain('Starting...');
+    expect(source).toContain('role="alert"');
+    expect(source).toContain('submitInFlight.current = false');
+    expect(source).toContain('setSubmitting(false)');
+  });
+
   it('archives the active journey before cycle reset clears current state', async () => {
     const { useAppStore } = await import('@/store/useAppStore');
 
