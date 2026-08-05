@@ -62,7 +62,7 @@ describe('PWA UX shell', () => {
 
     expect(home).toContain('routesForDomain');
     expect(home).toContain('route.parentDomainType === domain.type');
-    expect(home).toContain('Sub-route');
+    expect(home).toContain('route.label');
     expect(home).not.toContain('domainLabels.get(route.parentDomainType)');
   });
 
