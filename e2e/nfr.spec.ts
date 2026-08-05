@@ -46,7 +46,7 @@ test.describe('NFR smoke gates', () => {
     await expect(page.getByRole('button', { name: /walk for 20 minutes/i })).toBeVisible();
     await page.getByRole('button', { name: /continue/i }).click();
     await expect(page.getByRole('heading', { name: /choose reminder level/i })).toBeVisible();
-    await expect(page.getByRole('button', { name: /high accountability/i })).toBeVisible();
+    await expect(page.getByRole('button', { name: /extra support/i })).toBeVisible();
     await expectNoHorizontalOverflow(page);
     await expectNoA11yViolations(page);
   });
