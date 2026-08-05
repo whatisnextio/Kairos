@@ -38,10 +38,10 @@ import { useNavigate } from 'react-router-dom';
 
 const STATUS_LABELS: Record<CheckInStatus, string> = {
   Done: 'Done',
-  Partial: 'Partial',
+  Partial: 'Part done',
   Missed: 'Missed',
   Pending: 'Check in',
-  Protected: 'Protected',
+  Protected: 'Rest day',
 };
 
 const STATUS_ROW_CLASSES: Record<CheckInStatus, string> = {
@@ -401,7 +401,7 @@ export default function HomeScreen() {
         <DismissibleTip
           profileId={profile.id}
           tipId="home-framework-categories"
-          eyebrow="Framework tip"
+          eyebrow="How it works"
           title="The four categories stay fixed"
         >
           <p>
@@ -533,7 +533,7 @@ export default function HomeScreen() {
           <div className="flex flex-col gap-3">
             <div>
               <div className="flex justify-between text-xs text-base-subtext mb-1.5">
-                <span>Cycle</span>
+                <span>Journey</span>
                 <span>{cyclePct}%</span>
               </div>
               <div className="h-1.5 bg-base-border rounded-full overflow-hidden">
@@ -599,7 +599,7 @@ export default function HomeScreen() {
             }
           >
             <p className="font-heading text-xs text-base-subtext tracking-widest uppercase mb-1">
-              Day protocol
+              Right now
             </p>
             <p className="font-heading text-base-text text-lg tracking-wide">
               {activeDayStateProtocol.title}
@@ -616,13 +616,13 @@ export default function HomeScreen() {
             </div>
             {activeDayStateProtocol.actions.some((action) => action.kind === 'mark_partial') && (
               <p className="text-base-muted text-xs mt-3">
-                Partial means the smallest useful version was completed.
+                "Part done" means you did a smaller version — it still counts.
               </p>
             )}
             {activeDayStateProtocol.actions.some((action) => action.kind === 'dismiss') && (
               <p className="text-base-muted text-xs mt-3">
-                Dismiss hides this prompt on this device. If the same item stays open, Kairos may
-                offer one smaller rescue later today.
+                "Not now" hides this for a while. If the item stays open, Kairos may offer a smaller
+                option later today.
               </p>
             )}
             <div className="flex flex-col gap-2 mt-3 sm:flex-row sm:flex-wrap">
@@ -801,7 +801,6 @@ export default function HomeScreen() {
                             <p className="text-base-subtext text-xs mt-1 truncate">
                               {route.focusDescription}
                             </p>
-                            <p className="text-base-muted text-[11px] mt-0.5">Sub-route</p>
                           </button>
                         );
                       })}

@@ -334,13 +334,13 @@ export function getEarlyWakeProtocol(now = new Date()): EarlyWakeProtocol | null
   if (hour < 4 || hour >= 7) return null;
 
   return {
-    title: 'Early-wake protocol',
-    body: 'Do the floor, then decide whether the day starts now or you recover more sleep.',
+    title: 'Up early',
+    body: 'Do something small or go back to sleep — no pressure either way.',
     steps: [
       'Water first.',
       'No scrolling for the first ten minutes.',
-      'Pick one tiny body or fuel action.',
-      'If you are still tired, return to bed without guilt.',
+      'Pick one small action if you feel ready.',
+      'Still tired? Go back to bed — that counts too.',
     ],
   };
 }
@@ -373,7 +373,7 @@ export function buildCatchUpPath(
     steps: [
       target.prepOptions[0],
       `Do the smallest useful version of ${target.focusOptions[0].toLowerCase()}.`,
-      'Use Partial when a smaller useful version happened.',
+      'Use "Part done" when you did a smaller version.',
     ],
   };
 }
@@ -443,28 +443,28 @@ function protocolActions(
 ): DayStateProtocolAction[] {
   if (type === 'early_wake') {
     return [
-      { id: 'start-floor', label: 'Start floor', kind: 'open_check_in' },
-      { id: 'dismiss', label: 'Dismiss', kind: 'dismiss' },
+      { id: 'start-floor', label: 'Do something small', kind: 'open_check_in' },
+      { id: 'dismiss', label: 'Not now', kind: 'dismiss' },
     ];
   }
 
   if (type === 'shutdown') {
     return [
-      { id: 'set-tomorrow', label: 'Set tomorrow', kind: 'set_tomorrow' },
+      { id: 'set-tomorrow', label: 'Plan for tomorrow', kind: 'set_tomorrow' },
       ...(target
-        ? [{ id: 'mark-partial', label: 'Mark Partial', kind: 'mark_partial' } as const]
+        ? [{ id: 'mark-partial', label: 'Mark part done', kind: 'mark_partial' } as const]
         : []),
-      { id: 'dismiss', label: 'Dismiss', kind: 'dismiss' },
+      { id: 'dismiss', label: 'Not now', kind: 'dismiss' },
     ];
   }
 
   if (type === 'catch_up') {
     return [
-      { id: 'start-rescue', label: 'Start 10-minute rescue', kind: 'start_rescue' },
+      { id: 'start-rescue', label: 'Do 10 minutes now', kind: 'start_rescue' },
       ...(target
-        ? [{ id: 'mark-partial', label: 'Mark Partial', kind: 'mark_partial' } as const]
+        ? [{ id: 'mark-partial', label: 'Mark part done', kind: 'mark_partial' } as const]
         : []),
-      { id: 'dismiss', label: 'Dismiss', kind: 'dismiss' },
+      { id: 'dismiss', label: 'Not now', kind: 'dismiss' },
     ];
   }
 
@@ -474,7 +474,7 @@ function protocolActions(
       label: target ? `Open ${target.label}` : 'Review today',
       kind: 'open_check_in',
     },
-    { id: 'dismiss', label: 'Dismiss', kind: 'dismiss' },
+    { id: 'dismiss', label: 'Not now', kind: 'dismiss' },
   ];
 }
 
@@ -514,14 +514,12 @@ export function selectDayStateProtocol({
     return {
       id: 'shutdown',
       type: 'shutdown',
-      title: 'Shutdown protocol',
-      body: `${targetLabel(
-        target,
-      )} is still open. Close the loop gently, then leave the rest for tomorrow.`,
+      title: 'Evening wrap-up',
+      body: `${targetLabel(target)} still needs a mark. Wrap it up or plan it for tomorrow.`,
       steps: [
-        'Choose one open item only.',
-        'Mark Done, Partial, or Missed.',
-        'Leave the rest for tomorrow after one next-day action.',
+        'Pick one open item.',
+        'Mark Done, Part done, or Missed.',
+        'Leave the rest for tomorrow.',
       ],
       target,
       actions: protocolActions('shutdown', target),
@@ -533,18 +531,14 @@ export function selectDayStateProtocol({
     return {
       id: escalated ? 'catch-up-after-dismiss' : 'catch-up',
       type: 'catch_up',
-      title: escalated ? '10-minute rescue' : 'Catch-up path',
+      title: escalated ? 'Quick win' : 'Still time today',
       body: escalated
-        ? `${targetLabel(
-            target,
-          )} still needs a check-in. Record what happened; a smaller useful version as Partial counts.`
-        : `${targetLabel(
-            missedTarget ?? target,
-          )} is recoverable. The day is not failed; choose one small close.`,
+        ? `${targetLabel(target)} still needs a mark. Record what happened — a smaller version counts.`
+        : `${targetLabel(missedTarget ?? target)} is still open. Pick one small action and mark it.`,
       steps: [
-        'Start with ten quiet minutes.',
+        'Ten quiet minutes is enough.',
         'Do the smallest useful version.',
-        'Use Partial when that smaller version happened.',
+        'Use "Part done" when you did a smaller version.',
       ],
       target,
       actions: protocolActions('catch_up', target),
@@ -554,10 +548,10 @@ export function selectDayStateProtocol({
   return {
     id: target ? 'normal-start' : 'normal-review',
     type: 'normal_start',
-    title: target ? 'Start protocol' : 'Review protocol',
+    title: target ? 'Start here' : 'All marked',
     body: target
-      ? `${targetLabel(target)} is the next clean check-in. Keep it small and visible.`
-      : 'Today is marked. Review the pattern or protect tomorrow.',
+      ? `${targetLabel(target)} is next. Keep it small.`
+      : 'Today is marked. Review what worked or set up tomorrow.',
     steps: target
       ? ['Pick the easiest first mark.', 'Record what happened.', 'Keep the next action visible.']
       : ['Scan what worked.', 'Notice one friction point.', 'Set up tomorrow if needed.'],
@@ -571,10 +565,10 @@ export function buildAccountabilityPrompt(ignoredCount: number): AccountabilityP
     return {
       level: 3,
       title: 'End-of-day check',
-      body: 'Pick one open item and record what happened. A smaller useful version still counts.',
+      body: 'Pick one open item and record what happened. A smaller version still counts.',
       steps: [
         'Choose one open item.',
-        'Mark Done, Partial, or Missed.',
+        'Mark Done, Part done, or Missed.',
         'Leave the rest for tomorrow if needed.',
       ],
     };
@@ -584,7 +578,7 @@ export function buildAccountabilityPrompt(ignoredCount: number): AccountabilityP
     return {
       level: 2,
       title: 'Quick reset',
-      body: 'One small mark keeps the day live. Choose the easiest open item.',
+      body: 'One small mark keeps the day going. Choose the easiest open item.',
       steps: ['Choose one open item.', 'Do two minutes.', 'Record what happened.'],
     };
   }
@@ -640,7 +634,7 @@ export function buildWeeklyFlywheel({
   const todayIso = toLocalIsoDate(today);
 
   return {
-    title: 'Core flywheel',
+    title: 'This week',
     entries: rows.map((row) => {
       let done = 0;
       let partial = 0;
@@ -797,7 +791,7 @@ export function buildWeeklyReview({
   );
 
   return {
-    title: 'Weekly mentor review',
+    title: 'Weekly review',
     weekNumber: Math.max(1, Math.ceil(dayInCycle / 7)),
     phaseLabel: phase.label,
     score,

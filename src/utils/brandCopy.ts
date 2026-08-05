@@ -52,7 +52,7 @@ export const HELP_FAQS = [
   },
   {
     q: 'What happens if I miss a day?',
-    a: 'The day is not failed. Mark Done, Partial, Missed, or Protected where available, then use the catch-up prompt to close one useful loop.',
+    a: 'The day is not failed. Mark Done, Part done, Missed, or Protected where available, then use the catch-up prompt to close one useful loop.',
   },
   {
     q: 'What does reset do?',
