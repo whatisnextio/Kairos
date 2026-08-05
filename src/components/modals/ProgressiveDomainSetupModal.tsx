@@ -4,6 +4,13 @@ import { useAppStore } from '@/store/useAppStore';
 import { getAvailableDomains } from '@/types';
 import type { DomainType } from '@/types';
 import { hasBrotherhoodAccess } from '@/utils/entitlements';
+import {
+  CONNECTION_RECIPIENT_OPTIONS,
+  type ConnectionContextId,
+  type ConnectionRecipientId,
+  buildConnectionFocusDescription,
+  getConnectionContextOptions,
+} from '@/utils/v1Framework';
 import { useState } from 'react';
 
 interface Props {
@@ -15,6 +22,8 @@ export default function ProgressiveDomainSetupModal({ onClose }: Props) {
   const [focus, setFocus] = useState('');
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [connectionRecipient, setConnectionRecipient] = useState<ConnectionRecipientId>('partner');
+  const [connectionContext, setConnectionContext] = useState<ConnectionContextId>('practical_help');
 
   const availableDomains = getAvailableDomains(authUser?.email);
   const setupDomains = new Set(domainFocuses.map((f) => f.domainType));
@@ -76,6 +85,23 @@ export default function ProgressiveDomainSetupModal({ onClose }: Props) {
   }
 
   const remaining = availableDomains.filter((domain) => !setupDomains.has(domain.type)).length;
+  const connectionContextOptions = getConnectionContextOptions(connectionRecipient);
+
+  function selectConnectionRecipient(nextRecipient: ConnectionRecipientId) {
+    const nextContextOptions = getConnectionContextOptions(nextRecipient);
+    const nextContext = nextContextOptions.some((option) => option.id === connectionContext)
+      ? connectionContext
+      : nextContextOptions[0].id;
+
+    setConnectionRecipient(nextRecipient);
+    setConnectionContext(nextContext);
+    setFocus(buildConnectionFocusDescription(nextRecipient, nextContext));
+  }
+
+  function selectConnectionContext(nextContext: ConnectionContextId) {
+    setConnectionContext(nextContext);
+    setFocus(buildConnectionFocusDescription(connectionRecipient, nextContext));
+  }
 
   return (
     <div
@@ -106,6 +132,56 @@ export default function ProgressiveDomainSetupModal({ onClose }: Props) {
           Set up <span className={nextDomain.colour}>{nextDomain.label}</span>
         </h2>
         <p className="text-base-subtext text-sm mb-6">{nextDomain.question}</p>
+
+        {nextDomain.type === 'USTIME' && (
+          <div className="mb-4 flex flex-col gap-3">
+            <div>
+              <p className="mb-2 font-heading text-[11px] uppercase tracking-widest text-base-muted">
+                Who is this for?
+              </p>
+              <div className="grid grid-cols-2 gap-2">
+                {CONNECTION_RECIPIENT_OPTIONS.map((option) => (
+                  <button
+                    type="button"
+                    key={option.id}
+                    aria-pressed={connectionRecipient === option.id}
+                    onClick={() => selectConnectionRecipient(option.id)}
+                    className={`min-h-11 rounded border px-3 py-2 text-left text-sm transition-colors ${
+                      connectionRecipient === option.id
+                        ? 'border-accent-green bg-accent-green/10 text-base-text'
+                        : 'border-base-border bg-base-black/20 text-base-subtext hover:border-base-muted'
+                    }`}
+                  >
+                    {option.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div>
+              <p className="mb-2 font-heading text-[11px] uppercase tracking-widest text-base-muted">
+                What helps today?
+              </p>
+              <div className="grid grid-cols-1 gap-2">
+                {connectionContextOptions.map((option) => (
+                  <button
+                    type="button"
+                    key={option.id}
+                    aria-pressed={connectionContext === option.id}
+                    onClick={() => selectConnectionContext(option.id)}
+                    className={`min-h-11 rounded border px-3 py-2 text-left text-sm transition-colors ${
+                      connectionContext === option.id
+                        ? 'border-accent-green bg-accent-green/10 text-base-text'
+                        : 'border-base-border bg-base-black/20 text-base-subtext hover:border-base-muted'
+                    }`}
+                  >
+                    <span className="block text-base-text">{option.label}</span>
+                    <span className="mt-1 block text-xs text-base-muted">{option.description}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
 
         <div className="grid grid-cols-1 gap-2 mb-4">
           {nextDomain.focusOptions.map((option) => (

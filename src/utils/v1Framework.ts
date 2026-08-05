@@ -38,6 +38,29 @@ export interface FlywheelSummary {
   entries: FlywheelEntry[];
 }
 
+export type ConnectionRecipientId = 'partner' | 'family' | 'friend' | 'community';
+export type ConnectionContextId =
+  | 'practical_help'
+  | 'conversation'
+  | 'affection'
+  | 'family_presence'
+  | 'repair'
+  | 'comfort_first'
+  | 'consent_led_closeness';
+
+export interface ConnectionRecipientOption {
+  id: ConnectionRecipientId;
+  label: string;
+  focusLabel: string;
+}
+
+export interface ConnectionContextOption {
+  id: ConnectionContextId;
+  label: string;
+  description: string;
+  recipients?: ConnectionRecipientId[];
+}
+
 export const CORE_FLYWHEEL: Array<{ domainType: DomainType; label: string }> = [
   { domainType: 'BODY', label: 'Body' },
   { domainType: 'FUEL', label: 'Fuel' },
@@ -51,6 +74,104 @@ export const CONNECTION_SUPPORT_OPTIONS = [
   'No-mood day: affection stays available without an agenda.',
   'Pain day: reduce load first, then offer closeness if it helps.',
 ];
+
+export const CONNECTION_RECIPIENT_OPTIONS: ConnectionRecipientOption[] = [
+  { id: 'partner', label: 'Partner', focusLabel: 'Partner' },
+  { id: 'family', label: 'Family', focusLabel: 'Family' },
+  { id: 'friend', label: 'Friend', focusLabel: 'Friend' },
+  { id: 'community', label: 'Wider community', focusLabel: 'Community' },
+];
+
+export const CONNECTION_CONTEXT_OPTIONS: ConnectionContextOption[] = [
+  {
+    id: 'practical_help',
+    label: 'Practical help',
+    description: 'Do one useful thing that lowers load.',
+  },
+  {
+    id: 'conversation',
+    label: 'Conversation',
+    description: 'Ask a better question and listen.',
+  },
+  {
+    id: 'affection',
+    label: 'Affection',
+    description: 'Offer warmth with no agenda.',
+    recipients: ['partner', 'family'],
+  },
+  {
+    id: 'family_presence',
+    label: 'Family presence',
+    description: 'Be present in one small ordinary moment.',
+    recipients: ['family'],
+  },
+  {
+    id: 'repair',
+    label: 'Repair',
+    description: 'Own one small friction point and make it easier.',
+  },
+  {
+    id: 'comfort_first',
+    label: 'Comfort first',
+    description: 'Pain, tiredness, cycle symptoms, low mood, or not in the mood.',
+    recipients: ['partner'],
+  },
+  {
+    id: 'consent_led_closeness',
+    label: 'Consent-led closeness',
+    description: 'Only when context and consent make it right.',
+    recipients: ['partner'],
+  },
+];
+
+const CONNECTION_COMFORT_PATTERN =
+  /\b(pain|tired|tiredness|cycle|symptom|symptoms|low mood|not in the mood|not-in-the-mood|no mood|no-mood|unwell|sore)\b/i;
+
+export function getConnectionContextOptions(
+  recipientId: ConnectionRecipientId,
+): ConnectionContextOption[] {
+  return CONNECTION_CONTEXT_OPTIONS.filter(
+    (option) => !option.recipients || option.recipients.includes(recipientId),
+  );
+}
+
+export function buildConnectionFocusDescription(
+  recipientId: ConnectionRecipientId,
+  contextId: ConnectionContextId,
+): string {
+  const recipient =
+    CONNECTION_RECIPIENT_OPTIONS.find((option) => option.id === recipientId) ??
+    CONNECTION_RECIPIENT_OPTIONS[0];
+  const context =
+    CONNECTION_CONTEXT_OPTIONS.find((option) => option.id === contextId) ??
+    CONNECTION_CONTEXT_OPTIONS[0];
+
+  return `${recipient.focusLabel}: ${context.label}. ${context.description}`;
+}
+
+export function buildConnectionRecommendation(focusDescription?: string | null): string | null {
+  const focus = focusDescription?.trim();
+  if (!focus) return null;
+
+  const lowerFocus = focus.toLowerCase();
+  if (lowerFocus.includes('partner') && CONNECTION_COMFORT_PATTERN.test(lowerFocus)) {
+    return 'Prioritise comfort, practical help, and consent-led presence. Ask less, make care easier.';
+  }
+
+  if (lowerFocus.includes('family')) {
+    return 'Offer one small presence action: help, listen, play, or make the room easier.';
+  }
+
+  if (lowerFocus.includes('friend')) {
+    return 'Send one low-pressure check-in or make one useful plan they can easily accept.';
+  }
+
+  if (lowerFocus.includes('community')) {
+    return 'Make one wider-community action useful, bounded, and easy to receive.';
+  }
+
+  return null;
+}
 
 export function getDailyDomainLabel(domain: DomainConfig): string {
   return domain.label;

@@ -13,7 +13,12 @@ import {
 } from '@/types';
 import { hasBrotherhoodAccess } from '@/utils/entitlements';
 import {
+  CONNECTION_RECIPIENT_OPTIONS,
   CONNECTION_SUPPORT_OPTIONS,
+  type ConnectionContextId,
+  type ConnectionRecipientId,
+  buildConnectionFocusDescription,
+  getConnectionContextOptions,
   getDailyDomainLabel,
   toLocalIsoDate,
 } from '@/utils/v1Framework';
@@ -211,6 +216,8 @@ export default function DetailScreen() {
   const [editingFocus, setEditingFocus] = useState(false);
   const [focusDraft, setFocusDraft] = useState('');
   const [focusSaving, setFocusSaving] = useState(false);
+  const [connectionRecipient, setConnectionRecipient] = useState<ConnectionRecipientId>('partner');
+  const [connectionContext, setConnectionContext] = useState<ConnectionContextId>('practical_help');
 
   const { data: remoteStreaks } = useStreaks();
   const HISTORY_LIMIT = 28;
@@ -219,6 +226,23 @@ export default function DetailScreen() {
   const streak =
     remoteStreaks?.find((s) => s.domainType === domainType) ??
     (domainType ? localStreaks[domainType] : undefined);
+  const connectionContextOptions = getConnectionContextOptions(connectionRecipient);
+
+  function selectConnectionRecipient(nextRecipient: ConnectionRecipientId) {
+    const nextContextOptions = getConnectionContextOptions(nextRecipient);
+    const nextContext = nextContextOptions.some((option) => option.id === connectionContext)
+      ? connectionContext
+      : nextContextOptions[0].id;
+
+    setConnectionRecipient(nextRecipient);
+    setConnectionContext(nextContext);
+    setFocusDraft(buildConnectionFocusDescription(nextRecipient, nextContext));
+  }
+
+  function selectConnectionContext(nextContext: ConnectionContextId) {
+    setConnectionContext(nextContext);
+    setFocusDraft(buildConnectionFocusDescription(connectionRecipient, nextContext));
+  }
 
   useEffect(() => {
     if (!domainType) return;
@@ -287,7 +311,12 @@ export default function DetailScreen() {
             size="sm"
             variant="ghost"
             onClick={() => {
-              setFocusDraft(focus?.focusDescription ?? domainConfig.focusOptions[0]);
+              setFocusDraft(
+                focus?.focusDescription ??
+                  (domainType === 'USTIME'
+                    ? buildConnectionFocusDescription(connectionRecipient, connectionContext)
+                    : domainConfig.focusOptions[0]),
+              );
               setEditingFocus((value) => !value);
             }}
             className="shrink-0"
@@ -297,6 +326,57 @@ export default function DetailScreen() {
         </div>
         {editingFocus && (
           <div className="mt-4 border-t border-base-border pt-4">
+            {domainType === 'USTIME' && (
+              <div className="mb-4 flex flex-col gap-3">
+                <div>
+                  <p className="mb-2 font-heading text-[11px] uppercase tracking-widest text-base-muted">
+                    Who is this for?
+                  </p>
+                  <div className="grid grid-cols-2 gap-2">
+                    {CONNECTION_RECIPIENT_OPTIONS.map((option) => (
+                      <button
+                        type="button"
+                        key={option.id}
+                        aria-pressed={connectionRecipient === option.id}
+                        onClick={() => selectConnectionRecipient(option.id)}
+                        className={`min-h-11 rounded border px-3 py-2 text-left text-sm transition-colors ${
+                          connectionRecipient === option.id
+                            ? 'border-accent-green bg-accent-green/10 text-base-text'
+                            : 'border-base-border bg-base-black/20 text-base-subtext hover:border-base-muted'
+                        }`}
+                      >
+                        {option.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <div>
+                  <p className="mb-2 font-heading text-[11px] uppercase tracking-widest text-base-muted">
+                    What helps today?
+                  </p>
+                  <div className="grid grid-cols-1 gap-2">
+                    {connectionContextOptions.map((option) => (
+                      <button
+                        type="button"
+                        key={option.id}
+                        aria-pressed={connectionContext === option.id}
+                        onClick={() => selectConnectionContext(option.id)}
+                        className={`min-h-11 rounded border px-3 py-2 text-left text-sm transition-colors ${
+                          connectionContext === option.id
+                            ? 'border-accent-green bg-accent-green/10 text-base-text'
+                            : 'border-base-border bg-base-black/20 text-base-subtext hover:border-base-muted'
+                        }`}
+                      >
+                        <span className="block text-base-text">{option.label}</span>
+                        <span className="mt-1 block text-xs text-base-muted">
+                          {option.description}
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
             <div className="grid grid-cols-1 gap-2 mb-3">
               {domainConfig.focusOptions.map((option) => (
                 <button
