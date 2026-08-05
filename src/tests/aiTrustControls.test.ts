@@ -12,6 +12,9 @@ describe('AI trust controls', () => {
     expect(source).toContain('buildFrameworkWhyText');
     expect(source).toContain('AI_BOUNDARY_COPY');
     expect(source).toContain('Kairos coaching only');
+    expect(source).toContain(
+      'AI acts as a Kairos accountability coach for short prompts, not chat',
+    );
     expect(source).toContain('whyText: card.whyText');
     expect(types).toContain('whyText?: string');
     expect(source).not.toMatch(/chatbot|chat window|ask me anything/i);

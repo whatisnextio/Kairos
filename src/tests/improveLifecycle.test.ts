@@ -93,6 +93,22 @@ describe('Improve challenge lifecycle', () => {
     });
   });
 
+  it('can restore a dismissed challenge back to new', async () => {
+    const { useAppStore } = await import('@/store/useAppStore');
+
+    useAppStore.getState().reset();
+    useAppStore.setState({ profile, currentCycle: cycle });
+
+    await useAppStore.getState().setImproveCardStatus('card-restore', 'dismissed', 15);
+    expect(useAppStore.getState().improveCardStatuses['card-restore']).toBe('dismissed');
+
+    await useAppStore.getState().setImproveCardStatus('card-restore', 'new', 15);
+
+    expect(useAppStore.getState().improveCardStatuses['card-restore']).toBe('new');
+    expect(useAppStore.getState().rewardedImproveCards['card-restore']).toBeUndefined();
+    expect(useAppStore.getState().profile?.xp).toBe(20);
+  });
+
   it('clears challenge lifecycle when a new journey starts', async () => {
     const { useAppStore } = await import('@/store/useAppStore');
 

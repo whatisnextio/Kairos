@@ -26,6 +26,7 @@ describe('Improve lifecycle helpers', () => {
     expect(getImproveStatusHelper('accepted')).toContain('until you mark complete or dismiss');
     expect(getImproveStatusHelper('completed')).toContain('awarded once');
     expect(getImproveStatusHelper('dismissed')).toContain('hidden today');
+    expect(getImproveStatusHelper('dismissed')).toContain('restore');
   });
 
   it('gives specific AI generation failure copy', () => {
@@ -51,6 +52,7 @@ describe('Improve lifecycle helpers', () => {
 
   it('summarises dismissed cards without implying notifications stop', () => {
     expect(getDismissedCardsMessage(2)).toContain('hidden for today');
+    expect(getDismissedCardsMessage(2)).toContain('Show hidden cards to restore one');
     expect(getDismissedCardsMessage(2)).toContain('Reminders may still ask for a check-in');
   });
 

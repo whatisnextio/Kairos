@@ -64,7 +64,7 @@ export const HELP_FAQS = [
   },
   {
     q: 'How does the AI nudge work?',
-    a: 'AI nudges use your identity anchor, phase, recent check-ins, streaks, and active routes. They stay short, supportive, and grounded in your current 12K context.',
+    a: 'AI acts as a Kairos accountability coach, not a chat interface. It uses your identity anchor, phase, recent check-ins, streaks, and active routes to generate short prompts grounded in your current 12K context.',
   },
   {
     q: 'Is my data private?',

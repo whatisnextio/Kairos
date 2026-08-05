@@ -15,12 +15,12 @@ export function getImproveStatusHelper(status: NudgeStatus): string {
   if (status === 'new') return 'Accept keeps this card in Active until you close it.';
   if (status === 'accepted') return 'Active cards stay here until you mark complete or dismiss.';
   if (status === 'completed') return 'Closed today. Any reward is awarded once.';
-  return 'Dismissed cards stay hidden today and can return as new options tomorrow.';
+  return 'Dismissed cards stay hidden today unless you restore them.';
 }
 
 export function getDismissedCardsMessage(count: number): string {
   const label = count === 1 ? 'card is' : 'cards are';
-  return `${count} dismissed ${label} hidden for today. Reminders may still ask for a check-in if notifications are enabled.`;
+  return `${count} dismissed ${label} hidden for today. Show hidden cards to restore one. Reminders may still ask for a check-in if notifications are enabled.`;
 }
 
 export function normaliseNudgeErrorMessage(error: unknown): string {

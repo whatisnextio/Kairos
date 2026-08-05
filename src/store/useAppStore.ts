@@ -22,6 +22,7 @@ import type {
   ImproveCardSnapshot,
   JourneyArchiveEntry,
   KairosCycle,
+  NudgeStatus,
   Profile,
   UserDomainFocus,
   UserStreak,
@@ -200,7 +201,7 @@ interface AppState {
   // null = first load, phase not yet recorded.
   lastCelebrationPhase: string | null;
   profileImageDataUrl: string | null;
-  improveCardStatuses: Record<string, CheckInStatus | 'accepted' | 'completed' | 'dismissed'>;
+  improveCardStatuses: Record<string, NudgeStatus>;
   improveCardSnapshots: Record<string, ImproveCardSnapshot>;
   rewardedImproveCards: Record<string, true>;
   notificationPreferences: NotificationPreferences;
@@ -265,7 +266,7 @@ interface AppActions {
   setThemePreference: (theme: ThemePreference) => void;
   setImproveCardStatus: (
     cardId: string,
-    status: 'accepted' | 'completed' | 'dismissed',
+    status: NudgeStatus,
     xpReward?: number,
     snapshot?: ImproveCardSnapshot,
   ) => Promise<void>;
