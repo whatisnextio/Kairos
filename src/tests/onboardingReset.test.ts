@@ -76,6 +76,16 @@ describe('onboarding and reset contract', () => {
     expect(source).toContain('setNotificationPreferences');
   });
 
+  it('recovers a returning user when the profile is missing its active cycle link', () => {
+    const source = readFileSync('src/hooks/useBootstrap.ts', 'utf8');
+
+    expect(source).toContain(".from('kairos_cycles')");
+    expect(source).toContain(".eq('status', 'active')");
+    expect(source).toContain('.update({ current_kairos_cycle_id: cycleId })');
+    expect(source).toContain('setOnboardingComplete(false)');
+    expect(source).toContain('setOnboardingComplete(true)');
+  });
+
   it('archives the active journey before cycle reset clears current state', async () => {
     const { useAppStore } = await import('@/store/useAppStore');
 
