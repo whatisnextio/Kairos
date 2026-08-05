@@ -18,7 +18,7 @@ const config: Config = {
         'accent-green-dim': 'rgb(var(--color-accent-green-dim) / <alpha-value>)',
         'domain-body': '#3B82F6',
         'domain-fuel': '#F97316',
-        'domain-metime': '#8B5CF6',
+        'domain-metime': 'rgb(var(--color-domain-metime) / <alpha-value>)',
         'domain-ustime': '#EC4899',
         'domain-shot': '#F59E0B',
         'domain-lens': '#14B8A6',
