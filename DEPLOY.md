@@ -112,6 +112,7 @@ Production environment variables:
 - `VITE_SUPABASE_ANON_KEY`
 - `VITE_VAPID_PUBLIC_KEY`
 - `VITE_SENTRY_DSN` (optional)
+- `VITE_ENABLE_SQUAD` (optional, default off; set to `true` only when Squad is ready)
 
 ## 8. Verify
 
@@ -120,7 +121,7 @@ Production environment variables:
 - PWA restart: completed onboarding loads the active app, not onboarding again.
 - Check-ins: all four domains and all statuses.
 - AI nudge: Improve loads a nudge for app users.
-- Squad: match-to-squad and weekly pulse.
+- Squad: only verify match-to-squad and weekly pulse when `VITE_ENABLE_SQUAD=true`.
 - Push: opt in, save preferences, receive notification.
 - Custom routes: add, display, and check in against a personal route.
 - GDPR: delete account removes user data and clears local app state.

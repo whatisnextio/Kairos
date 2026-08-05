@@ -3,6 +3,7 @@ import Card from '@/components/common/Card';
 import SetupOptionSections from '@/components/common/SetupOptionSections';
 import AbandonCycleModal from '@/components/modals/AbandonCycleModal';
 import WeeklyVibeCheckModal from '@/components/modals/WeeklyVibeCheckModal';
+import { isSquadFeatureEnabled } from '@/config/features';
 import { useMatchToSquad, useSquadPulse } from '@/hooks/useSquad';
 import {
   INTENSITY_PREVIEW_COPY,
@@ -142,6 +143,7 @@ export default function YouScreen() {
   } = useAppStore();
   const { data: squadPulse } = useSquadPulse();
   const { mutate: matchToSquad, isPending: isMatching } = useMatchToSquad();
+  const squadFeatureEnabled = isSquadFeatureEnabled();
   const [pushStatus, setPushStatus] = useState<
     'idle' | 'requesting' | 'done' | 'denied' | 'unsupported'
   >('idle');
@@ -667,37 +669,40 @@ export default function YouScreen() {
         </div>
       </Card>
 
-      {/* Squad */}
-      <Card>
-        <p className="text-base-subtext text-xs font-heading tracking-widest uppercase mb-2">
-          Squad
-        </p>
-        <p className="text-base-subtext text-sm mb-3">{FEATURE_EXPLANATIONS.squad}</p>
-        {profile.squadId ? (
-          <>
-            {squadPulse ? (
-              <>
-                <p className="text-base-subtext text-xs mb-1">Week {squadPulse.weekNumber} pulse</p>
-                <p className="text-base-text text-sm italic">{squadPulse.message}</p>
-              </>
-            ) : (
-              <p className="text-base-subtext text-sm">
-                You are matched. The weekly pulse appears after the next pulse run.
+      {squadFeatureEnabled && (
+        <Card>
+          <p className="text-base-subtext text-xs font-heading tracking-widest uppercase mb-2">
+            Squad
+          </p>
+          <p className="text-base-subtext text-sm mb-3">{FEATURE_EXPLANATIONS.squad}</p>
+          {profile.squadId ? (
+            <>
+              {squadPulse ? (
+                <>
+                  <p className="text-base-subtext text-xs mb-1">
+                    Week {squadPulse.weekNumber} pulse
+                  </p>
+                  <p className="text-base-text text-sm italic">{squadPulse.message}</p>
+                </>
+              ) : (
+                <p className="text-base-subtext text-sm">
+                  You are matched. The weekly pulse appears after the next pulse run.
+                </p>
+              )}
+            </>
+          ) : (
+            <>
+              <p className="text-base-subtext text-sm mb-3">
+                You have not been matched yet. Tapping below creates or joins an anonymous phase
+                squad.
               </p>
-            )}
-          </>
-        ) : (
-          <>
-            <p className="text-base-subtext text-sm mb-3">
-              You have not been matched yet. Tapping below creates or joins an anonymous phase
-              squad.
-            </p>
-            <Button size="sm" onClick={() => matchToSquad()} disabled={isMatching}>
-              {isMatching ? 'Matching...' : 'Find anonymous squad'}
-            </Button>
-          </>
-        )}
-      </Card>
+              <Button size="sm" onClick={() => matchToSquad()} disabled={isMatching}>
+                {isMatching ? 'Matching...' : 'Find anonymous squad'}
+              </Button>
+            </>
+          )}
+        </Card>
+      )}
 
       {/* Vibe check */}
       <Card>
