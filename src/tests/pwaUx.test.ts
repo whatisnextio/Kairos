@@ -66,14 +66,20 @@ describe('PWA UX shell', () => {
     expect(home).not.toContain('domainLabels.get(route.parentDomainType)');
   });
 
-  it('keeps Improve AI fallback copy clear and intentional', () => {
+  it('keeps Improve suggestion copy simple and user-facing', () => {
     const improve = readFileSync('src/pages/ImproveScreen.tsx', 'utf8');
     const lifecycle = readFileSync('src/utils/improveLifecycle.ts', 'utf8');
     const oldFallbackPhrase = ['framework', 'options', 'below'].join(' ');
     const oldAwkwardPhrase = ['carrying', 'today'].join(' ');
 
-    expect(improve).toContain('choose a Kairos option below');
-    expect(lifecycle).toContain('Your Kairos options are ready below');
+    expect(improve).toContain('Pick one small move for today.');
+    expect(improve).toContain(
+      'Use the option below for now. Try again later for a fresh suggestion.',
+    );
+    expect(lifecycle).toContain('Your options are ready below');
+    expect(improve).not.toContain('AI acts as');
+    expect(improve).not.toContain('Kairos fallback');
+    expect(improve).not.toContain('generated card');
     expect(`${improve}\n${lifecycle}`).not.toContain(oldFallbackPhrase);
     expect(`${improve}\n${lifecycle}`).not.toContain(oldAwkwardPhrase);
   });

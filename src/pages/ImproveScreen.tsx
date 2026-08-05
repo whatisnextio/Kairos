@@ -33,8 +33,7 @@ const STATUS_LABELS: Record<NudgeStatus, string> = {
   dismissed: 'Dismissed',
 };
 
-const AI_BOUNDARY_COPY =
-  'Kairos coaching only. Not therapy, diagnosis, medical, legal, or financial advice.';
+const AI_BOUNDARY_COPY = 'Support only. Not medical, legal, financial, or therapy advice.';
 
 interface ImproveCard {
   id: string;
@@ -58,20 +57,20 @@ interface ImproveCard {
 function buildAiWhyText(nudge: AiNudge, domainLabel: string, phaseLabel: string): string {
   const ctaContext =
     nudge.cta === 'check_in_now'
-      ? "today's check-in path"
+      ? "today's check-in"
       : nudge.cta === 'reflect'
-        ? 'a reflection prompt'
+        ? 'a short reflection'
         : nudge.cta === 'plan_tomorrow'
           ? "tomorrow's plan"
-          : 'one next action';
-  const domainContext = domainLabel === 'Kairos' ? 'your current 12K context' : domainLabel;
+          : 'your next action';
+  const domainContext = domainLabel === 'Kairos' ? 'your current setup' : domainLabel;
 
-  return `Based on your ${phaseLabel} phase, ${domainContext}, ${ctaContext}, and available Kairos history such as recent check-ins, streaks, vibe checks, and active extra actions.`;
+  return `Chosen from your ${phaseLabel} stage, ${domainContext}, and ${ctaContext}.`;
 }
 
 function buildFallbackWhyText(domainLabel: string, phaseLabel: string): string {
-  const domainContext = domainLabel === 'Kairos' ? 'your current 12K setup' : domainLabel;
-  return `Built from your ${phaseLabel} phase and ${domainContext} setup while the AI service is unavailable. Retry AI when the service is back.`;
+  const domainContext = domainLabel === 'Kairos' ? 'your current setup' : domainLabel;
+  return `Chosen from your ${phaseLabel} stage and ${domainContext} setup.`;
 }
 
 function getNudgeDomainLabel(domainType: DomainType | null, email?: string | null): string {
@@ -87,11 +86,11 @@ function buildFrameworkWhyText(
     ? 'your extra action'
     : `${recommendation.domainLabel} setup`;
 
-  return `Based on your ${phaseLabel} phase, ${routeContext}, today's check-in state, and the next useful option in the Kairos framework.`;
+  return `Chosen from your ${phaseLabel} stage, ${routeContext}, and today's check-ins.`;
 }
 
 function buildSnapshotWhyText(snapshot: ImproveCardSnapshot): string {
-  return `Saved from ${snapshot.phaseLabel} for ${snapshot.domainLabel}. It stays visible from the original Improve context until you complete or dismiss it.`;
+  return `Saved for ${snapshot.domainLabel} in ${snapshot.phaseLabel}. Finish it or dismiss it.`;
 }
 
 interface ImproveCardContentProps {
@@ -269,7 +268,7 @@ export default function ImproveScreen() {
           kind: 'ai',
           status: nudge.status,
           lens: isFallbackNudge
-            ? 'Kairos fallback'
+            ? 'Suggested move'
             : nudge.type === 'weekly_challenge'
               ? 'Challenge'
               : "Today's nudge",
@@ -424,9 +423,7 @@ export default function ImproveScreen() {
       <div className="flex items-start justify-between gap-3">
         <div>
           <h1 className="font-heading text-2xl font-bold text-base-text tracking-wide">Improve</h1>
-          <p className="mt-1 max-w-xl text-sm text-base-subtext">
-            AI acts as a Kairos accountability coach for short prompts, not chat.
-          </p>
+          <p className="mt-1 max-w-xl text-sm text-base-subtext">Pick one small move for today.</p>
         </div>
         {canSeeNudge && (
           <button
@@ -443,22 +440,20 @@ export default function ImproveScreen() {
       {canSeeNudge && isLoading && (
         <Card>
           <p className="font-heading text-sm font-medium text-base-text mb-1">
-            Generating your coach card
+            Finding your next move
           </p>
-          <p className="text-base-subtext text-sm">
-            Using your phase, focus, recent proof, and active extra actions.
-          </p>
+          <p className="text-base-subtext text-sm">Using today&apos;s plan and your check-ins.</p>
         </Card>
       )}
 
       {canSeeNudge && isError && !isLoading && (
         <Card>
           <p className="font-heading text-sm font-medium text-status-partial mb-1">
-            Coach card not ready
+            Extra suggestion not ready
           </p>
           <p className="text-base-subtext text-sm mb-3">{normaliseNudgeErrorMessage(nudgeError)}</p>
           <Button size="sm" variant="ghost" onClick={() => refetch()} disabled={isFetching}>
-            {isFetching ? 'Retrying...' : 'Retry coach card'}
+            {isFetching ? 'Trying...' : 'Try again'}
           </Button>
         </Card>
       )}
@@ -466,14 +461,13 @@ export default function ImproveScreen() {
       {canSeeNudge && isFallbackNudge && !isLoading && !isError && (
         <Card>
           <p className="font-heading text-sm font-medium text-status-partial mb-1">
-            Coach card not ready
+            Extra suggestion not ready
           </p>
           <p className="text-base-subtext text-sm mb-3">
-            The card below is a Kairos fallback from your setup. Retry AI when you want the
-            generated card.
+            Use the option below for now. Try again later for a fresh suggestion.
           </p>
           <Button size="sm" variant="ghost" onClick={() => refetch()} disabled={isFetching}>
-            {isFetching ? 'Retrying...' : 'Retry coach card'}
+            {isFetching ? 'Trying...' : 'Try again'}
           </Button>
         </Card>
       )}
@@ -481,10 +475,10 @@ export default function ImproveScreen() {
       {canSeeNudge && !nudge && !isLoading && !isError && (
         <Card>
           <p className="text-base-subtext text-sm mb-3">
-            No coach card yet today. Generate one, or choose a Kairos option below.
+            No extra suggestion yet today. Try again, or choose one option below.
           </p>
           <Button size="sm" onClick={() => refetch()}>
-            {isFetching ? 'Generating...' : 'Generate coach card'}
+            {isFetching ? 'Trying...' : 'Try again'}
           </Button>
         </Card>
       )}

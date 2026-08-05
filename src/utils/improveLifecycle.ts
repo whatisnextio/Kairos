@@ -28,22 +28,22 @@ export function normaliseNudgeErrorMessage(error: unknown): string {
   const lower = message.toLowerCase();
 
   if (lower.includes('no session')) {
-    return 'Sign in again for an AI card. Your Kairos options are ready below.';
+    return 'Sign in again for an extra suggestion. Your options are ready below.';
   }
 
   if (lower.includes('tier')) {
-    return 'AI cards are included in the app. Retry, or choose a Kairos option below.';
+    return 'Extra suggestions are included in the app. Try again, or choose an option below.';
   }
 
   if (lower.includes('failed to store')) {
-    return 'AI made a card but could not save it. Retry, or choose a Kairos option below.';
+    return 'The suggestion could not be saved. Try again, or choose an option below.';
   }
 
   if (lower.includes('failed') || lower.includes('unavailable')) {
-    return 'AI did not complete this time. Retry, or choose a Kairos option below.';
+    return 'The suggestion is not ready. Try again, or choose an option below.';
   }
 
-  return 'AI is not ready right now. Your Kairos options are ready below.';
+  return 'The suggestion is not ready right now. Your options are ready below.';
 }
 
 export function resolveImproveCompletionTarget({

@@ -12,7 +12,8 @@ describe('AI nudge availability', () => {
     expect(hook).not.toContain('hasBrotherhoodAccess(profile.tier) || isSunday');
     expect(improve).not.toContain('Unlock Kairos Plus');
     expect(improve).not.toContain('Free tier gets one nudge on Sundays');
-    expect(improve).toContain('Generate coach card');
+    expect(improve).toContain('No extra suggestion yet today');
+    expect(improve).toContain('Try again');
   });
 
   it('keeps the Edge Function from failing when the AI provider is unavailable', () => {
@@ -41,9 +42,11 @@ describe('AI nudge availability', () => {
     expect(hook).toContain('LOCAL_FALLBACK_NUDGE_ID_PREFIX');
     expect(improve).toContain('LOCAL_FALLBACK_NUDGE_ID_PREFIX');
     expect(improve).toContain('isFallbackNudge');
-    expect(improve).toContain('Kairos fallback');
-    expect(improve).toContain('The card below is a Kairos fallback from your setup');
-    expect(improve).toContain('Retry coach card');
+    expect(improve).toContain('Suggested move');
+    expect(improve).toContain('Use the option below for now');
+    expect(improve).toContain('Try again');
+    expect(improve).not.toContain('Kairos fallback');
+    expect(improve).not.toContain('generated card');
   });
 
   it('stores generated nudges against the active cycle', () => {
