@@ -11,12 +11,14 @@
 //   6. Return reflection JSON
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { estimateAnthropicCostPence } from "../_shared/anthropicCost.ts";
 import { jsonResponse, preflightResponse } from "../_shared/cors.ts";
 
 const ANTHROPIC_API_KEY = Deno.env.get("ANTHROPIC_API_KEY") ?? "";
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ??
   "";
+const CLAUDE_SONNET_MODEL = "claude-sonnet-4-6";
 
 const SYSTEM_PROMPT =
   `You are the KAIROS cycle reflection engine. You write one deeply personal summary for someone who has just completed a 12-week behavioural action framework.
@@ -127,7 +129,7 @@ async function callClaude(prompt: string): Promise<{
       "content-type": "application/json",
     },
     body: JSON.stringify({
-      model: "claude-sonnet-4-6",
+      model: CLAUDE_SONNET_MODEL,
       max_tokens: 2048,
       system: SYSTEM_PROMPT,
       messages: [{ role: "user", content: prompt }],
@@ -143,10 +145,11 @@ async function callClaude(prompt: string): Promise<{
   const content: string = data.content?.[0]?.text ?? "";
   const inputTokens: number = data.usage?.input_tokens ?? 0;
   const outputTokens: number = data.usage?.output_tokens ?? 0;
-  // Claude Sonnet: ~$3/Mtok input, ~$15/Mtok output, converted to pence
-  const costPence = Math.round(
-    ((inputTokens * 3 + outputTokens * 15) / 1_000_000) * 100 * 100,
-  );
+  const costPence = estimateAnthropicCostPence({
+    model: CLAUDE_SONNET_MODEL,
+    inputTokens,
+    outputTokens,
+  });
 
   try {
     const jsonMatch = content.match(/```(?:json)?\s*([\s\S]*?)```/) ??

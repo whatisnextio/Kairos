@@ -11,11 +11,13 @@
 //   6. Return nudge JSON
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { estimateAnthropicCostPence } from '../_shared/anthropicCost.ts';
 import { jsonResponse, preflightResponse } from '../_shared/cors.ts';
 
 const ANTHROPIC_API_KEY = Deno.env.get('ANTHROPIC_API_KEY') ?? '';
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL') ?? '';
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
+const CLAUDE_HAIKU_MODEL = 'claude-haiku-4-5-20251001';
 
 const SYSTEM_PROMPT = `You are the KAIROS nudge engine. You write short, sharp, personal daily messages to people in a 12-week behavioural action framework.
 
@@ -229,7 +231,7 @@ async function callClaude(userPrompt: string): Promise<GeneratedNudge> {
       'content-type': 'application/json',
     },
     body: JSON.stringify({
-      model: 'claude-haiku-4-5-20251001',
+      model: CLAUDE_HAIKU_MODEL,
       max_tokens: 300,
       system: SYSTEM_PROMPT,
       messages: [{ role: 'user', content: userPrompt }],
@@ -245,8 +247,11 @@ async function callClaude(userPrompt: string): Promise<GeneratedNudge> {
   const content: string = data.content?.[0]?.text ?? '';
   const inputTokens: number = data.usage?.input_tokens ?? 0;
   const outputTokens: number = data.usage?.output_tokens ?? 0;
-  // Claude Haiku 4.5: ~$0.80/Mtok input, ~$4/Mtok output, converted to pence
-  const costPence = Math.round(((inputTokens * 0.8 + outputTokens * 4) / 1_000_000) * 100 * 100);
+  const costPence = estimateAnthropicCostPence({
+    model: CLAUDE_HAIKU_MODEL,
+    inputTokens,
+    outputTokens,
+  });
 
   try {
     const jsonMatch = content.match(/```(?:json)?\s*([\s\S]*?)```/) ?? [null, content];
