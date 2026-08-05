@@ -184,6 +184,8 @@ test.describe('NFR smoke gates', () => {
     await page.goto('/#/progress');
     await expect(page.getByText(/weekly bonuses/i)).toBeVisible();
     await expect(page.getByText(/badges/i)).toBeVisible();
+    await expect(page.getByText('12K stages', { exact: true })).toBeVisible();
+    await expect(page.getByText(/kairos phases/i)).toHaveCount(0);
     await page.getByRole('button', { name: /preview share/i }).click();
     await expect(page.getByText('12K progress', { exact: true })).toBeVisible();
   });

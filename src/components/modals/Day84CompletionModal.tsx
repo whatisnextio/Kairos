@@ -145,7 +145,7 @@ export default function Day84CompletionModal({ onClose }: Props) {
               Building your reflection
             </p>
             <p className="text-base-subtext text-sm mb-2">
-              {KAIROS_CYCLE_LENGTH_DAYS} days of data. {availableDomains.length} areas. Six phases.
+              Your {KAIROS_CYCLE_LENGTH_DAYS}-day round across {availableDomains.length} areas.
             </p>
             <p className="text-base-muted text-xs mb-4">This takes a few seconds.</p>
             <PulsingDots />

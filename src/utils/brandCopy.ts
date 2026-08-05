@@ -78,7 +78,7 @@ export const FEATURE_EXPLANATIONS = {
   personalRoutesAction:
     'After you add an extra action, it can appear in Home, Progress, and Improve as its own line.',
   squad:
-    'Squad is anonymous accountability, not chat. The match action places you with people in the same Kairos phase and shows a weekly pulse when one is available.',
+    'Squad is anonymous accountability, not chat. The match action places you with people at the same 12K stage and shows a weekly pulse when one is available.',
   notifications:
     'Reminders are opt-in device prompts. Extra support adds more simple check-ins inside your chosen hours.',
 } as const;

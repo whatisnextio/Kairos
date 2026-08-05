@@ -638,7 +638,7 @@ export default function ProgressScreen() {
         {/* Phase timeline */}
         <Card>
           <h2 className="font-heading text-xs font-medium text-base-subtext tracking-widest uppercase mb-3">
-            KAIROS Phases
+            12K stages
           </h2>
           <div className="flex flex-col gap-2">
             {KAIROS_PHASES.map((phase: KairosPhaseConfig) => {
