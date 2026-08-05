@@ -3,6 +3,7 @@ import { supabase } from '@/services/supabaseClient';
 import { useAppStore } from '@/store/useAppStore';
 import { getAvailableDomains } from '@/types';
 import type { DomainType } from '@/types';
+import { hasBrotherhoodAccess } from '@/utils/entitlements';
 import { useState } from 'react';
 
 interface Props {
@@ -22,17 +23,42 @@ export default function ProgressiveDomainSetupModal({ onClose }: Props) {
   if (!nextDomain || !authUser || !profile || !currentCycle) return null;
 
   async function handleSave() {
-    if (!focus.trim() || !authUser || !currentCycle || !nextDomain) return;
+    if (!focus.trim() || !authUser || !profile || !currentCycle || !nextDomain) return;
     setSaving(true);
     setError(null);
+    const trimmedFocus = focus.trim();
+    const userId = authUser.id;
+    const cycleId = currentCycle.id;
+    const domainType = nextDomain.type as DomainType;
+
+    function addLocalFocus(id: string, setAt: string) {
+      setDomainFocuses([
+        ...domainFocuses,
+        {
+          id,
+          userId,
+          cycleId,
+          domainType,
+          focusDescription: trimmedFocus,
+          setAt,
+        },
+      ]);
+    }
+
+    if (!hasBrotherhoodAccess(profile.tier)) {
+      addLocalFocus(crypto.randomUUID(), new Date().toISOString());
+      setSaving(false);
+      onClose();
+      return;
+    }
 
     const { data, error: err } = await supabase
       .from('user_domain_focuses')
       .insert({
-        user_id: authUser.id,
-        cycle_id: currentCycle.id,
-        domain_type: nextDomain.type,
-        focus_description: focus.trim(),
+        user_id: userId,
+        cycle_id: cycleId,
+        domain_type: domainType,
+        focus_description: trimmedFocus,
       })
       .select()
       .single();
@@ -43,17 +69,7 @@ export default function ProgressiveDomainSetupModal({ onClose }: Props) {
       return;
     }
 
-    setDomainFocuses([
-      ...domainFocuses,
-      {
-        id: data.id,
-        userId: authUser.id,
-        cycleId: currentCycle.id,
-        domainType: nextDomain.type as DomainType,
-        focusDescription: focus.trim(),
-        setAt: data.set_at,
-      },
-    ]);
+    addLocalFocus(data.id, data.set_at);
 
     setSaving(false);
     onClose();
@@ -116,17 +132,18 @@ export default function ProgressiveDomainSetupModal({ onClose }: Props) {
         />
 
         {error && (
-          <p role="alert" className="text-status-missed text-xs mb-3">
-            {error}
-          </p>
+          <div role="alert" className="mb-3 text-xs text-status-missed">
+            <p>{error}</p>
+            <p className="mt-1 text-base-muted">Try again or skip for now.</p>
+          </div>
         )}
 
         <div className="flex gap-3">
           <Button variant="ghost" onClick={onClose} className="flex-1">
-            Later
+            Skip for now
           </Button>
           <Button onClick={handleSave} disabled={!focus.trim() || saving} className="flex-1">
-            {saving ? 'Saving…' : 'Lock it in'}
+            {saving ? 'Saving...' : error ? 'Retry save' : 'Lock it in'}
           </Button>
         </div>
       </div>
