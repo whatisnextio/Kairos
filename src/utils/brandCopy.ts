@@ -44,7 +44,7 @@ export const HELP_FAQS = [
   },
   {
     q: 'What does Connection include?',
-    a: 'Connection covers partner, family, affection, communication, practical support, comfort, and consent-led closeness. It should support presence, not pressure.',
+    a: 'Connection covers family, friends, partners, community, communication, warmth, comfort, and practical support. It should support presence, not pressure.',
   },
   {
     q: 'Can I add my own routes?',

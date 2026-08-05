@@ -83,10 +83,11 @@ describe('guided domain setup model', () => {
     const partnerContextIds = getConnectionContextOptions('partner').map((option) => option.id);
     const familyContextIds = getConnectionContextOptions('family').map((option) => option.id);
 
-    expect(model.focusOptions).toContain('Offer affection with no agenda');
-    expect(partnerContextIds).toContain('consent_led_closeness');
-    expect(familyContextIds).not.toContain('consent_led_closeness');
-    expect(model.focusOptions.join(' ')).not.toMatch(/sex|wife|husband|intimacy/i);
+    expect(model.focusOptions).toContain('Offer warmth with no agenda');
+    expect(partnerContextIds).toContain('warmth');
+    expect(partnerContextIds).not.toContain('consent_led_closeness');
+    expect(familyContextIds).not.toContain('comfort_first');
+    expect(model.focusOptions.join(' ')).not.toMatch(/sex|sexual|wife|husband|intimacy|intimate/i);
   });
 
   it('keeps option chips usable at narrow mobile widths', () => {

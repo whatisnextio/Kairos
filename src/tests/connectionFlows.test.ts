@@ -49,11 +49,14 @@ describe('Connection comfort-first flows', () => {
     expect(setupSource).toContain('min-h-11');
   });
 
-  it('keeps comfort-first partner options before consent-led closeness', () => {
+  it('keeps Connection partner options practical and family-safe', () => {
     const ids = CONNECTION_CONTEXT_OPTIONS.map((option) => option.id);
+    const labels = CONNECTION_CONTEXT_OPTIONS.map((option) => option.label).join(' ');
 
     expect(ids).toContain('comfort_first');
-    expect(ids.indexOf('comfort_first')).toBeLessThan(ids.indexOf('consent_led_closeness'));
+    expect(ids).toContain('warmth');
+    expect(ids).not.toContain('consent_led_closeness');
+    expect(labels).not.toMatch(/sex|sexual|intimacy|intimate|closeness|affection/i);
   });
 
   it('filters partner-only context out of family and friend setup', () => {
@@ -61,8 +64,7 @@ describe('Connection comfort-first flows', () => {
     const friendIds = getConnectionContextOptions('friend').map((option) => option.id);
 
     expect(familyIds).toContain('family_presence');
-    expect(familyIds).not.toContain('consent_led_closeness');
-    expect(friendIds).not.toContain('consent_led_closeness');
+    expect(familyIds).not.toContain('comfort_first');
     expect(friendIds).not.toContain('comfort_first');
   });
 
@@ -70,10 +72,10 @@ describe('Connection comfort-first flows', () => {
     const partnerFocus = buildConnectionFocusDescription('partner', 'comfort_first');
     const recommendation = buildConnectionRecommendation(partnerFocus);
 
-    expect(partnerFocus).toContain('Pain, tiredness, cycle symptoms, low mood');
+    expect(partnerFocus).toContain('Pain, tiredness, stress, low mood');
     expect(recommendation).toContain('comfort');
     expect(recommendation).toContain('practical help');
-    expect(recommendation).toContain('consent-led presence');
+    expect(recommendation).toContain('low-pressure presence');
   });
 
   it('keeps family and friend recommendations away from partner-specific closeness copy', () => {
@@ -87,7 +89,7 @@ describe('Connection comfort-first flows', () => {
 
     expect(familyRecommendation).toContain('presence action');
     expect(friendRecommendation).toContain('low-pressure check-in');
-    expect(combined).not.toMatch(/partner|consent-led|closeness|intimacy|sex/i);
+    expect(combined).not.toMatch(/partner|closeness|intimacy|sex|sexual/i);
   });
 
   it('uses comfort-first Connection copy in Improve recommendations', () => {
@@ -103,7 +105,7 @@ describe('Connection comfort-first flows', () => {
     expect(recommendations[0].domainLabel).toBe('Connection');
     expect(recommendations[0].body).toContain('comfort');
     expect(recommendations[0].body).toContain('practical help');
-    expect(recommendations[0].body).not.toMatch(/sex|wife|husband|intimacy/i);
+    expect(recommendations[0].body).not.toMatch(/sex|sexual|wife|husband|intimacy|intimate/i);
   });
 
   it('keeps generated Connection labels and notification copy discreet', () => {
@@ -117,7 +119,7 @@ describe('Connection comfort-first flows', () => {
       ' ',
     );
 
-    expect(generatedLabels).not.toMatch(/sex|wife|husband|intimacy/i);
-    expect(notificationCopy).not.toMatch(/sex|wife|husband|intimacy/i);
+    expect(generatedLabels).not.toMatch(/sex|sexual|wife|husband|intimacy|intimate|closeness/i);
+    expect(notificationCopy).not.toMatch(/sex|sexual|wife|husband|intimacy|intimate|closeness/i);
   });
 });

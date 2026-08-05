@@ -15,6 +15,8 @@ import { toLocalIsoDate } from '@/utils/v1Framework';
 export const LOCAL_FALLBACK_NUDGE_ID_PREFIX = 'local-fallback-nudge:';
 
 const CLOSED_CHECK_IN_STATUSES = new Set<CheckInStatus>(['Done', 'Protected']);
+const ADULT_CONTENT_PATTERN =
+  /\b(sex|sexual|sexy|erotic|flirt|flirting|intimacy|intimate|porn|nude|naked|orgasm|masturbat(?:e|ion|ing)?|fetish|bedroom|hook\s?up)\b/i;
 
 interface BuildLocalFallbackNudgeInput {
   profile: Profile;
@@ -39,6 +41,12 @@ function clipText(text: string, maxLength: number): string {
   return `${text.slice(0, Math.max(0, maxLength - 3)).trimEnd()}...`;
 }
 
+function safeFallbackText(text: string | null | undefined, fallback: string): string {
+  const trimmed = text?.trim();
+  if (!trimmed) return fallback;
+  return ADULT_CONTENT_PATTERN.test(trimmed) ? fallback : trimmed;
+}
+
 function isOpenStatus(status: CheckInStatus | undefined): boolean {
   return !status || !CLOSED_CHECK_IN_STATUSES.has(status);
 }
@@ -61,11 +69,13 @@ export function buildLocalFallbackNudge({
   );
   const openDomainType = focusedOpenDomain?.domainType ?? activeRoute?.parentDomainType ?? null;
   const domainLabel = openDomainType ? getLabelForDomain(openDomainType, email) : 'Kairos';
-  const focusText =
-    focusedOpenDomain?.focusDescription ??
-    activeRoute?.focusDescription ??
-    'Pick one useful action and close it today';
-  const routePrefix = activeRoute ? `${activeRoute.label}: ` : '';
+  const focusText = safeFallbackText(
+    focusedOpenDomain?.focusDescription ?? activeRoute?.focusDescription,
+    'Pick one useful action and close it today',
+  );
+  const routePrefix = activeRoute
+    ? `${safeFallbackText(activeRoute.label, 'Personal route')}: `
+    : '';
 
   return {
     id: `${LOCAL_FALLBACK_NUDGE_ID_PREFIX}${profile.id}:${currentCycle?.id ?? 'no-cycle'}:${today}`,

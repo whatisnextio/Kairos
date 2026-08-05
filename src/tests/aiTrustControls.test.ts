@@ -25,9 +25,13 @@ describe('AI trust controls', () => {
 
     expect(source).toContain('Sensitive-topic boundary');
     expect(source).toContain('therapy, diagnosis, medical advice, legal advice, financial advice');
+    expect(source).toContain('Age and content boundary');
+    expect(source).toContain('family-safe and suitable for teens');
     expect(source).toContain('buildBoundaryNudge');
+    expect(source).toContain('buildFamilySafeNudge');
     expect(source).toContain('enforceNudgeBoundaries');
     expect(source).toContain('ADVICE_BOUNDARY_PATTERN');
+    expect(source).toContain('ADULT_CONTENT_PATTERN');
     expect(source).toContain('Timing rules:');
     expect(source).toContain('A Done check-in means one action was logged');
     expect(source).toContain('DAY_COMPLETION_PATTERN');

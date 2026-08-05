@@ -112,7 +112,7 @@ describe('V1 acceptance framework', () => {
     expect(PRIVATE_ROUTE_TEMPLATES.every((route) => route.focusDescription)).toBe(true);
     expect(combinedFocusCopy).toContain('one visible move');
     expect(combinedFocusCopy).toContain('one photo action');
-    expect(combinedFocusCopy).toContain('one present husband or dad action');
+    expect(combinedFocusCopy).toContain('one present family action');
     expect(combinedFocusCopy).not.toContain('sex');
     expect(combinedFocusCopy).not.toContain('masturb');
   });
@@ -164,9 +164,11 @@ describe('V1 acceptance framework', () => {
 
   it('keeps Connection comfort-first when physical or mood barriers exist', () => {
     expect(CONNECTION_SUPPORT_OPTIONS).toContain(
-      'No-mood day: affection stays available without an agenda.',
+      'Overloaded day: practical help first, conversation second.',
     );
-    expect(CONNECTION_SUPPORT_OPTIONS.join(' ').toLowerCase()).not.toContain('sex');
+    expect(CONNECTION_SUPPORT_OPTIONS.join(' ')).not.toMatch(
+      /sex|sexual|intimacy|intimate|closeness|affection/i,
+    );
   });
 
   it('escalates accountability prompts after ignored cues', () => {

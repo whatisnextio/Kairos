@@ -54,6 +54,11 @@ Sensitive-topic boundary:
 - Signpost qualified professional, emergency, or crisis support where needed.
 - Do not repeat sensitive note details in the output.
 
+Age and content boundary:
+- Do not write sexual, erotic, flirtatious, graphic, or explicit content.
+- Keep Connection nudges family-safe and suitable for teens: presence, listening, practical help, and low-pressure support only.
+- Do not mention intimacy, nudity, porn, adult relationship acts, or bodies in a sexual context.
+
 KAIROS phase contexts:
 - KICKOFF (Days 1-14): Start small. Create the first visible win.
 - ANCHOR (Days 15-28): Make the habit easy to find, repeat, and protect.
@@ -212,6 +217,15 @@ function clipText(text: string, maxLength: number): string {
   return `${text.slice(0, Math.max(0, maxLength - 3)).trimEnd()}...`;
 }
 
+function safeFallbackText(
+  text: string | null | undefined,
+  fallback: string,
+): string {
+  const trimmed = text?.trim();
+  if (!trimmed) return fallback;
+  return ADULT_CONTENT_PATTERN.test(trimmed) ? fallback : trimmed;
+}
+
 function buildFallbackNudge(state: UserState): GeneratedNudge {
   const recentOpen = [...state.recentCheckIns]
     .reverse()
@@ -225,7 +239,9 @@ function buildFallbackNudge(state: UserState): GeneratedNudge {
   const domainLabel = domain ? formatDomain(domain) : "Kairos";
   const phase = PHASE_CONTEXTS[state.phase]?.split(" - ")[0] ?? state.phase;
   const action = focus?.focus
-    ? `${domainLabel}: ${focus.focus}`
+    ? `${domainLabel}: ${
+      safeFallbackText(focus.focus, "Pick one visible action and close it today")
+    }`
     : "Pick one visible action and close it today";
 
   return {
@@ -243,6 +259,8 @@ const ADVICE_BOUNDARY_PATTERN =
   /\b(therapy|therapist|diagnosis|diagnose|medical advice|doctor|medication|legal advice|financial advice|investment|invest|debt advice|self-harm|suicide|crisis)\b/i;
 const DAY_COMPLETION_PATTERN =
   /\b(?:day\s+\d+\s+(?:is\s+)?(?:done|complete(?:d)?)|today(?:'s|\s+is)?\s+(?:done|complete(?:d)?))\b/i;
+const ADULT_CONTENT_PATTERN =
+  /\b(sex|sexual|sexy|erotic|flirt|flirting|intimacy|intimate|porn|nude|naked|orgasm|masturbat(?:e|ion|ing)?|fetish|bedroom|hook\s?up)\b/i;
 
 function buildBoundaryNudge(state: UserState): GeneratedNudge {
   const phase = PHASE_CONTEXTS[state.phase]?.split(" - ")[0] ?? state.phase;
@@ -261,12 +279,30 @@ function buildBoundaryNudge(state: UserState): GeneratedNudge {
   };
 }
 
+function buildFamilySafeNudge(state: UserState): GeneratedNudge {
+  const phase = PHASE_CONTEXTS[state.phase]?.split(" - ")[0] ?? state.phase;
+
+  return {
+    title: "Choose the useful version.",
+    body: clipText(
+      `${phase}. Keep it practical and age-safe: one small action, one low-pressure check-in, or one quiet reset.`,
+      200,
+    ),
+    type: "daily_nudge",
+    domain: null,
+    xp_reward: 0,
+    cta: "reflect",
+    _costPence: 0,
+  };
+}
+
 function enforceNudgeBoundaries(
   result: GeneratedNudge,
   state: UserState,
 ): GeneratedNudge {
   const combined = `${result.title} ${result.body}`;
   if (ADVICE_BOUNDARY_PATTERN.test(combined)) return buildBoundaryNudge(state);
+  if (ADULT_CONTENT_PATTERN.test(combined)) return buildFamilySafeNudge(state);
   if (DAY_COMPLETION_PATTERN.test(combined)) return buildFallbackNudge(state);
   return result;
 }

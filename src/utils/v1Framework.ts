@@ -141,11 +141,10 @@ export type ConnectionRecipientId = 'partner' | 'family' | 'friend' | 'community
 export type ConnectionContextId =
   | 'practical_help'
   | 'conversation'
-  | 'affection'
+  | 'warmth'
   | 'family_presence'
   | 'repair'
-  | 'comfort_first'
-  | 'consent_led_closeness';
+  | 'comfort_first';
 
 export interface ConnectionRecipientOption {
   id: ConnectionRecipientId;
@@ -168,10 +167,10 @@ export const CORE_FLYWHEEL: Array<{ domainType: DomainType; label: string }> = [
 ];
 
 export const CONNECTION_SUPPORT_OPTIONS = [
-  'Low-energy day: make warmth easier and ask less of them.',
+  'Low-energy day: make support easier and ask less of them.',
   'Body-care day: comfort, tea, heat, chores, no pressure.',
-  'No-mood day: affection stays available without an agenda.',
-  'Pain day: reduce load first, then offer closeness if it helps.',
+  'Overloaded day: practical help first, conversation second.',
+  'Pain day: reduce load first, then offer simple support if it helps.',
 ];
 
 const BODY_HEALTH_PATTERN =
@@ -232,8 +231,8 @@ export const CONNECTION_CONTEXT_OPTIONS: ConnectionContextOption[] = [
     description: 'Ask a better question and listen.',
   },
   {
-    id: 'affection',
-    label: 'Affection',
+    id: 'warmth',
+    label: 'Warmth',
     description: 'Offer warmth with no agenda.',
     recipients: ['partner', 'family'],
   },
@@ -251,19 +250,13 @@ export const CONNECTION_CONTEXT_OPTIONS: ConnectionContextOption[] = [
   {
     id: 'comfort_first',
     label: 'Comfort first',
-    description: 'Pain, tiredness, cycle symptoms, low mood, or not in the mood.',
-    recipients: ['partner'],
-  },
-  {
-    id: 'consent_led_closeness',
-    label: 'Consent-led closeness',
-    description: 'Only when context and consent make it right.',
+    description: 'Pain, tiredness, stress, low mood, or feeling overloaded.',
     recipients: ['partner'],
   },
 ];
 
 const CONNECTION_COMFORT_PATTERN =
-  /\b(pain|tired|tiredness|cycle|symptom|symptoms|low mood|not in the mood|not-in-the-mood|no mood|no-mood|unwell|sore)\b/i;
+  /\b(pain|tired|tiredness|stress|stressed|low mood|overloaded|unwell|sore)\b/i;
 
 export function getConnectionContextOptions(
   recipientId: ConnectionRecipientId,
@@ -293,7 +286,7 @@ export function buildConnectionRecommendation(focusDescription?: string | null):
 
   const lowerFocus = focus.toLowerCase();
   if (lowerFocus.includes('partner') && CONNECTION_COMFORT_PATTERN.test(lowerFocus)) {
-    return 'Prioritise comfort, practical help, and consent-led presence. Ask less, make care easier.';
+    return 'Prioritise comfort, practical help, and low-pressure presence. Ask less, make care easier.';
   }
 
   if (lowerFocus.includes('family')) {

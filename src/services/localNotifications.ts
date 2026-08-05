@@ -49,7 +49,7 @@ export const REMINDER_INTENSITY_OPTIONS: {
     id: 'high',
     label: 'High accountability',
     description:
-      'A consented ladder: smaller action, rescue prompt, Partial option, then tomorrow setup.',
+      'An opted-in ladder: smaller action, rescue prompt, Partial option, then tomorrow setup.',
   },
 ];
 

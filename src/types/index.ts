@@ -84,7 +84,7 @@ export const PRIVATE_ROUTE_TEMPLATES: PrivateRouteTemplate[] = [
     label: 'Nest',
     parentDomainType: 'USTIME',
     description: 'Home rhythm, fatherhood, family presence, and practical support.',
-    focusDescription: 'One present husband or dad action that makes home easier.',
+    focusDescription: 'One present family action that makes home easier.',
   },
   {
     type: 'ROOTS',
@@ -225,14 +225,14 @@ export const DOMAINS: DomainConfig[] = [
     colour: 'text-domain-ustime',
     audience: 'public',
     description:
-      'Partner, family, affection, communication, practical support, and consent-led closeness.',
+      'Family, friends, partners, community, communication, warmth, and practical support.',
     focusPrompt: 'Choose one relationship action that makes connection easier.',
     question: 'Who needs a more present version of you today?',
     focusOptions: [
       'Check their energy first',
       'Have a no-phone conversation',
       'Do one useful household action',
-      'Offer affection with no agenda',
+      'Offer warmth with no agenda',
       'Ask a better question and listen',
       'Be present with family for 15 minutes',
     ],
@@ -240,7 +240,7 @@ export const DOMAINS: DomainConfig[] = [
     recoveryOptions: [
       'Send one low-pressure check-in',
       'Do one practical help action',
-      'Offer warmth with no agenda',
+      'Offer simple support with no agenda',
     ],
     reflectPrompt: 'Where did you create warmth, safety, or attention?',
     coachPrompt: 'Connection starts with the other person as they are today.',
