@@ -47,7 +47,7 @@ describe('day-state protocols', () => {
     });
 
     expect(protocol.type).toBe('early_wake');
-    expect(protocol.title).toBe('Early-wake protocol');
+    expect(protocol.title).toBe('Up early');
     expect(protocol.steps.length).toBeGreaterThanOrEqual(2);
     expect(protocol.steps.length).toBeLessThanOrEqual(4);
   });
@@ -60,7 +60,7 @@ describe('day-state protocols', () => {
     });
 
     expect(protocol.type).toBe('normal_start');
-    expect(protocol.title).toBe('Start protocol');
+    expect(protocol.title).toBe('Start here');
     expect(protocol.actions.map((action) => action.label)).toContain('Open Body');
   });
 
@@ -76,7 +76,7 @@ describe('day-state protocols', () => {
 
     expect(protocol.type).toBe('catch_up');
     expect(protocol.body).toContain('not failed');
-    expect(protocol.actions.map((action) => action.label)).toContain('Mark Partial');
+    expect(protocol.actions.map((action) => action.label)).toContain('Mark part done');
   });
 
   it('selects shutdown late in the evening with open domains', () => {

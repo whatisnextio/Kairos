@@ -50,8 +50,8 @@ describe('Home journey language', () => {
     const you = readFileSync('src/pages/YouScreen.tsx', 'utf8');
 
     expect(home).toContain('data-testid="day-state-protocol"');
-    expect(framework).toContain('Mark Partial');
-    expect(home + framework).toContain('Partial means the smallest useful version was completed.');
+    expect(framework).toContain('Mark part done');
+    expect(home + framework).toContain("Part done\" means you did a smaller version");
     expect(framework).toContain('Record what happened');
     expect(home).not.toContain('honest status');
     expect(home).not.toContain('stop the drift');
