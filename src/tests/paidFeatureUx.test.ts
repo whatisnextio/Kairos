@@ -7,8 +7,10 @@ describe('paid feature UX copy', () => {
     const oldOwnerSetupTitle = ['Liam', 'Transformation'].join(' ');
 
     expect(source).toContain('Personal sub-routes');
-    expect(source).toContain('normal Kairos categories');
     expect(source).not.toContain(oldOwnerSetupTitle);
+    expect(source).not.toContain('Liam sub-routes');
+    expect(source).not.toContain('high accountability prompts');
+    expect(source).not.toContain('handleApplyPersonalSetup');
     expect(source).toContain('FEATURE_EXPLANATIONS.personalRoutes');
     expect(source).toContain('FEATURE_EXPLANATIONS.personalRoutesAction');
     expect(source).toContain('FEATURE_EXPLANATIONS.squad');
