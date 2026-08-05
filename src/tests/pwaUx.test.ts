@@ -93,4 +93,18 @@ describe('PWA UX shell', () => {
     expect(push).toContain("'Notification' in window");
     expect(push).toContain("'PushManager' in window");
   });
+
+  it('registers the PWA service worker and activates updates promptly', () => {
+    const main = readFileSync('src/main.tsx', 'utf8');
+    const sw = readFileSync('src/sw.ts', 'utf8');
+    const viteEnv = readFileSync('src/vite-env.d.ts', 'utf8');
+
+    expect(viteEnv).toContain('vite-plugin-pwa/client');
+    expect(main).toContain("import { registerSW } from 'virtual:pwa-register'");
+    expect(main).toContain('immediate: true');
+    expect(main).toContain('onNeedRefresh()');
+    expect(main).toContain('void updateSW(true)');
+    expect(sw).toContain('self.skipWaiting()');
+    expect(sw).toContain('clientsClaim()');
+  });
 });

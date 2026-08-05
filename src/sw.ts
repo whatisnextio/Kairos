@@ -1,3 +1,4 @@
+import { clientsClaim } from 'workbox-core';
 import { ExpirationPlugin } from 'workbox-expiration';
 import { cleanupOutdatedCaches, precacheAndRoute } from 'workbox-precaching';
 import { registerRoute } from 'workbox-routing';
@@ -5,6 +6,8 @@ import { CacheFirst, StaleWhileRevalidate } from 'workbox-strategies';
 
 declare const self: ServiceWorkerGlobalScope;
 
+self.skipWaiting();
+clientsClaim();
 cleanupOutdatedCaches();
 // biome-ignore lint/suspicious/noExplicitAny: Workbox injects __WB_MANIFEST at build time; type is not exported
 precacheAndRoute((self as any).__WB_MANIFEST);
