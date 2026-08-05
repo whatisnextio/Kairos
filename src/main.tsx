@@ -1,3 +1,4 @@
+import { registerSW } from 'virtual:pwa-register';
 import ErrorBoundary from '@/components/common/ErrorBoundary';
 import * as Sentry from '@sentry/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -23,6 +24,23 @@ const queryClient = new QueryClient({
 
 const root = document.getElementById('root');
 if (!root) throw new Error('Root element not found');
+
+if ('serviceWorker' in navigator) {
+  const updateSW = registerSW({
+    immediate: true,
+    onNeedRefresh() {
+      void updateSW(true);
+    },
+    onRegisteredSW(_swUrl, registration) {
+      window.setInterval(
+        () => {
+          void registration?.update();
+        },
+        1000 * 60 * 60,
+      );
+    },
+  });
+}
 
 createRoot(root).render(
   <StrictMode>

@@ -23,6 +23,7 @@ import {
   getPhaseProgressPct,
 } from '@/utils/kairos';
 import {
+  type DayStateProtocol,
   type DayStateProtocolAction,
   getDailyDomainLabel,
   selectDayStateProtocol,
@@ -72,16 +73,55 @@ const PHASE_MILESTONE_MESSAGES: Record<string, string> = {
   SUSTAIN: 'Hold the gain. Prepare the next cycle deliberately.',
 };
 
+const DAY_PROTOCOL_DISMISSAL_KEY = 'kairos_day_protocol_dismissal_v1';
+
+interface DismissedDayProtocol {
+  cycleId: string | null;
+  date: string;
+  protocolId: string;
+  targetKey: string | null;
+  dismissedAt: string;
+}
+
+function getProtocolTargetKey(protocol: DayStateProtocol | null | undefined): string | null {
+  const target = protocol?.target;
+  if (!target) return null;
+  return target.kind === 'domain' ? `domain:${target.domainType}` : `route:${target.routeId}`;
+}
+
+function readDismissedDayProtocol(todayIso: string): DismissedDayProtocol | null {
+  if (typeof window === 'undefined') return null;
+
+  try {
+    const raw = window.localStorage.getItem(DAY_PROTOCOL_DISMISSAL_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as Partial<DismissedDayProtocol>;
+    if (!parsed.dismissedAt || parsed.date !== todayIso) {
+      window.localStorage.removeItem(DAY_PROTOCOL_DISMISSAL_KEY);
+      return null;
+    }
+    return {
+      cycleId: parsed.cycleId ?? null,
+      date: parsed.date,
+      protocolId: parsed.protocolId ?? '',
+      targetKey: parsed.targetKey ?? null,
+      dismissedAt: parsed.dismissedAt,
+    };
+  } catch {
+    window.localStorage.removeItem(DAY_PROTOCOL_DISMISSAL_KEY);
+    return null;
+  }
+}
+
+function writeDismissedDayProtocol(dismissal: DismissedDayProtocol): void {
+  if (typeof window === 'undefined') return;
+  window.localStorage.setItem(DAY_PROTOCOL_DISMISSAL_KEY, JSON.stringify(dismissal));
+}
+
 // Module-level flags: prevent re-prompting within the same JS session even if HomeScreen remounts.
-// Day protocols are keyed by cycle ID so they reset automatically on cycle change.
 let vibeCheckShownThisSession = false;
 let domainSetupShownThisSession = false;
 let phaseTransitionShownThisSession = false;
-let dismissedDayProtocol: {
-  cycleId: string | null;
-  protocolId: string;
-  dismissedAt: string;
-} | null = null;
 
 export default function HomeScreen() {
   const navigate = useNavigate();
@@ -126,6 +166,9 @@ export default function HomeScreen() {
   const availableDomains = getAvailableDomains(authUser?.email);
   const activeCustomRoutes = customRoutes.filter((route) => !route.archivedAt);
   const todayIso = toLocalIsoDate(new Date());
+  const [dismissedDayProtocol, setDismissedDayProtocol] = useState<DismissedDayProtocol | null>(
+    () => readDismissedDayProtocol(todayIso),
+  );
   const availableDomainTypes = new Set(availableDomains.map((domain) => domain.type));
   const configuredDomainCount = domainFocuses.filter((focus) =>
     availableDomainTypes.has(focus.domainType),
@@ -136,8 +179,20 @@ export default function HomeScreen() {
   const dismissedProtocolAgeMinutes = dismissedProtocolForCycle
     ? (now.getTime() - new Date(dismissedProtocolForCycle.dismissedAt).getTime()) / 60_000
     : 0;
+  const baseDayStateProtocol = selectDayStateProtocol({
+    now,
+    domains: availableDomains,
+    todayCheckIns,
+    customRoutes: activeCustomRoutes,
+    todayCustomRouteCheckIns,
+  });
+  const dismissedProtocolMatches =
+    !!dismissedProtocolForCycle &&
+    dismissedProtocolForCycle.targetKey === getProtocolTargetKey(baseDayStateProtocol);
   const shouldEscalateDismissedProtocol =
-    !!dismissedProtocolForCycle && dismissedProtocolAgeMinutes >= 60;
+    dismissedProtocolMatches &&
+    dismissedProtocolAgeMinutes >= 60 &&
+    dismissedProtocolForCycle.protocolId !== 'catch-up-after-dismiss';
   const dayStateProtocol = selectDayStateProtocol({
     now,
     domains: availableDomains,
@@ -149,9 +204,9 @@ export default function HomeScreen() {
       : null,
   });
   const activeDayStateProtocol =
-    dismissedProtocolForCycle &&
+    dismissedProtocolMatches &&
     !shouldEscalateDismissedProtocol &&
-    dismissedProtocolForCycle.protocolId === dayStateProtocol.id
+    dismissedProtocolForCycle.targetKey === getProtocolTargetKey(dayStateProtocol)
       ? null
       : dayStateProtocol;
 
@@ -245,11 +300,15 @@ export default function HomeScreen() {
   const handleDayProtocolAction = (action: DayStateProtocolAction) => {
     if (!activeDayStateProtocol) return;
     if (action.kind === 'dismiss') {
-      dismissedDayProtocol = {
+      const dismissal = {
         cycleId,
+        date: todayIso,
         protocolId: activeDayStateProtocol.id,
+        targetKey: getProtocolTargetKey(activeDayStateProtocol),
         dismissedAt: new Date().toISOString(),
       };
+      writeDismissedDayProtocol(dismissal);
+      setDismissedDayProtocol(dismissal);
       setProtocolDismissVersion((version) => version + 1);
       return;
     }
@@ -462,6 +521,12 @@ export default function HomeScreen() {
             {activeDayStateProtocol.actions.some((action) => action.kind === 'mark_partial') && (
               <p className="text-base-muted text-xs mt-3">
                 Partial means the smallest useful version was completed.
+              </p>
+            )}
+            {activeDayStateProtocol.actions.some((action) => action.kind === 'dismiss') && (
+              <p className="text-base-muted text-xs mt-3">
+                Dismiss hides this prompt on this device. If the same item stays open, Kairos may
+                offer one smaller rescue later today.
               </p>
             )}
             <div className="flex flex-col gap-2 mt-3 sm:flex-row sm:flex-wrap">
