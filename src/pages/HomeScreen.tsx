@@ -365,8 +365,8 @@ export default function HomeScreen() {
       </div>
       {activeDayStateProtocol.actions.some((action) => action.kind === 'dismiss') && (
         <p className="text-base-muted text-xs mt-3">
-          Not now hides this prompt on this device. If the same item stays open, Kairos may offer
-          one smaller option later today.
+          Not now hides this prompt on this device. If the same item stays open, 12K may suggest a
+          smaller option later today.
         </p>
       )}
     </Card>
@@ -540,14 +540,14 @@ export default function HomeScreen() {
           </Card>
         )}
 
-        {/* Today's nudge preview */}
+        {/* Helpful prompt preview */}
         {nudge && nudge.status === 'new' && (
           <button type="button" className="w-full text-left" onClick={() => navigate('/improve')}>
             <Card className="border-accent-green/30 hover:border-accent-green/60 transition-colors">
               <div className="flex items-start justify-between gap-2">
                 <div className="flex-1 min-w-0">
                   <p className="font-heading text-xs text-accent-green tracking-widest uppercase mb-1">
-                    Today's nudge
+                    Helpful prompt
                   </p>
                   <p className="text-base-text text-sm font-medium leading-snug truncate">
                     {nudge.title}

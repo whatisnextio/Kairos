@@ -222,7 +222,7 @@ export function buildNotificationScheduleContext({
       if (!isOpenStatus(checkIn?.status)) return null;
       return {
         id: route.id,
-        label: revealRouteNames ? route.label : 'Personal route',
+        label: revealRouteNames ? route.label : 'Extra action',
         privateLabel: route.label,
         status: checkIn?.status,
       };

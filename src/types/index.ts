@@ -302,7 +302,7 @@ export const DOMAINS: DomainConfig[] = [
     prepOptions: ['Open the account', 'Set the number', 'Write the next decision down'],
     recoveryOptions: ['Check one balance', 'Write the next money decision', 'Close one admin loop'],
     reflectPrompt: 'What became more stable because of today?',
-    coachPrompt: 'Roots is about reducing future drag. Close one loop at a time.',
+    coachPrompt: 'Roots is about reducing future drag. Close one clear task at a time.',
     feedbackPrompt: 'Roots is a private route for Liam, not a default public promise.',
     focusPrompt: 'Debt clear. Capital building. Portugal fund.',
   },

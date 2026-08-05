@@ -900,7 +900,7 @@ export default function YouScreen() {
           </label>
 
           <label className="flex items-center justify-between gap-3 text-sm text-base-subtext">
-            <span>Show route names in notifications</span>
+            <span>Show action names in notifications</span>
             <input
               type="checkbox"
               checked={notificationPreferences.revealRouteNames}
@@ -1061,8 +1061,8 @@ export default function YouScreen() {
                 This is permanent.
               </p>
               <p className="text-base-subtext text-xs mb-3">
-                This deletes your profile, journey history, check-ins, notes, extra actions, nudges,
-                squad link, push subscriptions, and auth account.
+                This deletes your profile, journey history, check-ins, notes, extra actions,
+                prompts, squad link, push subscriptions, and auth account.
               </p>
               <label className="text-base-subtext text-xs font-heading tracking-widest uppercase">
                 Type DELETE to confirm

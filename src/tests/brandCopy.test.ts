@@ -17,7 +17,7 @@ describe('brand and help copy contract', () => {
         'Can I add extra actions?',
         'What does reset do?',
         'How do notifications work?',
-        'How does the AI nudge work?',
+        'How does the extra prompt work?',
       ]),
     );
     expect(kairosAnswer).toContain('Greek');
@@ -51,6 +51,7 @@ describe('brand and help copy contract', () => {
     expect(publicCopy).toContain('suggests short actions');
     expect(publicCopy).toContain('not a chat app or professional advice');
     expect(publicCopy).not.toContain('AI acts as a Kairos accountability coach');
+    expect(publicCopy).not.toMatch(/\bAI nudges\b|Today's nudge/i);
     expect(publicCopy).not.toMatch(/Kairos Plus|Lifechanger|checkout|billing portal|paid tier/i);
     expect(publicCopy).not.toContain('Brotherhood');
     expect(publicCopy).not.toMatch(/\bmen\b|\bman\b|male/i);

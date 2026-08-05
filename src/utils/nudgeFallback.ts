@@ -104,9 +104,7 @@ export function buildLocalFallbackNudge({
     focusedOpenDomain?.focusDescription ?? activeRoute?.focusDescription,
     'Pick one useful action and close it today',
   );
-  const routePrefix = activeRoute
-    ? `${safeFallbackText(activeRoute.label, 'Personal route')}: `
-    : '';
+  const routePrefix = activeRoute ? `${safeFallbackText(activeRoute.label, 'Extra action')}: ` : '';
 
   return {
     id: `${LOCAL_FALLBACK_NUDGE_ID_PREFIX}${profile.id}:${currentCycle?.id ?? 'no-cycle'}:${today}`,
@@ -114,7 +112,7 @@ export function buildLocalFallbackNudge({
     cycleId: currentCycle?.id ?? null,
     date: today,
     type: 'daily_nudge',
-    title: `Day ${Math.min(dayInCycle, 84)}. Close one loop.`,
+    title: `Day ${Math.min(dayInCycle, 84)}. Pick one small action.`,
     body: clipText(
       `${phase.label}. ${routePrefix}${domainLabel}: ${focusText}. Keep it small enough to do now.`,
       200,

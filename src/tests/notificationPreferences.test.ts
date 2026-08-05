@@ -145,7 +145,7 @@ describe('notification preferences', () => {
       .map((slot) => slot.body)
       .join(' ');
 
-    expect(privateCopy).toContain('Personal route');
+    expect(privateCopy).toContain('Extra action');
     expect(privateCopy).not.toContain('Money');
     expect(namedCopy).toContain('Money');
   });

@@ -28,9 +28,9 @@ const CTA_PROMPTS: Record<Exclude<NudgeCta, 'check_in_now' | null>, string> = {
 
 const STATUS_LABELS: Record<NudgeStatus, string> = {
   new: 'New',
-  accepted: 'Active',
+  accepted: 'Chosen',
   completed: 'Done',
-  dismissed: 'Dismissed',
+  dismissed: 'Hidden',
 };
 
 const AI_BOUNDARY_COPY = 'Support only. Not medical, legal, financial, or therapy advice.';
@@ -271,7 +271,7 @@ export default function ImproveScreen() {
             ? 'Suggested move'
             : nudge.type === 'weekly_challenge'
               ? 'Challenge'
-              : "Today's nudge",
+              : 'Helpful prompt',
           title: nudge.title,
           body: nudge.body,
           domainLabel: getNudgeDomainLabel(nudge.domainType, authUser?.email),
@@ -291,7 +291,7 @@ export default function ImproveScreen() {
               ? 'Write one honest line'
               : nudge.cta === 'plan_tomorrow'
                 ? 'Plan tomorrow'
-                : 'Close one loop',
+                : 'Check in now',
           xpReward: nudge.xpReward ?? 0,
           cta: nudge.cta,
           reflectionText: improveCardSnapshots[nudge.id]?.reflectionText,
@@ -532,7 +532,7 @@ export default function ImproveScreen() {
       {activeCards.length > 0 && (
         <div>
           <h2 className="font-heading text-xs font-medium text-base-subtext tracking-widest uppercase mb-3">
-            Active
+            Chosen for today
           </h2>
           <div className="flex flex-col gap-3">
             {activeCards.map((card) => renderCard(card, true))}

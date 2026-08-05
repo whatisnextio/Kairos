@@ -94,6 +94,8 @@ describe('PWA UX shell', () => {
     expect(improve).toContain('Context');
     expect(lifecycle).toContain('Complete it when done, or dismiss if it is not useful.');
     expect(lifecycle).not.toContain('Active cards stay here');
+    expect(lifecycle).not.toContain('move it into Active');
+    expect(improve).not.toContain("'Active'");
   });
 
   it('keeps native select options readable in the dark app shell', () => {
@@ -148,7 +150,7 @@ describe('PWA UX shell', () => {
     expect(you).toContain('Reminder preview');
     expect(you).toContain('failing silently');
     expect(you).toContain('Pause extra reminders');
-    expect(you).toContain('Show route names in notifications');
+    expect(you).toContain('Show action names in notifications');
     expect(push).toContain("'Notification' in window");
     expect(push).toContain("'PushManager' in window");
   });

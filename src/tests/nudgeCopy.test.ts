@@ -12,7 +12,7 @@ function nudge(overrides: Partial<AiNudge> = {}): AiNudge {
     cycleId: 'cycle-1',
     date: '2026-08-05',
     type: 'daily_nudge',
-    title: 'Day 1. Close one loop.',
+    title: 'Day 1. Pick one small action.',
     body: 'Kickoff. Body: walk for ten minutes.',
     domainType: 'BODY',
     kairosPhase: 'KICKOFF',
@@ -41,7 +41,7 @@ describe('nudge copy timing guard', () => {
     });
     const fallback = nudge({
       id: 'fallback-1',
-      title: 'Day 1. Close one loop.',
+      title: 'Day 1. Pick one small action.',
       body: 'Kickoff. Fuel: drink water before caffeine.',
       domainType: 'FUEL',
     });
@@ -49,7 +49,7 @@ describe('nudge copy timing guard', () => {
     const normalised = normalisePrematureDayCompletionNudge(unsafe, fallback);
 
     expect(normalised.id).toBe('nudge-1');
-    expect(normalised.title).toBe('Day 1. Close one loop.');
+    expect(normalised.title).toBe('Day 1. Pick one small action.');
     expect(normalised.body).toContain('drink water before caffeine');
     expect(normalised.domainType).toBe('FUEL');
   });

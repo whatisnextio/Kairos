@@ -555,7 +555,7 @@ export function selectDayStateProtocol({
       ? `${targetLabel(target)} is next. Keep it small.`
       : 'Today is marked. Review the pattern or protect tomorrow.',
     steps: target
-      ? ['Pick the easiest first mark.', 'Record what happened.', 'Keep the next action visible.']
+      ? ['Choose the easiest action.', 'Record what happened.', 'Keep the next action visible.']
       : ['Scan what worked.', 'Notice one friction point.', 'Set up tomorrow if needed.'],
     target,
     actions: protocolActions('normal_start', target),
@@ -580,7 +580,7 @@ export function buildAccountabilityPrompt(ignoredCount: number): AccountabilityP
     return {
       level: 2,
       title: 'Quick reset',
-      body: 'One small mark keeps the day live. Choose the easiest open item.',
+      body: 'One small action keeps the day moving. Choose the easiest open item.',
       steps: ['Choose one open item.', 'Do two minutes.', 'Record what happened.'],
     };
   }
@@ -588,8 +588,8 @@ export function buildAccountabilityPrompt(ignoredCount: number): AccountabilityP
   return {
     level: 1,
     title: 'Still open',
-    body: 'One item still needs a check-in. Mark it when you are ready.',
-    steps: ['Pick the easiest item.', 'Make the first mark.', 'Keep moving.'],
+    body: 'One item still needs a check-in. Record what happened when you are ready.',
+    steps: ['Pick the easiest item.', 'Do two minutes.', 'Record what happened.'],
   };
 }
 

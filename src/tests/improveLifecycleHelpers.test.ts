@@ -22,10 +22,10 @@ const lensRoute: CustomRoute = {
 
 describe('Improve lifecycle helpers', () => {
   it('explains what each card status means', () => {
-    expect(getImproveStatusHelper('new')).toContain('move it into Active');
+    expect(getImproveStatusHelper('new')).toContain('keep this for today');
     expect(getImproveStatusHelper('accepted')).toContain('Complete it when done');
-    expect(getImproveStatusHelper('completed')).toContain('awarded once');
-    expect(getImproveStatusHelper('dismissed')).toContain('hidden today');
+    expect(getImproveStatusHelper('completed')).toContain('Points are added once');
+    expect(getImproveStatusHelper('dismissed')).toContain('out of the way today');
     expect(getImproveStatusHelper('dismissed')).toContain('restore');
   });
 
@@ -51,8 +51,8 @@ describe('Improve lifecycle helpers', () => {
   });
 
   it('summarises dismissed cards without implying notifications stop', () => {
-    expect(getDismissedCardsMessage(2)).toContain('hidden for today');
-    expect(getDismissedCardsMessage(2)).toContain('Show hidden cards to restore one');
+    expect(getDismissedCardsMessage(2)).toContain('out of the way for today');
+    expect(getDismissedCardsMessage(2)).toContain('Show hidden suggestions to restore one');
     expect(getDismissedCardsMessage(2)).toContain('Reminders may still ask for a check-in');
   });
 

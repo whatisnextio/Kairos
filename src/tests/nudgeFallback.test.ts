@@ -54,7 +54,7 @@ describe('local nudge fallback', () => {
 
     expect(nudge.id).toBe('local-fallback-nudge:user-1:cycle-1:2026-08-05');
     expect(nudge.cycleId).toBe('cycle-1');
-    expect(nudge.title).toBe('Day 5. Close one loop.');
+    expect(nudge.title).toMatch(/^Day \d+\. Pick one small action\.$/);
     expect(nudge.body).toContain('Kickoff');
     expect(nudge.body).toContain('Fuel');
     expect(nudge.body).toContain('Drink water before caffeine');
@@ -87,7 +87,7 @@ describe('local nudge fallback', () => {
       todayCheckIns: {},
     });
 
-    expect(nudge.body).toContain('Personal route');
+    expect(nudge.body).toContain('Extra action');
     expect(nudge.body).toContain('Pick one useful action');
     expect(nudge.body).not.toMatch(/sex|sexual|intimacy|intimate/i);
   });

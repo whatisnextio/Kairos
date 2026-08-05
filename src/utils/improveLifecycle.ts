@@ -12,15 +12,15 @@ export type ImproveCompletionTarget =
   | { kind: 'none' };
 
 export function getImproveStatusHelper(status: NudgeStatus): string {
-  if (status === 'new') return 'Accept to move it into Active.';
+  if (status === 'new') return 'Tap Accept to keep this for today.';
   if (status === 'accepted') return 'Complete it when done, or dismiss if it is not useful.';
-  if (status === 'completed') return 'Closed today. Any reward is awarded once.';
-  return 'Dismissed cards stay hidden today unless you restore them.';
+  if (status === 'completed') return 'Done today. Points are added once.';
+  return 'Hidden suggestions stay out of the way today unless you restore them.';
 }
 
 export function getDismissedCardsMessage(count: number): string {
-  const label = count === 1 ? 'card is' : 'cards are';
-  return `${count} dismissed ${label} hidden for today. Show hidden cards to restore one. Reminders may still ask for a check-in if notifications are enabled.`;
+  const label = count === 1 ? 'suggestion is' : 'suggestions are';
+  return `${count} hidden ${label} out of the way for today. Show hidden suggestions to restore one. Reminders may still ask for a check-in if notifications are enabled.`;
 }
 
 export function normaliseNudgeErrorMessage(error: unknown): string {
