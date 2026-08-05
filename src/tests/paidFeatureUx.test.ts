@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 
 describe('single app tier UX copy', () => {
-  it('keeps Personal sub-routes and Squad visible in You without upgrade controls', () => {
+  it('keeps Personal sub-routes visible without upgrade controls', () => {
     const source = readFileSync('src/pages/YouScreen.tsx', 'utf8');
     const oldOwnerSetupTitle = ['Liam', 'Transformation'].join(' ');
 
@@ -14,11 +14,21 @@ describe('single app tier UX copy', () => {
     expect(source).not.toContain('Journey history');
     expect(source).toContain('FEATURE_EXPLANATIONS.personalRoutes');
     expect(source).toContain('FEATURE_EXPLANATIONS.personalRoutesAction');
-    expect(source).toContain('FEATURE_EXPLANATIONS.squad');
-    expect(source).toContain('Find anonymous squad');
     expect(source).not.toContain('Billing portal');
     expect(source).not.toContain('Manage billing');
     expect(source).not.toContain('Upgrade');
+  });
+
+  it('hides Squad behind an explicit readiness flag', () => {
+    const youScreen = readFileSync('src/pages/YouScreen.tsx', 'utf8');
+    const homeScreen = readFileSync('src/pages/HomeScreen.tsx', 'utf8');
+    const squadHook = readFileSync('src/hooks/useSquad.ts', 'utf8');
+
+    expect(youScreen).toContain('squadFeatureEnabled &&');
+    expect(homeScreen).toContain('squadFeatureEnabled && hasBrotherhoodAccess');
+    expect(squadHook).toContain('isSquadFeatureEnabled() &&');
+    expect(squadHook).toContain("throw new Error('Squad is not enabled')");
+    expect(youScreen).toContain('Find anonymous squad');
   });
 
   it('redirects the obsolete subscription route back to You', () => {

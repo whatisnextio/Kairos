@@ -4,6 +4,7 @@ import CheckInStatusModal from '@/components/modals/CheckInStatusModal';
 import Day84CompletionModal from '@/components/modals/Day84CompletionModal';
 import ProgressiveDomainSetupModal from '@/components/modals/ProgressiveDomainSetupModal';
 import WeeklyVibeCheckModal from '@/components/modals/WeeklyVibeCheckModal';
+import { isSquadFeatureEnabled } from '@/config/features';
 import { useNudge } from '@/hooks/useNudge';
 import { useSquadMembers, useSquadPulse } from '@/hooks/useSquad';
 import { useAppStore } from '@/store/useAppStore';
@@ -144,6 +145,7 @@ export default function HomeScreen() {
   const { data: nudge } = useNudge();
   const { data: squadPulse } = useSquadPulse();
   const { data: squadMembers } = useSquadMembers();
+  const squadFeatureEnabled = isSquadFeatureEnabled();
   const celebrationPending = useAppStore((s) => s.celebrationPending);
   const setCelebrationPending = useAppStore((s) => s.setCelebrationPending);
   const levelUpPending = useAppStore((s) => s.levelUpPending);
@@ -580,7 +582,7 @@ export default function HomeScreen() {
         )}
 
         {/* Squad */}
-        {hasBrotherhoodAccess(profile.tier) && profile.squadId && (
+        {squadFeatureEnabled && hasBrotherhoodAccess(profile.tier) && profile.squadId && (
           <Card>
             <p className="font-heading text-xs text-base-subtext tracking-widest uppercase mb-3">
               Squad

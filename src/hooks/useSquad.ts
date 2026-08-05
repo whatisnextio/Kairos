@@ -1,3 +1,4 @@
+import { isSquadFeatureEnabled } from '@/config/features';
 import { supabase } from '@/services/supabaseClient';
 import { useAppStore } from '@/store/useAppStore';
 import type { SquadPulse } from '@/types';
@@ -26,7 +27,8 @@ function toSquadPulse(raw: RawSquadPulse): SquadPulse {
 
 export function useSquadPulse() {
   const profile = useAppStore((s) => s.profile);
-  const enabled = !!profile && hasBrotherhoodAccess(profile.tier) && !!profile.squadId;
+  const enabled =
+    isSquadFeatureEnabled() && !!profile && hasBrotherhoodAccess(profile.tier) && !!profile.squadId;
 
   return useQuery({
     queryKey: ['squad-pulse', profile?.squadId],
@@ -66,7 +68,8 @@ export interface SquadMemberStatus {
 
 export function useSquadMembers() {
   const profile = useAppStore((s) => s.profile);
-  const enabled = !!profile && hasBrotherhoodAccess(profile.tier) && !!profile.squadId;
+  const enabled =
+    isSquadFeatureEnabled() && !!profile && hasBrotherhoodAccess(profile.tier) && !!profile.squadId;
 
   return useQuery({
     queryKey: ['squad-members', profile?.squadId],
@@ -96,6 +99,8 @@ export function useMatchToSquad() {
 
   return useMutation({
     mutationFn: async () => {
+      if (!isSquadFeatureEnabled()) throw new Error('Squad is not enabled');
+
       const {
         data: { session },
       } = await supabase.auth.getSession();
