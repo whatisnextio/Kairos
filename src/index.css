@@ -78,6 +78,17 @@
     @apply w-full min-h-11 rounded-lg border border-white/10 bg-white/[0.035] px-4 py-3 text-base-text placeholder-base-muted shadow-inner shadow-black/10 transition-colors focus:border-accent-green focus:outline-none focus:ring-2 focus:ring-accent-green/20;
   }
 
+  .input-field option,
+  .input-field optgroup {
+    color: #0b0b0b;
+    background-color: #ffffff;
+  }
+
+  .input-field option:checked {
+    color: #ffffff;
+    background-color: #2563eb;
+  }
+
   .tab-item {
     @apply relative flex min-h-16 flex-col items-center justify-center gap-1 rounded-lg text-xs font-body text-base-muted transition-all duration-200;
   }

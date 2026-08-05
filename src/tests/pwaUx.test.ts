@@ -62,4 +62,13 @@ describe('PWA UX shell', () => {
     expect(`${improve}\n${lifecycle}`).not.toContain(oldFallbackPhrase);
     expect(`${improve}\n${lifecycle}`).not.toContain(oldAwkwardPhrase);
   });
+
+  it('keeps native select options readable in the dark app shell', () => {
+    const css = readFileSync('src/index.css', 'utf8');
+
+    expect(css).toContain('.input-field option');
+    expect(css).toContain('color: #0b0b0b');
+    expect(css).toContain('background-color: #ffffff');
+    expect(css).toContain('.input-field option:checked');
+  });
 });
