@@ -33,7 +33,7 @@ describe('Improve lifecycle helpers', () => {
     expect(normaliseNudgeErrorMessage(new Error('No session'))).toContain('Kairos options');
     expect(
       normaliseNudgeErrorMessage(new Error('Free tier gets nudges on Sundays only')),
-    ).toContain('Sunday nudge');
+    ).toContain('included in the app');
     expect(normaliseNudgeErrorMessage(new Error('Failed to store nudge'))).toContain(
       'could not save',
     );

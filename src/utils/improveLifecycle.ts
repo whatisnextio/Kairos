@@ -32,7 +32,7 @@ export function normaliseNudgeErrorMessage(error: unknown): string {
   }
 
   if (lower.includes('free tier') || lower.includes('tier')) {
-    return 'Daily AI cards are included in Kairos Plus. Free accounts get the Sunday nudge.';
+    return 'AI cards are included in the app. Retry, or choose a Kairos option below.';
   }
 
   if (lower.includes('failed to store')) {
