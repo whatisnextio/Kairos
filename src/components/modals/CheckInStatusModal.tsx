@@ -16,6 +16,9 @@ const OPTIONS: Array<{ status: CheckInStatus; title: string; body: string }> = [
 ];
 
 export default function CheckInStatusModal({ label, currentStatus, onSelect, onClose }: Props) {
+  const hasMarkToClear = currentStatus !== undefined && currentStatus !== 'Pending';
+  const options = OPTIONS.filter((option) => option.status !== 'Pending' || hasMarkToClear);
+
   return (
     <div
       className="fixed inset-0 z-50 flex items-end justify-center bg-black/70 p-4"
@@ -40,24 +43,17 @@ export default function CheckInStatusModal({ label, currentStatus, onSelect, onC
           Set {label}
         </h2>
         <div className="grid grid-cols-2 gap-2">
-          {OPTIONS.map((option) => {
-            const isClear = option.status === 'Pending';
-            const nothingToClear = isClear && (!currentStatus || currentStatus === 'Pending');
-            const active =
-              option.status === currentStatus ||
-              (isClear && (!currentStatus || currentStatus === 'Pending'));
+          {options.map((option) => {
+            const active = option.status === currentStatus;
             return (
               <button
                 type="button"
                 key={option.status}
-                disabled={nothingToClear}
-                onClick={() => !nothingToClear && onSelect(option.status)}
+                onClick={() => onSelect(option.status)}
                 className={`rounded border p-3 text-left transition-colors ${
-                  nothingToClear
-                    ? 'border-base-border/30 bg-base-black/10 opacity-30 cursor-not-allowed'
-                    : active
-                      ? 'border-accent-green bg-accent-green/10'
-                      : 'border-base-border bg-base-black/20 hover:border-base-muted'
+                  active
+                    ? 'border-accent-green bg-accent-green/10'
+                    : 'border-base-border bg-base-black/20 hover:border-base-muted'
                 }`}
               >
                 <p className="font-heading text-sm font-medium text-base-text">{option.title}</p>
