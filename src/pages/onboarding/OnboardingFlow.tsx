@@ -347,7 +347,7 @@ export default function OnboardingFlow() {
               Tell us your name.
             </h1>
             <p className="text-base-subtext text-sm leading-relaxed mb-5">
-              This keeps the app personal. The role choice only changes the tone of your reminders.
+              This keeps the app personal. The reminder style only changes how prompts feel.
             </p>
 
             <Input
@@ -360,7 +360,7 @@ export default function OnboardingFlow() {
             />
 
             <p className="text-base-subtext text-xs font-heading tracking-widest uppercase mb-2">
-              Reminder tone
+              Reminder style
             </p>
             <p className="text-base-subtext text-xs leading-relaxed mb-3">
               Pick the one that feels closest. You can change it later.
@@ -387,7 +387,7 @@ export default function OnboardingFlow() {
             {anchorId === 'custom' && (
               <input
                 className="input-field mt-3"
-                placeholder="Name your identity"
+                placeholder="Name your reminder style"
                 value={customAnchor}
                 onChange={(event) => setCustomAnchor(event.target.value)}
               />
@@ -475,7 +475,7 @@ export default function OnboardingFlow() {
               Choose reminder level.
             </h1>
             <p className="text-base-subtext text-sm leading-relaxed mb-5">
-              Choose how often 12K should nudge you. You can change this later.
+              Choose how often 12K should remind you. You can change this later.
             </p>
 
             <div className="grid grid-cols-1 gap-2 mb-5">
@@ -508,8 +508,7 @@ export default function OnboardingFlow() {
               <span>
                 <span className="block text-sm font-medium text-base-text">Enable reminders</span>
                 <span className="block text-xs text-base-subtext mt-0.5">
-                  You can change this later from You. Browser push setup may still ask for
-                  permission.
+                  You can change this later from You. Your browser may still ask for permission.
                 </span>
               </span>
             </label>
@@ -603,7 +602,7 @@ export default function OnboardingFlow() {
             </div>
 
             <p className="text-base-muted text-xs text-center mt-4">
-              Accountability can be adjusted later from You.
+              Reminder level can be changed later from You.
             </p>
           </section>
         )}

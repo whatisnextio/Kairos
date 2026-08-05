@@ -96,8 +96,8 @@ export default function AbandonCycleModal({ onClose }: Props) {
             </h2>
             <p className="text-base-subtext text-sm mb-6">
               Day {currentCycle ? getDayInCycle(currentCycle.startDate) : '?'} will be cleared and
-              your progress metrics will return to zero. You will choose your identity, area, and
-              first action again.
+              your progress metrics will return to zero. You will choose your reminder style and
+              actions again.
             </p>
             {error && (
               <p role="alert" className="text-status-missed text-xs mb-3">

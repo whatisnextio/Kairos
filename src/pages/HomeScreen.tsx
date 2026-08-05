@@ -262,7 +262,7 @@ export default function HomeScreen() {
   const anchorDisplayName =
     profile.identityAnchorId === 'custom'
       ? (profile.customAnchorName ?? 'Custom')
-      : (anchor?.name ?? 'Your identity');
+      : (anchor?.name.replace(/^The /, '') ?? 'Your style');
   const firstName = profile.displayName.trim().split(/\s+/)[0] || 'You';
   const avatarInitial = firstName.charAt(0).toUpperCase() || 'K';
 
@@ -411,7 +411,7 @@ export default function HomeScreen() {
             </p>
           </div>
           <p className="text-base-muted text-xs mt-1">
-            Focus: {anchorDisplayName}. Pick one useful action and keep it visible.
+            Style: {anchorDisplayName}. Pick one useful action and keep it visible.
           </p>
         </div>
 

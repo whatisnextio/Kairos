@@ -800,7 +800,7 @@ export default function YouScreen() {
         <div className="flex flex-col gap-3">
           <div>
             <p className="text-base-subtext text-xs font-heading tracking-widest uppercase mb-2">
-              Accountability preview
+              Reminder preview
             </p>
             <div className="grid grid-cols-1 gap-2">
               {REMINDER_INTENSITY_OPTIONS.map((option) => (
@@ -824,9 +824,7 @@ export default function YouScreen() {
 
           <div className="rounded-lg border border-base-border bg-base-elevated p-3">
             <p className="font-heading text-sm text-base-text tracking-wide">
-              {notificationPreferences.intensity === 'high'
-                ? 'High accountability'
-                : 'Selected cadence'}
+              {notificationPreferences.intensity === 'high' ? 'Extra support' : 'Selected level'}
             </p>
             <ul className="mt-2 space-y-1 text-xs text-base-subtext">
               {INTENSITY_PREVIEW_COPY[notificationPreferences.intensity].map((line) => (
@@ -917,12 +915,12 @@ export default function YouScreen() {
             <div className="flex flex-col gap-2 rounded-lg border border-base-border bg-base-elevated p-3 sm:flex-row sm:items-center sm:justify-between">
               <div className="min-w-0">
                 <p className="font-heading text-xs tracking-widest text-base-text uppercase">
-                  High-accountability pause
+                  Extra support pause
                 </p>
                 <p className="mt-1 text-xs text-base-subtext">
                   {escalationPausedToday
-                    ? 'Escalation is paused today. Tomorrow still uses your saved cadence.'
-                    : 'Pause the repeated ladder for today without turning reminders off.'}
+                    ? 'Extra reminders are paused today. Tomorrow still uses your saved level.'
+                    : 'Pause extra reminders for today without turning reminders off.'}
                 </p>
               </div>
               <Button
@@ -931,7 +929,7 @@ export default function YouScreen() {
                 onClick={handlePauseEscalationToday}
                 className="w-full sm:w-auto"
               >
-                {escalationPausedToday ? 'Resume ladder' : 'Pause ladder'}
+                {escalationPausedToday ? 'Resume extra reminders' : 'Pause extra reminders'}
               </Button>
             </div>
           )}

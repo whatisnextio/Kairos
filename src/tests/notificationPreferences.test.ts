@@ -38,10 +38,13 @@ describe('notification preferences', () => {
     );
     expect(
       REMINDER_INTENSITY_OPTIONS.find((option) => option.id === 'high')?.description,
-    ).toContain('opted-in ladder');
+    ).toContain('smaller option');
+    expect(REMINDER_INTENSITY_OPTIONS.find((option) => option.id === 'high')?.label).toBe(
+      'Extra support',
+    );
     expect(INTENSITY_PREVIEW_COPY.high).toHaveLength(3);
     expect(REMINDER_INTENSITY_OPTIONS.map((option) => option.description).join(' ')).not.toMatch(
-      /adhd|diagnos/i,
+      /adhd|diagnos|ladder|high accountability/i,
     );
   });
 

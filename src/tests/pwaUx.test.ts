@@ -145,9 +145,9 @@ describe('PWA UX shell', () => {
     const you = readFileSync('src/pages/YouScreen.tsx', 'utf8');
     const push = readFileSync('src/services/pushNotifications.ts', 'utf8');
 
-    expect(you).toContain('Accountability preview');
+    expect(you).toContain('Reminder preview');
     expect(you).toContain('failing silently');
-    expect(you).toContain('Pause ladder');
+    expect(you).toContain('Pause extra reminders');
     expect(you).toContain('Show route names in notifications');
     expect(push).toContain("'Notification' in window");
     expect(push).toContain("'PushManager' in window");

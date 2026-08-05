@@ -130,7 +130,7 @@ export default function NewCycleScreen() {
 
       <Card>
         <p className="font-heading text-xs text-base-subtext tracking-widest uppercase mb-3">
-          Your identity anchor
+          Your reminder style
         </p>
         <p className="text-base-subtext text-xs mb-4">
           You can keep the same role or choose the one that best fits this round.
@@ -161,7 +161,7 @@ export default function NewCycleScreen() {
         {anchorId === 'custom' && (
           <input
             className="input-field mt-3"
-            placeholder="Name your identity"
+            placeholder="Name your reminder style"
             value={customAnchor}
             onChange={(e) => setCustomAnchor(e.target.value)}
           />

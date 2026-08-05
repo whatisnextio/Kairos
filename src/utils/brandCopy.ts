@@ -40,7 +40,7 @@ export const HELP_FAQS = [
   },
   {
     q: 'Why Self, not Mind?',
-    a: 'Self is broader than mindset. It covers attention, recovery, reflection, identity, mood, confidence, emotional regulation, and discreet private check-ins.',
+    a: 'Self covers attention, rest, confidence, mood, and the private check-ins that help you feel steady.',
   },
   {
     q: 'What does Connection include?',
@@ -60,7 +60,7 @@ export const HELP_FAQS = [
   },
   {
     q: 'How do notifications work?',
-    a: 'Reminders are opt-in where your device supports them. High accountability repeats simple prompts through the day, including early start, catch-up, and evening planning.',
+    a: 'Reminders are opt-in where your device supports them. Extra support adds more simple prompts through the day, including early start, catch-up, and evening planning.',
   },
   {
     q: 'How does the AI nudge work?',
@@ -80,7 +80,7 @@ export const FEATURE_EXPLANATIONS = {
   squad:
     'Squad is anonymous accountability, not chat. The match action places you with people in the same Kairos phase and shows a weekly pulse when one is available.',
   notifications:
-    'Reminders are opt-in device prompts. High accountability repeats discreet check-in prompts inside your chosen hours.',
+    'Reminders are opt-in device prompts. Extra support adds more simple check-ins inside your chosen hours.',
 } as const;
 
 export const PRIVACY_COPY = {

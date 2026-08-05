@@ -103,7 +103,7 @@ export const PRODUCT_POSITIONING = {
   kairosMeaning:
     'Kairos is Greek for the right or opportune moment: the point where attention becomes action.',
   why: 'It gives you a clear goal, simple prompts, one check-in, feedback, and a way back when the day slips.',
-  audience: 'Built for adults who need a simple guided reset, not a gender-specific programme.',
+  audience: 'Built for adults who want a simple plan. It is for everyone.',
   designedFor:
     'Designed for real life: inconsistent energy, busy work, family pressure, missed days, and the need to rebuild without shame.',
   categoryIntro:
@@ -181,7 +181,7 @@ export const DOMAINS: DomainConfig[] = [
     label: 'Self',
     colour: 'text-domain-metime',
     audience: 'public',
-    description: 'Attention, recovery, identity, reflection, confidence, and emotional regulation.',
+    description: 'Attention, rest, confidence, mood, and feeling steady.',
     focusPrompt: 'Pick one reset or private check-in that helps you feel steady.',
     question: 'What helps you feel steady today?',
     focusOptions: ['Take a 10-minute reset', 'Write one honest line'],
@@ -192,8 +192,7 @@ export const DOMAINS: DomainConfig[] = [
       'Put the phone away for 10 minutes',
     ],
     reflectPrompt: 'What pulled you off centre, and what brought you back?',
-    coachPrompt:
-      'Self is broader than mindset. Protect attention, recovery, confidence, and identity.',
+    coachPrompt: 'Self is about feeling steady. Protect attention, rest, and confidence.',
     feedbackPrompt: 'Self helps the other choices feel easier.',
   },
   {

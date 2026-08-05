@@ -47,9 +47,8 @@ export const REMINDER_INTENSITY_OPTIONS: {
   },
   {
     id: 'high',
-    label: 'High accountability',
-    description:
-      'An opted-in ladder: smaller action, rescue prompt, Part done option, then tomorrow setup.',
+    label: 'Extra support',
+    description: 'More reminders through the day, with a smaller option if the first plan slips.',
   },
 ];
 
@@ -57,9 +56,9 @@ export const INTENSITY_PREVIEW_COPY: Record<ReminderIntensity, string[]> = {
   light: ['One discreet action prompt.', 'One catch-up prompt before evening.'],
   standard: ['Early start if enabled.', 'Start, reset, and evening prompts in your hours.'],
   high: [
-    'If the first cue is missed, Kairos asks for the smallest useful action.',
-    'If the day still drifts, it switches to rescue, Part done, or set tomorrow.',
-    'Quiet hours defer prompts, and route names stay hidden unless you opt in.',
+    'If the first reminder is missed, 12K asks for the smallest useful action.',
+    'If the day slips, choose Done, Part done, Missed, or plan tomorrow.',
+    'Quiet hours pause reminders. Action names stay hidden unless you turn them on.',
   ],
 };
 
