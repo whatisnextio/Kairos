@@ -161,6 +161,7 @@ interface AppState {
   profile: Profile | null;
   isAuthLoading: boolean;
   isBootstrapLoading: boolean;
+  bootstrapError: string | null;
 
   // Cycle
   currentCycle: KairosCycle | null;
@@ -213,6 +214,7 @@ interface AppActions {
   setAuthUser: (user: AuthUser | null) => void;
   setProfile: (profile: Profile | null) => void;
   setIsBootstrapLoading: (loading: boolean) => void;
+  setBootstrapError: (message: string | null) => void;
   setCurrentCycle: (cycle: KairosCycle | null) => void;
   setDomainFocuses: (focuses: UserDomainFocus[]) => void;
   updateDomainFocus: (domainType: DomainType, focusDescription: string) => Promise<void>;
@@ -278,6 +280,7 @@ const initialState: AppState = {
   profile: null,
   isAuthLoading: true,
   isBootstrapLoading: false,
+  bootstrapError: null,
   currentCycle: null,
   domainFocuses: [],
   customRoutes: [],
@@ -318,6 +321,7 @@ export const useAppStore = create<AppState & AppActions>()(
       setAuthUser: (authUser) => set({ authUser, isAuthLoading: false }),
       setProfile: (profile) => set({ profile }),
       setIsBootstrapLoading: (isBootstrapLoading) => set({ isBootstrapLoading }),
+      setBootstrapError: (bootstrapError) => set({ bootstrapError }),
       setCurrentCycle: (currentCycle) => set({ currentCycle }),
       setDomainFocuses: (domainFocuses) => set({ domainFocuses }),
       refreshOfflineSyncState: async () => {

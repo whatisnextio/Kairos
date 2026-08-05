@@ -27,9 +27,19 @@ describe('PWA UX shell', () => {
     const splash = readFileSync('src/pages/SplashScreen.tsx', 'utf8');
 
     expect(splash).toContain('/kairos-12k-mark.svg');
-    expect(splash).toContain('aria-label="Loading 12K"');
+    expect(splash).toContain("'Loading 12K'");
     expect(splash).toContain('animate-pulse');
     expect(splash).not.toMatch(/>\s*12K\s*</);
+  });
+
+  it('makes the reload splash recoverable when loading stalls', () => {
+    const splash = readFileSync('src/pages/SplashScreen.tsx', 'utf8');
+
+    expect(splash).not.toContain('<output');
+    expect(splash).toContain('window.setTimeout(() => setShowSlowMessage(true), 8_000)');
+    expect(splash).toContain('taking longer than expected');
+    expect(splash).toContain('Retry');
+    expect(splash).toContain('window.location.reload()');
   });
 
   it('uses clear check-in language on the daily action rows', () => {
