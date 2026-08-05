@@ -1,4 +1,5 @@
 import Button from '@/components/common/Button';
+import SetupOptionSections from '@/components/common/SetupOptionSections';
 import {
   DEFAULT_NOTIFICATION_PREFERENCES,
   REMINDER_INTENSITY_OPTIONS,
@@ -17,6 +18,7 @@ import {
 import { AUTH_COPY } from '@/utils/brandCopy';
 import { getComplimentaryProfileFields } from '@/utils/entitlements';
 import { DEV_CYCLE_ID, isLocalDevUser } from '@/utils/localDevSession';
+import { buildDomainSetupOptionModel } from '@/utils/v1Framework';
 import { useRef, useState } from 'react';
 
 type Step = 'framework' | 'identity' | 'focus' | 'accountability' | 'commit';
@@ -56,6 +58,7 @@ export default function OnboardingFlow() {
 
   const availableDomains = getAvailableDomains(authUser?.email);
   const selectedDomain = availableDomains.find((d) => d.type === domain);
+  const selectedSetupOptions = selectedDomain ? buildDomainSetupOptionModel(selectedDomain) : null;
   const stepNumber = ONBOARDING_STEPS.indexOf(step) + 1;
   const stepCount = ONBOARDING_STEPS.length;
 
@@ -506,7 +509,7 @@ export default function OnboardingFlow() {
                   key={d.type}
                   onClick={() => {
                     setDomain(d.type);
-                    setMicroAction(d.focusOptions[0] ?? '');
+                    setMicroAction(buildDomainSetupOptionModel(d).focusOptions[0] ?? '');
                   }}
                   className={`w-full text-left p-3 rounded border transition-colors ${
                     domain === d.type
@@ -616,28 +619,23 @@ export default function OnboardingFlow() {
               . This becomes your first focus and your first check-in.
             </p>
 
-            {selectedDomain && (
-              <div className="grid grid-cols-1 gap-2 mb-4">
-                {selectedDomain.focusOptions.map((option) => (
-                  <button
-                    type="button"
-                    key={option}
-                    onClick={() => setMicroAction(option)}
-                    className={`text-left rounded border px-3 py-2 text-sm transition-colors ${
-                      microAction === option
-                        ? 'border-accent-green bg-accent-green/10 text-base-text'
-                        : 'border-base-border bg-base-surface text-base-subtext hover:border-base-muted'
-                    }`}
-                  >
-                    {option}
-                  </button>
-                ))}
+            {selectedSetupOptions && (
+              <div className="mb-4">
+                <SetupOptionSections
+                  model={selectedSetupOptions}
+                  value={microAction}
+                  onSelect={setMicroAction}
+                />
               </div>
             )}
 
             <textarea
               className="input-field h-24 resize-none text-sm"
-              placeholder={selectedDomain?.focusPrompt ?? 'Write your first action.'}
+              placeholder={
+                selectedDomain && selectedSetupOptions
+                  ? `Custom. ${selectedSetupOptions.customPlaceholder}. ${selectedDomain.focusPrompt}`
+                  : 'Write your first action.'
+              }
               value={microAction}
               onChange={(event) => setMicroAction(event.target.value)}
             />

@@ -1,5 +1,6 @@
 import Button from '@/components/common/Button';
 import Card from '@/components/common/Card';
+import SetupOptionSections from '@/components/common/SetupOptionSections';
 import AbandonCycleModal from '@/components/modals/AbandonCycleModal';
 import WeeklyVibeCheckModal from '@/components/modals/WeeklyVibeCheckModal';
 import { useMatchToSquad, useSquadPulse } from '@/hooks/useSquad';
@@ -15,6 +16,7 @@ import { FEATURE_EXPLANATIONS } from '@/utils/brandCopy';
 import { hasBrotherhoodAccess } from '@/utils/entitlements';
 import { deriveEarnedBadges, formatKairosPoints, getLevelForXp } from '@/utils/gamification';
 import { getDayInCycle } from '@/utils/kairos';
+import { buildDomainSetupOptionModel } from '@/utils/v1Framework';
 import { type ChangeEvent, useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 
@@ -198,6 +200,18 @@ export default function YouScreen() {
   const [isAddingRoute, setIsAddingRoute] = useState(false);
   const availableDomains = getAvailableDomains(authUser?.email);
   const domainLabels = new Map(availableDomains.map((domain) => [domain.type, domain.label]));
+  const routeParentDomain = availableDomains.find((domain) => domain.type === routeParent);
+  const routeSetupOptions = routeParentDomain
+    ? buildDomainSetupOptionModel(
+        routeParentDomain,
+        routeLabel.trim()
+          ? {
+              label: routeLabel,
+              focusDescription: routeFocus,
+            }
+          : null,
+      )
+    : null;
   const activeCustomRoutes = customRoutes.filter((route) => !route.archivedAt);
 
   const checkInHistory = useAppStore((s) => s.checkInHistory);
@@ -483,9 +497,20 @@ export default function YouScreen() {
             value={routeLabel}
             onChange={(e) => setRouteLabel(e.target.value)}
           />
+          {routeSetupOptions && (
+            <SetupOptionSections
+              model={routeSetupOptions}
+              value={routeFocus}
+              onSelect={setRouteFocus}
+            />
+          )}
           <textarea
             className="input-field h-20 resize-none"
-            placeholder="What does a small win look like?"
+            placeholder={
+              routeSetupOptions
+                ? `Custom. ${routeSetupOptions.customPlaceholder}. What does a small win look like?`
+                : 'What does a small win look like?'
+            }
             value={routeFocus}
             onChange={(e) => setRouteFocus(e.target.value)}
           />
