@@ -4,7 +4,12 @@ import { useAppStore } from '@/store/useAppStore';
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-const ADMIN_EMAILS = ['liam@whatisnext.io'];
+const ADMIN_EMAILS = new Set(
+  (import.meta.env.VITE_ADMIN_EMAILS ?? '')
+    .split(',')
+    .map((email: string) => email.trim().toLowerCase())
+    .filter(Boolean),
+);
 
 interface MetricsSnapshot {
   snapshot_date: string;
@@ -33,7 +38,7 @@ export default function AdminMetricsPage() {
   const [error, setError] = useState<string | null>(null);
   const [triggering, setTriggering] = useState(false);
 
-  const isAdmin = authUser && ADMIN_EMAILS.includes(authUser.email);
+  const isAdmin = !!authUser && ADMIN_EMAILS.has(authUser.email.trim().toLowerCase());
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: navigate and loadSnapshots are stable; only re-run when admin status changes
   useEffect(() => {

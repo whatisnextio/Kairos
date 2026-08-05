@@ -58,6 +58,27 @@ describe('security hardening', () => {
     expect(customRoutes).toContain('auth.uid() = user_id');
   });
 
+  it('keeps admin metrics protected by server-side admin checks', () => {
+    const adminMetricsMigration = readFileSync(
+      'supabase/migrations/026_harden_admin_metrics_auth.sql',
+      'utf8',
+    );
+    const computeMetrics = functionSource('compute-weekly-metrics');
+    const adminMetricsPage = readFileSync('src/pages/AdminMetricsPage.tsx', 'utf8');
+
+    expect(adminMetricsMigration).toContain("auth.jwt() -> 'app_metadata' ->> 'role'");
+    expect(adminMetricsMigration).toContain("= 'admin'");
+    expect(adminMetricsMigration).toContain('using (public.is_admin())');
+
+    expect(computeMetrics).toContain('function isAdminUser');
+    expect(computeMetrics).toContain('role === "admin"');
+    expect(computeMetrics).toContain('Deno.env.get("ADMIN_EMAILS") ?? ""');
+    expect(computeMetrics).not.toContain('?? "liam@whatisnext.io"');
+
+    expect(adminMetricsPage).toContain('VITE_ADMIN_EMAILS');
+    expect(adminMetricsPage).not.toContain("['liam@whatisnext.io']");
+  });
+
   it('documents the reviewed security surfaces and residual risks', () => {
     const review = readFileSync('docs/SECURITY_REVIEW.md', 'utf8');
     const functionNames = readdirSync(edgeFunctionRoot, { withFileTypes: true })
