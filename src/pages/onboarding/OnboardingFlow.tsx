@@ -59,6 +59,11 @@ export default function OnboardingFlow() {
   const stepNumber = ONBOARDING_STEPS.indexOf(step) + 1;
   const stepCount = ONBOARDING_STEPS.length;
 
+  const goToFramework = () => {
+    setSubmitError(null);
+    setStep('framework');
+  };
+
   const goToIdentity = () => {
     setSubmitError(null);
     setStep('identity');
@@ -453,15 +458,22 @@ export default function OnboardingFlow() {
               />
             )}
 
-            <Button
-              onClick={goToFocus}
-              disabled={
-                !displayName.trim() || !anchorId || (anchorId === 'custom' && !customAnchor.trim())
-              }
-              className="w-full mt-5"
-            >
-              Continue
-            </Button>
+            <div className="flex gap-3 mt-5">
+              <Button variant="ghost" onClick={goToFramework} className="flex-1">
+                Back
+              </Button>
+              <Button
+                onClick={goToFocus}
+                disabled={
+                  !displayName.trim() ||
+                  !anchorId ||
+                  (anchorId === 'custom' && !customAnchor.trim())
+                }
+                className="flex-1"
+              >
+                Continue
+              </Button>
+            </div>
           </section>
         )}
 
@@ -637,7 +649,17 @@ export default function OnboardingFlow() {
                 disabled={!microAction.trim() || submitting}
                 className="flex-1"
               >
-                {submitting ? 'Starting...' : 'Done, start 12K'}
+                {submitting ? (
+                  <span className="inline-flex items-center justify-center gap-2">
+                    <span
+                      className="h-4 w-4 animate-spin rounded-full border-2 border-base-black/30 border-t-base-black"
+                      aria-hidden="true"
+                    />
+                    Starting...
+                  </span>
+                ) : (
+                  'Done, start 12K'
+                )}
               </Button>
             </div>
 
