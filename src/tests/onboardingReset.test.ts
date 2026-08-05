@@ -106,7 +106,7 @@ describe('onboarding and reset contract', () => {
     expect(source).toContain('setSubmitting(false)');
   });
 
-  it('archives the active journey before cycle reset clears current state', async () => {
+  it('clears journey metrics when a user resets their journey', async () => {
     const { useAppStore } = await import('@/store/useAppStore');
 
     useAppStore.getState().reset();
@@ -119,55 +119,68 @@ describe('onboarding and reset contract', () => {
       todayCustomRouteCheckIns: {},
       customRouteCheckInHistory: {},
       customRoutes: [],
-      journeyArchive: [],
+      journeyArchive: [
+        {
+          id: 'archive-1',
+          archivedAt: '2026-08-03T00:00:00Z',
+          reason: 'abandoned',
+          cycleId: 'cycle-0',
+          startDate: '2026-08-01',
+          endDate: '2026-08-03',
+          xp: 50,
+          domainFocuses: [],
+          customRoutes: [],
+          checkInHistory: {},
+          customRouteCheckInHistory: {},
+        },
+      ],
+      streaks: {
+        BODY: {
+          userId: 'user-1',
+          domainType: 'BODY',
+          currentStreak: 2,
+          longestStreak: 2,
+          lastCheckInDate: '2026-08-04',
+        },
+      },
+      streakProtectionHistory: { 'BODY-2026-08-04': true },
+      awardedWeeklyBonuses: { '2026-W32': true },
+      lastVibeCheckDate: '2026-08-04',
+      levelUpPending: { level: 2, label: 'Level 2' },
       onboardingComplete: true,
     });
 
-    useAppStore.getState().archiveCurrentJourney('abandoned');
-    useAppStore.getState().resetCycleLocalState();
-    useAppStore.getState().setCurrentCycle(null);
-    useAppStore.getState().setOnboardingComplete(false);
+    useAppStore.getState().resetJourneyMetricsLocalState();
 
     const state = useAppStore.getState();
     expect(state.currentCycle).toBeNull();
     expect(state.onboardingComplete).toBe(false);
+    expect(state.profile?.xp).toBe(0);
+    expect(state.profile?.currentKairosCycleId).toBeNull();
     expect(state.domainFocuses).toEqual([]);
     expect(state.checkInHistory).toEqual({});
+    expect(state.todayCheckIns).toEqual({});
+    expect(state.streaks).toEqual({});
+    expect(state.streakProtectionHistory).toEqual({});
+    expect(state.awardedWeeklyBonuses).toEqual({});
     expect(state.lastVibeCheckDate).toBeNull();
     expect(state.levelUpPending).toBeNull();
-    expect(state.journeyArchive).toHaveLength(1);
-    expect(state.journeyArchive[0]).toMatchObject({
-      reason: 'abandoned',
-      cycleId: 'cycle-1',
-      xp: 80,
-      domainFocuses: [{ domainType: 'BODY', focusDescription: 'Walk for 20 minutes' }],
-    });
+    expect(state.journeyArchive).toEqual([]);
   });
 
-  it('resets profile KP through a trusted database function when a journey is abandoned', () => {
+  it('resets all journey metrics through a trusted database function when a journey is abandoned', () => {
     const modal = readFileSync('src/components/modals/AbandonCycleModal.tsx', 'utf8');
-    const migration = readFileSync(
-      'supabase/migrations/032_cycle_scoped_ai_nudges_and_reset_progress.sql',
-      'utf8',
-    );
+    const migration = readFileSync('supabase/migrations/033_reset_journey_metrics.sql', 'utf8');
 
-    expect(modal).toContain("'reset_profile_progress'");
-    expect(modal).toContain('isMissingRpcError');
-    expect(modal).toContain('loadCompletedCycleXp');
-    expect(modal).toContain("supabase.rpc('increment_profile_xp'");
-    expect(modal).toContain('p_delta: preservedXp - Math.max(0, currentRemoteXp)');
-    expect(modal).toContain(".from('ai_nudges')");
-    expect(modal).toContain(".eq('type', 'daily_nudge')");
-    expect(modal).toContain('currentKairosCycleId: null, xp: preservedXp');
-    expect(modal).toContain('Completed journeys keep KP.');
-    expect(migration).toContain('create or replace function public.reset_profile_progress');
-    expect(migration).toContain('returns integer');
-    expect(migration).toContain("and status = 'completed'");
-    expect(migration).toContain('set xp = completed_xp');
+    expect(modal).toContain("supabase.rpc('reset_journey_metrics')");
+    expect(modal).toContain('resetJourneyMetricsLocalState');
+    expect(modal).not.toContain('archiveCurrentJourney');
+    expect(modal).toContain('Your active journey, KP, streaks, check-ins, and local');
+    expect(migration).toContain('create or replace function public.reset_journey_metrics()');
+    expect(migration).toContain('xp = 0');
+    expect(migration).toContain('current_kairos_cycle_id = null');
+    expect(migration).toContain('delete from public.kairos_cycles');
     expect(migration).toContain('delete from public.user_streaks');
-    expect(migration).toContain(
-      'revoke all on function public.reset_profile_progress(uuid) from public, anon',
-    );
   });
 
   it('starts a new cycle only after archiving the previous local journey', () => {

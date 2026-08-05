@@ -2,32 +2,11 @@ import Button from '@/components/common/Button';
 import { supabase } from '@/services/supabaseClient';
 import { useAppStore } from '@/store/useAppStore';
 import { getDayInCycle } from '@/utils/kairos';
-import { toLocalIsoDate } from '@/utils/v1Framework';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 interface Props {
   onClose: () => void;
-}
-
-function isMissingRpcError(message: string): boolean {
-  return /function .* does not exist|could not find the function|schema cache/i.test(message);
-}
-
-async function loadCompletedCycleXp(userId: string): Promise<{ xp: number; error?: string }> {
-  const { data, error } = await supabase
-    .from('kairos_cycles')
-    .select('total_xp_earned')
-    .eq('user_id', userId)
-    .eq('status', 'completed');
-
-  if (error) return { xp: 0, error: error.message };
-
-  const xp = (data ?? []).reduce(
-    (sum, row) => sum + Math.max(0, Number(row.total_xp_earned ?? 0)),
-    0,
-  );
-  return { xp };
 }
 
 export default function AbandonCycleModal({ onClose }: Props) {
@@ -39,8 +18,7 @@ export default function AbandonCycleModal({ onClose }: Props) {
     setProfile,
     setCurrentCycle,
     setOnboardingComplete,
-    resetCycleLocalState,
-    archiveCurrentJourney,
+    resetJourneyMetricsLocalState,
   } = useAppStore();
   const [confirming, setConfirming] = useState(false);
   const [abandoning, setAbandoning] = useState(false);
@@ -50,96 +28,21 @@ export default function AbandonCycleModal({ onClose }: Props) {
     if (!authUser || !currentCycle) return;
     setAbandoning(true);
     setError(null);
-    const today = toLocalIsoDate(new Date());
-    let preservedXp = 0;
 
     if (currentCycle.id !== 'local-dev-cycle') {
-      // All tiers have their cycle row in Supabase (created during onboarding for all users).
-      // Must update it regardless of tier so bootstrap doesn't reload the cycle as 'active' on next login.
-      const { error: err } = await supabase
-        .from('kairos_cycles')
-        .update({ status: 'abandoned', end_date: today })
-        .eq('id', currentCycle.id);
-      if (err) {
-        setError(err.message);
+      // Protected progress fields such as KP and squad membership must reset
+      // through the trusted RPC, not direct browser updates.
+      const { error: resetErr } = await supabase.rpc('reset_journey_metrics');
+      if (resetErr) {
+        setError(resetErr.message);
         setAbandoning(false);
         return;
-      }
-
-      const { error: profileErr } = await supabase
-        .from('profiles')
-        .update({ current_kairos_cycle_id: null })
-        .eq('id', authUser.id);
-      if (profileErr) {
-        setError(profileErr.message);
-        setAbandoning(false);
-        return;
-      }
-
-      const { data: progressXp, error: progressErr } = await supabase.rpc(
-        'reset_profile_progress',
-        {
-          p_user_id: authUser.id,
-        },
-      );
-      if (progressErr) {
-        if (!isMissingRpcError(progressErr.message)) {
-          setError(progressErr.message);
-          setAbandoning(false);
-          return;
-        }
-
-        const completed = await loadCompletedCycleXp(authUser.id);
-        if (completed.error) {
-          setError(completed.error);
-          setAbandoning(false);
-          return;
-        }
-        preservedXp = completed.xp;
-
-        const { data: remoteProfile } = await supabase
-          .from('profiles')
-          .select('xp')
-          .eq('id', authUser.id)
-          .maybeSingle();
-        const currentRemoteXp =
-          typeof remoteProfile?.xp === 'number' ? remoteProfile.xp : (profile?.xp ?? 0);
-        const { error: xpErr } = await supabase.rpc('increment_profile_xp', {
-          p_user_id: authUser.id,
-          p_delta: preservedXp - Math.max(0, currentRemoteXp),
-        });
-        if (xpErr) {
-          setError(xpErr.message);
-          setAbandoning(false);
-          return;
-        }
-
-        await supabase.from('user_streaks').delete().eq('user_id', authUser.id);
-        await supabase
-          .from('ai_nudges')
-          .delete()
-          .eq('user_id', authUser.id)
-          .eq('date', today)
-          .eq('type', 'daily_nudge');
-      } else {
-        if (typeof progressXp === 'number') {
-          preservedXp = progressXp;
-        } else {
-          const completed = await loadCompletedCycleXp(authUser.id);
-          if (completed.error) {
-            setError(completed.error);
-            setAbandoning(false);
-            return;
-          }
-          preservedXp = completed.xp;
-        }
       }
     }
 
-    archiveCurrentJourney('abandoned');
     setCurrentCycle(null);
-    if (profile) setProfile({ ...profile, currentKairosCycleId: null, xp: preservedXp });
-    resetCycleLocalState();
+    if (profile) setProfile({ ...profile, xp: 0, currentKairosCycleId: null, squadId: null });
+    resetJourneyMetricsLocalState();
     setOnboardingComplete(false);
     setAbandoning(false);
     onClose();
@@ -174,8 +77,8 @@ export default function AbandonCycleModal({ onClose }: Props) {
               Reset 12K journey?
             </h2>
             <p className="text-base-subtext text-sm mb-6">
-              This starts onboarding again. KP from this active journey, progress, and prompts
-              reset. Completed journeys keep KP.
+              This starts onboarding again. Your active journey, KP, streaks, check-ins, and local
+              history reset. Your account, subscription, and preferences stay intact.
             </p>
             <div className="flex gap-3">
               <Button variant="ghost" onClick={onClose} className="flex-1">
@@ -192,8 +95,9 @@ export default function AbandonCycleModal({ onClose }: Props) {
               Are you sure?
             </h2>
             <p className="text-base-subtext text-sm mb-6">
-              Day {currentCycle ? getDayInCycle(currentCycle.startDate) : '?'} will be closed and
-              kept in history. You will choose your identity, domain, and first action again.
+              Day {currentCycle ? getDayInCycle(currentCycle.startDate) : '?'} will be cleared and
+              your progress metrics will return to zero. You will choose your identity, domain, and
+              first action again.
             </p>
             {error && (
               <p role="alert" className="text-status-missed text-xs mb-3">

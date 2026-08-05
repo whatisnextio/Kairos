@@ -274,6 +274,7 @@ interface AppActions {
   completeCycle: (reflection: string) => Promise<void>;
 
   resetCycleLocalState: () => void;
+  resetJourneyMetricsLocalState: () => void;
   signOut: () => Promise<void>;
   reset: () => void;
 }
@@ -1179,6 +1180,43 @@ export const useAppStore = create<AppState & AppActions>()(
           offlineQueueCount: 0,
           offlineSyncLastError: null,
         }),
+
+      resetJourneyMetricsLocalState: () =>
+        set((state) => ({
+          currentCycle: null,
+          profile: state.profile
+            ? {
+                ...state.profile,
+                xp: 0,
+                currentKairosCycleId: null,
+                squadId: null,
+              }
+            : null,
+          onboardingComplete: false,
+          celebrationPending: false,
+          levelUpPending: null,
+          streakProtectionPending: null,
+          nextCycleIntention: null,
+          lastCelebrationPhase: null,
+          lastVibeCheckDate: null,
+          domainFocuses: [],
+          customRoutes: [],
+          todayCheckIns: {},
+          todayCustomRouteCheckIns: {},
+          checkInHistory: {},
+          customRouteCheckInHistory: {},
+          checkInNoteOverrides: {},
+          streaks: {},
+          improveCardStatuses: {},
+          improveCardSnapshots: {},
+          rewardedImproveCards: {},
+          streakProtectionHistory: {},
+          awardedWeeklyBonuses: {},
+          journeyArchive: [],
+          offlineSyncStatus: 'idle',
+          offlineQueueCount: 0,
+          offlineSyncLastError: null,
+        })),
 
       signOut: async () => {
         clearLocalDevSession();
