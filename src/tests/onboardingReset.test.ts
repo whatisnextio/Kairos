@@ -111,4 +111,17 @@ describe('onboarding and reset contract', () => {
       domainFocuses: [{ domainType: 'BODY', focusDescription: 'Walk for 20 minutes' }],
     });
   });
+
+  it('starts a new cycle only after archiving the previous local journey', () => {
+    const source = readFileSync('src/pages/NewCycleScreen.tsx', 'utf8');
+    const archiveIndex = source.indexOf("archiveCurrentJourney('completed')");
+    const setCycleIndex = source.indexOf('setCurrentCycle({');
+    const resetIndex = source.indexOf('resetCycleLocalState();');
+
+    expect(archiveIndex).toBeGreaterThan(-1);
+    expect(setCycleIndex).toBeGreaterThan(-1);
+    expect(resetIndex).toBeGreaterThan(-1);
+    expect(archiveIndex).toBeLessThan(setCycleIndex);
+    expect(archiveIndex).toBeLessThan(resetIndex);
+  });
 });

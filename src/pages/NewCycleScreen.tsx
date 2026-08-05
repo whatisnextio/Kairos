@@ -81,6 +81,8 @@ export default function NewCycleScreen() {
       return;
     }
 
+    archiveCurrentJourney('completed');
+
     setCurrentCycle({
       id: cycle.id,
       userId: authUser.id,
@@ -99,7 +101,6 @@ export default function NewCycleScreen() {
       customAnchorName: anchorId === 'custom' ? customAnchor : undefined,
     });
 
-    archiveCurrentJourney('completed');
     resetCycleLocalState();
     setStarting(false);
     navigate('/', { replace: true });
