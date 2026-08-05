@@ -38,10 +38,10 @@ const STATUS_DOT: Record<string, string> = {
 
 const STATUS_LABEL: Record<string, string> = {
   Done: 'Done',
-  Partial: 'Partial',
+  Partial: 'Part done',
   Missed: 'Missed',
   Pending: 'Pending',
-  Protected: 'Protected',
+  Protected: 'Rest day',
 };
 
 // ─── SVG Sparkline ────────────────────────────────────────────────────────────

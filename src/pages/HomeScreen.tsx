@@ -616,7 +616,7 @@ export default function HomeScreen() {
             </div>
             {activeDayStateProtocol.actions.some((action) => action.kind === 'mark_partial') && (
               <p className="text-base-muted text-xs mt-3">
-                "Part done" means you did a smaller version — it still counts.
+                "Part done" means you did a smaller version - it still counts.
               </p>
             )}
             {activeDayStateProtocol.actions.some((action) => action.kind === 'dismiss') && (

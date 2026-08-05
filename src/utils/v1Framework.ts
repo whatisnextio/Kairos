@@ -335,12 +335,12 @@ export function getEarlyWakeProtocol(now = new Date()): EarlyWakeProtocol | null
 
   return {
     title: 'Up early',
-    body: 'Do something small or go back to sleep — no pressure either way.',
+    body: 'Do something small or go back to sleep. No pressure either way.',
     steps: [
       'Water first.',
       'No scrolling for the first ten minutes.',
       'Pick one small action if you feel ready.',
-      'Still tired? Go back to bed — that counts too.',
+      'Still tired? Go back to bed. That counts too.',
     ],
   };
 }
@@ -533,7 +533,7 @@ export function selectDayStateProtocol({
       type: 'catch_up',
       title: escalated ? 'Quick win' : 'Still time today',
       body: escalated
-        ? `${targetLabel(target)} still needs a mark. Record what happened — a smaller version counts.`
+        ? `${targetLabel(target)} still needs a mark. Record what happened - a smaller version counts.`
         : `${targetLabel(missedTarget ?? target)} is still open. Pick one small action and mark it.`,
       steps: [
         'Ten quiet minutes is enough.',

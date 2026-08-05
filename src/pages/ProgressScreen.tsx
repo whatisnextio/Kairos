@@ -159,7 +159,7 @@ export default function ProgressScreen() {
         {cycleComplete && (
           <div className="rounded-xl border border-accent-green/40 bg-accent-green/5 px-4 py-5">
             <p className="font-heading text-xs text-accent-green tracking-widest uppercase mb-1">
-              Cycle complete
+              Journey complete
             </p>
             <h2 className="font-heading text-xl font-bold text-base-text tracking-wide mb-3">
               {KAIROS_CYCLE_LENGTH_DAYS} days done.
@@ -198,7 +198,7 @@ export default function ProgressScreen() {
                 View reflection
               </Button>
               <Button size="sm" onClick={() => navigate('/new-cycle')} type="button">
-                Start Cycle {nextCycleNumber}
+                Start journey {nextCycleNumber}
               </Button>
             </div>
           </div>
@@ -255,7 +255,7 @@ export default function ProgressScreen() {
           <div className="flex items-start justify-between gap-3">
             <div>
               <h2 className="font-heading text-xs font-medium text-base-subtext tracking-widest uppercase mb-2">
-                Weekly mentor review
+                Weekly review
               </h2>
               <p className="text-base-subtext text-sm">
                 Week {weeklyReview.weekNumber} - {weeklyReview.phaseLabel}
@@ -291,7 +291,7 @@ export default function ProgressScreen() {
 
               <details className="mb-4 rounded border border-base-border bg-base-black/20 px-3 py-2">
                 <summary className="cursor-pointer text-base-subtext text-xs font-heading tracking-widest uppercase">
-                  Flywheel proof
+                  This week's proof
                 </summary>
                 <div className="mt-3 flex flex-col gap-3">
                   {weeklyReview.entries.map((entry) => (
@@ -304,7 +304,7 @@ export default function ProgressScreen() {
                         <p className="font-heading text-sm text-base-subtext">{entry.score}%</p>
                       </div>
                       <p className="text-base-muted text-[11px] mt-1">
-                        {entry.done} done - {entry.partial} partial - {entry.missed} missed
+                        {entry.done} done - {entry.partial} part done - {entry.missed} missed
                       </p>
                       {entry.routes.length > 0 && (
                         <div className="mt-2 flex flex-col gap-1">
@@ -347,7 +347,7 @@ export default function ProgressScreen() {
         {activeCustomRoutes.length > 0 && (
           <Card>
             <h2 className="font-heading text-xs font-medium text-base-subtext tracking-widest uppercase mb-3">
-              Personal sub-routes
+              Your focuses
             </h2>
             <p className="text-base-muted text-xs mb-3">
               Tracked under the core categories, not as separate domains.
@@ -414,7 +414,7 @@ export default function ProgressScreen() {
                       })}
                     </div>
                     <p className="text-base-muted text-[11px] mt-2">
-                      {done} done - {partial} partial - {missed} missed
+                      {done} done - {partial} part done - {missed} missed
                     </p>
                   </div>
                 );
@@ -464,7 +464,7 @@ export default function ProgressScreen() {
                   />
                 </div>
                 <p className="text-base-muted text-[11px] mt-2">
-                  {entry.done} done - {entry.partial} partial - {entry.missed} missed
+                  {entry.done} done - {entry.partial} part done - {entry.missed} missed
                 </p>
               </button>
             ))}
@@ -638,7 +638,7 @@ export default function ProgressScreen() {
         {/* Phase timeline */}
         <Card>
           <h2 className="font-heading text-xs font-medium text-base-subtext tracking-widest uppercase mb-3">
-            KAIROS Phases
+            Phases
           </h2>
           <div className="flex flex-col gap-2">
             {KAIROS_PHASES.map((phase: KairosPhaseConfig) => {

@@ -135,9 +135,9 @@ test.describe('NFR smoke gates', () => {
     await page.getByRole('button', { name: /check in fuel/i }).click();
     await page
       .getByRole('dialog')
-      .getByRole('button', { name: /partial smaller version/i })
+      .getByRole('button', { name: /part done did a smaller version/i })
       .click();
-    await expect(page.getByTestId('daily-domain-row-FUEL')).toContainText('Partial');
+    await expect(page.getByTestId('daily-domain-row-FUEL')).toContainText('Part done');
     await expect(page.getByRole('button', { name: /check in fuel/i })).toBeVisible();
     await context.setOffline(false);
 
