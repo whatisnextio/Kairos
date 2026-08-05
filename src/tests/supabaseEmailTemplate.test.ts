@@ -32,7 +32,9 @@ describe('Supabase magic-link email template', () => {
   });
 
   it('uses the live logo asset and branded CTA', () => {
-    expect(html).toContain('https://www.12k.app/kairos-12k-logo.png');
+    expect(html).toContain(
+      'https://raw.githubusercontent.com/whatisnextio/Kairos/main/public/kairos-12k-logo.png',
+    );
     expect(html).toContain('Open Kairos');
     expect(html).toContain('#22c55e');
   });

@@ -1,8 +1,16 @@
 import { readFile } from 'node:fs/promises';
 import process from 'node:process';
 
-const projectRef = process.env.SUPABASE_PROJECT_REF ?? 'kvksenmykcnlwnaokamg';
+const linkedProjectRef = await readFile(new URL('../supabase/.temp/project-ref', import.meta.url), 'utf8')
+  .then((value) => value.trim())
+  .catch(() => '');
+const projectRef = process.env.SUPABASE_PROJECT_REF ?? linkedProjectRef;
 const accessToken = process.env.SUPABASE_ACCESS_TOKEN;
+
+if (!projectRef) {
+  console.error('SUPABASE_PROJECT_REF is required when the local Supabase project is not linked.');
+  process.exit(1);
+}
 
 if (!accessToken) {
   console.error('SUPABASE_ACCESS_TOKEN is required.');
