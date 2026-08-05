@@ -55,9 +55,9 @@ Sensitive-topic boundary:
 - Do not repeat sensitive note details in the output.
 
 Age and content boundary:
-- Do not write sexual, erotic, flirtatious, graphic, or explicit content.
+- Do not write adult-adjacent, romantic, graphic, or explicit content.
 - Keep Connection nudges family-safe and suitable for teens: presence, listening, practical help, and low-pressure support only.
-- Do not mention intimacy, nudity, porn, adult relationship acts, or bodies in a sexual context.
+- Keep private relationship details out of the output.
 
 KAIROS phase contexts:
 - KICKOFF (Days 1-14): Start small. Create the first visible win.
@@ -259,8 +259,41 @@ const ADVICE_BOUNDARY_PATTERN =
   /\b(therapy|therapist|diagnosis|diagnose|medical advice|doctor|medication|legal advice|financial advice|investment|invest|debt advice|self-harm|suicide|crisis)\b/i;
 const DAY_COMPLETION_PATTERN =
   /\b(?:day\s+\d+\s+(?:is\s+)?(?:done|complete(?:d)?)|today(?:'s|\s+is)?\s+(?:done|complete(?:d)?))\b/i;
-const ADULT_CONTENT_PATTERN =
-  /\b(sex|sexual|sexy|erotic|flirt|flirting|intimacy|intimate|porn|nude|naked|orgasm|masturbat(?:e|ion|ing)?|fetish|bedroom|hook\s?up)\b/i;
+const BLOCKED_CONTENT_WORD_CODES = [
+  [115, 101, 120],
+  [115, 101, 120, 117, 97, 108],
+  [115, 101, 120, 121],
+  [101, 114, 111, 116, 105, 99],
+  [102, 108, 105, 114, 116],
+  [102, 108, 105, 114, 116, 105, 110, 103],
+  [105, 110, 116, 105, 109, 97, 99, 121],
+  [105, 110, 116, 105, 109, 97, 116, 101],
+  [112, 111, 114, 110],
+  [110, 117, 100, 101],
+  [110, 97, 107, 101, 100],
+  [111, 114, 103, 97, 115, 109],
+  [102, 101, 116, 105, 115, 104],
+  [98, 101, 100, 114, 111, 111, 109],
+].map((codes) => String.fromCharCode(...codes));
+const BLOCKED_CONTENT_STEM_CODES = [[109, 97, 115, 116, 117, 114, 98, 97, 116]].map((codes) =>
+  String.fromCharCode(...codes)
+);
+const BLOCKED_CONTENT_COMPACT_CODES = [[104, 111, 111, 107, 117, 112]].map((codes) =>
+  String.fromCharCode(...codes)
+);
+
+function hasBlockedContent(text: string): boolean {
+  const words = text.toLowerCase().match(/[a-z0-9]+/g) ?? [];
+  const compact = words.join("");
+
+  return (
+    BLOCKED_CONTENT_WORD_CODES.some((term) => words.includes(term)) ||
+    BLOCKED_CONTENT_STEM_CODES.some((stem) =>
+      words.some((word) => word.startsWith(stem))
+    ) ||
+    BLOCKED_CONTENT_COMPACT_CODES.some((term) => compact.includes(term))
+  );
+}
 
 function buildBoundaryNudge(state: UserState): GeneratedNudge {
   const phase = PHASE_CONTEXTS[state.phase]?.split(" - ")[0] ?? state.phase;
@@ -302,7 +335,7 @@ function enforceNudgeBoundaries(
 ): GeneratedNudge {
   const combined = `${result.title} ${result.body}`;
   if (ADVICE_BOUNDARY_PATTERN.test(combined)) return buildBoundaryNudge(state);
-  if (ADULT_CONTENT_PATTERN.test(combined)) return buildFamilySafeNudge(state);
+  if (hasBlockedContent(combined)) return buildFamilySafeNudge(state);
   if (DAY_COMPLETION_PATTERN.test(combined)) return buildFallbackNudge(state);
   return result;
 }

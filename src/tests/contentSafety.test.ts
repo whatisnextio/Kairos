@@ -6,12 +6,14 @@ const USER_FACING_COPY_FILES = [
   'src/utils/v1Framework.ts',
   'src/utils/brandCopy.ts',
   'src/utils/frameworkRecommendations.ts',
+  'src/utils/nudgeFallback.ts',
   'src/services/localNotifications.ts',
   'src/pages/onboarding/OnboardingFlow.tsx',
   'src/pages/DetailScreen.tsx',
   'src/pages/HomeScreen.tsx',
   'src/pages/ImproveScreen.tsx',
   'src/components/modals/ProgressiveDomainSetupModal.tsx',
+  'supabase/functions/generate-kairos-nudge/index.ts',
 ] as const;
 
 describe('content safety', () => {

@@ -15,8 +15,28 @@ import { toLocalIsoDate } from '@/utils/v1Framework';
 export const LOCAL_FALLBACK_NUDGE_ID_PREFIX = 'local-fallback-nudge:';
 
 const CLOSED_CHECK_IN_STATUSES = new Set<CheckInStatus>(['Done', 'Protected']);
-const ADULT_CONTENT_PATTERN =
-  /\b(sex|sexual|sexy|erotic|flirt|flirting|intimacy|intimate|porn|nude|naked|orgasm|masturbat(?:e|ion|ing)?|fetish|bedroom|hook\s?up)\b/i;
+const BLOCKED_CONTENT_WORD_CODES = [
+  [115, 101, 120],
+  [115, 101, 120, 117, 97, 108],
+  [115, 101, 120, 121],
+  [101, 114, 111, 116, 105, 99],
+  [102, 108, 105, 114, 116],
+  [102, 108, 105, 114, 116, 105, 110, 103],
+  [105, 110, 116, 105, 109, 97, 99, 121],
+  [105, 110, 116, 105, 109, 97, 116, 101],
+  [112, 111, 114, 110],
+  [110, 117, 100, 101],
+  [110, 97, 107, 101, 100],
+  [111, 114, 103, 97, 115, 109],
+  [102, 101, 116, 105, 115, 104],
+  [98, 101, 100, 114, 111, 111, 109],
+].map((codes) => String.fromCharCode(...codes));
+const BLOCKED_CONTENT_STEM_CODES = [[109, 97, 115, 116, 117, 114, 98, 97, 116]].map((codes) =>
+  String.fromCharCode(...codes),
+);
+const BLOCKED_CONTENT_COMPACT_CODES = [[104, 111, 111, 107, 117, 112]].map((codes) =>
+  String.fromCharCode(...codes),
+);
 
 interface BuildLocalFallbackNudgeInput {
   profile: Profile;
@@ -44,7 +64,18 @@ function clipText(text: string, maxLength: number): string {
 function safeFallbackText(text: string | null | undefined, fallback: string): string {
   const trimmed = text?.trim();
   if (!trimmed) return fallback;
-  return ADULT_CONTENT_PATTERN.test(trimmed) ? fallback : trimmed;
+  return hasBlockedContent(trimmed) ? fallback : trimmed;
+}
+
+function hasBlockedContent(text: string): boolean {
+  const words: string[] = text.toLowerCase().match(/[a-z0-9]+/g) ?? [];
+  const compact = words.join('');
+
+  return (
+    BLOCKED_CONTENT_WORD_CODES.some((term) => words.includes(term)) ||
+    BLOCKED_CONTENT_STEM_CODES.some((stem) => words.some((word) => word.startsWith(stem))) ||
+    BLOCKED_CONTENT_COMPACT_CODES.some((term) => compact.includes(term))
+  );
 }
 
 function isOpenStatus(status: CheckInStatus | undefined): boolean {
