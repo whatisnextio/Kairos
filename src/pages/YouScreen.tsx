@@ -23,6 +23,7 @@ import { FEATURE_EXPLANATIONS } from '@/utils/brandCopy';
 import { hasBrotherhoodAccess } from '@/utils/entitlements';
 import { deriveEarnedBadges, formatKairosPoints, getLevelForXp } from '@/utils/gamification';
 import { getDayInCycle } from '@/utils/kairos';
+import type { SharePrivacyPreferences } from '@/utils/shareProgress';
 import type { ThemePreference } from '@/utils/theme';
 import { buildDomainSetupOptionModel } from '@/utils/v1Framework';
 import { type ChangeEvent, useCallback, useEffect, useState } from 'react';
@@ -80,6 +81,14 @@ function resizeImageDataUrl(dataUrl: string): Promise<string> {
 
 const SAVE_PUSH_ENDPOINT = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/save-push-subscription`;
 const DELETE_ACCOUNT_ENDPOINT = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/delete-account`;
+
+const SHARE_PRIVACY_OPTIONS: Array<[keyof SharePrivacyPreferences, string]> = [
+  ['includeName', 'Include display name'],
+  ['includePhoto', 'Include profile photo in preview'],
+  ['includeBadges', 'Include milestone badge'],
+  ['includeDomainDetail', 'Show core domain scores'],
+  ['includeStats', 'Show level and KP'],
+];
 
 async function syncPushPreferences(preferences: unknown): Promise<boolean> {
   try {
@@ -152,6 +161,9 @@ export default function YouScreen() {
     'idle',
   );
   const [settingsError, setSettingsError] = useState<string | null>(null);
+  const [sharePrivacyStatus, setSharePrivacyStatus] = useState<
+    'idle' | 'saving' | 'saved' | 'error'
+  >('idle');
   const todayNotificationKey = getLocalNotificationDateKey(new Date());
   const escalationPausedToday = notificationPreferences.pausedDate === todayNotificationKey;
 
@@ -379,46 +391,89 @@ export default function YouScreen() {
     }
   }, [signOut]);
 
-  const handleSaveSettings = useCallback(async () => {
-    if (!profile) return;
-    setSettingsStatus('saving');
-    setSettingsError(null);
+  const saveSettingsSnapshot = useCallback(
+    async (
+      overrides?: {
+        profileImageDataUrl?: string | null;
+        notificationPreferences?: typeof notificationPreferences;
+        sharePrivacyPreferences?: SharePrivacyPreferences;
+        themePreference?: ThemePreference;
+      },
+      options?: { syncPush?: boolean },
+    ): Promise<boolean> => {
+      if (!profile) return false;
+      const nextNotificationPreferences =
+        overrides?.notificationPreferences ?? notificationPreferences;
 
-    try {
-      await saveUserSettings({
-        userId: profile.id,
-        profileImageDataUrl,
-        notificationPreferences,
-        sharePrivacyPreferences,
-        themePreference,
-      });
+      setSettingsStatus('saving');
+      setSettingsError(null);
 
-      if (notificationPreferences.webPushEnabled) {
-        const pushSynced = await syncPushPreferences(notificationPreferences);
-        if (!pushSynced) {
-          setSettingsDirty(true);
-          setSettingsStatus('error');
-          setSettingsError(
-            'Saved to your account, but web push delivery did not update. Try Save settings again.',
-          );
-          return;
+      try {
+        await saveUserSettings({
+          userId: profile.id,
+          profileImageDataUrl: overrides?.profileImageDataUrl ?? profileImageDataUrl,
+          notificationPreferences: nextNotificationPreferences,
+          sharePrivacyPreferences: overrides?.sharePrivacyPreferences ?? sharePrivacyPreferences,
+          themePreference: overrides?.themePreference ?? themePreference,
+        });
+
+        if ((options?.syncPush ?? true) && nextNotificationPreferences.webPushEnabled) {
+          const pushSynced = await syncPushPreferences(nextNotificationPreferences);
+          if (!pushSynced) {
+            setSettingsDirty(true);
+            setSettingsStatus('error');
+            setSettingsError(
+              'Saved to your account, but web push delivery did not update. Try Save settings again.',
+            );
+            return false;
+          }
         }
-      }
 
-      setSettingsDirty(false);
-      setSettingsStatus('saved');
-    } catch (error) {
+        setSettingsDirty(false);
+        setSettingsStatus('saved');
+        return true;
+      } catch (error) {
+        setSettingsDirty(true);
+        setSettingsStatus('error');
+        setSettingsError(error instanceof Error ? error.message : 'Settings could not be saved.');
+        return false;
+      }
+    },
+    [
+      notificationPreferences,
+      profile,
+      profileImageDataUrl,
+      sharePrivacyPreferences,
+      themePreference,
+    ],
+  );
+
+  const handleSaveSettings = useCallback(async () => {
+    await saveSettingsSnapshot();
+  }, [saveSettingsSnapshot]);
+
+  const handleSharePrivacyChange = useCallback(
+    async (key: keyof SharePrivacyPreferences, checked: boolean) => {
+      const nextSharePrivacyPreferences = {
+        ...sharePrivacyPreferences,
+        [key]: checked,
+      };
+
+      setSharePrivacyPreferences(nextSharePrivacyPreferences);
       setSettingsDirty(true);
-      setSettingsStatus('error');
-      setSettingsError(error instanceof Error ? error.message : 'Settings could not be saved.');
-    }
-  }, [
-    notificationPreferences,
-    profile,
-    profileImageDataUrl,
-    sharePrivacyPreferences,
-    themePreference,
-  ]);
+      setSharePrivacyStatus('saving');
+
+      const saved = await saveSettingsSnapshot(
+        {
+          sharePrivacyPreferences: nextSharePrivacyPreferences,
+        },
+        { syncPush: false },
+      );
+
+      setSharePrivacyStatus(saved ? 'saved' : 'error');
+    },
+    [saveSettingsSnapshot, setSharePrivacyPreferences, sharePrivacyPreferences],
+  );
 
   const handleProfileImage = useCallback(
     (event: ChangeEvent<HTMLInputElement>) => {
@@ -884,13 +939,7 @@ export default function YouScreen() {
           Defaults for controlled progress shares. You still preview before anything leaves the app.
         </p>
         <div className="flex flex-col gap-3">
-          {[
-            ['includeName', 'Include display name'],
-            ['includePhoto', 'Include profile photo in preview'],
-            ['includeBadges', 'Include milestone badge'],
-            ['includeDomainDetail', 'Show core domain scores'],
-            ['includeStats', 'Show level and KP'],
-          ].map(([key, label]) => (
+          {SHARE_PRIVACY_OPTIONS.map(([key, label]) => (
             <label
               key={key}
               className="flex items-center justify-between gap-3 text-sm text-base-subtext"
@@ -898,16 +947,25 @@ export default function YouScreen() {
               <span>{label}</span>
               <input
                 type="checkbox"
-                checked={sharePrivacyPreferences[key as keyof typeof sharePrivacyPreferences]}
-                onChange={(e) => {
-                  setSharePrivacyPreferences({
-                    [key]: e.target.checked,
-                  });
-                  markSettingsDirty();
-                }}
+                checked={sharePrivacyPreferences[key]}
+                disabled={sharePrivacyStatus === 'saving'}
+                onChange={(e) => void handleSharePrivacyChange(key, e.target.checked)}
               />
             </label>
           ))}
+        </div>
+        <div aria-live="polite" className="mt-3 min-h-4">
+          {sharePrivacyStatus === 'saving' && (
+            <p className="text-base-muted text-xs">Saving privacy defaults...</p>
+          )}
+          {sharePrivacyStatus === 'saved' && (
+            <p className="text-accent-green text-xs">Sharing privacy saved in the database.</p>
+          )}
+          {sharePrivacyStatus === 'error' && (
+            <p role="alert" className="text-status-missed text-xs">
+              Sharing privacy could not be saved. Use Save settings, or try again.
+            </p>
+          )}
         </div>
       </Card>
 
