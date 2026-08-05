@@ -22,5 +22,16 @@ describe('AI nudge availability', () => {
     expect(source).toContain('function buildFallbackNudge');
     expect(source).toContain('AI provider unavailable, using fallback nudge');
     expect(source).toContain('result = buildFallbackNudge(state);');
+    expect(source).toContain(".eq('status', 'active')");
+    expect(source).toContain('local-fallback-nudge:');
+    expect(source).toContain('stored: false');
+  });
+
+  it('uses a local Improve card when the Edge Function is unavailable', () => {
+    const hook = readFileSync('src/hooks/useNudge.ts', 'utf8');
+
+    expect(hook).toContain('buildLocalFallbackNudge');
+    expect(hook).toContain('return fallbackNudge');
+    expect(hook).toContain('LOCAL_FALLBACK_NUDGE_ID_PREFIX');
   });
 });

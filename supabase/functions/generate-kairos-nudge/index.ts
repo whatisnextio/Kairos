@@ -298,13 +298,19 @@ Deno.serve(async (req: Request) => {
   try {
     const { data: profile, error: profileErr } = await supabase
       .from('profiles')
-      .select('*, identity_anchors(name)')
+      .select('*')
       .eq('id', userId)
       .single();
 
     if (profileErr || !profile) {
       return jsonResponse(req, { error: 'Profile not found' }, { status: 404 });
     }
+
+    const { data: identityAnchor } = await supabase
+      .from('identity_anchors')
+      .select('name')
+      .eq('id', profile.identity_anchor_id)
+      .maybeSingle();
 
     // Cache check
     const { data: cached } = await supabase
@@ -319,17 +325,30 @@ Deno.serve(async (req: Request) => {
       return jsonResponse(req, { nudge: cached, cached: true });
     }
 
-    const { data: cycle } = await supabase
-      .from('kairos_cycles')
-      .select('*')
-      .eq('id', profile.current_kairos_cycle_id)
-      .maybeSingle();
-
-    if (!cycle) {
-      return jsonResponse(req, { error: 'No active cycle' }, { status: 400 });
+    let cycle: Record<string, unknown> | null = null;
+    if (profile.current_kairos_cycle_id) {
+      const { data } = await supabase
+        .from('kairos_cycles')
+        .select('*')
+        .eq('id', profile.current_kairos_cycle_id)
+        .maybeSingle();
+      cycle = data;
     }
 
-    const startDate = new Date(cycle.start_date);
+    if (!cycle) {
+      const { data } = await supabase
+        .from('kairos_cycles')
+        .select('*')
+        .eq('user_id', userId)
+        .eq('status', 'active')
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      cycle = data;
+    }
+
+    const cycleId = (cycle?.id as string | undefined) ?? null;
+    const startDate = new Date((cycle?.start_date as string | undefined) ?? profile.created_at ?? today);
     const todayDate = new Date(today);
     const dayInCycle = Math.max(
       1,
@@ -348,19 +367,23 @@ Deno.serve(async (req: Request) => {
       PHASE_DAYS.find((p) => dayInCycle >= p.start && dayInCycle <= p.end) ??
       PHASE_DAYS[PHASE_DAYS.length - 1];
 
-    const { data: focuses } = await supabase
-      .from('user_domain_focuses')
-      .select('domain_type, focus_description')
-      .eq('user_id', userId)
-      .eq('cycle_id', cycle.id);
+    const { data: focuses } = cycleId
+      ? await supabase
+          .from('user_domain_focuses')
+          .select('domain_type, focus_description')
+          .eq('user_id', userId)
+          .eq('cycle_id', cycleId)
+      : { data: [] };
 
-    const { data: customRoutes } = await supabase
-      .from('custom_routes')
-      .select('id, label, parent_domain_type, focus_description')
-      .eq('user_id', userId)
-      .eq('cycle_id', cycle.id)
-      .is('archived_at', null)
-      .order('created_at', { ascending: true });
+    const { data: customRoutes } = cycleId
+      ? await supabase
+          .from('custom_routes')
+          .select('id, label, parent_domain_type, focus_description')
+          .eq('user_id', userId)
+          .eq('cycle_id', cycleId)
+          .is('archived_at', null)
+          .order('created_at', { ascending: true })
+      : { data: [] };
 
     const sevenDaysAgo = new Date(todayDate.getTime() - 7 * 86_400_000).toISOString().split('T')[0];
 
@@ -371,13 +394,15 @@ Deno.serve(async (req: Request) => {
       .gte('date', sevenDaysAgo)
       .order('date', { ascending: true });
 
-    const { data: customCheckIns } = await supabase
-      .from('custom_route_check_ins')
-      .select('date, status, notes, custom_routes(label)')
-      .eq('user_id', userId)
-      .eq('cycle_id', cycle.id)
-      .gte('date', sevenDaysAgo)
-      .order('date', { ascending: true });
+    const { data: customCheckIns } = cycleId
+      ? await supabase
+          .from('custom_route_check_ins')
+          .select('date, status, notes, custom_routes(label)')
+          .eq('user_id', userId)
+          .eq('cycle_id', cycleId)
+          .gte('date', sevenDaysAgo)
+          .order('date', { ascending: true })
+      : { data: [] };
 
     const { data: streaks } = await supabase
       .from('user_streaks')
@@ -395,7 +420,7 @@ Deno.serve(async (req: Request) => {
 
     const state: UserState = {
       identityAnchorName:
-        (profile.identity_anchors as { name: string } | null)?.name ?? profile.identity_anchor_id,
+        (identityAnchor as { name: string } | null)?.name ?? profile.identity_anchor_id,
       customAnchorName: profile.custom_anchor_name ?? undefined,
       phase: phaseConfig.phase,
       dayInCycle,
@@ -498,13 +523,25 @@ Deno.serve(async (req: Request) => {
 
     if (insertErr) {
       console.error('Upsert nudge failed:', insertErr.message);
-      return jsonResponse(
-        req,
-        { error: 'Failed to store nudge' },
-        {
-          status: 500,
+      return jsonResponse(req, {
+        nudge: {
+          id: `local-fallback-nudge:${userId}:${today}`,
+          user_id: userId,
+          date: today,
+          type: 'daily_nudge',
+          title: result.title,
+          body: result.body,
+          domain_type: result.domain,
+          kairos_phase: phaseConfig.phase,
+          xp_reward: result.xp_reward,
+          status: 'new',
+          cta: result.cta,
+          generated_at: new Date().toISOString(),
+          cost_pence: result._costPence ?? 0,
         },
-      );
+        cached: false,
+        stored: false,
+      });
     }
 
     return jsonResponse(req, { nudge, cached: false });

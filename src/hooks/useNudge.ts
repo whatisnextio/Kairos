@@ -2,6 +2,7 @@ import { supabase } from '@/services/supabaseClient';
 import { useAppStore } from '@/store/useAppStore';
 import type { AiNudge, DomainType, KairosPhase, NudgeCta, NudgeStatus, NudgeType } from '@/types';
 import { getLevelForXp } from '@/utils/gamification';
+import { LOCAL_FALLBACK_NUDGE_ID_PREFIX, buildLocalFallbackNudge } from '@/utils/nudgeFallback';
 import { toLocalIsoDate } from '@/utils/v1Framework';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
@@ -24,27 +25,35 @@ function mapNudge(raw: Record<string, unknown>): AiNudge {
   };
 }
 
-async function fetchOrGenerateNudge(accessToken: string): Promise<AiNudge> {
-  const res = await fetch(NUDGE_ENDPOINT, {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${accessToken}`,
-      'Content-Type': 'application/json',
-    },
-  });
+async function fetchOrGenerateNudge(accessToken: string, fallbackNudge: AiNudge): Promise<AiNudge> {
+  try {
+    const res = await fetch(NUDGE_ENDPOINT, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        'Content-Type': 'application/json',
+      },
+    });
 
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({ error: res.statusText }));
-    throw new Error(err.error ?? `Nudge fetch failed: ${res.status}`);
+    if (!res.ok) {
+      return fallbackNudge;
+    }
+
+    const { nudge } = await res.json().catch(() => ({ nudge: null }));
+    if (!nudge) return fallbackNudge;
+    return mapNudge(nudge as Record<string, unknown>);
+  } catch {
+    return fallbackNudge;
   }
-
-  const { nudge } = await res.json();
-  return mapNudge(nudge as Record<string, unknown>);
 }
 
 export function useNudge() {
   const profile = useAppStore((s) => s.profile);
   const authUser = useAppStore((s) => s.authUser);
+  const currentCycle = useAppStore((s) => s.currentCycle);
+  const domainFocuses = useAppStore((s) => s.domainFocuses);
+  const customRoutes = useAppStore((s) => s.customRoutes);
+  const todayCheckIns = useAppStore((s) => s.todayCheckIns);
 
   const today = toLocalIsoDate(new Date());
   const enabled = !!authUser && !!profile;
@@ -52,11 +61,21 @@ export function useNudge() {
   return useQuery({
     queryKey: ['nudge', profile?.id, today],
     queryFn: async () => {
+      if (!profile) throw new Error('No profile');
+      const fallbackNudge = buildLocalFallbackNudge({
+        profile,
+        currentCycle,
+        domainFocuses,
+        customRoutes,
+        todayCheckIns,
+        email: authUser?.email,
+      });
+
       const {
         data: { session },
       } = await supabase.auth.getSession();
-      if (!session) throw new Error('No session');
-      return fetchOrGenerateNudge(session.access_token);
+      if (!session) return fallbackNudge;
+      return fetchOrGenerateNudge(session.access_token, fallbackNudge);
     },
     enabled,
     staleTime: 1000 * 60 * 60 * 4, // 4 hours; nudge is cached server-side by date
@@ -81,8 +100,10 @@ export function useUpdateNudgeStatus() {
       xpReward?: number | null;
     }) => {
       const previous = queryClient.getQueryData<AiNudge>(['nudge', profile?.id, today]);
-      const { error } = await supabase.from('ai_nudges').update({ status }).eq('id', nudgeId);
-      if (error) throw new Error(error.message);
+      if (!nudgeId.startsWith(LOCAL_FALLBACK_NUDGE_ID_PREFIX)) {
+        const { error } = await supabase.from('ai_nudges').update({ status }).eq('id', nudgeId);
+        if (error) throw new Error(error.message);
+      }
       return { nudgeId, status, xpReward, previousStatus: previous?.status };
     },
     onSuccess: async ({ status, xpReward, previousStatus }) => {
