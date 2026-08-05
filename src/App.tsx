@@ -25,6 +25,23 @@ import LoginPage from '@/pages/auth/LoginPage';
 import RegisterPage from '@/pages/auth/RegisterPage';
 import OnboardingFlow from '@/pages/onboarding/OnboardingFlow';
 
+function getInitialHashRouteRedirect(): string | null {
+  if (typeof window === 'undefined') return null;
+
+  const { origin, pathname, search, hash } = window.location;
+  if (hash || pathname === '/' || pathname === '/index.html' || pathname.includes('.')) {
+    return null;
+  }
+
+  return `${origin}/#${pathname}${search}`;
+}
+
+const initialHashRouteRedirect = getInitialHashRouteRedirect();
+
+if (initialHashRouteRedirect) {
+  window.location.replace(initialHashRouteRedirect);
+}
+
 // Non-critical: lazy loaded
 const DetailScreen = lazy(() => import('@/pages/DetailScreen'));
 const PrivacyPolicyPage = lazy(() => import('@/pages/PrivacyPolicyPage'));
@@ -47,6 +64,10 @@ function withInstallPrompt(content: ReactNode) {
 }
 
 export default function App() {
+  if (initialHashRouteRedirect) {
+    return <PageFallback />;
+  }
+
   const {
     authUser,
     profile,

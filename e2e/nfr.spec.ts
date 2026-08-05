@@ -43,6 +43,18 @@ test.describe('NFR smoke gates', () => {
     await expectNoA11yViolations(page);
   });
 
+  test('direct register URL opens the sign-up screen', async ({ page }) => {
+    await page.goto('/register');
+
+    await expect(page).toHaveURL(/#\/register/);
+    await expect(
+      page.getByRole('heading', { name: /create your 12k account/i, level: 1 }),
+    ).toBeVisible();
+    await expect(page.getByRole('button', { name: /create account/i })).toBeVisible();
+    await expectNoHorizontalOverflow(page);
+    await expectNoA11yViolations(page);
+  });
+
   test('onboarding is accessible before profile creation', async ({ page }) => {
     await page.addInitScript(() => localStorage.setItem('kairos_dev_session', '1'));
     await page.goto('/');
