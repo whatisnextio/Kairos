@@ -12,6 +12,7 @@ function mapNudge(raw: Record<string, unknown>): AiNudge {
   return {
     id: raw.id as string,
     userId: raw.user_id as string,
+    cycleId: (raw.cycle_id as string | null) ?? null,
     date: raw.date as string,
     type: raw.type as NudgeType,
     title: raw.title as string,
@@ -33,6 +34,7 @@ async function fetchOrGenerateNudge(accessToken: string, fallbackNudge: AiNudge)
         Authorization: `Bearer ${accessToken}`,
         'Content-Type': 'application/json',
       },
+      body: JSON.stringify({ date: fallbackNudge.date }),
     });
 
     if (!res.ok) {
@@ -56,10 +58,11 @@ export function useNudge() {
   const todayCheckIns = useAppStore((s) => s.todayCheckIns);
 
   const today = toLocalIsoDate(new Date());
-  const enabled = !!authUser && !!profile;
+  const currentCycleId = currentCycle?.id ?? null;
+  const enabled = !!authUser && !!profile && !!currentCycle;
 
   return useQuery({
-    queryKey: ['nudge', profile?.id, today],
+    queryKey: ['nudge', profile?.id, currentCycleId, today],
     queryFn: async () => {
       if (!profile) throw new Error('No profile');
       const fallbackNudge = buildLocalFallbackNudge({
@@ -78,7 +81,7 @@ export function useNudge() {
       return fetchOrGenerateNudge(session.access_token, fallbackNudge);
     },
     enabled,
-    staleTime: 1000 * 60 * 60 * 4, // 4 hours; nudge is cached server-side by date
+    staleTime: 1000 * 60 * 60 * 4, // 4 hours; nudge is cached server-side by cycle/date
     retry: 1,
   });
 }
@@ -86,8 +89,10 @@ export function useNudge() {
 export function useUpdateNudgeStatus() {
   const queryClient = useQueryClient();
   const profile = useAppStore((s) => s.profile);
+  const currentCycle = useAppStore((s) => s.currentCycle);
   const setProfile = useAppStore((s) => s.setProfile);
   const today = toLocalIsoDate(new Date());
+  const queryKey = ['nudge', profile?.id, currentCycle?.id ?? null, today] as const;
 
   return useMutation({
     mutationFn: async ({
@@ -99,7 +104,7 @@ export function useUpdateNudgeStatus() {
       status: NudgeStatus;
       xpReward?: number | null;
     }) => {
-      const previous = queryClient.getQueryData<AiNudge>(['nudge', profile?.id, today]);
+      const previous = queryClient.getQueryData<AiNudge>(queryKey);
       if (!nudgeId.startsWith(LOCAL_FALLBACK_NUDGE_ID_PREFIX)) {
         const { error } = await supabase.from('ai_nudges').update({ status }).eq('id', nudgeId);
         if (error) throw new Error(error.message);
@@ -107,7 +112,7 @@ export function useUpdateNudgeStatus() {
       return { nudgeId, status, xpReward, previousStatus: previous?.status };
     },
     onSuccess: async ({ status, xpReward, previousStatus }) => {
-      queryClient.setQueryData(['nudge', profile?.id, today], (old: AiNudge | undefined) =>
+      queryClient.setQueryData(queryKey, (old: AiNudge | undefined) =>
         old ? { ...old, status } : old,
       );
 
