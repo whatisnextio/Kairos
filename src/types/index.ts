@@ -565,6 +565,7 @@ export interface ImproveCardSnapshot {
   domainLabel: string;
   phaseLabel: string;
   actionText: string;
+  whyText?: string;
   xpReward: number;
   cta: NudgeCta;
   reflectionText?: string;
