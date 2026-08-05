@@ -122,6 +122,7 @@ export interface DomainConfig {
   question: string;
   focusOptions: string[];
   prepOptions: string[];
+  recoveryOptions: string[];
   reflectPrompt: string;
   coachPrompt: string;
   feedbackPrompt: string;
@@ -150,6 +151,11 @@ export const DOMAINS: DomainConfig[] = [
       'Block a 20-minute window',
       'Choose the easiest route',
     ],
+    recoveryOptions: [
+      'Make it a 5-minute mobility floor',
+      'Use an easy walk instead of a session',
+      'Protect sleep and mark Partial',
+    ],
     reflectPrompt: 'What did your body need today, and did you answer it?',
     coachPrompt: 'If energy is low, shrink the action before you skip it.',
     feedbackPrompt: 'Body is not punishment. It is the daily signal that you are in the game.',
@@ -176,6 +182,11 @@ export const DOMAINS: DomainConfig[] = [
       'Plan the alcohol-free option before evening',
       'Decide the next meal before you are hungry',
     ],
+    recoveryOptions: [
+      'Drink water before the next choice',
+      'Make the next meal protein-first',
+      'Write the trigger and reset the next decision',
+    ],
     reflectPrompt: 'Which choice gave you energy, and which choice took it?',
     coachPrompt: 'Do not negotiate with hunger late. Set the next choice while you are clear.',
     feedbackPrompt: 'Fuel is a leverage point. One better choice changes the next decision.',
@@ -198,6 +209,11 @@ export const DOMAINS: DomainConfig[] = [
       'Do your private check-in',
     ],
     prepOptions: ['Choose the place', 'Set a short timer', 'Remove the phone from reach'],
+    recoveryOptions: [
+      'Take a 3-minute breathing reset',
+      'Write one honest line and stop',
+      'Put the phone away for 10 minutes',
+    ],
     reflectPrompt: 'What pulled you off centre, and what brought you back?',
     coachPrompt:
       'Self is broader than mindset. Protect attention, recovery, confidence, and identity.',
@@ -221,6 +237,11 @@ export const DOMAINS: DomainConfig[] = [
       'Be present with family for 15 minutes',
     ],
     prepOptions: ['Name the person', 'Choose the moment', 'Keep it small and specific'],
+    recoveryOptions: [
+      'Send one low-pressure check-in',
+      'Do one practical help action',
+      'Offer warmth with no agenda',
+    ],
     reflectPrompt: 'Where did you create warmth, safety, or attention?',
     coachPrompt: 'Connection starts with the other person as they are today.',
     feedbackPrompt: 'The point is not pressure or grand gestures. It is reliable presence.',
@@ -243,6 +264,11 @@ export const DOMAINS: DomainConfig[] = [
       'Choose the one blocker',
       'Write the follow-up before context switching',
     ],
+    recoveryOptions: [
+      'Close one visible loop',
+      'Send one follow-up',
+      'Reset the next SHOT decision',
+    ],
     reflectPrompt: 'What moved SHOT forwards in a way that can be seen?',
     coachPrompt: 'Prefer cash, shipped proof, and real user evidence over busy work.',
     feedbackPrompt: 'SHOT is a private route. It should never be forced onto normal users.',
@@ -262,6 +288,7 @@ export const DOMAINS: DomainConfig[] = [
       'Study one reference frame',
     ],
     prepOptions: ['Charge the kit', 'Choose the location', 'Make the next image easy to find'],
+    recoveryOptions: ['Edit one keeper', 'Study one reference frame', 'Plan the next short outing'],
     reflectPrompt: 'What did you notice that you would usually miss?',
     coachPrompt: 'The creative habit survives on scheduled output, not mood.',
     feedbackPrompt: 'Lens stays private to Liam unless another user creates their own route.',
@@ -281,6 +308,11 @@ export const DOMAINS: DomainConfig[] = [
       'Ask what they need',
     ],
     prepOptions: ['Pick the child or room', 'Clear 15 minutes', 'Remove the phone'],
+    recoveryOptions: [
+      'One shoulder-to-shoulder moment',
+      'Tidy one friction point',
+      'Ask what would help now',
+    ],
     reflectPrompt: 'Where did you make home easier for someone else?',
     coachPrompt: 'Small consistent attention beats a dramatic catch-up.',
     feedbackPrompt: 'Nest is Liam-specific context and should not appear in the generic product.',
@@ -300,6 +332,7 @@ export const DOMAINS: DomainConfig[] = [
       'Protect the Portugal fund',
     ],
     prepOptions: ['Open the account', 'Set the number', 'Write the next decision down'],
+    recoveryOptions: ['Check one balance', 'Write the next money decision', 'Close one admin loop'],
     reflectPrompt: 'What became more stable because of today?',
     coachPrompt: 'Roots is about reducing future drag. Close one loop at a time.',
     feedbackPrompt: 'Roots is a private route for Liam, not a default public promise.',

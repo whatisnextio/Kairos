@@ -1,5 +1,6 @@
 import Button from '@/components/common/Button';
 import Card from '@/components/common/Card';
+import SetupOptionSections from '@/components/common/SetupOptionSections';
 import { useDomainCheckIns } from '@/hooks/useCheckIns';
 import { useStreaks } from '@/hooks/useStreaks';
 import { useAppStore } from '@/store/useAppStore';
@@ -18,6 +19,7 @@ import {
   type ConnectionContextId,
   type ConnectionRecipientId,
   buildConnectionFocusDescription,
+  buildDomainSetupOptionModel,
   buildHealthPatternReflection,
   getConnectionContextOptions,
   getDailyDomainLabel,
@@ -214,6 +216,7 @@ export default function DetailScreen() {
   const domainConfig = domainType ? getDomainConfig(domainType, authUser?.email) : undefined;
   const focus = domainType ? domainFocuses.find((f) => f.domainType === domainType) : undefined;
   const displayLabel = domainConfig ? getDailyDomainLabel(domainConfig) : '';
+  const setupOptions = domainConfig ? buildDomainSetupOptionModel(domainConfig) : null;
   const [editingFocus, setEditingFocus] = useState(false);
   const [focusDraft, setFocusDraft] = useState('');
   const [focusSaving, setFocusSaving] = useState(false);
@@ -324,7 +327,7 @@ export default function DetailScreen() {
                 focus?.focusDescription ??
                   (domainType === 'USTIME'
                     ? buildConnectionFocusDescription(connectionRecipient, connectionContext)
-                    : domainConfig.focusOptions[0]),
+                    : (setupOptions?.focusOptions[0] ?? domainConfig.focusOptions[0])),
               );
               setEditingFocus((value) => !value);
             }}
@@ -386,22 +389,15 @@ export default function DetailScreen() {
                 </div>
               </div>
             )}
-            <div className="grid grid-cols-1 gap-2 mb-3">
-              {domainConfig.focusOptions.map((option) => (
-                <button
-                  type="button"
-                  key={option}
-                  onClick={() => setFocusDraft(option)}
-                  className={`text-left rounded border px-3 py-2 text-sm transition-colors ${
-                    focusDraft === option
-                      ? 'border-accent-green bg-accent-green/10 text-base-text'
-                      : 'border-base-border bg-base-black/20 text-base-subtext hover:border-base-muted'
-                  }`}
-                >
-                  {option}
-                </button>
-              ))}
-            </div>
+            {setupOptions && (
+              <div className="mb-3">
+                <SetupOptionSections
+                  model={setupOptions}
+                  value={focusDraft}
+                  onSelect={setFocusDraft}
+                />
+              </div>
+            )}
             <textarea
               className="input-field h-20 resize-none text-sm mb-3"
               placeholder={domainConfig.focusPrompt}

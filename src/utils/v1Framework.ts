@@ -82,6 +82,13 @@ export interface WeeklyReviewSummary {
   recommendation: WeeklyReviewRecommendation;
 }
 
+export interface DomainSetupOptionModel {
+  focusOptions: string[];
+  prepOptions: string[];
+  recoveryOptions: string[];
+  customPlaceholder: string;
+}
+
 export type ConnectionRecipientId = 'partner' | 'family' | 'friend' | 'community';
 export type ConnectionContextId =
   | 'practical_help'
@@ -258,6 +265,27 @@ export function buildConnectionRecommendation(focusDescription?: string | null):
 
 export function getDailyDomainLabel(domain: DomainConfig): string {
   return domain.label;
+}
+
+function uniqueOptions(options: Array<string | null | undefined>): string[] {
+  return [...new Set(options.map((option) => option?.trim()).filter(Boolean) as string[])];
+}
+
+export function buildDomainSetupOptionModel(
+  domain: DomainConfig,
+  route?: Pick<CustomRoute, 'label' | 'focusDescription'> | null,
+): DomainSetupOptionModel {
+  const routeLabel = route?.label?.trim();
+  const routeFocus = route?.focusDescription?.trim();
+  const routeOption =
+    routeFocus || (routeLabel ? `${routeLabel}: ${domain.focusOptions[0]}` : null);
+
+  return {
+    focusOptions: uniqueOptions([routeOption, ...domain.focusOptions]),
+    prepOptions: uniqueOptions(domain.prepOptions),
+    recoveryOptions: uniqueOptions(domain.recoveryOptions),
+    customPlaceholder: `Custom ${domain.label.toLowerCase()} action`,
+  };
 }
 
 export function getEarlyWakeProtocol(now = new Date()): EarlyWakeProtocol | null {

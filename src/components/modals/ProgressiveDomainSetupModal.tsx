@@ -1,4 +1,5 @@
 import Button from '@/components/common/Button';
+import SetupOptionSections from '@/components/common/SetupOptionSections';
 import { supabase } from '@/services/supabaseClient';
 import { useAppStore } from '@/store/useAppStore';
 import { getAvailableDomains } from '@/types';
@@ -9,6 +10,7 @@ import {
   type ConnectionContextId,
   type ConnectionRecipientId,
   buildConnectionFocusDescription,
+  buildDomainSetupOptionModel,
   getConnectionContextOptions,
 } from '@/utils/v1Framework';
 import { useState } from 'react';
@@ -86,6 +88,7 @@ export default function ProgressiveDomainSetupModal({ onClose }: Props) {
 
   const remaining = availableDomains.filter((domain) => !setupDomains.has(domain.type)).length;
   const connectionContextOptions = getConnectionContextOptions(connectionRecipient);
+  const setupOptions = buildDomainSetupOptionModel(nextDomain);
 
   function selectConnectionRecipient(nextRecipient: ConnectionRecipientId) {
     const nextContextOptions = getConnectionContextOptions(nextRecipient);
@@ -183,26 +186,13 @@ export default function ProgressiveDomainSetupModal({ onClose }: Props) {
           </div>
         )}
 
-        <div className="grid grid-cols-1 gap-2 mb-4">
-          {nextDomain.focusOptions.map((option) => (
-            <button
-              type="button"
-              key={option}
-              onClick={() => setFocus(option)}
-              className={`text-left rounded border px-3 py-2 text-sm transition-colors ${
-                focus === option
-                  ? 'border-accent-green bg-accent-green/10 text-base-text'
-                  : 'border-base-border bg-base-black/20 text-base-subtext hover:border-base-muted'
-              }`}
-            >
-              {option}
-            </button>
-          ))}
+        <div className="mb-4">
+          <SetupOptionSections model={setupOptions} value={focus} onSelect={setFocus} />
         </div>
 
         <textarea
           className="input-field h-24 resize-none w-full mb-4"
-          placeholder={`Or write your own. ${nextDomain.focusPrompt}`}
+          placeholder={`Custom. ${setupOptions.customPlaceholder}. ${nextDomain.focusPrompt}`}
           value={focus}
           onChange={(e) => setFocus(e.target.value)}
         />
