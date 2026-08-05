@@ -43,6 +43,11 @@ Support rules:
 - Do not claim advanced pattern detection.
 - Never diagnose, therapise, or make medical, financial, or legal claims.
 
+Timing rules:
+- Today is in progress until the user closes it. Never write "Day X done", "today done", "day complete", or similar.
+- A Done check-in means one action was logged. It does not mean the whole day is finished.
+- If there is already a Done check-in today, say "first action logged" or "keep the next one small", not that the day is done.
+
 Sensitive-topic boundary:
 - If context asks for therapy, diagnosis, medical advice, legal advice, financial advice, or crisis support, do not answer as an expert.
 - Stay inside Kairos coaching: one safe next action, one recovery step, or one reflection.
@@ -82,6 +87,7 @@ const PHASE_CONTEXTS: Record<string, string> = {
 };
 
 interface UserState {
+  today: string;
   identityAnchorName: string;
   customAnchorName?: string;
   phase: string;
@@ -155,6 +161,18 @@ function buildUserPrompt(
   const vibeLines = state.lastVibeCheck
     ? `Rating ${state.lastVibeCheck.rating}/5 on ${state.lastVibeCheck.date}`
     : "No vibe check yet.";
+  const todayCheckIns = state.recentCheckIns.filter((c) =>
+    c.date === state.today
+  );
+  const todayDone = todayCheckIns.filter((c) => c.status === "Done").length;
+  const todayPartial = todayCheckIns.filter((c) => c.status === "Partial")
+    .length;
+  const todayMissed = todayCheckIns.filter((c) => c.status === "Missed")
+    .length;
+  const todayPending = Math.max(
+    state.domainFocuses.length - todayDone - todayPartial - todayMissed,
+    0,
+  );
 
   return `Identity anchor: ${anchor}
 Current phase: ${phaseCtx} (Day ${Math.min(state.dayInCycle, 84)} of 84)
@@ -175,6 +193,14 @@ Current streaks:
 ${streakLines}
 
 Last vibe check: ${vibeLines}
+
+Today status:
+  Date: ${state.today}
+  Done check-ins: ${todayDone}
+  Partial check-ins: ${todayPartial}
+  Missed check-ins: ${todayMissed}
+  Pending configured domains: ${todayPending}
+  Important: today is still in progress. Do not say the day is done or complete.
 
 Personalisation mode: standard app support. Use one grounded detail from the context above.
 
@@ -215,6 +241,8 @@ function buildFallbackNudge(state: UserState): GeneratedNudge {
 
 const ADVICE_BOUNDARY_PATTERN =
   /\b(therapy|therapist|diagnosis|diagnose|medical advice|doctor|medication|legal advice|financial advice|investment|invest|debt advice|self-harm|suicide|crisis)\b/i;
+const DAY_COMPLETION_PATTERN =
+  /\b(?:day\s+\d+\s+(?:is\s+)?(?:done|complete(?:d)?)|today(?:'s|\s+is)?\s+(?:done|complete(?:d)?))\b/i;
 
 function buildBoundaryNudge(state: UserState): GeneratedNudge {
   const phase = PHASE_CONTEXTS[state.phase]?.split(" - ")[0] ?? state.phase;
@@ -238,9 +266,9 @@ function enforceNudgeBoundaries(
   state: UserState,
 ): GeneratedNudge {
   const combined = `${result.title} ${result.body}`;
-  return ADVICE_BOUNDARY_PATTERN.test(combined)
-    ? buildBoundaryNudge(state)
-    : result;
+  if (ADVICE_BOUNDARY_PATTERN.test(combined)) return buildBoundaryNudge(state);
+  if (DAY_COMPLETION_PATTERN.test(combined)) return buildFallbackNudge(state);
+  return result;
 }
 
 function getLondonIsoDate(now = new Date()): string {
@@ -503,6 +531,7 @@ Deno.serve(async (req: Request) => {
     const lastVibeCheck = vibeChecks?.[vibeChecks.length - 1];
 
     const state: UserState = {
+      today,
       identityAnchorName: (identityAnchor as { name: string } | null)?.name ??
         profile.identity_anchor_id,
       customAnchorName: profile.custom_anchor_name ?? undefined,

@@ -2,6 +2,7 @@ import { supabase } from '@/services/supabaseClient';
 import { useAppStore } from '@/store/useAppStore';
 import type { AiNudge, DomainType, KairosPhase, NudgeCta, NudgeStatus, NudgeType } from '@/types';
 import { getLevelForXp } from '@/utils/gamification';
+import { normalisePrematureDayCompletionNudge } from '@/utils/nudgeCopy';
 import { LOCAL_FALLBACK_NUDGE_ID_PREFIX, buildLocalFallbackNudge } from '@/utils/nudgeFallback';
 import { toLocalIsoDate } from '@/utils/v1Framework';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -78,7 +79,8 @@ export function useNudge() {
         data: { session },
       } = await supabase.auth.getSession();
       if (!session) return fallbackNudge;
-      return fetchOrGenerateNudge(session.access_token, fallbackNudge);
+      const nudge = await fetchOrGenerateNudge(session.access_token, fallbackNudge);
+      return normalisePrematureDayCompletionNudge(nudge, fallbackNudge);
     },
     enabled,
     staleTime: 1000 * 60 * 60 * 4, // 4 hours; nudge is cached server-side by cycle/date

@@ -28,6 +28,10 @@ describe('AI trust controls', () => {
     expect(source).toContain('buildBoundaryNudge');
     expect(source).toContain('enforceNudgeBoundaries');
     expect(source).toContain('ADVICE_BOUNDARY_PATTERN');
+    expect(source).toContain('Timing rules:');
+    expect(source).toContain('A Done check-in means one action was logged');
+    expect(source).toContain('DAY_COMPLETION_PATTERN');
+    expect(source).toContain('Do not say the day is done or complete');
     expect(source).toContain('one safe proof step');
     expect(source).toContain('qualified support where needed');
   });
