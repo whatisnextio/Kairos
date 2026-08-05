@@ -26,6 +26,7 @@ describe('security hardening', () => {
     expect(helper).toContain('https://12k.app');
     expect(helper).toContain('http://localhost:5173');
     expect(helper).toContain('isAllowedCorsOrigin');
+    expect(helper).toContain('authorization, content-type, apikey, x-client-info');
     expect(helper).not.toContain("Access-Control-Allow-Origin': '*'");
 
     for (const name of corsProtectedFunctions) {
