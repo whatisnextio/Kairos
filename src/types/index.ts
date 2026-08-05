@@ -584,6 +584,7 @@ export type NudgeCta = 'check_in_now' | 'reflect' | 'plan_tomorrow' | null;
 export interface AiNudge {
   id: string;
   userId: string;
+  cycleId: string | null;
   date: string;
   type: NudgeType;
   title: string;

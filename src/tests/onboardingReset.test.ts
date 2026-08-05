@@ -133,6 +133,8 @@ describe('onboarding and reset contract', () => {
     expect(state.onboardingComplete).toBe(false);
     expect(state.domainFocuses).toEqual([]);
     expect(state.checkInHistory).toEqual({});
+    expect(state.lastVibeCheckDate).toBeNull();
+    expect(state.levelUpPending).toBeNull();
     expect(state.journeyArchive).toHaveLength(1);
     expect(state.journeyArchive[0]).toMatchObject({
       reason: 'abandoned',
@@ -140,6 +142,32 @@ describe('onboarding and reset contract', () => {
       xp: 80,
       domainFocuses: [{ domainType: 'BODY', focusDescription: 'Walk for 20 minutes' }],
     });
+  });
+
+  it('resets profile KP through a trusted database function when a journey is abandoned', () => {
+    const modal = readFileSync('src/components/modals/AbandonCycleModal.tsx', 'utf8');
+    const migration = readFileSync(
+      'supabase/migrations/032_cycle_scoped_ai_nudges_and_reset_progress.sql',
+      'utf8',
+    );
+
+    expect(modal).toContain("'reset_profile_progress'");
+    expect(modal).toContain('isMissingRpcError');
+    expect(modal).toContain('loadCompletedCycleXp');
+    expect(modal).toContain("supabase.rpc('increment_profile_xp'");
+    expect(modal).toContain('p_delta: preservedXp - Math.max(0, currentRemoteXp)');
+    expect(modal).toContain(".from('ai_nudges')");
+    expect(modal).toContain(".eq('type', 'daily_nudge')");
+    expect(modal).toContain('currentKairosCycleId: null, xp: preservedXp');
+    expect(modal).toContain('Completed journeys keep KP.');
+    expect(migration).toContain('create or replace function public.reset_profile_progress');
+    expect(migration).toContain('returns integer');
+    expect(migration).toContain("and status = 'completed'");
+    expect(migration).toContain('set xp = completed_xp');
+    expect(migration).toContain('delete from public.user_streaks');
+    expect(migration).toContain(
+      'revoke all on function public.reset_profile_progress(uuid) from public, anon',
+    );
   });
 
   it('starts a new cycle only after archiving the previous local journey', () => {

@@ -35,9 +35,15 @@ type NotificationPreferences = {
 
 type DailyNudge = {
   user_id: string;
+  cycle_id: string | null;
   domain_type: string | null;
   kairos_phase: string | null;
   cta: string | null;
+};
+
+type ProfileCycle = {
+  id: string;
+  current_kairos_cycle_id: string | null;
 };
 
 function notificationsEnabled(preferences: unknown): boolean {
@@ -69,6 +75,19 @@ function buildPushPayload(nudge: DailyNudge): string {
     body: `${label} action waiting. Open 12K.`,
     url,
   });
+}
+
+function getLondonIsoDate(now = new Date()): string {
+  const parts = new Intl.DateTimeFormat("en-GB", {
+    timeZone: "Europe/London",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).formatToParts(now);
+  const lookup = Object.fromEntries(
+    parts.map((part) => [part.type, part.value]),
+  );
+  return `${lookup.year}-${lookup.month}-${lookup.day}`;
 }
 
 // ─── Base64url helpers ────────────────────────────────────────────────────────
@@ -327,7 +346,7 @@ Deno.serve(async (req: Request) => {
   }
 
   const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
-  const today = new Date().toISOString().split("T")[0];
+  const today = getLondonIsoDate();
 
   // 1. Fetch users with push subscriptions.
   // ai_nudges has no FK to push_subscriptions so we use two separate queries.
@@ -358,16 +377,43 @@ Deno.serve(async (req: Request) => {
     );
   }
 
-  // 2. Fetch today's nudges for those users.
+  const { data: activeProfiles, error: profileErr } = await supabase
+    .from("profiles")
+    .select("id, current_kairos_cycle_id")
+    .in("id", userIds);
+
+  if (profileErr) {
+    console.error("send-daily-push: profiles query error", profileErr.message);
+    return jsonResponse(
+      req,
+      { error: profileErr.message },
+      { status: 500 },
+      CORS_ALLOWED_HEADERS,
+    );
+  }
+
+  const activeCycleByUser = new Map(
+    ((activeProfiles ?? []) as ProfileCycle[])
+      .filter((profile) => profile.current_kairos_cycle_id)
+      .map((
+        profile,
+      ) => [profile.id, profile.current_kairos_cycle_id as string]),
+  );
+
+  // 2. Fetch today's active-cycle nudges for those users.
   const { data: nudges } = await supabase
     .from("ai_nudges")
-    .select("user_id, domain_type, kairos_phase, cta")
+    .select("user_id, cycle_id, domain_type, kairos_phase, cta")
     .in("user_id", userIds)
     .eq("date", today)
     .eq("type", "daily_nudge");
 
   const nudgeMap = new Map(
-    (nudges ?? []).map((n: DailyNudge) => [n.user_id, n]),
+    ((nudges ?? []) as DailyNudge[])
+      .filter((nudge) =>
+        nudge.cycle_id === activeCycleByUser.get(nudge.user_id)
+      )
+      .map((nudge) => [nudge.user_id, nudge]),
   );
 
   let sent = 0;

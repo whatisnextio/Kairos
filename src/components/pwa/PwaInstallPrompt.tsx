@@ -16,31 +16,38 @@ interface BeforeInstallPromptEvent extends Event {
 type InstallMode = 'native' | 'manual';
 const INSTALL_PROMPT_DELAY_MS = 2500;
 
-function getInstallMode(): InstallMode | null {
+function isInstallSuppressed(): boolean {
+  if (typeof window === 'undefined') return true;
+  return isStandaloneDisplay() || !!getInstallDismissedUntil();
+}
+
+function getManualInstallMode(): InstallMode | null {
   if (typeof window === 'undefined') return null;
-  if (isStandaloneDisplay()) return null;
+  if (isInstallSuppressed()) return null;
   if (!isMobileUserAgent(window.navigator.userAgent)) return null;
-  if (getInstallDismissedUntil()) return null;
   return 'manual';
 }
 
 export default function PwaInstallPrompt() {
   const [installEvent, setInstallEvent] = useState<BeforeInstallPromptEvent | null>(null);
   const [mode, setMode] = useState<InstallMode | null>(null);
-  const pendingMode = useRef<InstallMode | null>(getInstallMode());
+  const pendingMode = useRef<InstallMode | null>(getManualInstallMode());
 
   useEffect(() => {
-    if (pendingMode.current === null || typeof window === 'undefined') return;
+    if (typeof window === 'undefined' || isInstallSuppressed()) return;
 
-    const timer = window.setTimeout(() => {
-      setMode(pendingMode.current);
-    }, INSTALL_PROMPT_DELAY_MS);
+    const timer =
+      pendingMode.current === 'manual'
+        ? window.setTimeout(() => {
+            setMode(pendingMode.current);
+          }, INSTALL_PROMPT_DELAY_MS)
+        : null;
 
     const handleBeforeInstallPrompt = (event: Event) => {
       event.preventDefault();
       setInstallEvent(event as BeforeInstallPromptEvent);
       pendingMode.current = 'native';
-      setMode((current) => (current === null ? current : 'native'));
+      setMode('native');
     };
 
     const handleInstalled = () => {
@@ -53,7 +60,7 @@ export default function PwaInstallPrompt() {
     window.addEventListener('appinstalled', handleInstalled);
 
     return () => {
-      window.clearTimeout(timer);
+      if (timer) window.clearTimeout(timer);
       window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
       window.removeEventListener('appinstalled', handleInstalled);
     };

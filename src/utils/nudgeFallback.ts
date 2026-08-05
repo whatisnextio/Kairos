@@ -68,8 +68,9 @@ export function buildLocalFallbackNudge({
   const routePrefix = activeRoute ? `${activeRoute.label}: ` : '';
 
   return {
-    id: `${LOCAL_FALLBACK_NUDGE_ID_PREFIX}${profile.id}:${today}`,
+    id: `${LOCAL_FALLBACK_NUDGE_ID_PREFIX}${profile.id}:${currentCycle?.id ?? 'no-cycle'}:${today}`,
     userId: profile.id,
+    cycleId: currentCycle?.id ?? null,
     date: today,
     type: 'daily_nudge',
     title: `Day ${Math.min(dayInCycle, 84)}. Close one loop.`,

@@ -233,6 +233,7 @@ Deno.serve(async (req: Request) => {
       .from("ai_nudges")
       .select("*")
       .eq("user_id", userId)
+      .eq("cycle_id", cycle.id)
       .eq("date", cycle.start_date)
       .eq("type", "cycle_reflection")
       .maybeSingle();
@@ -451,6 +452,7 @@ Deno.serve(async (req: Request) => {
       .upsert(
         {
           user_id: userId,
+          cycle_id: cycle.id,
           date: cycle.start_date,
           type: "cycle_reflection",
           title: result.headline,
@@ -462,7 +464,7 @@ Deno.serve(async (req: Request) => {
           cta: null,
           cost_pence: result._costPence ?? 0,
         },
-        { onConflict: "user_id,date,type", ignoreDuplicates: false },
+        { onConflict: "user_id,cycle_id,date,type", ignoreDuplicates: false },
       )
       .select()
       .single();
