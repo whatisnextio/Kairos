@@ -18,16 +18,50 @@ import { getDayInCycle } from '@/utils/kairos';
 import { type ChangeEvent, useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 
-function resizeImageDataUrl(dataUrl: string, maxPx = 400, quality = 0.72): Promise<string> {
+const PROFILE_IMAGE_MAX_BYTES = 300_000;
+const PROFILE_IMAGE_MAX_PX = 400;
+const PROFILE_IMAGE_MIN_PX = 160;
+const PROFILE_IMAGE_MIN_QUALITY = 0.44;
+const PROFILE_IMAGE_START_QUALITY = 0.72;
+
+function estimateDataUrlBytes(dataUrl: string): number {
+  const base64 = dataUrl.split(',')[1] ?? '';
+  return Math.ceil((base64.length * 3) / 4);
+}
+
+function resizeImageDataUrl(dataUrl: string): Promise<string> {
   return new Promise((resolve) => {
     const img = new Image();
     img.onload = () => {
-      const ratio = Math.min(maxPx / img.width, maxPx / img.height, 1);
       const canvas = document.createElement('canvas');
-      canvas.width = Math.round(img.width * ratio);
-      canvas.height = Math.round(img.height * ratio);
-      canvas.getContext('2d')?.drawImage(img, 0, 0, canvas.width, canvas.height);
-      resolve(canvas.toDataURL('image/jpeg', quality));
+      const render = (maxPx: number, quality: number) => {
+        const ratio = Math.min(maxPx / img.width, maxPx / img.height, 1);
+        canvas.width = Math.round(img.width * ratio);
+        canvas.height = Math.round(img.height * ratio);
+        const context = canvas.getContext('2d');
+        if (!context) return dataUrl;
+        context.clearRect(0, 0, canvas.width, canvas.height);
+        context.drawImage(img, 0, 0, canvas.width, canvas.height);
+        return canvas.toDataURL('image/jpeg', quality);
+      };
+
+      let maxPx = PROFILE_IMAGE_MAX_PX;
+      let quality = PROFILE_IMAGE_START_QUALITY;
+      let output = render(maxPx, quality);
+
+      while (
+        estimateDataUrlBytes(output) > PROFILE_IMAGE_MAX_BYTES &&
+        (quality > PROFILE_IMAGE_MIN_QUALITY || maxPx > PROFILE_IMAGE_MIN_PX)
+      ) {
+        if (quality > PROFILE_IMAGE_MIN_QUALITY) {
+          quality = Math.max(PROFILE_IMAGE_MIN_QUALITY, quality - 0.08);
+        } else {
+          maxPx = Math.max(PROFILE_IMAGE_MIN_PX, Math.round(maxPx * 0.82));
+        }
+        output = render(maxPx, quality);
+      }
+
+      resolve(output);
     };
     img.onerror = () => resolve(dataUrl);
     img.src = dataUrl;
@@ -365,8 +399,8 @@ export default function YouScreen() {
                 onChange={handleProfileImage}
               />
             </label>
-            <p className="text-base-muted text-[10px] text-center mt-1 leading-tight">
-              This browser only
+            <p className="text-base-muted text-[10px] text-center mt-1 max-w-24 leading-tight">
+              Photo saved on this browser. Upload again on other devices.
             </p>
           </div>
           <div className="min-w-0 flex-1">
