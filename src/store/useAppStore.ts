@@ -1124,6 +1124,11 @@ export const useAppStore = create<AppState & AppActions>()(
     }),
     {
       name: '12k-app-store',
+      version: 1,
+      migrate: (persistedState): Partial<AppState> => ({
+        ...(persistedState as Partial<AppState>),
+        journeyArchive: [],
+      }),
       partialize: (state) => ({
         onboardingComplete: state.onboardingComplete,
         todayCheckIns: state.todayCheckIns,
@@ -1136,7 +1141,6 @@ export const useAppStore = create<AppState & AppActions>()(
         currentCycle: state.currentCycle,
         domainFocuses: state.domainFocuses,
         customRoutes: state.customRoutes,
-        journeyArchive: state.journeyArchive,
         lastVibeCheckDate: state.lastVibeCheckDate,
         nextCycleIntention: state.nextCycleIntention,
         lastCelebrationPhase: state.lastCelebrationPhase,

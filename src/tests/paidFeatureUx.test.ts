@@ -11,6 +11,7 @@ describe('paid feature UX copy', () => {
     expect(source).not.toContain('Liam sub-routes');
     expect(source).not.toContain('high accountability prompts');
     expect(source).not.toContain('handleApplyPersonalSetup');
+    expect(source).not.toContain('Journey history');
     expect(source).toContain('FEATURE_EXPLANATIONS.personalRoutes');
     expect(source).toContain('FEATURE_EXPLANATIONS.personalRoutesAction');
     expect(source).toContain('FEATURE_EXPLANATIONS.squad');

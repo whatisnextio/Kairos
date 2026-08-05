@@ -86,7 +86,6 @@ export default function YouScreen() {
     authUser,
     currentCycle,
     customRoutes,
-    journeyArchive,
     profileImageDataUrl,
     notificationPreferences,
     sharePrivacyPreferences,
@@ -222,7 +221,6 @@ export default function YouScreen() {
           focusDescription: f.focusDescription,
         })),
         customRoutes,
-        journeyArchive,
         earnedBadges,
         streakProtectionHistory,
         awardedWeeklyBonuses,
@@ -245,7 +243,6 @@ export default function YouScreen() {
           focusDescription: f.focusDescription,
         })),
         customRoutes,
-        journeyArchive,
         earnedBadges,
         sharePrivacyPreferences,
         checkInHistory,
@@ -266,7 +263,6 @@ export default function YouScreen() {
     currentCycle,
     domainFocuses,
     customRoutes,
-    journeyArchive,
     checkInHistory,
     customRouteCheckInHistory,
     todayCheckIns,
@@ -491,36 +487,6 @@ export default function YouScreen() {
           </div>
         )}
       </Card>
-
-      {/* Journey history */}
-      {journeyArchive.length > 0 && (
-        <Card>
-          <p className="text-base-subtext text-xs font-heading tracking-widest uppercase mb-3">
-            Journey history
-          </p>
-          <div className="flex flex-col gap-3">
-            {journeyArchive.slice(0, 3).map((entry) => (
-              <div key={entry.id} className="border-b border-base-border pb-3 last:border-b-0">
-                <div className="flex items-center justify-between gap-3">
-                  <p className="font-heading text-sm font-medium text-base-text capitalize">
-                    {entry.reason}
-                  </p>
-                  <p className="text-base-muted text-xs">
-                    {new Date(entry.archivedAt).toLocaleDateString('en-GB', {
-                      day: 'numeric',
-                      month: 'short',
-                      year: 'numeric',
-                    })}
-                  </p>
-                </div>
-                <p className="text-base-subtext text-xs mt-1">
-                  {entry.domainFocuses.length + entry.customRoutes.length} routes kept.
-                </p>
-              </div>
-            ))}
-          </div>
-        </Card>
-      )}
 
       {/* Squad: paid tiers only */}
       {hasPaidAccess && (
