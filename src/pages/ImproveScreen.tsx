@@ -212,7 +212,7 @@ function ImproveCardContent({
           )}
           {card.status === 'accepted' && (
             <Button size="sm" onClick={onComplete} disabled={isUpdating}>
-              Mark complete
+              Done
             </Button>
           )}
           <Button size="sm" variant="ghost" onClick={onDismiss} disabled={isUpdating}>

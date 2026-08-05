@@ -15,4 +15,13 @@ describe('Hidden Improve cards', () => {
     expect(store).toContain('improveCardStatuses: Record<string, NudgeStatus>');
     expect(store).toContain('status: NudgeStatus');
   });
+
+  it('uses plain completion copy for active cards', () => {
+    const improve = readFileSync('src/pages/ImproveScreen.tsx', 'utf8');
+
+    expect(improve).toMatch(
+      /card\.status === 'accepted'[\s\S]*<Button size="sm" onClick=\{onComplete\} disabled=\{isUpdating\}>[\s\S]*Done[\s\S]*<\/Button>/,
+    );
+    expect(improve).not.toContain('Mark complete');
+  });
 });
