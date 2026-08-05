@@ -8,6 +8,7 @@ import { supabase } from '@/services/supabaseClient';
 import { useAppStore } from '@/store/useAppStore';
 import { getAvailableDomains } from '@/types';
 import { DEV_EMAIL, DEV_USER_ID, hasLocalDevSession } from '@/utils/localDevSession';
+import { applyThemePreference } from '@/utils/theme';
 import { type ReactNode, Suspense, lazy, useEffect, useMemo } from 'react';
 import { HashRouter, Navigate, Route, Routes } from 'react-router-dom';
 
@@ -57,6 +58,7 @@ export default function App() {
     currentCycle,
     celebrationPending,
     notificationPreferences,
+    themePreference,
     customRoutes,
     todayCheckIns,
     todayCustomRouteCheckIns,
@@ -65,6 +67,10 @@ export default function App() {
   } = useAppStore();
 
   useBootstrap();
+
+  useEffect(() => {
+    applyThemePreference(themePreference);
+  }, [themePreference]);
 
   const notificationScheduleContext = useMemo(
     () =>

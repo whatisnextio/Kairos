@@ -1,4 +1,5 @@
 import { supabase } from '@/services/supabaseClient';
+import { loadUserSettings } from '@/services/userSettings';
 import { useAppStore } from '@/store/useAppStore';
 import type {
   CheckInStatus,
@@ -174,6 +175,10 @@ export function useBootstrap() {
     setTodayCustomRouteCheckIns,
     mergeCheckInHistory,
     mergeCustomRouteCheckInHistory,
+    setProfileImageDataUrl,
+    setNotificationPreferences,
+    setSharePrivacyPreferences,
+    setThemePreference,
     setIsBootstrapLoading,
     setBootstrapError,
     flushPendingSync,
@@ -268,6 +273,18 @@ export function useBootstrap() {
           ? { ...mapped, xp: localProfile.xp }
           : mapped;
       setProfile(profile);
+
+      try {
+        const settings = await loadUserSettings(user.id);
+        if (settings) {
+          setProfileImageDataUrl(settings.profileImageDataUrl);
+          setNotificationPreferences(settings.notificationPreferences);
+          setSharePrivacyPreferences(settings.sharePrivacyPreferences);
+          setThemePreference(settings.themePreference);
+        }
+      } catch (error) {
+        captureBootstrapError('user settings query', error, false);
+      }
 
       let cycleId = profile.currentKairosCycleId;
       let cycleRow: Record<string, unknown> | null = null;

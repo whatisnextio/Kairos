@@ -60,6 +60,21 @@ Deno.serve(async (req: Request) => {
   const now = new Date().toISOString();
   const payload: Record<string, unknown> = { updated_at: now };
 
+  if (body.preferences) {
+    const { error: settingsErr } = await supabase
+      .from("user_settings")
+      .upsert({
+        user_id: user.id,
+        notification_preferences: body.preferences,
+        updated_at: now,
+      }, { onConflict: "user_id" });
+
+    if (settingsErr) {
+      console.error("save-user-settings preferences error:", settingsErr.message);
+      return jsonResponse(req, { error: settingsErr.message }, { status: 500 });
+    }
+  }
+
   if (body.subscription) {
     const upsertPayload: Record<string, unknown> = {
       user_id: user.id,
