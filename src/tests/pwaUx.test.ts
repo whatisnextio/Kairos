@@ -77,9 +77,32 @@ describe('PWA UX shell', () => {
     const css = readFileSync('src/index.css', 'utf8');
 
     expect(css).toContain('.input-field option');
-    expect(css).toContain('color: #0b0b0b');
-    expect(css).toContain('background-color: #ffffff');
+    expect(css).toContain('color: rgb(var(--color-option-text))');
+    expect(css).toContain('background-color: rgb(var(--color-option-bg))');
     expect(css).toContain('.input-field option:checked');
+  });
+
+  it('pins the bottom tab bar inside the app shell scroll frame', () => {
+    const css = readFileSync('src/index.css', 'utf8');
+    const shell = readFileSync('src/components/layout/AppShell.tsx', 'utf8');
+
+    expect(css).toContain('overflow: hidden');
+    expect(css).toContain('@apply relative min-h-0 flex-1 overflow-y-auto');
+    expect(css).toContain('@apply sticky bottom-0 z-40');
+    expect(css).not.toContain('@apply fixed bottom-0 left-0 right-0');
+    expect(shell).toContain('<main className="app-main">');
+    expect(shell).not.toContain('5.5rem');
+  });
+
+  it('defines dark and light theme variables for the PWA shell', () => {
+    const css = readFileSync('src/index.css', 'utf8');
+    const tailwind = readFileSync('tailwind.config.ts', 'utf8');
+    const app = readFileSync('src/App.tsx', 'utf8');
+
+    expect(css).toContain('html[data-theme="light"]');
+    expect(css).toContain('--color-base-surface: 255 255 255');
+    expect(tailwind).toContain("'base-surface': 'rgb(var(--color-base-surface)");
+    expect(app).toContain('applyThemePreference(themePreference)');
   });
 
   it('shows notification consent preview and unsupported-browser fallback', () => {
@@ -88,7 +111,7 @@ describe('PWA UX shell', () => {
 
     expect(you).toContain('Accountability preview');
     expect(you).toContain('failing silently');
-    expect(you).toContain('Pause today');
+    expect(you).toContain('Pause ladder');
     expect(you).toContain('Show route names in notifications');
     expect(push).toContain("'Notification' in window");
     expect(push).toContain("'PushManager' in window");

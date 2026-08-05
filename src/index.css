@@ -3,6 +3,59 @@
 @tailwind utilities;
 
 @layer base {
+  :root,
+  html[data-theme="dark"] {
+    color-scheme: dark;
+    --color-base-black: 11 11 11;
+    --color-base-bg: 9 10 10;
+    --color-base-surface: 20 20 20;
+    --color-base-elevated: 28 28 28;
+    --color-base-border: 42 42 42;
+    --color-base-muted: 140 140 140;
+    --color-base-text: 240 240 240;
+    --color-base-subtext: 184 184 184;
+    --color-accent-green: 34 197 94;
+    --color-accent-green-dim: 22 163 74;
+    --color-option-text: 11 11 11;
+    --color-option-bg: 255 255 255;
+    --app-background: linear-gradient(
+        180deg,
+        rgba(255, 255, 255, 0.035),
+        rgba(255, 255, 255, 0) 28rem
+      ), linear-gradient(135deg, rgba(34, 197, 94, 0.11), transparent 30rem),
+      linear-gradient(315deg, rgba(249, 115, 22, 0.09), transparent 26rem), #090a0a;
+    --app-shell-shadow: 0 0 0 1px rgba(255, 255, 255, 0.07), 0 32px 120px rgba(0, 0, 0, 0.42);
+    --app-shell-gloss: linear-gradient(180deg, rgba(255, 255, 255, 0.075), transparent);
+    --tabbar-shadow: 0 -16px 50px rgba(0, 0, 0, 0.42);
+    --card-shadow: 0 18px 60px rgba(0, 0, 0, 0.24);
+  }
+
+  html[data-theme="light"] {
+    color-scheme: light;
+    --color-base-black: 246 248 246;
+    --color-base-bg: 242 246 243;
+    --color-base-surface: 255 255 255;
+    --color-base-elevated: 235 241 237;
+    --color-base-border: 201 211 205;
+    --color-base-muted: 89 98 93;
+    --color-base-text: 17 24 20;
+    --color-base-subtext: 76 86 80;
+    --color-accent-green: 22 163 74;
+    --color-accent-green-dim: 21 128 61;
+    --color-option-text: 17 24 20;
+    --color-option-bg: 255 255 255;
+    --app-background: linear-gradient(
+        180deg,
+        rgba(255, 255, 255, 0.86),
+        rgba(242, 246, 243, 0.96) 24rem
+      ), linear-gradient(135deg, rgba(34, 197, 94, 0.12), transparent 28rem),
+      linear-gradient(315deg, rgba(249, 115, 22, 0.1), transparent 24rem), #f2f6f3;
+    --app-shell-shadow: 0 0 0 1px rgba(43, 58, 49, 0.14), 0 24px 80px rgba(43, 58, 49, 0.16);
+    --app-shell-gloss: linear-gradient(180deg, rgba(255, 255, 255, 0.8), transparent);
+    --tabbar-shadow: 0 -10px 34px rgba(43, 58, 49, 0.14);
+    --card-shadow: 0 12px 34px rgba(43, 58, 49, 0.1);
+  }
+
   * {
     -webkit-tap-highlight-color: transparent;
     box-sizing: border-box;
@@ -18,14 +71,12 @@
 
   body {
     height: 100%;
-    overflow-y: auto;
+    overflow: hidden;
     overscroll-behavior-y: contain;
     touch-action: manipulation;
     -webkit-overflow-scrolling: touch;
-    background: linear-gradient(180deg, rgba(255, 255, 255, 0.035), rgba(255, 255, 255, 0) 28rem),
-      linear-gradient(135deg, rgba(34, 197, 94, 0.11), transparent 30rem),
-      linear-gradient(315deg, rgba(249, 115, 22, 0.09), transparent 26rem), #090a0a;
-    color: #f0f0f0;
+    background: var(--app-background);
+    color: rgb(var(--color-base-text));
   }
 
   #root {
@@ -63,25 +114,26 @@
   }
 
   .btn-secondary {
-    @apply btn border border-white/15 bg-white/[0.03] text-base-text hover:border-white/25 hover:bg-white/[0.06] px-6 py-3 active:translate-y-px;
+    @apply btn border border-base-border bg-base-elevated text-base-text hover:border-accent-green/50 hover:bg-base-surface px-6 py-3 active:translate-y-px;
   }
 
   .btn-ghost {
-    @apply btn text-base-subtext hover:text-base-text hover:bg-white/[0.04] px-4 py-2 active:translate-y-px;
+    @apply btn text-base-subtext hover:text-base-text hover:bg-base-elevated px-4 py-2 active:translate-y-px;
   }
 
   .card {
-    @apply rounded-lg border border-white/10 bg-base-surface/90 p-4 shadow-[0_18px_60px_rgba(0,0,0,0.24)] backdrop-blur-sm;
+    @apply rounded-lg border border-base-border bg-base-surface/95 p-4 backdrop-blur-sm;
+    box-shadow: var(--card-shadow);
   }
 
   .input-field {
-    @apply w-full min-h-11 rounded-lg border border-white/10 bg-white/[0.035] px-4 py-3 text-base-text placeholder-base-muted shadow-inner shadow-black/10 transition-colors focus:border-accent-green focus:outline-none focus:ring-2 focus:ring-accent-green/20;
+    @apply w-full min-h-11 rounded-lg border border-base-border bg-base-elevated px-4 py-3 text-base-text placeholder-base-muted transition-colors focus:border-accent-green focus:outline-none focus:ring-2 focus:ring-accent-green/20;
   }
 
   .input-field option,
   .input-field optgroup {
-    color: #0b0b0b;
-    background-color: #ffffff;
+    color: rgb(var(--color-option-text));
+    background-color: rgb(var(--color-option-bg));
   }
 
   .input-field option:checked {
@@ -103,23 +155,25 @@
   }
 
   .app-shell {
-    @apply relative mx-auto flex min-h-dvh w-full max-w-[46rem] flex-col overflow-hidden bg-base-black/80 shadow-[0_0_0_1px_rgba(255,255,255,0.07),0_32px_120px_rgba(0,0,0,0.42)] backdrop-blur-xl;
+    @apply relative mx-auto flex h-dvh w-full max-w-[46rem] flex-col overflow-hidden bg-base-black/85 backdrop-blur-xl;
+    box-shadow: var(--app-shell-shadow);
   }
 
   .app-shell::before {
     content: "";
     pointer-events: none;
-    @apply absolute inset-x-0 top-0 h-32 border-t border-white/10;
-    background: linear-gradient(180deg, rgba(255, 255, 255, 0.075), transparent);
+    @apply absolute inset-x-0 top-0 h-32 border-t border-base-border;
+    background: var(--app-shell-gloss);
   }
 
   .app-main {
-    @apply relative flex-1 overflow-y-auto;
+    @apply relative min-h-0 flex-1 overflow-y-auto;
     scrollbar-gutter: stable;
   }
 
   .app-tabbar {
-    @apply fixed bottom-0 left-0 right-0 mx-auto max-w-[46rem] border border-white/10 border-b-0 bg-base-surface/90 px-2 pt-2 shadow-[0_-16px_50px_rgba(0,0,0,0.42)] backdrop-blur-xl;
+    @apply sticky bottom-0 z-40 mx-auto w-full shrink-0 border border-base-border border-b-0 bg-base-surface/95 px-2 pt-2 backdrop-blur-xl;
+    box-shadow: var(--tabbar-shadow);
   }
 
   .domain-dot {
@@ -156,12 +210,11 @@
   }
 
   .app-shell {
-    min-height: calc(100dvh - 48px);
+    height: calc(100dvh - 48px);
     border-radius: 20px;
   }
 
   .app-tabbar {
-    bottom: 24px;
     border-radius: 18px 18px 20px 20px;
   }
 }

@@ -15,12 +15,14 @@ import {
   unsubscribeFromPush,
 } from '@/services/pushNotifications';
 import { supabase } from '@/services/supabaseClient';
+import { saveUserSettings } from '@/services/userSettings';
 import { useAppStore } from '@/store/useAppStore';
 import { type DomainType, IDENTITY_ANCHORS, getAvailableDomains } from '@/types';
 import { FEATURE_EXPLANATIONS } from '@/utils/brandCopy';
 import { hasBrotherhoodAccess } from '@/utils/entitlements';
 import { deriveEarnedBadges, formatKairosPoints, getLevelForXp } from '@/utils/gamification';
 import { getDayInCycle } from '@/utils/kairos';
+import type { ThemePreference } from '@/utils/theme';
 import { buildDomainSetupOptionModel } from '@/utils/v1Framework';
 import { type ChangeEvent, useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
@@ -78,7 +80,7 @@ function resizeImageDataUrl(dataUrl: string): Promise<string> {
 const SAVE_PUSH_ENDPOINT = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/save-push-subscription`;
 const DELETE_ACCOUNT_ENDPOINT = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/delete-account`;
 
-async function syncPushPreferences(preferences: Record<string, unknown>): Promise<boolean> {
+async function syncPushPreferences(preferences: unknown): Promise<boolean> {
   try {
     const {
       data: { session },
@@ -98,7 +100,7 @@ async function syncPushPreferences(preferences: Record<string, unknown>): Promis
   }
 }
 
-async function registerPush(preferences: Record<string, unknown>): Promise<boolean> {
+async function registerPush(preferences: unknown): Promise<boolean> {
   try {
     const sub = await subscribeToPush();
     if (!sub) return false;
@@ -129,9 +131,11 @@ export default function YouScreen() {
     profileImageDataUrl,
     notificationPreferences,
     sharePrivacyPreferences,
+    themePreference,
     setProfileImageDataUrl,
     setNotificationPreferences,
     setSharePrivacyPreferences,
+    setThemePreference,
     addCustomRoute,
     archiveCustomRoute,
     signOut,
@@ -141,6 +145,11 @@ export default function YouScreen() {
   const [pushStatus, setPushStatus] = useState<
     'idle' | 'requesting' | 'done' | 'denied' | 'unsupported'
   >('idle');
+  const [settingsDirty, setSettingsDirty] = useState(false);
+  const [settingsStatus, setSettingsStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>(
+    'idle',
+  );
+  const [settingsError, setSettingsError] = useState<string | null>(null);
   const todayNotificationKey = getLocalNotificationDateKey(new Date());
   const escalationPausedToday = notificationPreferences.pausedDate === todayNotificationKey;
 
@@ -160,44 +169,57 @@ export default function YouScreen() {
     );
   }, []);
 
+  const markSettingsDirty = useCallback(() => {
+    setSettingsDirty(true);
+    setSettingsStatus('idle');
+    setSettingsError(null);
+  }, []);
+
   const updateNotificationPreferences = useCallback(
     (preferences: Partial<typeof notificationPreferences>) => {
-      const next = { ...notificationPreferences, ...preferences };
       setNotificationPreferences(preferences);
-      if (next.webPushEnabled) {
-        void syncPushPreferences(next);
-      }
+      markSettingsDirty();
     },
-    [notificationPreferences, setNotificationPreferences],
+    [markSettingsDirty, setNotificationPreferences],
   );
 
   const handleEnableNotifications = useCallback(async () => {
-    const next = { ...notificationPreferences, enabled: true, webPushEnabled: true };
-    setNotificationPreferences({ enabled: true, webPushEnabled: true });
+    const next = { ...notificationPreferences, enabled: true, webPushEnabled: false };
+    setNotificationPreferences({ enabled: true, webPushEnabled: false });
+    markSettingsDirty();
     if (!isPushSupported()) {
-      setNotificationPreferences({ enabled: false, webPushEnabled: false });
       setPushStatus('unsupported');
       return;
     }
     setPushStatus('requesting');
-    const ok = await registerPush(next);
+    const ok = await registerPush({ ...next, webPushEnabled: true });
     setPushStatus(ok ? 'done' : Notification.permission === 'denied' ? 'denied' : 'idle');
-    if (!ok) setNotificationPreferences({ enabled: false, webPushEnabled: false });
-  }, [notificationPreferences, setNotificationPreferences]);
+    setNotificationPreferences({ webPushEnabled: ok });
+    markSettingsDirty();
+  }, [markSettingsDirty, notificationPreferences, setNotificationPreferences]);
 
   const handleDisableNotifications = useCallback(async () => {
     const next = { ...notificationPreferences, enabled: false, webPushEnabled: false };
     setNotificationPreferences({ enabled: false, webPushEnabled: false });
+    markSettingsDirty();
     if (isPushSupported()) await unsubscribeFromPush();
     await syncPushPreferences(next);
     setPushStatus(isPushSupported() ? 'idle' : 'unsupported');
-  }, [notificationPreferences, setNotificationPreferences]);
+  }, [markSettingsDirty, notificationPreferences, setNotificationPreferences]);
 
   const handlePauseEscalationToday = useCallback(() => {
     updateNotificationPreferences({
       pausedDate: escalationPausedToday ? null : todayNotificationKey,
     });
   }, [escalationPausedToday, todayNotificationKey, updateNotificationPreferences]);
+
+  const handleThemeChange = useCallback(
+    (theme: ThemePreference) => {
+      setThemePreference(theme);
+      markSettingsDirty();
+    },
+    [markSettingsDirty, setThemePreference],
+  );
 
   const [deleteConfirm, setDeleteConfirm] = useState(false);
   const [deletePhrase, setDeletePhrase] = useState('');
@@ -355,6 +377,47 @@ export default function YouScreen() {
     }
   }, [signOut]);
 
+  const handleSaveSettings = useCallback(async () => {
+    if (!profile) return;
+    setSettingsStatus('saving');
+    setSettingsError(null);
+
+    try {
+      await saveUserSettings({
+        userId: profile.id,
+        profileImageDataUrl,
+        notificationPreferences,
+        sharePrivacyPreferences,
+        themePreference,
+      });
+
+      if (notificationPreferences.webPushEnabled) {
+        const pushSynced = await syncPushPreferences(notificationPreferences);
+        if (!pushSynced) {
+          setSettingsDirty(true);
+          setSettingsStatus('error');
+          setSettingsError(
+            'Saved to your account, but web push delivery did not update. Try Save settings again.',
+          );
+          return;
+        }
+      }
+
+      setSettingsDirty(false);
+      setSettingsStatus('saved');
+    } catch (error) {
+      setSettingsDirty(true);
+      setSettingsStatus('error');
+      setSettingsError(error instanceof Error ? error.message : 'Settings could not be saved.');
+    }
+  }, [
+    notificationPreferences,
+    profile,
+    profileImageDataUrl,
+    sharePrivacyPreferences,
+    themePreference,
+  ]);
+
   const handleProfileImage = useCallback(
     (event: ChangeEvent<HTMLInputElement>) => {
       const file = event.target.files?.[0];
@@ -364,12 +427,13 @@ export default function YouScreen() {
         if (typeof reader.result === 'string') {
           const resized = await resizeImageDataUrl(reader.result);
           setProfileImageDataUrl(resized);
+          markSettingsDirty();
         }
       };
       reader.readAsDataURL(file);
       event.target.value = '';
     },
-    [setProfileImageDataUrl],
+    [markSettingsDirty, setProfileImageDataUrl],
   );
 
   const handleAddCustomRoute = useCallback(async () => {
@@ -427,7 +491,7 @@ export default function YouScreen() {
               />
             </label>
             <p className="text-base-muted text-[10px] text-center mt-1 max-w-24 leading-tight">
-              Photo saved on this browser. Upload again on other devices.
+              Press Save settings to sync this photo to your account.
             </p>
           </div>
           <div className="min-w-0 flex-1">
@@ -450,6 +514,67 @@ export default function YouScreen() {
               {level.level}: {level.label}
             </p>
           </div>
+        </div>
+      </Card>
+
+      <Card className={settingsDirty ? 'border-status-partial/50' : undefined}>
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="min-w-0">
+            <p className="text-base-subtext text-xs font-heading tracking-widest uppercase mb-1">
+              Account settings
+            </p>
+            <p className="text-base-subtext text-sm">
+              {settingsDirty
+                ? 'Unsaved changes'
+                : settingsStatus === 'saved'
+                  ? 'Saved to your account'
+                  : 'Profile photo, reminders, privacy, and theme'}
+            </p>
+          </div>
+          <Button
+            size="sm"
+            onClick={() => void handleSaveSettings()}
+            disabled={settingsStatus === 'saving'}
+            className="w-full sm:w-auto"
+          >
+            {settingsStatus === 'saving' ? 'Saving...' : 'Save settings'}
+          </Button>
+        </div>
+        <div aria-live="polite" className="mt-3 min-h-4">
+          {settingsStatus === 'error' && (
+            <p role="alert" className="text-status-missed text-xs">
+              {settingsError ?? 'Settings could not be saved.'}
+            </p>
+          )}
+          {settingsStatus === 'saved' && !settingsDirty && (
+            <p className="text-accent-green text-xs">Saved in the database.</p>
+          )}
+        </div>
+      </Card>
+
+      <Card>
+        <p className="text-base-subtext text-xs font-heading tracking-widest uppercase mb-3">
+          Appearance
+        </p>
+        <div className="grid grid-cols-2 gap-2">
+          {[
+            ['dark', 'Dark'],
+            ['light', 'Light'],
+          ].map(([value, label]) => (
+            <button
+              type="button"
+              key={value}
+              aria-pressed={themePreference === value}
+              onClick={() => handleThemeChange(value as ThemePreference)}
+              className={`min-h-11 rounded-lg border px-3 py-2 text-center font-heading text-sm tracking-wide transition-colors ${
+                themePreference === value
+                  ? 'border-accent-green bg-accent-green/10 text-base-text'
+                  : 'border-base-border bg-base-elevated text-base-subtext hover:border-accent-green/60'
+              }`}
+            >
+              {label}
+            </button>
+          ))}
         </div>
       </Card>
 
@@ -613,7 +738,7 @@ export default function YouScreen() {
                   className={`min-h-11 rounded-lg border p-3 text-left transition-colors ${
                     notificationPreferences.intensity === option.id
                       ? 'border-accent-green bg-accent-green/10 text-base-text'
-                      : 'border-white/10 bg-white/[0.03] text-base-subtext hover:border-white/20'
+                      : 'border-base-border bg-base-elevated text-base-subtext hover:border-accent-green/60'
                   }`}
                 >
                   <span className="block font-heading text-sm tracking-wide">{option.label}</span>
@@ -623,7 +748,7 @@ export default function YouScreen() {
             </div>
           </div>
 
-          <div className="rounded-lg border border-white/10 bg-white/[0.03] p-3">
+          <div className="rounded-lg border border-base-border bg-base-elevated p-3">
             <p className="font-heading text-sm text-base-text tracking-wide">
               {notificationPreferences.intensity === 'high'
                 ? 'High accountability'
@@ -639,12 +764,12 @@ export default function YouScreen() {
           {pushStatus === 'unsupported' && (
             <p className="rounded-lg border border-status-partial/40 bg-status-partial/10 p-3 text-sm text-base-subtext">
               Web push is not supported here. 12K will keep in-app Home prompts available instead of
-              failing silently.
+              failing silently. Save settings to keep this preference on your account.
             </p>
           )}
           {pushStatus === 'denied' && (
             <p className="rounded-lg border border-status-missed/40 bg-status-missed/10 p-3 text-sm text-base-subtext">
-              Notifications are blocked. Re-enable them in browser settings, then return here.
+              Browser notifications are blocked. Your reminder preference can still be saved here.
             </p>
           )}
 
@@ -653,7 +778,6 @@ export default function YouScreen() {
             <input
               type="checkbox"
               checked={notificationPreferences.enabled}
-              disabled={pushStatus === 'unsupported' || pushStatus === 'denied'}
               onChange={(e) =>
                 e.target.checked
                   ? void handleEnableNotifications()
@@ -716,19 +840,24 @@ export default function YouScreen() {
           </label>
 
           {notificationPreferences.enabled && notificationPreferences.intensity === 'high' && (
-            <div className="flex flex-col gap-2 rounded-lg border border-white/10 bg-white/[0.03] p-3 sm:flex-row sm:items-center sm:justify-between">
-              <p className="text-xs text-base-subtext">
-                {escalationPausedToday
-                  ? 'Escalation is paused today. Tomorrow still uses your saved cadence.'
-                  : 'Pause the repeated ladder for today without turning reminders off.'}
-              </p>
+            <div className="flex flex-col gap-2 rounded-lg border border-base-border bg-base-elevated p-3 sm:flex-row sm:items-center sm:justify-between">
+              <div className="min-w-0">
+                <p className="font-heading text-xs tracking-widest text-base-text uppercase">
+                  High-accountability pause
+                </p>
+                <p className="mt-1 text-xs text-base-subtext">
+                  {escalationPausedToday
+                    ? 'Escalation is paused today. Tomorrow still uses your saved cadence.'
+                    : 'Pause the repeated ladder for today without turning reminders off.'}
+                </p>
+              </div>
               <Button
                 size="sm"
                 variant="secondary"
                 onClick={handlePauseEscalationToday}
                 className="w-full sm:w-auto"
               >
-                {escalationPausedToday ? 'Resume today' : 'Pause today'}
+                {escalationPausedToday ? 'Resume ladder' : 'Pause ladder'}
               </Button>
             </div>
           )}
@@ -765,11 +894,12 @@ export default function YouScreen() {
               <input
                 type="checkbox"
                 checked={sharePrivacyPreferences[key as keyof typeof sharePrivacyPreferences]}
-                onChange={(e) =>
+                onChange={(e) => {
                   setSharePrivacyPreferences({
                     [key]: e.target.checked,
-                  })
-                }
+                  });
+                  markSettingsDirty();
+                }}
               />
             </label>
           ))}

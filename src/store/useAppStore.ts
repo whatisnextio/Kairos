@@ -39,6 +39,7 @@ import {
 import { DEV_CYCLE_ID, clearLocalDevSession } from '@/utils/localDevSession';
 import { DEFAULT_SHARE_PRIVACY, type SharePrivacyPreferences } from '@/utils/shareProgress';
 import { computeLocalStreak } from '@/utils/streak';
+import { type ThemePreference, normaliseThemePreference } from '@/utils/theme';
 import { toLocalIsoDate } from '@/utils/v1Framework';
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
@@ -204,6 +205,7 @@ interface AppState {
   rewardedImproveCards: Record<string, true>;
   notificationPreferences: NotificationPreferences;
   sharePrivacyPreferences: SharePrivacyPreferences;
+  themePreference: ThemePreference;
   offlineSyncStatus: OfflineSyncStatus;
   offlineQueueCount: number;
   offlineSyncLastError: string | null;
@@ -260,6 +262,7 @@ interface AppActions {
   setProfileImageDataUrl: (dataUrl: string | null) => void;
   setNotificationPreferences: (preferences: Partial<NotificationPreferences>) => void;
   setSharePrivacyPreferences: (preferences: Partial<SharePrivacyPreferences>) => void;
+  setThemePreference: (theme: ThemePreference) => void;
   setImproveCardStatus: (
     cardId: string,
     status: 'accepted' | 'completed' | 'dismissed',
@@ -307,6 +310,7 @@ const initialState: AppState = {
   rewardedImproveCards: {},
   notificationPreferences: DEFAULT_NOTIFICATION_PREFERENCES,
   sharePrivacyPreferences: DEFAULT_SHARE_PRIVACY,
+  themePreference: 'dark',
   offlineSyncStatus: 'idle',
   offlineQueueCount: 0,
   offlineSyncLastError: null,
@@ -989,6 +993,8 @@ export const useAppStore = create<AppState & AppActions>()(
         set((state) => ({
           sharePrivacyPreferences: { ...state.sharePrivacyPreferences, ...preferences },
         })),
+      setThemePreference: (themePreference) =>
+        set({ themePreference: normaliseThemePreference(themePreference) }),
       setImproveCardStatus: async (cardId, status, xpReward, snapshot) => {
         const reward = xpReward ?? 0;
         let shouldSyncXp = false;
@@ -1142,6 +1148,7 @@ export const useAppStore = create<AppState & AppActions>()(
           notificationPreferences: normaliseNotificationPreferences(
             persisted.notificationPreferences,
           ),
+          themePreference: normaliseThemePreference(persisted.themePreference),
         };
       },
       partialize: (state) => ({
@@ -1165,6 +1172,7 @@ export const useAppStore = create<AppState & AppActions>()(
         rewardedImproveCards: state.rewardedImproveCards,
         notificationPreferences: state.notificationPreferences,
         sharePrivacyPreferences: state.sharePrivacyPreferences,
+        themePreference: state.themePreference,
         streakProtectionHistory: state.streakProtectionHistory,
         awardedWeeklyBonuses: state.awardedWeeklyBonuses,
         offlineSyncStatus: state.offlineSyncStatus,
@@ -1180,6 +1188,7 @@ export const useAppStore = create<AppState & AppActions>()(
           notificationPreferences: normaliseNotificationPreferences(
             persisted.notificationPreferences,
           ),
+          themePreference: normaliseThemePreference(persisted.themePreference),
         };
       },
     },
