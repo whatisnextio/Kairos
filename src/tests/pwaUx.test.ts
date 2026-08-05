@@ -95,12 +95,16 @@ describe('PWA UX shell', () => {
   });
 
   it('keeps onboarding scrollable outside the app shell', () => {
+    const css = readFileSync('src/index.css', 'utf8');
     const onboarding = readFileSync('src/pages/onboarding/OnboardingFlow.tsx', 'utf8');
 
-    expect(onboarding).toContain('h-dvh');
-    expect(onboarding).toContain('overflow-y-auto');
-    expect(onboarding).toContain('overscroll-contain');
-    expect(onboarding).toContain('md:h-[calc(100dvh-48px)]');
+    expect(onboarding).toContain("document.documentElement.dataset.kairosRoute = 'onboarding'");
+    expect(onboarding).toContain('flex min-h-dvh items-start justify-center');
+    expect(onboarding).not.toContain('flex h-dvh items-start justify-center');
+    expect(onboarding).not.toContain('overflow-y-auto overscroll-contain');
+    expect(onboarding).not.toContain('md:h-[calc(100dvh-48px)]');
+    expect(css).toContain('html[data-kairos-route="onboarding"]');
+    expect(css).toContain('touch-action: pan-y');
   });
 
   it('defines dark and light theme variables for the PWA shell', () => {

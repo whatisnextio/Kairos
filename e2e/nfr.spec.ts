@@ -52,21 +52,17 @@ test.describe('NFR smoke gates', () => {
     await expectNoA11yViolations(page);
   });
 
-  test('desktop onboarding final step scrolls to the start action', async ({ browser }, testInfo) => {
-    test.skip(testInfo.project.name !== 'Mobile Chrome', 'Desktop scroll regression runs once.');
+  test('mobile onboarding final step scrolls the document to the start action', async ({
+    page,
+  }, testInfo) => {
+    test.skip(testInfo.project.name !== 'Mobile Chrome', 'Scroll regression runs once.');
 
-    const context = await browser.newContext({
-      viewport: { width: 1000, height: 768 },
-      isMobile: false,
-      hasTouch: false,
-    });
-    const page = await context.newPage();
     await page.addInitScript(() => {
       localStorage.clear();
       localStorage.setItem('kairos_dev_session', '1');
     });
 
-    await page.goto('http://localhost:5173/#/onboarding');
+    await page.goto('/#/onboarding');
     await page.getByRole('button', { name: /start setup/i }).click();
     await page.getByLabel(/name/i).fill('Liam');
     await page.getByRole('button', { name: /the builder/i }).click();
@@ -76,29 +72,36 @@ test.describe('NFR smoke gates', () => {
     await page.getByRole('button', { name: /continue/i }).click();
 
     await expect(page.getByRole('heading', { name: /make day 0 count/i })).toBeVisible();
-    const onboardingFrame = page.locator('main').first();
-    const before = await onboardingFrame.evaluate((element) => ({
-      scrollTop: element.scrollTop,
-      scrollHeight: element.scrollHeight,
-      clientHeight: element.clientHeight,
-    }));
+    const before = await page.evaluate(() => {
+      const scrollElement = document.scrollingElement ?? document.documentElement;
+      const main = document.querySelector('main');
+
+      return {
+        scrollTop: scrollElement.scrollTop,
+        scrollHeight: scrollElement.scrollHeight,
+        clientHeight: scrollElement.clientHeight,
+        mainOverflowY: main ? getComputedStyle(main).overflowY : null,
+        route: document.documentElement.dataset.kairosRoute,
+      };
+    });
+    expect(before.route).toBe('onboarding');
+    expect(before.mainOverflowY).not.toBe('auto');
     expect(before.scrollHeight).toBeGreaterThan(before.clientHeight);
 
-    const box = await onboardingFrame.boundingBox();
-    expect(box).not.toBeNull();
-    await page.mouse.move((box?.x ?? 0) + (box?.width ?? 0) / 2, (box?.y ?? 0) + 200);
     await page.mouse.wheel(0, 900);
     await page.mouse.wheel(0, 900);
 
-    const after = await onboardingFrame.evaluate((element) => ({
-      scrollTop: element.scrollTop,
-      scrollHeight: element.scrollHeight,
-      clientHeight: element.clientHeight,
-    }));
+    const after = await page.evaluate(() => {
+      const scrollElement = document.scrollingElement ?? document.documentElement;
+
+      return {
+        scrollTop: scrollElement.scrollTop,
+        scrollHeight: scrollElement.scrollHeight,
+        clientHeight: scrollElement.clientHeight,
+      };
+    });
     expect(after.scrollTop).toBeGreaterThan(before.scrollTop);
     await expect(page.getByRole('button', { name: /done, start 12k/i })).toBeInViewport();
-
-    await context.close();
   });
 
   test('daily dashboard stays within a 3-tap check-in path', async ({ page }) => {

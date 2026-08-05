@@ -84,6 +84,22 @@
     isolation: isolate;
   }
 
+  html[data-kairos-route="onboarding"] {
+    min-height: 100%;
+    height: auto;
+    overflow-y: auto;
+    overscroll-behavior-y: auto;
+    touch-action: pan-y;
+  }
+
+  html[data-kairos-route="onboarding"] body {
+    min-height: 100%;
+    height: auto;
+    overflow-y: auto;
+    overscroll-behavior-y: auto;
+    touch-action: pan-y;
+  }
+
   h1,
   h2,
   h3,
