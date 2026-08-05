@@ -34,6 +34,11 @@ describe('account settings persistence', () => {
     expect(screen).toContain('Save settings');
     expect(screen).toContain('saveUserSettings({');
     expect(screen).toContain('Saved in the database.');
+    expect(screen).toContain('handleSharePrivacyChange');
+    expect(screen).toContain('nextSharePrivacyPreferences');
+    expect(screen).toContain('sharePrivacyPreferences: nextSharePrivacyPreferences');
+    expect(screen).toContain('Sharing privacy saved in the database.');
+    expect(screen).toContain('{ syncPush: false }');
   });
 
   it('mirrors reminder preferences from the push Edge Function into user settings', () => {
