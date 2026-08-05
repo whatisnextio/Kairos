@@ -47,8 +47,8 @@ describe('security hardening', () => {
   });
 
   it('keeps backend enforcement for client-visible app access state', () => {
-    const profileGuard = readFileSync('supabase/migrations/025_single_app_access.sql', 'utf8');
-    const customRoutes = readFileSync('supabase/migrations/025_single_app_access.sql', 'utf8');
+    const profileGuard = readFileSync('supabase/migrations/027_single_app_access.sql', 'utf8');
+    const customRoutes = readFileSync('supabase/migrations/027_single_app_access.sql', 'utf8');
 
     expect(profileGuard).toContain('guard_profile_sensitive_fields');
     expect(profileGuard).toContain('Profile app access fields cannot be changed directly');
