@@ -1,5 +1,6 @@
 import Button from '@/components/common/Button';
 import Card from '@/components/common/Card';
+import DismissibleTip from '@/components/common/DismissibleTip';
 import SetupOptionSections from '@/components/common/SetupOptionSections';
 import AbandonCycleModal from '@/components/modals/AbandonCycleModal';
 import WeeklyVibeCheckModal from '@/components/modals/WeeklyVibeCheckModal';
@@ -642,6 +643,19 @@ export default function YouScreen() {
         </p>
         <p className="text-base-subtext text-sm mb-2">{FEATURE_EXPLANATIONS.personalRoutes}</p>
         <p className="text-base-muted text-xs mb-4">{FEATURE_EXPLANATIONS.personalRoutesAction}</p>
+        <DismissibleTip
+          profileId={profile.id}
+          tipId="settings-sub-focus"
+          eyebrow="Settings tip"
+          title="Create your own sub-focus areas"
+          className="mb-4"
+        >
+          <p>
+            Body, Fuel, Self, and Connection never change. Use this settings area to add your own
+            sub-focus areas underneath them, such as work, money, family, photography, study, or
+            recovery.
+          </p>
+        </DismissibleTip>
         <div className="flex flex-col gap-2 mb-4">
           {activeCustomRoutes.length === 0 ? (
             <p className="text-base-muted text-sm">No personal sub-routes active.</p>

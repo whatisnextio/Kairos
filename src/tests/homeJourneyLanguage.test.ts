@@ -29,6 +29,21 @@ describe('Home journey language', () => {
     expect(home).toContain('aria-label="Dismiss Kairos explainer"');
   });
 
+  it('shows a permanently dismissible category tooltip on Home', () => {
+    const home = readFileSync('src/pages/HomeScreen.tsx', 'utf8');
+    const tip = readFileSync('src/components/common/DismissibleTip.tsx', 'utf8');
+    const tipStorage = readFileSync('src/utils/dismissibleTips.ts', 'utf8');
+
+    expect(tipStorage).toContain('kairos_dismissible_tip_v1');
+    expect(tipStorage).toContain("'home-framework-categories'");
+    expect(tip).toContain('writeDismissibleTip(profileId, tipId)');
+    expect(tip).toContain('aria-label={`Dismiss ${title} tip`}');
+    expect(home).toContain('CORE_CATEGORY_LABELS');
+    expect(home).toContain("['Body', 'Fuel', 'Self', 'Connection']");
+    expect(home).toContain('The four categories stay fixed');
+    expect(home).toContain('personal sub-focus areas sit');
+  });
+
   it('explains Partial and opens the weekly check-in with explicit copy', () => {
     const home = readFileSync('src/pages/HomeScreen.tsx', 'utf8');
     const framework = readFileSync('src/utils/v1Framework.ts', 'utf8');

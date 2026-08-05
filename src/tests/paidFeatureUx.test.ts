@@ -14,6 +14,9 @@ describe('single app tier UX copy', () => {
     expect(source).not.toContain('Journey history');
     expect(source).toContain('FEATURE_EXPLANATIONS.personalRoutes');
     expect(source).toContain('FEATURE_EXPLANATIONS.personalRoutesAction');
+    expect(source).toContain('tipId="settings-sub-focus"');
+    expect(source).toContain('Create your own sub-focus areas');
+    expect(source).toContain('Body, Fuel, Self, and Connection never change');
     expect(source).not.toContain('Billing portal');
     expect(source).not.toContain('Manage billing');
     expect(source).not.toContain('Upgrade');

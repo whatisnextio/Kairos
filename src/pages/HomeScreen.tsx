@@ -1,5 +1,6 @@
 import Button from '@/components/common/Button';
 import Card from '@/components/common/Card';
+import DismissibleTip from '@/components/common/DismissibleTip';
 import CheckInStatusModal from '@/components/modals/CheckInStatusModal';
 import Day84CompletionModal from '@/components/modals/Day84CompletionModal';
 import ProgressiveDomainSetupModal from '@/components/modals/ProgressiveDomainSetupModal';
@@ -78,6 +79,7 @@ const PHASE_MILESTONE_MESSAGES: Record<string, string> = {
 
 const DAY_PROTOCOL_DISMISSAL_KEY = 'kairos_day_protocol_dismissal_v1';
 const KAIROS_EXPLAINER_DISMISSED_KEY_PREFIX = 'kairos_explainer_dismissed_v1';
+const CORE_CATEGORY_LABELS = ['Body', 'Fuel', 'Self', 'Connection'] as const;
 
 interface DismissedDayProtocol {
   cycleId: string | null;
@@ -395,6 +397,19 @@ export default function HomeScreen() {
             Focus: {anchorDisplayName}. Pick one useful action and keep it visible.
           </p>
         </div>
+
+        <DismissibleTip
+          profileId={profile.id}
+          tipId="home-framework-categories"
+          eyebrow="Framework tip"
+          title="The four categories stay fixed"
+        >
+          <p>
+            12K always uses {CORE_CATEGORY_LABELS.join(', ')}. Your personal sub-focus areas sit
+            underneath those categories, so the daily check-in stays simple while the work stays
+            personal.
+          </p>
+        </DismissibleTip>
 
         {showKairosExplainer && (
           <Card className="border-accent-green/35 bg-accent-green/5">
