@@ -66,6 +66,33 @@ describe('Improve challenge lifecycle', () => {
     expect(useAppStore.getState().profile?.xp).toBe(35);
   });
 
+  it('persists completed reflection text with the Improve card snapshot', async () => {
+    const { useAppStore } = await import('@/store/useAppStore');
+
+    useAppStore.getState().reset();
+    useAppStore.setState({ profile, currentCycle: cycle });
+
+    await useAppStore.getState().setImproveCardStatus('card-reflect', 'completed', 5, {
+      id: 'card-reflect',
+      lens: 'Reflect',
+      title: 'Notice the shift',
+      body: 'Capture what changed.',
+      domainLabel: 'Self',
+      phaseLabel: 'Kickoff',
+      actionText: 'Write one honest line',
+      xpReward: 5,
+      cta: 'reflect',
+      reflectionText: 'I stopped early enough to reset.',
+      domainType: 'METIME',
+    });
+
+    expect(useAppStore.getState().improveCardStatuses['card-reflect']).toBe('completed');
+    expect(useAppStore.getState().improveCardSnapshots['card-reflect']).toMatchObject({
+      cta: 'reflect',
+      reflectionText: 'I stopped early enough to reset.',
+    });
+  });
+
   it('clears challenge lifecycle when a new journey starts', async () => {
     const { useAppStore } = await import('@/store/useAppStore');
 

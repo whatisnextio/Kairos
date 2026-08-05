@@ -43,6 +43,7 @@ interface ImproveCard {
   actionText: string;
   xpReward: number;
   cta: NudgeCta;
+  reflectionText?: string;
   nudge?: AiNudge;
   domainType?: DomainType;
   customRouteId?: string;
@@ -119,10 +120,19 @@ function ImproveCardContent({
       )}
 
       {card.status === 'completed' ? (
-        <p className="text-accent-green text-xs">
-          Complete
-          {rewarded && card.xpReward > 0 ? `. ${formatKairosPoints(card.xpReward)} awarded.` : '.'}
-        </p>
+        <div className="flex flex-col gap-2">
+          <p className="text-accent-green text-xs">
+            Complete
+            {rewarded && card.xpReward > 0
+              ? `. ${formatKairosPoints(card.xpReward)} awarded.`
+              : '.'}
+          </p>
+          {card.reflectionText && (
+            <p className="rounded border border-base-border bg-base-black/20 p-2 text-xs text-base-subtext">
+              {card.reflectionText}
+            </p>
+          )}
+        </div>
       ) : (
         <div className="flex gap-2 flex-wrap">
           {card.status === 'new' && (
@@ -179,7 +189,7 @@ export default function ImproveScreen() {
 
   const [activeCardId, setActiveCardId] = useState<string | null>(null);
   const [ctaExpanded, setCtaExpanded] = useState(false);
-  const [reflectionText, setReflectionText] = useState('');
+  const [reflectionDrafts, setReflectionDrafts] = useState<Record<string, string>>({});
 
   const frameworkRecommendations = buildFrameworkRecommendations({
     email: authUser?.email,
@@ -208,6 +218,7 @@ export default function ImproveScreen() {
                 : 'Close one loop',
           xpReward: nudge.xpReward ?? 0,
           cta: nudge.cta,
+          reflectionText: improveCardSnapshots[nudge.id]?.reflectionText,
           nudge,
         }
       : null;
@@ -226,6 +237,7 @@ export default function ImproveScreen() {
       actionText: recommendation.actionText,
       xpReward: recommendation.lens === 'Reflect' ? 5 : 15,
       cta: recommendation.lens === 'Reflect' ? 'reflect' : 'check_in_now',
+      reflectionText: improveCardSnapshots[id]?.reflectionText,
       domainType: recommendation.domainType,
       customRouteId: recommendation.customRouteId,
     };
@@ -251,18 +263,34 @@ export default function ImproveScreen() {
     .slice(0, Math.max(0, 3 - activeCards.length));
   const completedCards = visibleCards.filter((card) => card.status === 'completed').slice(0, 2);
 
-  function setCardStatus(card: ImproveCard, status: NudgeStatus) {
+  function clearReflectionDraft(cardId: string) {
+    setReflectionDrafts((drafts) => {
+      const { [cardId]: _removed, ...remaining } = drafts;
+      return remaining;
+    });
+  }
+
+  function setCardStatus(
+    card: ImproveCard,
+    status: 'accepted' | 'completed' | 'dismissed',
+    reflectionText?: string,
+  ) {
+    const snapshot = toSnapshot(card, reflectionText);
+
     if (card.kind === 'ai' && card.nudge) {
       updateStatus({ nudgeId: card.nudge.id, status, xpReward: card.nudge.xpReward });
+      void setImproveCardStatus(card.id, status, 0, snapshot);
       return;
     }
 
     if (status === 'accepted' || status === 'completed' || status === 'dismissed') {
-      void setImproveCardStatus(card.id, status, card.xpReward, toSnapshot(card));
+      void setImproveCardStatus(card.id, status, card.xpReward, snapshot);
     }
   }
 
   function completeCard(card: ImproveCard) {
+    const reflectionText = (reflectionDrafts[card.id] ?? '').trim();
+
     if (card.cta !== 'reflect') {
       const target = resolveImproveCompletionTarget({
         domainType: card.domainType,
@@ -276,9 +304,9 @@ export default function ImproveScreen() {
         void setDailyCheckIn(target.domainType, 'Done');
       }
     }
-    setCardStatus(card, 'completed');
+    setCardStatus(card, 'completed', reflectionText || undefined);
     setCtaExpanded(false);
-    setReflectionText('');
+    clearReflectionDraft(card.id);
   }
 
   function renderCard(card: ImproveCard, emphasise = false) {
@@ -290,16 +318,21 @@ export default function ImproveScreen() {
           ctaExpanded={ctaExpanded}
           rewarded={!!rewardedImproveCards[card.id]}
           isUpdating={isUpdatingNudge && card.kind === 'ai'}
-          reflectionText={activeCardId === card.id ? reflectionText : ''}
-          onReflectionChange={setReflectionText}
+          reflectionText={
+            activeCardId === card.id ? (reflectionDrafts[card.id] ?? card.reflectionText ?? '') : ''
+          }
+          onReflectionChange={(text) =>
+            setReflectionDrafts((drafts) => ({ ...drafts, [card.id]: text }))
+          }
           onToggleWrite={() => {
-            const closing = activeCardId === card.id && ctaExpanded;
-            if (closing) setReflectionText('');
             setActiveCardId((current) => (current === card.id ? null : card.id));
             setCtaExpanded((current) => (activeCardId === card.id ? !current : true));
           }}
           onAccept={() => setCardStatus(card, 'accepted')}
-          onDismiss={() => setCardStatus(card, 'dismissed')}
+          onDismiss={() => {
+            setCardStatus(card, 'dismissed');
+            clearReflectionDraft(card.id);
+          }}
           onComplete={() => completeCard(card)}
         />
       </Card>
@@ -432,7 +465,7 @@ export default function ImproveScreen() {
   );
 }
 
-function toSnapshot(card: ImproveCard): ImproveCardSnapshot {
+function toSnapshot(card: ImproveCard, reflectionText?: string): ImproveCardSnapshot {
   return {
     id: card.id,
     lens: card.lens,
@@ -443,6 +476,7 @@ function toSnapshot(card: ImproveCard): ImproveCardSnapshot {
     actionText: card.actionText,
     xpReward: card.xpReward,
     cta: card.cta,
+    reflectionText,
     domainType: card.domainType,
     customRouteId: card.customRouteId,
   };

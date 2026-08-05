@@ -595,6 +595,7 @@ export interface ImproveCardSnapshot {
   actionText: string;
   xpReward: number;
   cta: NudgeCta;
+  reflectionText?: string;
   domainType?: DomainType;
   customRouteId?: string;
 }
