@@ -3,7 +3,11 @@ import Card from '@/components/common/Card';
 import { useNudge, useUpdateNudgeStatus } from '@/hooks/useNudge';
 import { useAppStore } from '@/store/useAppStore';
 import type { AiNudge, DomainType, ImproveCardSnapshot, NudgeCta, NudgeStatus } from '@/types';
-import { buildFrameworkRecommendations } from '@/utils/frameworkRecommendations';
+import { getDomainConfig } from '@/types';
+import {
+  type FrameworkRecommendation,
+  buildFrameworkRecommendations,
+} from '@/utils/frameworkRecommendations';
 import { formatKairosPoints } from '@/utils/gamification';
 import {
   getDismissedCardsMessage,
@@ -28,6 +32,9 @@ const STATUS_LABELS: Record<NudgeStatus, string> = {
   dismissed: 'Dismissed',
 };
 
+const AI_BOUNDARY_COPY =
+  'Kairos coaching only. Not therapy, diagnosis, medical, legal, or financial advice.';
+
 interface ImproveCard {
   id: string;
   kind: 'ai' | 'framework';
@@ -38,12 +45,47 @@ interface ImproveCard {
   domainLabel: string;
   phaseLabel: string;
   actionText: string;
+  whyText: string;
   xpReward: number;
   cta: NudgeCta;
   reflectionText?: string;
   nudge?: AiNudge;
   domainType?: DomainType;
   customRouteId?: string;
+}
+
+function buildAiWhyText(nudge: AiNudge, domainLabel: string, phaseLabel: string): string {
+  const ctaContext =
+    nudge.cta === 'check_in_now'
+      ? "today's check-in path"
+      : nudge.cta === 'reflect'
+        ? 'a reflection prompt'
+        : nudge.cta === 'plan_tomorrow'
+          ? "tomorrow's plan"
+          : 'one next action';
+  const domainContext = domainLabel === 'Kairos' ? 'your current 12K context' : domainLabel;
+
+  return `Based on your ${phaseLabel} phase, ${domainContext}, ${ctaContext}, and available Kairos history such as recent check-ins, streaks, vibe checks, and active personal routes.`;
+}
+
+function getNudgeDomainLabel(domainType: DomainType | null, email?: string | null): string {
+  if (!domainType) return 'Kairos';
+  return getDomainConfig(domainType, email)?.label ?? domainType;
+}
+
+function buildFrameworkWhyText(
+  recommendation: FrameworkRecommendation,
+  phaseLabel: string,
+): string {
+  const routeContext = recommendation.customRouteId
+    ? 'your personal sub-route'
+    : `${recommendation.domainLabel} setup`;
+
+  return `Based on your ${phaseLabel} phase, ${routeContext}, today's check-in state, and the next useful option in the Kairos framework.`;
+}
+
+function buildSnapshotWhyText(snapshot: ImproveCardSnapshot): string {
+  return `Saved from ${snapshot.phaseLabel} for ${snapshot.domainLabel}. It stays visible from the original Improve context until you complete or dismiss it.`;
 }
 
 interface ImproveCardContentProps {
@@ -102,6 +144,13 @@ function ImproveCardContent({
       </div>
 
       <p className="text-base-subtext text-sm mb-3">{card.body}</p>
+      <details className="mb-3 rounded border border-base-border bg-base-black/20 px-3 py-2">
+        <summary className="cursor-pointer text-base-subtext text-xs font-heading tracking-widest uppercase">
+          Why this?
+        </summary>
+        <p className="mt-2 text-base-subtext text-xs leading-relaxed">{card.whyText}</p>
+        <p className="mt-2 text-base-muted text-[11px] leading-relaxed">{AI_BOUNDARY_COPY}</p>
+      </details>
       <p className="text-base-text text-sm mb-4">{card.actionText}</p>
       <p className="text-base-muted text-xs mb-4">{getImproveStatusHelper(card.status)}</p>
 
@@ -201,8 +250,13 @@ export default function ImproveScreen() {
           lens: nudge.type === 'weekly_challenge' ? 'Challenge' : "Today's nudge",
           title: nudge.title,
           body: nudge.body,
-          domainLabel: nudge.domainType ?? 'Kairos',
+          domainLabel: getNudgeDomainLabel(nudge.domainType, authUser?.email),
           phaseLabel: nudge.kairosPhase ?? phaseConfig.label,
+          whyText: buildAiWhyText(
+            nudge,
+            getNudgeDomainLabel(nudge.domainType, authUser?.email),
+            nudge.kairosPhase ?? phaseConfig.label,
+          ),
           actionText:
             nudge.cta === 'reflect'
               ? 'Write one honest line'
@@ -227,6 +281,7 @@ export default function ImproveScreen() {
       body: recommendation.body,
       domainLabel: recommendation.domainLabel,
       phaseLabel: phaseConfig.label,
+      whyText: buildFrameworkWhyText(recommendation, phaseConfig.label),
       actionText: recommendation.actionText,
       xpReward: recommendation.lens === 'Reflect' ? 5 : 15,
       cta: recommendation.lens === 'Reflect' ? 'reflect' : 'check_in_now',
@@ -243,6 +298,7 @@ export default function ImproveScreen() {
       ...snapshot,
       kind: 'framework',
       status: (improveCardStatuses[snapshot.id] as NudgeStatus | undefined) ?? 'new',
+      whyText: snapshot.whyText ?? buildSnapshotWhyText(snapshot),
     }));
 
   const allCards = [aiCard, ...frameworkCards, ...snapshotCards].filter(
@@ -436,6 +492,7 @@ function toSnapshot(card: ImproveCard, reflectionText?: string): ImproveCardSnap
     domainLabel: card.domainLabel,
     phaseLabel: card.phaseLabel,
     actionText: card.actionText,
+    whyText: card.whyText,
     xpReward: card.xpReward,
     cta: card.cta,
     reflectionText,

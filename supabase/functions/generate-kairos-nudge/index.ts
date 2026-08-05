@@ -38,6 +38,12 @@ Support rules:
 - Do not claim advanced pattern detection.
 - Never diagnose, therapise, or make medical, financial, or legal claims.
 
+Sensitive-topic boundary:
+- If context asks for therapy, diagnosis, medical advice, legal advice, financial advice, or crisis support, do not answer as an expert.
+- Stay inside Kairos coaching: one safe next action, one recovery step, or one reflection.
+- Signpost qualified professional, emergency, or crisis support where needed.
+- Do not repeat sensitive note details in the output.
+
 KAIROS phase contexts:
 - KICKOFF (Days 1-14): Start small. Create the first visible win.
 - ANCHOR (Days 15-28): Make the habit easy to find, repeat, and protect.
@@ -183,6 +189,31 @@ function buildFallbackNudge(state: UserState): GeneratedNudge {
     cta: domain ? 'check_in_now' : 'reflect',
     _costPence: 0,
   };
+}
+
+const ADVICE_BOUNDARY_PATTERN =
+  /\b(therapy|therapist|diagnosis|diagnose|medical advice|doctor|medication|legal advice|financial advice|investment|invest|debt advice|self-harm|suicide|crisis)\b/i;
+
+function buildBoundaryNudge(state: UserState): GeneratedNudge {
+  const phase = PHASE_CONTEXTS[state.phase]?.split(' - ')[0] ?? state.phase;
+
+  return {
+    title: 'Stay inside the next action.',
+    body: clipText(
+      `${phase}. Kairos is not therapy, diagnosis, medical, legal, or financial advice. Choose one safe proof step and use qualified support where needed.`,
+      200,
+    ),
+    type: 'daily_nudge',
+    domain: null,
+    xp_reward: 0,
+    cta: 'reflect',
+    _costPence: 0,
+  };
+}
+
+function enforceNudgeBoundaries(result: GeneratedNudge, state: UserState): GeneratedNudge {
+  const combined = `${result.title} ${result.body}`;
+  return ADVICE_BOUNDARY_PATTERN.test(combined) ? buildBoundaryNudge(state) : result;
 }
 
 async function callClaude(userPrompt: string): Promise<GeneratedNudge> {
@@ -442,6 +473,7 @@ Deno.serve(async (req: Request) => {
       console.error('AI provider unavailable, using fallback nudge:', message);
       result = buildFallbackNudge(state);
     }
+    result = enforceNudgeBoundaries(result, state);
 
     const { data: nudge, error: insertErr } = await supabase
       .from('ai_nudges')
