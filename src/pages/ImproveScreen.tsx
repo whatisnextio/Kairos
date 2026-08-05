@@ -125,6 +125,15 @@ function ImproveCardContent({
 
   return (
     <>
+      <div className="mb-4 rounded border border-accent-green/30 bg-accent-green/10 px-3 py-3">
+        <p className="mb-1 font-heading text-[11px] uppercase tracking-widest text-accent-green">
+          Action
+        </p>
+        <p className="font-heading text-lg font-semibold leading-snug text-base-text sm:text-xl">
+          {card.actionText}
+        </p>
+      </div>
+
       <div className="flex items-start justify-between gap-3 mb-2">
         <div className="min-w-0">
           <p className="text-accent-green text-xs font-heading tracking-widest uppercase mb-1">
@@ -149,7 +158,12 @@ function ImproveCardContent({
         )}
       </div>
 
-      <p className="text-base-subtext text-sm mb-3">{card.body}</p>
+      <div className="mb-3">
+        <p className="mb-1 font-heading text-[11px] uppercase tracking-widest text-base-muted">
+          Context
+        </p>
+        <p className="text-base-subtext text-sm">{card.body}</p>
+      </div>
       <details className="mb-3 rounded border border-base-border bg-base-black/20 px-3 py-2">
         <summary className="cursor-pointer text-base-subtext text-xs font-heading tracking-widest uppercase">
           Why this?
@@ -157,7 +171,6 @@ function ImproveCardContent({
         <p className="mt-2 text-base-subtext text-xs leading-relaxed">{card.whyText}</p>
         <p className="mt-2 text-base-muted text-[11px] leading-relaxed">{AI_BOUNDARY_COPY}</p>
       </details>
-      <p className="text-base-text text-sm mb-4">{card.actionText}</p>
       <p className="text-base-muted text-xs mb-4">{getImproveStatusHelper(card.status)}</p>
 
       {writeOpen && card.cta && card.cta in CTA_PROMPTS && (

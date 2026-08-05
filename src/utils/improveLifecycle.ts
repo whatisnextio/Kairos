@@ -12,8 +12,8 @@ export type ImproveCompletionTarget =
   | { kind: 'none' };
 
 export function getImproveStatusHelper(status: NudgeStatus): string {
-  if (status === 'new') return 'Accept keeps this card in Active until you close it.';
-  if (status === 'accepted') return 'Active cards stay here until you mark complete or dismiss.';
+  if (status === 'new') return 'Accept to move it into Active.';
+  if (status === 'accepted') return 'Complete it when done, or dismiss if it is not useful.';
   if (status === 'completed') return 'Closed today. Any reward is awarded once.';
   return 'Dismissed cards stay hidden today unless you restore them.';
 }

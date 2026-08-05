@@ -22,8 +22,8 @@ const lensRoute: CustomRoute = {
 
 describe('Improve lifecycle helpers', () => {
   it('explains what each card status means', () => {
-    expect(getImproveStatusHelper('new')).toContain('keeps this card in Active');
-    expect(getImproveStatusHelper('accepted')).toContain('until you mark complete or dismiss');
+    expect(getImproveStatusHelper('new')).toContain('move it into Active');
+    expect(getImproveStatusHelper('accepted')).toContain('Complete it when done');
     expect(getImproveStatusHelper('completed')).toContain('awarded once');
     expect(getImproveStatusHelper('dismissed')).toContain('hidden today');
     expect(getImproveStatusHelper('dismissed')).toContain('restore');

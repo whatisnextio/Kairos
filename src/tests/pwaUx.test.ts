@@ -78,6 +78,18 @@ describe('PWA UX shell', () => {
     expect(`${improve}\n${lifecycle}`).not.toContain(oldAwkwardPhrase);
   });
 
+  it('puts the Improve card action before context and rationale copy', () => {
+    const improve = readFileSync('src/pages/ImproveScreen.tsx', 'utf8');
+    const lifecycle = readFileSync('src/utils/improveLifecycle.ts', 'utf8');
+
+    expect(improve.indexOf('Action')).toBeLessThan(improve.indexOf('{card.title}'));
+    expect(improve.indexOf('{card.actionText}')).toBeLessThan(improve.indexOf('{card.body}'));
+    expect(improve).toContain('text-lg font-semibold');
+    expect(improve).toContain('Context');
+    expect(lifecycle).toContain('Complete it when done, or dismiss if it is not useful.');
+    expect(lifecycle).not.toContain('Active cards stay here');
+  });
+
   it('keeps native select options readable in the dark app shell', () => {
     const css = readFileSync('src/index.css', 'utf8');
 
