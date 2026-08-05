@@ -1,12 +1,14 @@
 import { useBootstrap } from '@/hooks/useBootstrap';
 import {
+  buildNotificationScheduleContext,
   cancelDailyNotifications,
   scheduleDailyNotifications,
 } from '@/services/localNotifications';
 import { supabase } from '@/services/supabaseClient';
 import { useAppStore } from '@/store/useAppStore';
+import { getAvailableDomains } from '@/types';
 import { DEV_EMAIL, DEV_USER_ID, hasLocalDevSession } from '@/utils/localDevSession';
-import { type ReactNode, Suspense, lazy, useEffect } from 'react';
+import { type ReactNode, Suspense, lazy, useEffect, useMemo } from 'react';
 import { HashRouter, Navigate, Route, Routes } from 'react-router-dom';
 
 import ErrorBoundary from '@/components/common/ErrorBoundary';
@@ -55,11 +57,32 @@ export default function App() {
     currentCycle,
     celebrationPending,
     notificationPreferences,
+    customRoutes,
+    todayCheckIns,
+    todayCustomRouteCheckIns,
     refreshOfflineSyncState,
     flushPendingSync,
   } = useAppStore();
 
   useBootstrap();
+
+  const notificationScheduleContext = useMemo(
+    () =>
+      buildNotificationScheduleContext({
+        domains: getAvailableDomains(authUser?.email),
+        customRoutes,
+        todayCheckIns,
+        todayCustomRouteCheckIns,
+        revealRouteNames: notificationPreferences.revealRouteNames,
+      }),
+    [
+      authUser?.email,
+      customRoutes,
+      notificationPreferences.revealRouteNames,
+      todayCheckIns,
+      todayCustomRouteCheckIns,
+    ],
+  );
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
@@ -101,8 +124,10 @@ export default function App() {
       return;
     }
 
-    scheduleDailyNotifications(notificationPreferences).catch(() => {});
-  }, [authUser, notificationPreferences]);
+    scheduleDailyNotifications(notificationPreferences, notificationScheduleContext).catch(
+      () => {},
+    );
+  }, [authUser, notificationPreferences, notificationScheduleContext]);
 
   if (isAuthLoading || isBootstrapLoading || bootstrapError) {
     return <SplashScreen errorMessage={bootstrapError} onRetry={() => window.location.reload()} />;

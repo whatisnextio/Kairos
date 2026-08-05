@@ -81,4 +81,16 @@ describe('PWA UX shell', () => {
     expect(css).toContain('background-color: #ffffff');
     expect(css).toContain('.input-field option:checked');
   });
+
+  it('shows notification consent preview and unsupported-browser fallback', () => {
+    const you = readFileSync('src/pages/YouScreen.tsx', 'utf8');
+    const push = readFileSync('src/services/pushNotifications.ts', 'utf8');
+
+    expect(you).toContain('Accountability preview');
+    expect(you).toContain('failing silently');
+    expect(you).toContain('Pause today');
+    expect(you).toContain('Show route names in notifications');
+    expect(push).toContain("'Notification' in window");
+    expect(push).toContain("'PushManager' in window");
+  });
 });

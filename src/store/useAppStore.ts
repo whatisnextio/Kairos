@@ -1,6 +1,7 @@
 import {
   DEFAULT_NOTIFICATION_PREFERENCES,
   type NotificationPreferences,
+  normaliseNotificationPreferences,
 } from '@/services/localNotifications';
 import {
   type OfflineMutation,
@@ -979,7 +980,10 @@ export const useAppStore = create<AppState & AppActions>()(
       setProfileImageDataUrl: (profileImageDataUrl) => set({ profileImageDataUrl }),
       setNotificationPreferences: (preferences) =>
         set((state) => ({
-          notificationPreferences: { ...state.notificationPreferences, ...preferences },
+          notificationPreferences: normaliseNotificationPreferences({
+            ...state.notificationPreferences,
+            ...preferences,
+          }),
         })),
       setSharePrivacyPreferences: (preferences) =>
         set((state) => ({
@@ -1130,10 +1134,16 @@ export const useAppStore = create<AppState & AppActions>()(
     {
       name: '12k-app-store',
       version: 1,
-      migrate: (persistedState): Partial<AppState> => ({
-        ...(persistedState as Partial<AppState>),
-        journeyArchive: [],
-      }),
+      migrate: (persistedState): Partial<AppState> => {
+        const persisted = persistedState as Partial<AppState>;
+        return {
+          ...persisted,
+          journeyArchive: [],
+          notificationPreferences: normaliseNotificationPreferences(
+            persisted.notificationPreferences,
+          ),
+        };
+      },
       partialize: (state) => ({
         onboardingComplete: state.onboardingComplete,
         todayCheckIns: state.todayCheckIns,
@@ -1161,6 +1171,17 @@ export const useAppStore = create<AppState & AppActions>()(
         offlineQueueCount: state.offlineQueueCount,
         offlineSyncLastError: state.offlineSyncLastError,
       }),
+      merge: (persistedState, currentState) => {
+        const persisted = persistedState as Partial<AppState>;
+        return {
+          ...currentState,
+          ...persisted,
+          journeyArchive: persisted.journeyArchive ?? currentState.journeyArchive,
+          notificationPreferences: normaliseNotificationPreferences(
+            persisted.notificationPreferences,
+          ),
+        };
+      },
     },
   ),
 );
