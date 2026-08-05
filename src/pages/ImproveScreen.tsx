@@ -3,8 +3,6 @@ import Card from '@/components/common/Card';
 import { useNudge, useUpdateNudgeStatus } from '@/hooks/useNudge';
 import { useAppStore } from '@/store/useAppStore';
 import type { AiNudge, DomainType, ImproveCardSnapshot, NudgeCta, NudgeStatus } from '@/types';
-import { SUBSCRIPTION_COPY } from '@/utils/brandCopy';
-import { hasBrotherhoodAccess } from '@/utils/entitlements';
 import { buildFrameworkRecommendations } from '@/utils/frameworkRecommendations';
 import { formatKairosPoints } from '@/utils/gamification';
 import {
@@ -17,7 +15,6 @@ import { getCurrentPhaseConfig, getDayInCycle } from '@/utils/kairos';
 import { toLocalIsoDate } from '@/utils/v1Framework';
 import { Zap } from 'lucide-react';
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 
 const CTA_PROMPTS: Record<Exclude<NudgeCta, 'check_in_now' | null>, string> = {
   reflect: 'What shifted today...',
@@ -160,7 +157,6 @@ function ImproveCardContent({
 }
 
 export default function ImproveScreen() {
-  const navigate = useNavigate();
   const profile = useAppStore((s) => s.profile);
   const authUser = useAppStore((s) => s.authUser);
   const currentCycle = useAppStore((s) => s.currentCycle);
@@ -175,12 +171,9 @@ export default function ImproveScreen() {
   const setCustomRouteCheckIn = useAppStore((s) => s.setCustomRouteCheckIn);
   const setImproveCardStatus = useAppStore((s) => s.setImproveCardStatus);
 
-  const isPaidTier = hasBrotherhoodAccess(profile?.tier);
   const now = new Date();
   const todayIso = toLocalIsoDate(now);
-  const isSunday = now.getDay() === 0;
-  const canSeeNudge = isPaidTier || isSunday;
-  const locked = !isPaidTier && !isSunday;
+  const canSeeNudge = !!profile;
   const dayInCycle = currentCycle ? getDayInCycle(currentCycle.startDate) : 1;
   const phaseConfig = getCurrentPhaseConfig(dayInCycle);
 
@@ -195,7 +188,7 @@ export default function ImproveScreen() {
     email: authUser?.email,
     domainFocuses,
     todayCheckIns,
-    customRoutes: isPaidTier ? customRoutes : [],
+    customRoutes,
     todayCustomRouteCheckIns,
   });
 
@@ -355,111 +348,80 @@ export default function ImproveScreen() {
         )}
       </div>
 
-      {locked ? (
-        <Card className="relative overflow-hidden">
-          <div className="blur-sm pointer-events-none select-none">
-            <p className="font-heading text-base font-medium text-base-text mb-1">
-              Active challenge
-            </p>
-            <p className="text-base-subtext text-sm mb-3">
-              Phase-aware, domain-specific prompts built from your current 12K context.
-            </p>
-            <div className="grid grid-cols-3 gap-2">
-              <div className="h-16 rounded border border-base-border bg-base-black/20" />
-              <div className="h-16 rounded border border-base-border bg-base-black/20" />
-              <div className="h-16 rounded border border-base-border bg-base-black/20" />
-            </div>
-          </div>
-          <div className="absolute inset-0 flex flex-col items-center justify-center bg-base-surface/85 p-4 text-center">
-            <p className="font-heading font-medium text-base-text text-sm mb-3">
-              Improve cards are a Kairos Plus feature.
-            </p>
-            <Button size="sm" onClick={() => navigate('/subscription')}>
-              Unlock Kairos Plus, {SUBSCRIPTION_COPY.price}/mo
-            </Button>
-            <p className="text-base-muted text-xs mt-3">Free tier gets one nudge on Sundays.</p>
-          </div>
+      {canSeeNudge && isLoading && (
+        <Card>
+          <p className="font-heading text-sm font-medium text-base-text mb-1">
+            Generating your AI card
+          </p>
+          <p className="text-base-subtext text-sm">
+            Using your phase, focus, recent proof, and active routes.
+          </p>
         </Card>
-      ) : (
-        <>
-          {canSeeNudge && isLoading && (
-            <Card>
-              <p className="font-heading text-sm font-medium text-base-text mb-1">
-                Generating your AI card
-              </p>
-              <p className="text-base-subtext text-sm">
-                Using your phase, focus, recent proof, and active routes.
-              </p>
-            </Card>
-          )}
+      )}
 
-          {canSeeNudge && isError && !isLoading && (
-            <Card>
-              <p className="font-heading text-sm font-medium text-status-partial mb-1">
-                AI card not ready
-              </p>
-              <p className="text-base-subtext text-sm mb-3">
-                {normaliseNudgeErrorMessage(nudgeError)}
-              </p>
-              <Button size="sm" variant="ghost" onClick={() => refetch()} disabled={isFetching}>
-                {isFetching ? 'Retrying...' : 'Retry AI card'}
-              </Button>
-            </Card>
-          )}
+      {canSeeNudge && isError && !isLoading && (
+        <Card>
+          <p className="font-heading text-sm font-medium text-status-partial mb-1">
+            AI card not ready
+          </p>
+          <p className="text-base-subtext text-sm mb-3">{normaliseNudgeErrorMessage(nudgeError)}</p>
+          <Button size="sm" variant="ghost" onClick={() => refetch()} disabled={isFetching}>
+            {isFetching ? 'Retrying...' : 'Retry AI card'}
+          </Button>
+        </Card>
+      )}
 
-          {canSeeNudge && !nudge && !isLoading && !isError && (
-            <Card>
-              <p className="text-base-subtext text-sm mb-3">
-                No AI card yet today. Generate one, or choose a Kairos option below.
-              </p>
-              <Button size="sm" onClick={() => refetch()}>
-                {isFetching ? 'Generating...' : 'Generate AI card'}
-              </Button>
-            </Card>
-          )}
+      {canSeeNudge && !nudge && !isLoading && !isError && (
+        <Card>
+          <p className="text-base-subtext text-sm mb-3">
+            No AI card yet today. Generate one, or choose a Kairos option below.
+          </p>
+          <Button size="sm" onClick={() => refetch()}>
+            {isFetching ? 'Generating...' : 'Generate AI card'}
+          </Button>
+        </Card>
+      )}
 
-          {dismissedCards.length > 0 && (
-            <Card>
-              <p className="font-heading text-xs font-medium text-base-subtext tracking-widest uppercase mb-2">
-                Hidden today
-              </p>
-              <p className="text-base-subtext text-sm">
-                {getDismissedCardsMessage(dismissedCards.length)}
-              </p>
-            </Card>
-          )}
+      {dismissedCards.length > 0 && (
+        <Card>
+          <p className="font-heading text-xs font-medium text-base-subtext tracking-widest uppercase mb-2">
+            Hidden today
+          </p>
+          <p className="text-base-subtext text-sm">
+            {getDismissedCardsMessage(dismissedCards.length)}
+          </p>
+        </Card>
+      )}
 
-          {activeCards.length > 0 && (
-            <div>
-              <h2 className="font-heading text-xs font-medium text-base-subtext tracking-widest uppercase mb-3">
-                Active
-              </h2>
-              <div className="flex flex-col gap-3">
-                {activeCards.map((card) => renderCard(card, true))}
-              </div>
-            </div>
-          )}
+      {activeCards.length > 0 && (
+        <div>
+          <h2 className="font-heading text-xs font-medium text-base-subtext tracking-widest uppercase mb-3">
+            Active
+          </h2>
+          <div className="flex flex-col gap-3">
+            {activeCards.map((card) => renderCard(card, true))}
+          </div>
+        </div>
+      )}
 
-          {nextCards.length > 0 && (
-            <div>
-              <h2 className="font-heading text-xs font-medium text-base-subtext tracking-widest uppercase mb-3">
-                Next options
-              </h2>
-              <div className="flex flex-col gap-3">{nextCards.map((card) => renderCard(card))}</div>
-            </div>
-          )}
+      {nextCards.length > 0 && (
+        <div>
+          <h2 className="font-heading text-xs font-medium text-base-subtext tracking-widest uppercase mb-3">
+            Next options
+          </h2>
+          <div className="flex flex-col gap-3">{nextCards.map((card) => renderCard(card))}</div>
+        </div>
+      )}
 
-          {completedCards.length > 0 && (
-            <div>
-              <h2 className="font-heading text-xs font-medium text-base-subtext tracking-widest uppercase mb-3">
-                Completed today
-              </h2>
-              <div className="flex flex-col gap-3">
-                {completedCards.map((card) => renderCard(card, true))}
-              </div>
-            </div>
-          )}
-        </>
+      {completedCards.length > 0 && (
+        <div>
+          <h2 className="font-heading text-xs font-medium text-base-subtext tracking-widest uppercase mb-3">
+            Completed today
+          </h2>
+          <div className="flex flex-col gap-3">
+            {completedCards.map((card) => renderCard(card, true))}
+          </div>
+        </div>
       )}
     </div>
   );
