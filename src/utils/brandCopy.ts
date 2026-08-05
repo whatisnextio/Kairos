@@ -64,7 +64,7 @@ export const HELP_FAQS = [
   },
   {
     q: 'How does the AI nudge work?',
-    a: 'AI acts as a Kairos accountability coach, not a chat interface. It uses your reminder tone, phase, recent check-ins, streaks, and active extra actions to generate short prompts grounded in your current 12K context.',
+    a: 'It suggests short actions from your plan, reminders, check-ins, and extra actions. It is not a chat app or professional advice.',
   },
   {
     q: 'Is my data private?',

@@ -48,8 +48,9 @@ describe('brand and help copy contract', () => {
     ].join(' ');
 
     expect(publicCopy).toContain('work, money, photography');
-    expect(publicCopy).toContain('AI acts as a Kairos accountability coach');
-    expect(publicCopy).toContain('reminder tone, phase, recent check-ins, streaks');
+    expect(publicCopy).toContain('suggests short actions');
+    expect(publicCopy).toContain('not a chat app or professional advice');
+    expect(publicCopy).not.toContain('AI acts as a Kairos accountability coach');
     expect(publicCopy).not.toMatch(/Kairos Plus|Lifechanger|checkout|billing portal|paid tier/i);
     expect(publicCopy).not.toContain('Brotherhood');
     expect(publicCopy).not.toMatch(/\bmen\b|\bman\b|male/i);
