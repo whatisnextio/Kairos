@@ -18,6 +18,7 @@ import {
   type ConnectionContextId,
   type ConnectionRecipientId,
   buildConnectionFocusDescription,
+  buildHealthPatternReflection,
   getConnectionContextOptions,
   getDailyDomainLabel,
   toLocalIsoDate,
@@ -227,6 +228,14 @@ export default function DetailScreen() {
     remoteStreaks?.find((s) => s.domainType === domainType) ??
     (domainType ? localStreaks[domainType] : undefined);
   const connectionContextOptions = getConnectionContextOptions(connectionRecipient);
+  const healthPatternReflection =
+    domainType && (domainType === 'BODY' || domainType === 'FUEL')
+      ? buildHealthPatternReflection(domainType, [
+          ...(history?.map((checkIn) => checkInNoteOverrides[checkIn.id]?.notes ?? checkIn.notes) ??
+            []),
+          todayCheckIns[domainType]?.notes,
+        ])
+      : null;
 
   function selectConnectionRecipient(nextRecipient: ConnectionRecipientId) {
     const nextContextOptions = getConnectionContextOptions(nextRecipient);
@@ -471,6 +480,15 @@ export default function DetailScreen() {
               </p>
             ))}
           </div>
+        </Card>
+      )}
+
+      {healthPatternReflection && (
+        <Card>
+          <p className="text-base-subtext text-xs font-heading tracking-widest uppercase mb-2">
+            Guardrail
+          </p>
+          <p className="text-base-subtext text-sm">{healthPatternReflection}</p>
         </Card>
       )}
 

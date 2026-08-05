@@ -8,7 +8,11 @@ import type {
   UserDomainFocus,
 } from '@/types';
 import { getAvailableDomains, getDomainConfig } from '@/types';
-import { buildConnectionRecommendation, getDailyDomainLabel } from '@/utils/v1Framework';
+import {
+  buildConnectionRecommendation,
+  buildHealthGuardrailRecommendation,
+  getDailyDomainLabel,
+} from '@/utils/v1Framework';
 
 export type FrameworkLens = 'Prep' | 'Reflect' | 'Coach' | 'Feedback';
 
@@ -80,13 +84,18 @@ export function buildFrameworkRecommendations({
     primary.domain.type === 'USTIME' ? buildConnectionRecommendation(primary.action) : null;
   const secondaryConnectionBody =
     secondary.domain.type === 'USTIME' ? buildConnectionRecommendation(secondary.action) : null;
+  const primaryHealthBody = buildHealthGuardrailRecommendation(primary.domain.type, primary.action);
+  const secondaryHealthBody = buildHealthGuardrailRecommendation(
+    secondary.domain.type,
+    secondary.action,
+  );
 
   const recommendations: FrameworkRecommendation[] = [
     {
       id: `${primary.id}-prep`,
       lens: 'Prep',
       title: `Prep ${primary.label}`,
-      body: primaryConnectionBody ?? primary.domain.prepOptions[0],
+      body: primaryConnectionBody ?? primaryHealthBody ?? primary.domain.prepOptions[0],
       domainType: primary.domain.type,
       customRouteId: primary.customRouteId,
       domainLabel: primary.label,
@@ -96,7 +105,7 @@ export function buildFrameworkRecommendations({
       id: `${secondary.id}-coach`,
       lens: 'Coach',
       title: `Choose ${secondary.label}`,
-      body: secondaryConnectionBody ?? secondary.domain.coachPrompt,
+      body: secondaryConnectionBody ?? secondaryHealthBody ?? secondary.domain.coachPrompt,
       domainType: secondary.domain.type,
       customRouteId: secondary.customRouteId,
       domainLabel: secondary.label,
@@ -116,7 +125,7 @@ export function buildFrameworkRecommendations({
       id: `${secondary.id}-feedback`,
       lens: 'Feedback',
       title: `${secondary.label} signal`,
-      body: secondaryConnectionBody ?? secondary.domain.feedbackPrompt,
+      body: secondaryConnectionBody ?? secondaryHealthBody ?? secondary.domain.feedbackPrompt,
       domainType: secondary.domain.type,
       customRouteId: secondary.customRouteId,
       domainLabel: secondary.label,
