@@ -10,7 +10,7 @@ interface Props {
 
 const OPTIONS: Array<{ status: CheckInStatus; title: string; body: string }> = [
   { status: 'Done', title: 'Done', body: 'Action completed.' },
-  { status: 'Partial', title: 'Part done', body: 'A smaller useful action happened.' },
+  { status: 'Partial', title: 'Part done', body: 'Did a smaller useful version.' },
   { status: 'Missed', title: 'Missed', body: 'Did not happen today.' },
   { status: 'Pending', title: 'Clear', body: "Remove today's mark." },
 ];
@@ -40,7 +40,7 @@ export default function CheckInStatusModal({ label, currentStatus, onSelect, onC
           id="check-in-status-title"
           className="font-heading text-xl font-bold text-base-text tracking-wide mb-4"
         >
-          Set {label}
+          How did {label} go?
         </h2>
         <div className="grid grid-cols-2 gap-2">
           {options.map((option) => {
