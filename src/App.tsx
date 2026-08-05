@@ -51,6 +51,7 @@ export default function App() {
     setAuthUser,
     isAuthLoading,
     isBootstrapLoading,
+    bootstrapError,
     currentCycle,
     celebrationPending,
     notificationPreferences,
@@ -103,7 +104,9 @@ export default function App() {
     scheduleDailyNotifications(notificationPreferences).catch(() => {});
   }, [authUser, notificationPreferences]);
 
-  if (isAuthLoading || isBootstrapLoading) return <SplashScreen />;
+  if (isAuthLoading || isBootstrapLoading || bootstrapError) {
+    return <SplashScreen errorMessage={bootstrapError} onRetry={() => window.location.reload()} />;
+  }
 
   if (!authUser) {
     return (

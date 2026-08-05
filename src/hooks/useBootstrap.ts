@@ -17,6 +17,7 @@ import {
 } from '@/utils/entitlements';
 import { isLocalDevUser } from '@/utils/localDevSession';
 import { toLocalIsoDate } from '@/utils/v1Framework';
+import * as Sentry from '@sentry/react';
 import { useEffect, useRef } from 'react';
 
 function mapProfile(row: Record<string, unknown>): Profile {
@@ -109,6 +110,56 @@ function mapCustomRouteCheckIn(row: Record<string, unknown>): CustomRouteCheckIn
   };
 }
 
+const BOOTSTRAP_TIMEOUT_MS = 8_000;
+const BOOTSTRAP_TIMEOUT_MESSAGE =
+  'Kairos is taking longer than expected to load. Check your connection and retry.';
+const CRITICAL_BOOTSTRAP_MESSAGE =
+  'Kairos could not load your profile. Check your connection and retry.';
+
+type SupabaseErrorLike = {
+  code?: string;
+  message?: string;
+};
+
+class CriticalBootstrapError extends Error {
+  readonly userMessage: string;
+
+  constructor(userMessage: string) {
+    super(userMessage);
+    this.name = 'CriticalBootstrapError';
+    this.userMessage = userMessage;
+  }
+}
+
+function isNoRowsError(error: SupabaseErrorLike | null | undefined): boolean {
+  return error?.code === 'PGRST116';
+}
+
+function describeBootstrapError(error: unknown): string {
+  if (error instanceof Error) return error.message;
+  if (typeof error === 'object' && error && 'message' in error) {
+    return String((error as { message: unknown }).message);
+  }
+  return String(error);
+}
+
+function captureBootstrapError(context: string, error: unknown, critical: boolean) {
+  const message = describeBootstrapError(error);
+  console.error(`Bootstrap ${context} failed:`, message);
+  Sentry.captureException(error instanceof Error ? error : new Error(message), {
+    tags: {
+      area: 'bootstrap',
+      critical: critical ? 'true' : 'false',
+    },
+    extra: { context },
+  });
+}
+
+function failCriticalBootstrap(context: string, error: unknown): never {
+  captureBootstrapError(context, error, true);
+  throw new CriticalBootstrapError(CRITICAL_BOOTSTRAP_MESSAGE);
+}
+
 export function useBootstrap() {
   const {
     authUser,
@@ -124,6 +175,7 @@ export function useBootstrap() {
     mergeCheckInHistory,
     mergeCustomRouteCheckInHistory,
     setIsBootstrapLoading,
+    setBootstrapError,
     flushPendingSync,
   } = useAppStore();
   const bootstrapped = useRef<string | null>(null);
@@ -132,11 +184,26 @@ export function useBootstrap() {
   useEffect(() => {
     if (!authUser) {
       bootstrapped.current = null;
+      setBootstrapError(null);
       return;
     }
     if (bootstrapped.current === authUser.id) return;
+    const user = authUser;
     bootstrapped.current = authUser.id;
     setIsBootstrapLoading(true);
+    setBootstrapError(null);
+    let cancelled = false;
+    let settled = false;
+    const timeoutId = window.setTimeout(() => {
+      if (cancelled || settled) return;
+      captureBootstrapError(
+        'timeout',
+        new Error(`Bootstrap exceeded ${BOOTSTRAP_TIMEOUT_MS}ms`),
+        true,
+      );
+      setBootstrapError(BOOTSTRAP_TIMEOUT_MESSAGE);
+      setIsBootstrapLoading(false);
+    }, BOOTSTRAP_TIMEOUT_MS);
 
     const today = toLocalIsoDate(new Date());
 
@@ -150,23 +217,34 @@ export function useBootstrap() {
       setTodayCustomRouteCheckIns({});
     }
 
-    if (isLocalDevUser(authUser.id)) {
+    if (isLocalDevUser(user.id)) {
+      settled = true;
+      window.clearTimeout(timeoutId);
       setIsBootstrapLoading(false);
       return;
     }
 
     async function load() {
-      const { data: profileRow } = await supabase
+      const { data: profileRow, error: profileErr } = await supabase
         .from('profiles')
         .select('*')
-        .eq('id', authUser?.id)
+        .eq('id', user.id)
         .single();
 
-      if (!profileRow) return;
+      if (profileErr && !isNoRowsError(profileErr)) {
+        failCriticalBootstrap('profile query', profileErr);
+      }
+
+      if (!profileRow) {
+        setProfile(null);
+        setCurrentCycle(null);
+        setOnboardingComplete(false);
+        return;
+      }
 
       let mapped = mapProfile(profileRow as Record<string, unknown>);
       if (
-        hasComplimentaryBrotherhood(authUser?.email) &&
+        hasComplimentaryBrotherhood(user.email) &&
         (!hasBrotherhoodAccess(mapped.tier) || mapped.subscriptionStatus !== 'active')
       ) {
         const { data: updatedProfileRow, error: entitlementErr } = await supabase.rpc(
@@ -176,8 +254,10 @@ export function useBootstrap() {
         if (updatedProfileRow) {
           mapped = mapProfile(updatedProfileRow as Record<string, unknown>);
         } else {
-          console.error('Complimentary entitlement sync failed:', entitlementErr?.message);
-          mapped = applyComplimentaryBrotherhood(authUser?.email, mapped);
+          if (entitlementErr) {
+            captureBootstrapError('complimentary entitlement sync', entitlementErr, false);
+          }
+          mapped = applyComplimentaryBrotherhood(user.email, mapped);
         }
       }
       // Preserve locally accumulated XP if the remote row is behind, so reloads
@@ -193,23 +273,30 @@ export function useBootstrap() {
       let cycleRow: Record<string, unknown> | null = null;
 
       if (cycleId) {
-        const { data } = await supabase
+        const { data, error: cycleErr } = await supabase
           .from('kairos_cycles')
           .select('*')
           .eq('id', cycleId)
           .single();
+        if (cycleErr && !isNoRowsError(cycleErr)) {
+          failCriticalBootstrap('current cycle query', cycleErr);
+        }
         if (data) cycleRow = data as Record<string, unknown>;
       }
 
       if (!cycleRow) {
-        const { data: activeCycle } = await supabase
+        const { data: activeCycle, error: activeCycleErr } = await supabase
           .from('kairos_cycles')
           .select('*')
-          .eq('user_id', authUser?.id)
+          .eq('user_id', user.id)
           .eq('status', 'active')
           .order('created_at', { ascending: false })
           .limit(1)
           .maybeSingle();
+
+        if (activeCycleErr && !isNoRowsError(activeCycleErr)) {
+          failCriticalBootstrap('active cycle recovery', activeCycleErr);
+        }
 
         if (activeCycle) {
           cycleRow = activeCycle as Record<string, unknown>;
@@ -221,10 +308,10 @@ export function useBootstrap() {
           const { error: linkErr } = await supabase
             .from('profiles')
             .update({ current_kairos_cycle_id: cycleId })
-            .eq('id', authUser?.id);
+            .eq('id', user.id);
 
           if (linkErr) {
-            console.error('Current cycle link repair failed:', linkErr.message);
+            captureBootstrapError('current cycle link repair', linkErr, false);
           }
         }
       }
@@ -242,39 +329,45 @@ export function useBootstrap() {
       setCurrentCycle(cycle);
       setOnboardingComplete(true);
 
-      const { data: focuses } = await supabase
+      const { data: focuses, error: focusesErr } = await supabase
         .from('user_domain_focuses')
         .select('*')
-        .eq('user_id', authUser?.id)
+        .eq('user_id', user.id)
         .eq('cycle_id', cycle.id);
 
-      if (focuses) {
+      if (focusesErr) {
+        captureBootstrapError('domain focuses query', focusesErr, false);
+      } else if (focuses) {
         setDomainFocuses(focuses.map((f) => mapFocus(f as Record<string, unknown>)));
       }
 
       // Paid tiers: reload recent check-ins from Supabase (cross-device sync + history backfill)
       if (hasBrotherhoodAccess(profile.tier)) {
-        const { data: routeRows } = await supabase
+        const { data: routeRows, error: routeRowsErr } = await supabase
           .from('custom_routes')
           .select('*')
-          .eq('user_id', authUser?.id)
+          .eq('user_id', user.id)
           .eq('cycle_id', cycle.id)
           .order('created_at', { ascending: true });
 
-        if (routeRows) {
+        if (routeRowsErr) {
+          captureBootstrapError('custom routes query', routeRowsErr, false);
+        } else if (routeRows) {
           setCustomRoutes(routeRows.map((row) => mapCustomRoute(row as Record<string, unknown>)));
         }
 
         const sevenDaysAgo = toLocalIsoDate(new Date(Date.now() - 6 * 86_400_000));
-        const { data: checkIns } = await supabase
+        const { data: checkIns, error: checkInsErr } = await supabase
           .from('daily_check_ins')
           .select('*')
-          .eq('user_id', authUser?.id)
+          .eq('user_id', user.id)
           .eq('cycle_id', cycle.id)
           .gte('date', sevenDaysAgo)
           .lte('date', today);
 
-        if (checkIns && checkIns.length > 0) {
+        if (checkInsErr) {
+          captureBootstrapError('daily check-ins query', checkInsErr, false);
+        } else if (checkIns && checkIns.length > 0) {
           const mapped = checkIns.map((c) => mapCheckIn(c as Record<string, unknown>));
 
           // Set today's check-ins for optimistic UI
@@ -293,15 +386,17 @@ export function useBootstrap() {
           mergeCheckInHistory(historyEntries);
         }
 
-        const { data: customCheckIns } = await supabase
+        const { data: customCheckIns, error: customCheckInsErr } = await supabase
           .from('custom_route_check_ins')
           .select('*')
-          .eq('user_id', authUser?.id)
+          .eq('user_id', user.id)
           .eq('cycle_id', cycle.id)
           .gte('date', sevenDaysAgo)
           .lte('date', today);
 
-        if (customCheckIns && customCheckIns.length > 0) {
+        if (customCheckInsErr) {
+          captureBootstrapError('custom route check-ins query', customCheckInsErr, false);
+        } else if (customCheckIns && customCheckIns.length > 0) {
           const mapped = customCheckIns.map((c) =>
             mapCustomRouteCheckIn(c as Record<string, unknown>),
           );
@@ -323,7 +418,32 @@ export function useBootstrap() {
     }
 
     load()
-      .then(() => flushPendingSync())
-      .finally(() => setIsBootstrapLoading(false));
+      .then(async () => {
+        try {
+          await flushPendingSync();
+        } catch (error) {
+          captureBootstrapError('offline queue flush', error, false);
+        }
+        if (!cancelled) setBootstrapError(null);
+      })
+      .catch((error) => {
+        if (cancelled) return;
+        if (error instanceof CriticalBootstrapError) {
+          setBootstrapError(error.userMessage);
+          return;
+        }
+        captureBootstrapError('unexpected load', error, true);
+        setBootstrapError(CRITICAL_BOOTSTRAP_MESSAGE);
+      })
+      .finally(() => {
+        settled = true;
+        window.clearTimeout(timeoutId);
+        if (!cancelled) setIsBootstrapLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timeoutId);
+    };
   }, [authUser?.id]);
 }
