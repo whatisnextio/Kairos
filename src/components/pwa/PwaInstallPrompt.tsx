@@ -99,7 +99,7 @@ export default function PwaInstallPrompt() {
   return (
     <aside
       className="fixed inset-x-0 bottom-0 z-50 mx-auto max-w-md px-4 pb-[calc(1rem+env(safe-area-inset-bottom))]"
-      aria-label="Install Kairos"
+      aria-label="Install 12K"
     >
       <div className="rounded-lg border border-accent-green/40 bg-base-elevated p-4 shadow-2xl shadow-black/50">
         <div className="flex items-start gap-3">
@@ -108,7 +108,7 @@ export default function PwaInstallPrompt() {
           </div>
           <div className="min-w-0 flex-1">
             <p className="font-heading text-sm font-medium uppercase tracking-wider text-base-text">
-              Install Kairos
+              Install 12K
             </p>
             <p className="mt-1 text-sm text-base-subtext">
               Add 12K to your home screen for faster check-ins.

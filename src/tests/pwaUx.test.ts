@@ -164,6 +164,15 @@ describe('PWA UX shell', () => {
     expect(push).toContain("'PushManager' in window");
   });
 
+  it('uses one public product name in the install prompt', () => {
+    const installPrompt = readFileSync('src/components/pwa/PwaInstallPrompt.tsx', 'utf8');
+
+    expect(installPrompt).toContain('aria-label="Install 12K"');
+    expect(installPrompt).toContain('Install 12K');
+    expect(installPrompt).toContain('Add 12K to your home screen');
+    expect(installPrompt).not.toContain('Install Kairos');
+  });
+
   it('registers the PWA service worker and activates updates promptly', () => {
     const main = readFileSync('src/main.tsx', 'utf8');
     const sw = readFileSync('src/sw.ts', 'utf8');
