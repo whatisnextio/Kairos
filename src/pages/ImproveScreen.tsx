@@ -448,9 +448,7 @@ export default function ImproveScreen() {
 
       {canSeeNudge && isError && !isLoading && (
         <Card>
-          <p className="font-heading text-sm font-medium text-status-partial mb-1">
-            Pick one idea
-          </p>
+          <p className="font-heading text-sm font-medium text-status-partial mb-1">Pick one idea</p>
           <p className="text-base-subtext text-sm mb-3">{normaliseNudgeErrorMessage(nudgeError)}</p>
           <Button size="sm" variant="ghost" onClick={() => refetch()} disabled={isFetching}>
             {isFetching ? 'Refreshing...' : 'Refresh ideas'}
@@ -460,9 +458,7 @@ export default function ImproveScreen() {
 
       {canSeeNudge && isFallbackNudge && !isLoading && !isError && (
         <Card>
-          <p className="font-heading text-sm font-medium text-status-partial mb-1">
-            Pick one idea
-          </p>
+          <p className="font-heading text-sm font-medium text-status-partial mb-1">Pick one idea</p>
           <p className="text-base-subtext text-sm mb-3">
             The ideas below are ready. Pick one now, or refresh for another option.
           </p>
