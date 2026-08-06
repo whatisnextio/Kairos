@@ -108,6 +108,8 @@ describe('notification preferences', () => {
 
     expect(slots.map((slot) => slot.id)).toEqual([4, 5, 6]);
     expect(new Set(slots.map((slot) => slot.strategy)).size).toBeGreaterThanOrEqual(3);
+    expect(slots.map((slot) => slot.body).join(' ')).toContain('record what happened');
+    expect(slots.map((slot) => slot.body).join(' ')).not.toContain('mark what happened');
   });
 
   it('keeps route names private unless the user opts in', () => {
@@ -151,6 +153,7 @@ describe('notification preferences', () => {
 
     expect(privateCopy).toContain('Extra action');
     expect(privateCopy).not.toContain('Money');
+    expect(privateCopy).not.toContain('mark what happened');
     expect(namedCopy).toContain('Money');
   });
 

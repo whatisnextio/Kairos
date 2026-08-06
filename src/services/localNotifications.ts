@@ -136,7 +136,7 @@ export const NOTIFICATION_SLOTS: NotificationScheduleSlot[] = [
     hour: 17,
     minute: 0,
     title: 'Kairos: catch up',
-    body: 'There is still time. Choose Part done, plan tomorrow, or mark what happened.',
+    body: 'There is still time. Choose Part done, plan tomorrow, or record what happened.',
     strategy: 'rescue',
   },
   {
@@ -306,7 +306,7 @@ function applyContextualCopy(
   if (slot.strategy === 'small_action') {
     return {
       ...slot,
-      body: `${label} is still open. Choose the smallest useful version or mark what happened.`,
+      body: `${label} is still open. Choose the smallest useful version or record what happened.`,
     };
   }
 
