@@ -22,8 +22,10 @@ describe('brand and help copy contract', () => {
     );
     expect(kairosAnswer).toContain('Greek');
     expect(kairosAnswer).toContain('Kickoff, Anchor, Increase, Rhythm, Own, and Sustain');
-    expect(kairosAnswer).toContain('Choose one useful action');
+    expect(kairosAnswer).toContain('choose one useful action');
+    expect(kairosAnswer).toContain('six simple two-week stages');
     expect(kairosAnswer).not.toMatch(/latin|implement/i);
+    expect(kairosAnswer).not.toMatch(/opportune|14-day phases/i);
   });
 
   it('explains 12K without implying a 12-step programme or guaranteed outcome', () => {
@@ -34,10 +36,12 @@ describe('brand and help copy contract', () => {
     expect(standForAnswer).toContain('not 12 steps');
     expect(standForAnswer).toContain('84 days');
     expect(researchAnswer).toContain('clear goals');
-    expect(researchAnswer).toContain('cues');
-    expect(researchAnswer).toContain('self-monitoring');
+    expect(researchAnswer).toContain('daily check-ins');
+    expect(researchAnswer).toContain('missed days');
     expect(researchAnswer).toContain('not medical advice');
-    expect(`${standForAnswer} ${researchAnswer}`).not.toMatch(/guarantee|cure|diagnos/i);
+    expect(`${standForAnswer} ${researchAnswer}`).not.toMatch(
+      /guarantee|cure|diagnos|self-monitoring|lapses|behaviour-change ingredients/i,
+    );
   });
 
   it('keeps public copy aligned to a single app tier', () => {
@@ -57,6 +61,9 @@ describe('brand and help copy contract', () => {
     expect(publicCopy).not.toContain('Brotherhood');
     expect(publicCopy).not.toMatch(/\bmen\b|\bman\b|male/i);
     expect(publicCopy).not.toMatch(/\b[Mm]ark (Done|what happened)/);
+    expect(publicCopy).not.toMatch(
+      /self-monitoring|lapses|opportune moment|14-day phases|behaviour-change ingredients|anonymous accountability/i,
+    );
   });
 
   it('explains app features without vague coming-soon language', () => {
@@ -64,8 +71,8 @@ describe('brand and help copy contract', () => {
 
     expect(FEATURE_EXPLANATIONS.personalRoutes).toContain('extra action under one core area');
     expect(FEATURE_EXPLANATIONS.personalRoutesAction).toContain('Home, Progress, and Improve');
-    expect(FEATURE_EXPLANATIONS.squad).toContain('anonymous accountability');
-    expect(FEATURE_EXPLANATIONS.squad).toContain('same 12K stage');
+    expect(FEATURE_EXPLANATIONS.squad).toContain('private weekly check-in');
+    expect(FEATURE_EXPLANATIONS.squad).toContain('similar point in 12K');
     expect(FEATURE_EXPLANATIONS.squad).not.toMatch(/Kairos phase/i);
     expect(FEATURE_EXPLANATIONS.notifications).toContain('opt-in device reminders');
     expect(featureCopy).not.toMatch(/coming soon/i);

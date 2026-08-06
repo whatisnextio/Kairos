@@ -6,7 +6,7 @@ This is the canonical product brief for 12K and the Kairos framework. Product co
 
 12K is a guided 12-week reset powered by Kairos. It is not a 12-step programme and the K is not a forced acronym. The product uses 84 days because it creates a finite arc long enough for repetition, recovery, and visible change without becoming an open-ended habit tracker.
 
-Kairos is the source concept. Kairos means the right, fitting, critical, or opportune moment in Greek. In the app, it means the moment where attention becomes action.
+Kairos is the source concept. Kairos means the right moment in Greek. In the app, it means the moment where attention becomes action.
 
 The product promise is:
 
@@ -19,7 +19,7 @@ The app should feel like a daily operating system:
 3. check in,
 4. recover quickly if the day slips,
 5. review the week,
-6. finish the 84-day cycle deliberately.
+6. finish the 84-day plan deliberately.
 
 ## Public Framework
 
@@ -36,9 +36,9 @@ Personal routes sit under the public framework. Examples: photography under Self
 
 ## The 84-Day Arc
 
-12K is six 14-day phases:
+12K has six simple two-week stages:
 
-| Phase | Days | Job |
+| Stage | Days | Job |
 | --- | --- | --- |
 | Kickoff | 1-14 | Start small and create the first visible wins. |
 | Anchor | 15-28 | Make the behaviour easy to find, repeat, and protect. |
@@ -47,19 +47,19 @@ Personal routes sit under the public framework. Examples: photography under Self
 | Own | 57-70 | Remove friction and make the behaviour feel like yours. |
 | Sustain | 71-84 | Hold the gain and choose the next cycle deliberately. |
 
-The phases should appear early in onboarding, in progress, in AI context, and in Day 84 reflection. They should not be hidden only on a progress page.
+The stages should appear early in onboarding, in progress, in AI context, and in Day 84 reflection. They should not be hidden only on a progress page.
 
 ## Behaviour Model
 
-Kairos is a practical behaviour-change wrapper, not a clinical programme. It uses evidence-aligned ingredients without making medical claims:
+Kairos is practical support, not a clinical programme. It uses simple habit basics without making medical claims:
 
-- clear goals and implementation intentions,
-- simple reminders and cues,
-- self-monitoring,
+- clear goals and planning,
+- simple reminders,
+- daily check-ins,
 - feedback,
 - repetition,
 - positive reinforcement,
-- recovery after lapses,
+- a way back after missed days,
 - social support where squad features exist.
 
 The core recovery rule is: a missed action is not a failed day. The app should offer a smaller catch-up path and let Partial record a smaller useful version.
@@ -69,7 +69,7 @@ The core recovery rule is: a missed action is not a failed day. The app should o
 AI should act as the framework voice. It should use:
 
 - identity anchor,
-- current phase,
+- current stage,
 - selected domains and personal routes,
 - recent check-ins,
 - streaks and slips,
@@ -112,10 +112,10 @@ Risk notes:
 
 ## Research References
 
-- Kairos meaning: classical-rhetoric sources consistently describe kairos as the right, critical, or opportune moment: https://en.wikipedia.org/wiki/Kairos
+- Kairos meaning: classical-rhetoric sources consistently describe kairos as the right moment for action: https://en.wikipedia.org/wiki/Kairos
 - Trade mark basics: USPTO explains trade marks as source identifiers for goods/services and warns that rights attach to specific commercial use, not ownership of a word in general: https://www.uspto.gov/trademarks/basics/what-trademark
 - US clearance search: USPTO recommends searching before applying and provides the official search system: https://www.uspto.gov/trademarks/search
 - UK trade mark searching: GOV.UK directs teams to check whether a similar mark already exists before committing to a brand: https://www.gov.uk/search-for-trademark
 - Copyright boundaries: WIPO distinguishes protectable expression from unprotectable ideas, systems, methods, and concepts: https://www.wipo.int/en/web/copyright/protection
-- Digital behaviour change: JMIR's 2024 systematic review identifies self-monitoring, goal setting, prompts/cues, feedback, repetition, and rewards as common digital behaviour-change techniques: https://www.jmir.org/2024/1/e54375/
+- Digital behaviour change: JMIR's 2024 systematic review identifies goals, reminders, feedback, repetition, and rewards as common digital support techniques: https://www.jmir.org/2024/1/e54375/
 - Habit formation: habit research supports repetition across weeks, while also showing large individual variation, so 12 weeks should be positioned as a useful reset arc rather than a certain transformation deadline: https://pmc.ncbi.nlm.nih.gov/articles/PMC3505409/

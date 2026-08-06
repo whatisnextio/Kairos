@@ -100,8 +100,7 @@ export const PRODUCT_POSITIONING = {
   systemName: 'Kairos',
   headline: 'Your 12-week transformation. Powered by the Kairos System.',
   what: '12K is a guided 12-week plan for turning small daily actions into visible change.',
-  kairosMeaning:
-    'Kairos is Greek for the right or opportune moment: the point where attention becomes action.',
+  kairosMeaning: 'Kairos is Greek for the right moment: the point where attention becomes action.',
   why: 'It gives you a clear goal, simple reminders, one check-in, feedback, and a way back when the day slips.',
   audience: 'Built for adults who want a simple plan. It is for everyone.',
   designedFor:

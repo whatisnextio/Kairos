@@ -28,11 +28,11 @@ export const HELP_FAQS = [
   },
   {
     q: 'What is the Kairos system?',
-    a: `${PRODUCT_POSITIONING.kairosMeaning} The plan uses six 14-day phases: Kickoff, Anchor, Increase, Rhythm, Own, and Sustain. The daily loop is: ${PRODUCT_POSITIONING.proofLoop}`,
+    a: `${PRODUCT_POSITIONING.kairosMeaning} The plan has six simple two-week stages: Kickoff, Anchor, Increase, Rhythm, Own, and Sustain. Each day, choose one useful action, do what you can, check in, recover quickly, and review the week.`,
   },
   {
     q: 'What research is it based on?',
-    a: 'Kairos uses established behaviour-change ingredients: clear goals, cues, self-monitoring, feedback, repetition, rewards, and recovery after lapses. It is support, not medical advice.',
+    a: 'Kairos uses simple habit basics: clear goals, reminders, daily check-ins, feedback, repeat practice, small rewards, and a way back after missed days. It is support, not medical advice.',
   },
   {
     q: 'What are the four areas?',
@@ -78,7 +78,7 @@ export const FEATURE_EXPLANATIONS = {
   personalRoutesAction:
     'After you add an extra action, it can appear in Home, Progress, and Improve as its own line.',
   squad:
-    'Squad is anonymous accountability, not chat. The match action places you with people at the same 12K stage and shows a weekly pulse when one is available.',
+    'Squad is not chat. It gives a private weekly check-in with people at a similar point in 12K.',
   notifications:
     'Reminders are opt-in device reminders. Extra support adds more simple check-ins inside your chosen hours.',
 } as const;

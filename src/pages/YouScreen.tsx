@@ -762,8 +762,8 @@ export default function YouScreen() {
           ) : (
             <>
               <p className="text-base-subtext text-sm mb-3">
-                You have not been matched yet. Tapping below creates or joins an anonymous phase
-                squad.
+                You have not joined a squad yet. Tapping below finds a private group at a similar
+                point in 12K.
               </p>
               <Button size="sm" onClick={() => matchToSquad()} disabled={isMatching}>
                 {isMatching ? 'Matching...' : 'Find anonymous squad'}

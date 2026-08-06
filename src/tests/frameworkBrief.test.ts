@@ -7,7 +7,7 @@ describe('canonical Kairos framework brief', () => {
   it('defines the framework in the same terms used by the app', () => {
     expect(brief).toContain('12K is a guided 12-week reset powered by Kairos');
     expect(brief).toContain('not a 12-step programme');
-    expect(brief).toContain('Kairos means the right, fitting, critical, or opportune moment');
+    expect(brief).toContain('Kairos means the right moment');
     expect(brief).toContain('Start with one small action.');
     expect(brief).toContain('Body');
     expect(brief).toContain('Fuel');
@@ -15,13 +15,14 @@ describe('canonical Kairos framework brief', () => {
     expect(brief).toContain('Connection');
   });
 
-  it('documents the phase arc, behaviour model, AI role, and privacy rules', () => {
-    expect(brief).toContain('six 14-day phases');
+  it('documents the stage arc, behaviour model, AI role, and privacy rules', () => {
+    expect(brief).toContain('six simple two-week stages');
     expect(brief).toContain('Kickoff');
     expect(brief).toContain('Sustain');
-    expect(brief).toContain('implementation intentions');
-    expect(brief).toContain('simple reminders and cues');
-    expect(brief).toContain('self-monitoring');
+    expect(brief).toContain('clear goals and planning');
+    expect(brief).toContain('simple reminders');
+    expect(brief).toContain('daily check-ins');
+    expect(brief).not.toMatch(/self-monitoring|lapses|14-day phases|opportune moment/i);
     expect(brief).toContain('AI should act as the framework voice');
     expect(brief).toContain('Labels must be discreet');
   });

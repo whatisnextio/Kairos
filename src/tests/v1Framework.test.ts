@@ -122,7 +122,8 @@ describe('V1 acceptance framework', () => {
     expect(PRODUCT_POSITIONING.headline).toContain('12-week transformation');
     expect(PRODUCT_POSITIONING.what).toContain('guided 12-week plan');
     expect(PRODUCT_POSITIONING.kairosMeaning).toContain('Greek');
-    expect(PRODUCT_POSITIONING.kairosMeaning).toContain('opportune moment');
+    expect(PRODUCT_POSITIONING.kairosMeaning).toContain('right moment');
+    expect(PRODUCT_POSITIONING.kairosMeaning).not.toContain('opportune moment');
     expect(PRODUCT_POSITIONING.kairosMeaning).not.toMatch(/latin|implement/i);
     expect(PRODUCT_POSITIONING.audience).toContain('It is for everyone');
     expect(PRODUCT_POSITIONING.audience).not.toMatch(/\bmen\b|\bman\b|male/i);
