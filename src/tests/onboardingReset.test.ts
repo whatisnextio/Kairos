@@ -69,13 +69,15 @@ describe('onboarding and reset contract', () => {
     expect(source).toContain('{stepNumber} of {stepCount}');
     expect(source).toContain('Start your 12K plan.');
     expect(source).toContain('Set up your four starter actions now.');
-    expect(source).toContain('Nothing is marked Done until you actually do');
+    expect(source).toContain('Nothing is ticked off until you actually do');
     expect(source).toContain('Choose your four actions.');
     expect(source).toContain('Pick one simple starter action in each area.');
-    expect(source).toMatch(/They are not\s+marked Done yet\./);
+    expect(source).toMatch(/They are not\s+ticked off yet\./);
     expect(source).toContain('Choose reminder level.');
     expect(source).toContain('Your four actions are set.');
-    expect(source).toContain('mark it Done');
+    expect(source).toContain('tick it off');
+    expect(source).not.toContain('mark it Done');
+    expect(source).not.toContain('marked Done');
     expect(source).toContain('setNotificationPreferences');
     expect(source).not.toMatch(/cure|fixed guaranteed outcome|medical claim/i);
   });

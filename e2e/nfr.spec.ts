@@ -64,7 +64,7 @@ test.describe('NFR smoke gates', () => {
     await expect(page.getByRole('heading', { name: /start your 12k plan/i })).toBeVisible();
     await expect(page.getByText('1 of 5')).toBeVisible();
     await expect(page.getByText(/set up your four starter actions now/i)).toBeVisible();
-    await expect(page.getByText(/nothing is marked done/i)).toBeVisible();
+    await expect(page.getByText(/nothing is ticked off/i)).toBeVisible();
     await page.getByRole('button', { name: /start setup/i }).click();
     await expect(page.getByRole('heading', { name: /tell us your name/i })).toBeVisible();
     await page.getByLabel(/name/i).fill('Alex');

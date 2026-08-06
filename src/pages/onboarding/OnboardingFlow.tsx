@@ -319,7 +319,7 @@ export default function OnboardingFlow() {
               12K helps you choose simple actions for Body, Fuel, Self, and Connection.
             </p>
             <p className="text-base-subtext text-sm leading-relaxed mb-5">
-              Set up your four starter actions now. Nothing is marked Done until you actually do it.
+              Set up your four starter actions now. Nothing is ticked off until you actually do it.
             </p>
             <p className="text-base-muted text-xs leading-relaxed mb-5">
               {PRODUCT_POSITIONING.audience}
@@ -422,7 +422,7 @@ export default function OnboardingFlow() {
             </h1>
             <p className="text-base-subtext text-sm leading-relaxed mb-5">
               Pick one simple starter action in each area. These are your targets. They are not
-              marked Done yet.
+              ticked off yet.
             </p>
             <div className="grid grid-cols-1 gap-2">
               {availableDomains.map((d) => (
@@ -549,7 +549,7 @@ export default function OnboardingFlow() {
               Ready to start.
             </h1>
             <p className="text-base-subtext text-sm leading-relaxed mb-5">
-              Your four actions are set. Go to Home, do one action, then mark it Done.
+              Your four actions are set. Go to Home, do one action, then tick it off.
             </p>
 
             <div className="grid grid-cols-1 gap-2 mb-4" aria-label="Chosen actions">
@@ -566,7 +566,7 @@ export default function OnboardingFlow() {
 
             <div className="rounded border border-accent-green/40 bg-accent-green/10 p-3">
               <p className="text-sm text-base-text">
-                Setup does not mark anything as Done. Your first tick happens after you take action.
+                Setup does not tick anything off. Your first tick happens after you take action.
               </p>
             </div>
 
