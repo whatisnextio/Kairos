@@ -1,0 +1,63 @@
+name: Scheduled Edge Functions
+
+on:
+  schedule:
+    # 06:00 UTC daily — generate today's AI nudge for every active user
+    - cron: '0 6 * * *'
+    # 07:00 UTC daily — send web-push notifications
+    - cron: '0 7 * * *'
+    # 22:00 UTC every Sunday — aggregate weekly engagement metrics
+    - cron: '0 22 * * 0'
+  workflow_dispatch:
+    inputs:
+      function:
+        description: 'Edge function to invoke'
+        required: true
+        type: choice
+        options:
+          - generate-kairos-nudge
+          - send-daily-push
+          - compute-weekly-metrics
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+jobs:
+  invoke:
+    name: Invoke edge function
+    runs-on: ubuntu-latest
+    steps:
+      - name: Determine function to call
+        id: fn
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "name=${{ inputs.function }}" >> "$GITHUB_OUTPUT"
+          else
+            MINUTE=$(date -u +%H%M)
+            case "$MINUTE" in
+              0600) echo "name=generate-kairos-nudge" >> "$GITHUB_OUTPUT" ;;
+              0700) echo "name=send-daily-push"        >> "$GITHUB_OUTPUT" ;;
+              2200) echo "name=compute-weekly-metrics" >> "$GITHUB_OUTPUT" ;;
+              *) echo "name=unknown" >> "$GITHUB_OUTPUT" ;;
+            esac
+          fi
+
+      - name: Call ${{ steps.fn.outputs.name }}
+        if: steps.fn.outputs.name != 'unknown'
+        run: |
+          FUNCTION_NAME="${{ steps.fn.outputs.name }}"
+          URL="${SUPABASE_URL}/functions/v1/${FUNCTION_NAME}"
+          HTTP_STATUS=$(curl -s -o /tmp/response.json -w "%{http_code}" \
+            -X POST "$URL" \
+            -H "Content-Type: application/json" \
+            -H "x-service-role: ${SUPABASE_SERVICE_ROLE_KEY}" \
+            -d '{}')
+          echo "HTTP status: $HTTP_STATUS"
+          cat /tmp/response.json
+          if [ "$HTTP_STATUS" -lt 200 ] || [ "$HTTP_STATUS" -ge 300 ]; then
+            echo "::error::Edge function ${FUNCTION_NAME} returned HTTP ${HTTP_STATUS}"
+            exit 1
+          fi
+        env:
+          SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
