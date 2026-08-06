@@ -38,6 +38,7 @@ test.describe('NFR smoke gates', () => {
     ).toBeVisible();
     await expect(page.getByLabel(/email/i)).toBeVisible();
     await expect(page.getByLabel(/date of birth/i)).toBeVisible();
+    await expect(page.getByText(/we only use this to check you are 18 or over/i)).toBeVisible();
     await expect(page.getByRole('button', { name: /create account/i })).toBeVisible();
     await expectNoHorizontalOverflow(page);
     await expectNoA11yViolations(page);

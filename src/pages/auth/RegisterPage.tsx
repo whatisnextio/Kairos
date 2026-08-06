@@ -63,8 +63,10 @@ export default function RegisterPage() {
 
         {sent ? (
           <div>
-            <p className="text-base-text font-medium mb-2">Check your email.</p>
-            <p className="text-base-subtext text-sm">Confirm your address to continue.</p>
+            <p className="text-base-text font-medium mb-2">Check your email</p>
+            <p className="text-base-subtext text-sm">
+              Open the link in this email on this device to continue setup.
+            </p>
           </div>
         ) : (
           <form onSubmit={handleRegister} className="w-full max-w-sm flex flex-col gap-4">
@@ -83,8 +85,12 @@ export default function RegisterPage() {
               label="Date of birth"
               value={dob}
               onChange={(e) => setDob(e.target.value)}
+              aria-describedby="dob-help"
               required
             />
+            <p id="dob-help" className="-mt-2 text-xs leading-relaxed text-base-subtext">
+              We only use this to check you are 18 or over.
+            </p>
             <label className="flex items-start gap-3 cursor-pointer">
               <input
                 type="checkbox"
