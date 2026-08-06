@@ -65,7 +65,7 @@ describe('brand and help copy contract', () => {
     expect(FEATURE_EXPLANATIONS.squad).toContain('anonymous accountability');
     expect(FEATURE_EXPLANATIONS.squad).toContain('same 12K stage');
     expect(FEATURE_EXPLANATIONS.squad).not.toMatch(/Kairos phase/i);
-    expect(FEATURE_EXPLANATIONS.notifications).toContain('opt-in device prompts');
+    expect(FEATURE_EXPLANATIONS.notifications).toContain('opt-in device reminders');
     expect(featureCopy).not.toMatch(/coming soon/i);
   });
 });

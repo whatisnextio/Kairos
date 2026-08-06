@@ -193,7 +193,7 @@ describe('V1 acceptance framework', () => {
       'Still open',
       'Quick reset',
       'End-of-day check',
-      'Kairos: catch-up',
+      'Kairos: catch up',
       'Kairos: plan tomorrow',
     ]);
   });

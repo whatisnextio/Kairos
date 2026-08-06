@@ -60,7 +60,7 @@ export const HELP_FAQS = [
   },
   {
     q: 'How do notifications work?',
-    a: 'Reminders are opt-in where your device supports them. Extra support adds more simple prompts through the day, including early start, catch-up, and evening planning.',
+    a: 'Reminders are opt-in where your device supports them. Extra support adds more reminders through the day, including early start, catch up, and evening planning.',
   },
   {
     q: 'How does the extra prompt work?',
@@ -80,7 +80,7 @@ export const FEATURE_EXPLANATIONS = {
   squad:
     'Squad is anonymous accountability, not chat. The match action places you with people at the same 12K stage and shows a weekly pulse when one is available.',
   notifications:
-    'Reminders are opt-in device prompts. Extra support adds more simple check-ins inside your chosen hours.',
+    'Reminders are opt-in device reminders. Extra support adds more simple check-ins inside your chosen hours.',
 } as const;
 
 export const PRIVACY_COPY = {

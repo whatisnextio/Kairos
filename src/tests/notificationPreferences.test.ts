@@ -43,8 +43,12 @@ describe('notification preferences', () => {
       'Extra support',
     );
     expect(INTENSITY_PREVIEW_COPY.high).toHaveLength(3);
-    expect(REMINDER_INTENSITY_OPTIONS.map((option) => option.description).join(' ')).not.toMatch(
-      /adhd|diagnos|ladder|high accountability/i,
+    const descriptions = REMINDER_INTENSITY_OPTIONS.map((option) => option.description).join(' ');
+    expect(descriptions).toContain('one chance to catch up');
+    expect(descriptions).toContain('Four reminders');
+    expect(descriptions).toContain('first plan is missed');
+    expect(descriptions).not.toMatch(
+      /adhd|diagnos|ladder|high accountability|catch-up path|Four prompts|first plan slips/i,
     );
   });
 

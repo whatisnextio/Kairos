@@ -38,26 +38,27 @@ export const REMINDER_INTENSITY_OPTIONS: {
   {
     id: 'light',
     label: 'Gentle',
-    description: 'Two check-ins: one useful prompt and one catch-up path.',
+    description: 'Two check-ins: one start reminder and one chance to catch up.',
   },
   {
     id: 'standard',
     label: 'Standard',
-    description: 'Four prompts: early start, start, afternoon check, and evening plan.',
+    description: 'Four reminders: early start, morning, afternoon, and evening.',
   },
   {
     id: 'high',
     label: 'Extra support',
-    description: 'More reminders through the day, with a smaller option if the first plan slips.',
+    description:
+      'More reminders through the day, plus a smaller option if the first plan is missed.',
   },
 ];
 
 export const INTENSITY_PREVIEW_COPY: Record<ReminderIntensity, string[]> = {
-  light: ['One discreet action prompt.', 'One catch-up prompt before evening.'],
-  standard: ['Early start if enabled.', 'Start, reset, and evening prompts in your hours.'],
+  light: ['One simple reminder to start.', 'One reminder to catch up before evening.'],
+  standard: ['Early start if enabled.', 'Morning, afternoon, and evening reminders in your hours.'],
   high: [
-    'If the first reminder is missed, 12K asks for the smallest useful action.',
-    'If the day slips, choose Done, Part done, Missed, or plan tomorrow.',
+    'If the first reminder is missed, 12K suggests the smallest useful action.',
+    'If the day gets messy, choose Done, Part done, Missed, or plan tomorrow.',
     'Quiet hours pause reminders. Action names stay hidden unless you turn them on.',
   ],
 };
@@ -134,8 +135,8 @@ export const NOTIFICATION_SLOTS: NotificationScheduleSlot[] = [
     id: 5,
     hour: 17,
     minute: 0,
-    title: 'Kairos: catch-up',
-    body: 'There is still time. Choose Part done, plan tomorrow, or finish one useful action.',
+    title: 'Kairos: catch up',
+    body: 'There is still time. Choose Part done, plan tomorrow, or mark what happened.',
     strategy: 'rescue',
   },
   {
