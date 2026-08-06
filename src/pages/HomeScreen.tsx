@@ -445,7 +445,7 @@ export default function HomeScreen() {
                   {protectedDomain?.label ?? streakProtectionPending} streak is safe.
                 </p>
                 <p className="text-base-subtext text-sm mt-1 mb-3">
-                  One grace day used this fortnight. The domain was marked Protected instead of
+                  One grace day used this fortnight. The area was set to Protected instead of
                   Missed.
                 </p>
                 <Button size="sm" variant="ghost" onClick={() => setStreakProtectionPending(null)}>

@@ -146,7 +146,7 @@ export const DOMAINS: DomainConfig[] = [
     recoveryOptions: [
       'Do 5 minutes only',
       'Use an easy walk instead of a session',
-      'Protect sleep and mark Part done if needed',
+      'Protect sleep and count that as Part done',
     ],
     reflectPrompt: 'What did your body need today, and did you answer it?',
     coachPrompt: 'If energy is low, shrink the action before you skip it.',

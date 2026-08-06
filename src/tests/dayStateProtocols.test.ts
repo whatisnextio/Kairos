@@ -117,6 +117,16 @@ describe('day-state protocols', () => {
         domains,
         todayCheckIns: { BODY: checkIn('BODY', 'Done') },
       }),
+      selectDayStateProtocol({
+        now: new Date('2026-08-05T08:30:00'),
+        domains,
+        todayCheckIns: {
+          BODY: checkIn('BODY', 'Done'),
+          FUEL: checkIn('FUEL', 'Done'),
+          METIME: checkIn('METIME', 'Done'),
+          USTIME: checkIn('USTIME', 'Done'),
+        },
+      }),
     ]
       .map((protocol) => `${protocol.title} ${protocol.body} ${protocol.steps.join(' ')}`)
       .join(' ');
@@ -128,6 +138,10 @@ describe('day-state protocols', () => {
     expect(source).not.toContain('10-minute rescue');
     expect(source).not.toContain('Early-wake protocol');
     expect(source).not.toContain('clean check-in');
+    expect(source).not.toContain('Today is marked');
+    expect(source).not.toContain('clear mark');
+    expect(source).not.toContain('marked Protected');
+    expect(source).toContain('Today is ticked off');
   });
 
   it('escalates after a dismissed protocol without adding a second panel', () => {

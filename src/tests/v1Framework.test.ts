@@ -183,7 +183,7 @@ describe('V1 acceptance framework', () => {
     expect(buildAccountabilityPrompt(2).title).toBe('End-of-day check');
     expect(buildAccountabilityPrompt(2).body).toContain('A smaller useful version still counts');
     expect(buildAccountabilityPrompt(2).body).not.toContain('not another task');
-    expect(buildAccountabilityPrompt(2).steps).toContain('Mark Done, Part done, or Missed.');
+    expect(buildAccountabilityPrompt(2).steps).toContain('Choose Done, Part done, or Missed.');
     expect(buildAccountabilityPrompt(1).steps).toContain('Record what happened.');
   });
 

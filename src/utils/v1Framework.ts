@@ -361,13 +361,13 @@ export function buildCatchUpPath(
       statusPriority(todayCheckIns[a.type]?.status) - statusPriority(todayCheckIns[b.type]?.status),
   )[0];
   const status = target ? todayCheckIns[target.type]?.status : undefined;
-  // Only prompt when the domain is still unmarked. A deliberate Missed mark means the user
+  // Only prompt when the domain is still open. A deliberate Missed check-in means the user
   // has already acknowledged the domain; showing a catch-up card at that point is nagging.
   if (!target || (status !== 'Pending' && status !== undefined)) return null;
 
   return {
     title: 'Choose one check-in',
-    body: 'Start with the easiest open item. One clear mark is enough for now.',
+    body: 'Start with the easiest open item. One clear check-in is enough for now.',
     domainType: target.type,
     domainLabel: target.label,
     steps: [
@@ -551,7 +551,7 @@ export function selectDayStateProtocol({
     title: target ? 'Start today' : 'Review today',
     body: target
       ? `${targetLabel(target)} is next. Keep it small.`
-      : 'Today is marked. Review the pattern or protect tomorrow.',
+      : 'Today is ticked off. Review the pattern or protect tomorrow.',
     steps: target
       ? ['Choose the easiest action.', 'Record what happened.', 'Keep the next action visible.']
       : ['Scan what worked.', 'Notice one friction point.', 'Set up tomorrow if needed.'],
@@ -568,7 +568,7 @@ export function buildAccountabilityPrompt(ignoredCount: number): AccountabilityP
       body: 'Pick one open item and record what happened. A smaller useful version still counts.',
       steps: [
         'Choose one open item.',
-        'Mark Done, Part done, or Missed.',
+        'Choose Done, Part done, or Missed.',
         'Leave the rest for tomorrow if needed.',
       ],
     };

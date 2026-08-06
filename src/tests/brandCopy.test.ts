@@ -56,6 +56,7 @@ describe('brand and help copy contract', () => {
     expect(publicCopy).not.toMatch(/Kairos Plus|Lifechanger|checkout|billing portal|paid tier/i);
     expect(publicCopy).not.toContain('Brotherhood');
     expect(publicCopy).not.toMatch(/\bmen\b|\bman\b|male/i);
+    expect(publicCopy).not.toMatch(/\b[Mm]ark (Done|what happened)/);
   });
 
   it('explains app features without vague coming-soon language', () => {

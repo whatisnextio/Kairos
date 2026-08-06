@@ -24,7 +24,7 @@ export const HELP_FAQS = [
   },
   {
     q: 'Is this a habit tracker?',
-    a: 'No. Choose a useful action, do it, mark what happened, and review the pattern each week.',
+    a: 'No. Choose a useful action, do it, record what happened, and review the pattern each week.',
   },
   {
     q: 'What is the Kairos system?',
@@ -52,7 +52,7 @@ export const HELP_FAQS = [
   },
   {
     q: 'What happens if I miss a day?',
-    a: 'The day is not failed. Mark Done, Part done, Missed, or Protected where available. Then choose the next small useful action.',
+    a: 'The day is not failed. Choose Done, Part done, Missed, or Protected where available. Then choose the next small useful action.',
   },
   {
     q: 'What does reset do?',

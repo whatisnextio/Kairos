@@ -42,6 +42,8 @@ describe('Body and Fuel health guardrails', () => {
 
     expect(body?.focusOptions).toEqual(['Walk for 20 minutes', 'Protect an earlier bedtime']);
     expect(body?.recoveryOptions).toContain('Use an easy walk instead of a session');
+    expect(body?.recoveryOptions).toContain('Protect sleep and count that as Part done');
+    expect(body?.recoveryOptions.join(' ')).not.toContain('mark Part done');
     expect(fuel?.focusOptions).toEqual([
       'Drink water before caffeine',
       'Make the next meal protein-first',
