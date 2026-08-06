@@ -440,31 +440,31 @@ export default function DetailScreen() {
 
       <Card>
         <p className="text-base-subtext text-xs font-heading tracking-widest uppercase mb-2">
-          Framework
+          Useful ideas
         </p>
         <p className="text-base-text text-sm mb-3">{domainConfig.question}</p>
         <div className="grid grid-cols-2 gap-2">
           <div className="rounded border border-base-border p-2">
             <p className="font-heading text-[11px] text-base-muted uppercase tracking-widest">
-              Prep
+              Get ready
             </p>
             <p className="text-base-subtext text-xs mt-1">{domainConfig.prepOptions[0]}</p>
           </div>
           <div className="rounded border border-base-border p-2">
             <p className="font-heading text-[11px] text-base-muted uppercase tracking-widest">
-              Coach
+              Keep it easy
             </p>
             <p className="text-base-subtext text-xs mt-1">{domainConfig.coachPrompt}</p>
           </div>
           <div className="rounded border border-base-border p-2">
             <p className="font-heading text-[11px] text-base-muted uppercase tracking-widest">
-              Reflect
+              Ask yourself
             </p>
             <p className="text-base-subtext text-xs mt-1">{domainConfig.reflectPrompt}</p>
           </div>
           <div className="rounded border border-base-border p-2">
             <p className="font-heading text-[11px] text-base-muted uppercase tracking-widest">
-              Feedback
+              Good to know
             </p>
             <p className="text-base-subtext text-xs mt-1">{domainConfig.feedbackPrompt}</p>
           </div>

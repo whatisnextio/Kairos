@@ -40,4 +40,18 @@ describe('Detail screen domain labels', () => {
     );
     expect(source).not.toContain('Longest: {streak?.longestStreak ?? 0} days');
   });
+
+  it('uses normal-language support labels instead of framework jargon', () => {
+    const source = readFileSync('src/pages/DetailScreen.tsx', 'utf8');
+
+    expect(source).toContain('Useful ideas');
+    expect(source).toContain('Get ready');
+    expect(source).toContain('Keep it easy');
+    expect(source).toContain('Ask yourself');
+    expect(source).toContain('Good to know');
+    expect(source).not.toContain('\n          Framework\n');
+    expect(source).not.toContain('\n              Coach\n');
+    expect(source).not.toContain('\n              Reflect\n');
+    expect(source).not.toContain('\n              Feedback\n');
+  });
 });
