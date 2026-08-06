@@ -150,6 +150,9 @@ test.describe('NFR smoke gates', () => {
 
     await expect(page.getByTestId('daily-domain-row-BODY')).toContainText('Done');
     await expect(page.getByRole('button', { name: /check in body/i })).toBeVisible();
+    await page.getByRole('button', { name: /check in body/i }).click();
+    await expect(page.getByRole('button', { name: /clear tick remove today's tick/i })).toBeVisible();
+    await expect(page.getByText(/remove today's mark/i)).toHaveCount(0);
     await expectNoHorizontalOverflow(page);
   });
 

@@ -17,6 +17,12 @@ describe('check-in interaction UX', () => {
     expect(checkInModal).not.toContain('cursor-not-allowed');
   });
 
+  it('uses plain tick language when clearing a check-in', () => {
+    expect(checkInModal).toContain("title: 'Clear tick'");
+    expect(checkInModal).toContain('body: "Remove today\'s tick."');
+    expect(checkInModal).not.toContain("Remove today's mark.");
+  });
+
   it('uses the status modal for custom routes instead of silent tap cycling', () => {
     expect(homeScreen).toContain('onClick={() => setSelectedCustomRouteId(route.id)}');
     expect(homeScreen).toContain('const currentStatus: CheckInStatus =');

@@ -12,7 +12,7 @@ const OPTIONS: Array<{ status: CheckInStatus; title: string; body: string }> = [
   { status: 'Done', title: 'Done', body: 'Action completed.' },
   { status: 'Partial', title: 'Part done', body: 'Did a smaller useful version.' },
   { status: 'Missed', title: 'Missed', body: 'Did not happen today.' },
-  { status: 'Pending', title: 'Clear', body: "Remove today's mark." },
+  { status: 'Pending', title: 'Clear tick', body: "Remove today's tick." },
 ];
 
 export default function CheckInStatusModal({ label, currentStatus, onSelect, onClose }: Props) {
