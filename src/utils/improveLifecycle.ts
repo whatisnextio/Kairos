@@ -19,8 +19,8 @@ export function getImproveStatusHelper(status: NudgeStatus): string {
 }
 
 export function getDismissedCardsMessage(count: number): string {
-  const label = count === 1 ? 'suggestion is' : 'suggestions are';
-  return `${count} hidden ${label} out of the way for today. Show hidden suggestions to restore one. Reminders may still ask for a check-in if notifications are enabled.`;
+  const label = count === 1 ? 'tip is' : 'tips are';
+  return `${count} ${label} hidden for today. Show them if you want one back. Reminders still work if they are switched on.`;
 }
 
 export function normaliseNudgeErrorMessage(error: unknown): string {

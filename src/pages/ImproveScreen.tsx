@@ -484,7 +484,7 @@ export default function ImproveScreen() {
           <div className="flex items-start justify-between gap-3">
             <div>
               <p className="font-heading text-xs font-medium text-base-subtext tracking-widest uppercase mb-2">
-                Hidden today
+                Tips hidden today
               </p>
               <p className="text-base-subtext text-sm">
                 {getDismissedCardsMessage(dismissedCards.length)}

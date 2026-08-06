@@ -11,7 +11,8 @@ describe('Hidden Improve cards', () => {
     expect(improve).toContain('function restoreCard(card: ImproveCard)');
     expect(improve).toContain("setCardStatus(card, 'new')");
     expect(improve).toContain('Restore');
-    expect(improve).toContain('Hidden today');
+    expect(improve).toContain('Tips hidden today');
+    expect(improve).not.toContain('Hidden today');
     expect(store).toContain('improveCardStatuses: Record<string, NudgeStatus>');
     expect(store).toContain('status: NudgeStatus');
   });

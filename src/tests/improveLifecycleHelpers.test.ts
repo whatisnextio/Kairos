@@ -51,9 +51,9 @@ describe('Improve lifecycle helpers', () => {
   });
 
   it('summarises dismissed cards without implying notifications stop', () => {
-    expect(getDismissedCardsMessage(2)).toContain('out of the way for today');
-    expect(getDismissedCardsMessage(2)).toContain('Show hidden suggestions to restore one');
-    expect(getDismissedCardsMessage(2)).toContain('Reminders may still ask for a check-in');
+    expect(getDismissedCardsMessage(2)).toContain('2 tips are hidden for today');
+    expect(getDismissedCardsMessage(2)).toContain('Show them if you want one back');
+    expect(getDismissedCardsMessage(2)).toContain('Reminders still work');
   });
 
   it('maps core completion to a daily check-in', () => {
