@@ -91,7 +91,7 @@ describe('progress sharing privacy', () => {
     expect(preview.text).toContain('Liam: 12K progress');
     expect(preview.text).toContain('Body 64%');
     expect(preview.text).toContain('Connection 43%');
-    expect(preview.text).toContain('Level: Level 10: Kairos. Kairos Points: 18,000 KP.');
+    expect(preview.text).toContain('Level: Level 10: Kairos. Points: 18,000 points.');
     expect(preview.showPhoto).toBe(true);
   });
 

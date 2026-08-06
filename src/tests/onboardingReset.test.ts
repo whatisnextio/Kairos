@@ -172,7 +172,8 @@ describe('onboarding and reset contract', () => {
     expect(modal).toContain("supabase.rpc('reset_journey_metrics')");
     expect(modal).toContain('resetJourneyMetricsLocalState');
     expect(modal).not.toContain('archiveCurrentJourney');
-    expect(modal).toContain('Your active journey, KP, streaks, check-ins, and local');
+    expect(modal).toContain('Your active journey, points, streaks, check-ins, and');
+    expect(modal).toContain('local history reset');
     expect(migration).toContain('create or replace function public.reset_journey_metrics()');
     expect(migration).toContain('xp = 0');
     expect(migration).toContain('current_kairos_cycle_id = null');

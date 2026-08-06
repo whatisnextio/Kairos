@@ -88,7 +88,7 @@ const SHARE_PRIVACY_OPTIONS: Array<[keyof SharePrivacyPreferences, string]> = [
   ['includePhoto', 'Include profile photo in preview'],
   ['includeBadges', 'Include milestone badge'],
   ['includeDomainDetail', 'Show four area scores'],
-  ['includeStats', 'Show level and KP'],
+  ['includeStats', 'Show level and points'],
 ];
 
 async function syncPushPreferences(preferences: unknown): Promise<boolean> {
@@ -561,7 +561,7 @@ export default function YouScreen() {
         </div>
         <div className="flex gap-4 mt-3">
           <div>
-            <p className="text-base-subtext text-xs">KP</p>
+            <p className="text-base-subtext text-xs">Total</p>
             <p className="font-heading font-bold text-base-text">
               {formatKairosPoints(profile.xp)}
             </p>

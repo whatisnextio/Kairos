@@ -169,7 +169,7 @@ export default function ProgressScreen() {
                 <p className="font-heading font-bold text-base-text">
                   {formatKairosPoints(currentCycle.totalXpEarned ?? profile.xp)}
                 </p>
-                <p className="text-base-muted text-xs">KP earned</p>
+                <p className="text-base-muted text-xs">points earned</p>
               </div>
               {aiReflection?.stats && (
                 <>
@@ -277,7 +277,7 @@ export default function ProgressScreen() {
                   <p className="font-heading text-base-text text-lg">
                     {formatKairosPoints(profile.xp)}
                   </p>
-                  <p className="text-base-muted text-[11px]">KP</p>
+                  <p className="text-base-muted text-[11px]">total</p>
                 </div>
                 <div className="rounded border border-base-border p-2">
                   <p className="font-heading text-base-text text-lg">{weeklyReview.proofCount}</p>

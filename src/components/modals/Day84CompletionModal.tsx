@@ -195,7 +195,7 @@ export default function Day84CompletionModal({ onClose }: Props) {
                   <p className="font-heading text-base font-bold text-accent-green">
                     {formatKairosPoints(aiReflection.stats.totalXp)}
                   </p>
-                  <p className="text-base-muted text-xs">KP earned</p>
+                  <p className="text-base-muted text-xs">points earned</p>
                 </div>
                 <div>
                   <p className="font-heading text-base font-bold text-base-text">
@@ -274,9 +274,7 @@ export default function Day84CompletionModal({ onClose }: Props) {
             <p className="font-heading text-5xl font-bold text-accent-green mb-2 tracking-widest">
               +{formatKairosPoints(XP_PER_CYCLE_COMPLETE)}
             </p>
-            <p className="text-base-muted text-xs mb-6">
-              Kairos Points for completing the 84-day plan
-            </p>
+            <p className="text-base-muted text-xs mb-6">points for completing the 84-day plan</p>
 
             <h2 className="font-heading text-2xl font-bold text-base-text mb-4 tracking-wide">
               One round done.
@@ -288,7 +286,7 @@ export default function Day84CompletionModal({ onClose }: Props) {
                   <p className="font-heading text-lg font-bold text-base-text">
                     {formatKairosPoints(aiReflection.stats.totalXp)}
                   </p>
-                  <p className="text-base-muted text-xs">KP total</p>
+                  <p className="text-base-muted text-xs">total points</p>
                 </div>
                 <div>
                   <p className="font-heading text-lg font-bold text-base-text">

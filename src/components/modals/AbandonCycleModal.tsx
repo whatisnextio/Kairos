@@ -30,7 +30,7 @@ export default function AbandonCycleModal({ onClose }: Props) {
     setError(null);
 
     if (currentCycle.id !== 'local-dev-cycle') {
-      // Protected progress fields such as KP and squad membership must reset
+      // Protected progress fields such as points and squad membership must reset
       // through the trusted RPC, not direct browser updates.
       const { error: resetErr } = await supabase.rpc('reset_journey_metrics');
       if (resetErr) {
@@ -77,8 +77,8 @@ export default function AbandonCycleModal({ onClose }: Props) {
               Reset 12K journey?
             </h2>
             <p className="text-base-subtext text-sm mb-6">
-              This starts onboarding again. Your active journey, KP, streaks, check-ins, and local
-              history reset. Your account, subscription, and preferences stay intact.
+              This starts onboarding again. Your active journey, points, streaks, check-ins, and
+              local history reset. Your account, subscription, and preferences stay intact.
             </p>
             <div className="flex gap-3">
               <Button variant="ghost" onClick={onClose} className="flex-1">

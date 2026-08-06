@@ -87,7 +87,7 @@ export const PRIVACY_COPY = {
   intro:
     '12K is private by design. It stores only what is needed to run your 84-day journey, sync the app, and keep it useful.',
   collected:
-    'Email, date of birth for 18+ checks, profile setup, check-ins, action choices, notes including health-related notes you choose to add, Kairos Points, streaks, notification preferences, and journey state.',
+    'Email, date of birth for 18+ checks, profile setup, check-ins, action choices, notes including health-related notes you choose to add, points, streaks, notification preferences, and journey state.',
   notDone:
     'We do not sell your data, use advertising networks, or make private action labels public. Supabase stores app data, and Plausible measures usage without cookies.',
   rights:

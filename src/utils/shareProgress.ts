@@ -60,7 +60,7 @@ export function buildProgressSharePreview(input: ProgressShareInput): SharePrevi
   ];
 
   if (preferences.includeStats) {
-    lines.push(`Level: ${input.levelLabel}. Kairos Points: ${formatKairosPoints(input.xp)}.`);
+    lines.push(`Level: ${input.levelLabel}. Points: ${formatKairosPoints(input.xp)}.`);
   }
 
   if (preferences.includeDomainDetail) {

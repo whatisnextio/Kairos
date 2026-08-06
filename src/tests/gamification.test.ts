@@ -124,9 +124,9 @@ describe('getXpProgressInLevel', () => {
   });
 });
 
-describe('Kairos Points rewards', () => {
-  it('formats public points as KP', () => {
-    expect(formatKairosPoints(18_000)).toBe('18,000 KP');
+describe('points rewards', () => {
+  it('formats public points in plain language', () => {
+    expect(formatKairosPoints(18_000)).toBe('18,000 points');
   });
 
   it('explains how every badge is earned', () => {

@@ -19,8 +19,8 @@ const LEVELS: XpLevel[] = [
   { level: 10, label: 'Kairos', minXp: 18000, maxXp: Number.POSITIVE_INFINITY },
 ];
 
-export const POINTS_SHORT_LABEL = 'KP';
-export const POINTS_FULL_LABEL = 'Kairos Points';
+export const POINTS_SHORT_LABEL = 'points';
+export const POINTS_FULL_LABEL = 'points';
 
 export function formatKairosPoints(points: number): string {
   return `${points.toLocaleString()} ${POINTS_SHORT_LABEL}`;
