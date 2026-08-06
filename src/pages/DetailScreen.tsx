@@ -320,10 +320,10 @@ export default function DetailScreen() {
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
             <p className="text-base-subtext text-xs font-heading tracking-widest uppercase mb-1">
-              Current focus
+              Your action
             </p>
             <p className="text-base-text text-sm">
-              {focus?.focusDescription ?? 'No focus set yet.'}
+              {focus?.focusDescription ?? 'No action set yet.'}
             </p>
           </div>
           <Button
@@ -423,7 +423,7 @@ export default function DetailScreen() {
                 disabled={!focusDraft.trim() || focusSaving}
                 className="flex-1"
               >
-                {focusSaving ? 'Saving...' : 'Save focus'}
+                {focusSaving ? 'Saving...' : 'Save action'}
               </Button>
               <Button
                 size="sm"

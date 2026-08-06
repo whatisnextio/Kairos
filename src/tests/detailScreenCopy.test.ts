@@ -54,4 +54,15 @@ describe('Detail screen domain labels', () => {
     expect(source).not.toContain('\n              Reflect\n');
     expect(source).not.toContain('\n              Feedback\n');
   });
+
+  it('uses action language for the editable daily target', () => {
+    const source = readFileSync('src/pages/DetailScreen.tsx', 'utf8');
+
+    expect(source).toContain('Your action');
+    expect(source).toContain('No action set yet.');
+    expect(source).toContain('Save action');
+    expect(source).not.toContain('Current focus');
+    expect(source).not.toContain('No focus set yet.');
+    expect(source).not.toContain('Save focus');
+  });
 });
