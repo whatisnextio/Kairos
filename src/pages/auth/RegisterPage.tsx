@@ -2,7 +2,7 @@ import Button from '@/components/common/Button';
 import Input from '@/components/common/Input';
 import { supabase } from '@/services/supabaseClient';
 import { AUTH_COPY } from '@/utils/brandCopy';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 
 export default function RegisterPage() {
@@ -12,6 +12,13 @@ export default function RegisterPage() {
   const [loading, setLoading] = useState(false);
   const [sent, setSent] = useState(false);
   const [error, setError] = useState('');
+  const errorRef = useRef<HTMLParagraphElement | null>(null);
+
+  useEffect(() => {
+    if (error) {
+      errorRef.current?.focus();
+    }
+  }, [error]);
 
   const isOver18 = () => {
     if (!dob) return false;
@@ -24,11 +31,11 @@ export default function RegisterPage() {
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!isOver18()) {
-      setError('You must be 18 or over to use 12K.');
+      setError('12K is for adults. You need to be 18 or over to use it.');
       return;
     }
     if (!ageConfirmed) {
-      setError('Please confirm you are 18 or over.');
+      setError('Tick the box to confirm you are 18 or over.');
       return;
     }
     setLoading(true);
@@ -98,14 +105,21 @@ export default function RegisterPage() {
                 onChange={(e) => setAgeConfirmed(e.target.checked)}
                 className="mt-0.5 accent-accent-green"
               />
-              <span className="text-sm text-base-subtext">I confirm I am 18 or over.</span>
+              <span className="text-sm text-base-subtext">
+                Tick this box to confirm you are 18 or over.
+              </span>
             </label>
             {error && (
-              <p role="alert" className="text-xs text-status-missed">
+              <p
+                ref={errorRef}
+                role="alert"
+                tabIndex={-1}
+                className="text-xs text-status-missed outline-none"
+              >
                 {error}
               </p>
             )}
-            <Button type="submit" disabled={loading || !ageConfirmed} className="w-full">
+            <Button type="submit" disabled={loading} className="w-full">
               {loading ? 'Sending...' : 'Create account'}
             </Button>
             <p className="text-center text-base-subtext text-xs">

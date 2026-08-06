@@ -40,7 +40,14 @@ test.describe('NFR smoke gates', () => {
     await expect(page.getByLabel(/email/i)).toBeVisible();
     await expect(page.getByLabel(/date of birth/i)).toBeVisible();
     await expect(page.getByText(/we only use this to check you are 18 or over/i)).toBeVisible();
-    await expect(page.getByRole('button', { name: /create account/i })).toBeVisible();
+    const createAccountButton = page.getByRole('button', { name: /create account/i });
+    await expect(createAccountButton).toBeVisible();
+    await expect(createAccountButton).toBeEnabled();
+    await page.getByLabel(/email/i).fill('uat@example.com');
+    await page.getByLabel(/date of birth/i).fill('1990-01-01');
+    await createAccountButton.click();
+    await expect(page.getByRole('alert')).toHaveText(/tick the box to confirm/i);
+    await expect(page.getByRole('alert')).toBeFocused();
     await expectNoHorizontalOverflow(page);
     await expectNoA11yViolations(page);
   });
