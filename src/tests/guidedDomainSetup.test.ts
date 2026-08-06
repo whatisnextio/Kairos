@@ -36,14 +36,20 @@ describe('guided domain setup model', () => {
 
   it('keeps onboarding simple while detailed setup paths reuse the option model', () => {
     const source = setupSources();
+    const setupOptionSections = readFileSync(
+      'src/components/common/SetupOptionSections.tsx',
+      'utf8',
+    );
 
     expect(source).toContain('Choose your four actions.');
     expect(source).toContain('Pick one simple starter action in each area.');
     expect(source.match(/buildDomainSetupOptionModel/g)?.length).toBeGreaterThanOrEqual(3);
     expect(source.match(/SetupOptionSections/g)?.length).toBeGreaterThanOrEqual(2);
-    expect(source).toContain('Action options');
-    expect(source).toContain('Prep options');
-    expect(source).toContain('Recovery options');
+    expect(setupOptionSections).toContain('Choose one action');
+    expect(setupOptionSections).toContain('model.focusOptions.map');
+    expect(setupOptionSections).not.toContain('Action options');
+    expect(setupOptionSections).not.toContain('Prep options');
+    expect(setupOptionSections).not.toContain('Recovery options');
   });
 
   it('keeps custom input available in setup paths', () => {
