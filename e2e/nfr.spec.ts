@@ -25,7 +25,8 @@ test.describe('NFR smoke gates', () => {
 
     await expect(page.getByRole('heading', { name: /sign in to 12k/i, level: 1 })).toBeVisible();
     await expect(page.getByLabel(/email/i)).toBeVisible();
-    await expect(page.getByRole('button', { name: /send magic link/i })).toBeVisible();
+    await expect(page.getByRole('button', { name: /email me a sign-in link/i })).toBeVisible();
+    await expect(page.getByText(/magic link/i)).toHaveCount(0);
     await expectNoHorizontalOverflow(page);
     await expectNoA11yViolations(page);
   });

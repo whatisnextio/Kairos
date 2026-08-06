@@ -137,8 +137,10 @@ export default function LoginPage() {
 
         {sent ? (
           <div>
-            <p className="text-base-text font-medium mb-2">Check your email.</p>
-            <p className="text-base-subtext text-sm">Magic link sent to {email}.</p>
+            <p className="text-base-text font-medium mb-2">Check your email</p>
+            <p className="text-base-subtext text-sm">
+              Open the sign-in link sent to {email} on this device to continue.
+            </p>
           </div>
         ) : (
           <form onSubmit={handleMagicLink} className="w-full max-w-sm flex flex-col gap-4">
@@ -153,7 +155,7 @@ export default function LoginPage() {
               error={error}
             />
             <Button type="submit" disabled={loading} className="w-full">
-              {loading ? 'Sending...' : 'Send magic link'}
+              {loading ? 'Sending...' : 'Email me a sign-in link'}
             </Button>
             <p className="text-center text-base-subtext text-xs">
               No account yet?{' '}
