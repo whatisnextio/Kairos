@@ -48,6 +48,10 @@ function dayUnit(count: number): 'day' | 'days' {
   return count === 1 ? 'day' : 'days';
 }
 
+function formatDayCount(count: number): string {
+  return `${count} ${dayUnit(count)}`;
+}
+
 // ─── SVG Sparkline ────────────────────────────────────────────────────────────
 
 type SparkStatus = CheckInStatus | undefined;
@@ -501,14 +505,9 @@ export default function DetailScreen() {
           Current streak
         </p>
         <p className="font-heading text-3xl font-bold text-base-text">
-          {currentStreak}
-          <span className="text-base-subtext text-base font-normal ml-1">
-            {dayUnit(currentStreak)}
-          </span>
+          {formatDayCount(currentStreak)}
         </p>
-        <p className="text-base-subtext text-xs mt-1">
-          Longest: {longestStreak} {dayUnit(longestStreak)}
-        </p>
+        <p className="text-base-subtext text-xs mt-1">Longest: {formatDayCount(longestStreak)}</p>
         {streak?.lastCheckInDate && (
           <p className="text-base-muted text-xs mt-0.5">Last check-in: {streak.lastCheckInDate}</p>
         )}

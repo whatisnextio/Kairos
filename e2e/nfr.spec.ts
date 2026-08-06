@@ -176,6 +176,15 @@ test.describe('NFR smoke gates', () => {
     await expectNoHorizontalOverflow(page);
   });
 
+  test('detail streak day count uses normal spacing', async ({ page }) => {
+    await loginAsLocalLiam(page);
+    await page.goto('/#/detail/BODY');
+
+    await expect(page.getByText('0 days', { exact: true })).toBeVisible();
+    await expect(page.getByText(/0days/i)).toHaveCount(0);
+    await expectNoHorizontalOverflow(page);
+  });
+
   test('core app screens are accessible on mobile', async ({ page }) => {
     await loginAsLocalLiam(page);
 
