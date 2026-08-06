@@ -223,13 +223,13 @@ export default function ProgressScreen() {
               <p className="font-heading text-base-text text-sm">
                 {Object.keys(streakProtectionHistory).length}
               </p>
-              <p className="text-base-muted text-[11px]">protection used</p>
+              <p className="text-base-muted text-[11px]">Saved days</p>
             </div>
             <div className="rounded border border-base-border p-2">
               <p className="font-heading text-base-text text-sm">
                 {Object.keys(awardedWeeklyBonuses).length}
               </p>
-              <p className="text-base-muted text-[11px]">weekly bonuses</p>
+              <p className="text-base-muted text-[11px]">Weekly rewards</p>
             </div>
           </div>
           <p className="text-base-muted text-xs mt-2">

@@ -41,4 +41,18 @@ describe('core platform labels', () => {
     expect(visibleSources).not.toContain(oldFieldName);
     expect(visibleSources).not.toContain(oldMapName);
   });
+
+  it('uses plain public copy for Fuel feedback and progress rewards', () => {
+    const domainSource = readFileSync('src/types/index.ts', 'utf8');
+    const progressSource = readFileSync('src/pages/ProgressScreen.tsx', 'utf8');
+
+    expect(domainSource).toContain(
+      'One useful food or drink choice is enough to move today forward.',
+    );
+    expect(domainSource).not.toContain('Fuel is one useful choice at a time.');
+    expect(progressSource).toContain('Saved days');
+    expect(progressSource).toContain('Weekly rewards');
+    expect(progressSource).not.toContain('protection used');
+    expect(progressSource).not.toContain('weekly bonuses');
+  });
 });

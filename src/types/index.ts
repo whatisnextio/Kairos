@@ -173,7 +173,7 @@ export const DOMAINS: DomainConfig[] = [
     ],
     reflectPrompt: 'Which choice gave you energy, and which choice took it?',
     coachPrompt: 'Do not negotiate with hunger late. Set the next choice while you are clear.',
-    feedbackPrompt: 'Fuel is one useful choice at a time.',
+    feedbackPrompt: 'One useful food or drink choice is enough to move today forward.',
   },
   {
     type: 'METIME',
