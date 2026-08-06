@@ -148,7 +148,19 @@ describe('PWA UX shell', () => {
 
     expect(css).toContain('html[data-theme="light"]');
     expect(css).toContain('--color-base-surface: 255 255 255');
+    expect(css).toContain('--color-base-bg: 224 231 226');
+    expect(css).toContain('--color-base-border: 164 178 169');
+    expect(css).toContain('--color-base-muted: 55 65 59');
+    expect(css).toContain('--color-accent-green: 18 128 65');
+    expect(css).toContain('--color-domain-body: 37 99 235');
+    expect(css).toContain('--color-domain-fuel: 194 65 12');
+    expect(css).toContain('--color-domain-ustime: 219 39 119');
+    expect(css).toContain('--card-shadow: 0 16px 44px rgba(28, 42, 34, 0.16)');
+    expect(css).not.toContain('--color-base-border: 201 211 205');
     expect(tailwind).toContain("'base-surface': 'rgb(var(--color-base-surface)");
+    expect(tailwind).toContain("'domain-body': 'rgb(var(--color-domain-body)");
+    expect(tailwind).toContain("'domain-fuel': 'rgb(var(--color-domain-fuel)");
+    expect(tailwind).toContain("'domain-ustime': 'rgb(var(--color-domain-ustime)");
     expect(app).toContain('applyThemePreference(themePreference)');
   });
 
