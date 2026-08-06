@@ -26,4 +26,18 @@ describe('Detail screen domain labels', () => {
     expect(source).toContain("{todayStatus ? STATUS_LABEL[todayStatus] : 'Not checked in'}");
     expect(source).not.toContain("{todayCheckIns[domainType]?.status ?? 'Not checked in'}");
   });
+
+  it('formats streak day counts with spacing and singular labels', () => {
+    const source = readFileSync('src/pages/DetailScreen.tsx', 'utf8');
+
+    expect(source).toContain("function dayUnit(count: number): 'day' | 'days'");
+    expect(source).toContain("return count === 1 ? 'day' : 'days';");
+    expect(source).toContain('{currentStreak}');
+    expect(source).toContain('{dayUnit(currentStreak)}');
+    expect(source).toContain('Longest: {longestStreak} {dayUnit(longestStreak)}');
+    expect(source).not.toContain(
+      '<span className="text-base-subtext text-base font-normal ml-1">days</span>',
+    );
+    expect(source).not.toContain('Longest: {streak?.longestStreak ?? 0} days');
+  });
 });

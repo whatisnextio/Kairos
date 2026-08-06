@@ -44,6 +44,10 @@ const STATUS_LABEL: Record<string, string> = {
   Protected: 'Protected',
 };
 
+function dayUnit(count: number): 'day' | 'days' {
+  return count === 1 ? 'day' : 'days';
+}
+
 // ─── SVG Sparkline ────────────────────────────────────────────────────────────
 
 type SparkStatus = CheckInStatus | undefined;
@@ -282,6 +286,8 @@ export default function DetailScreen() {
     return days.map((d) => (d === today ? todayCheckIns[domainType]?.status : byDate.get(d)));
   })();
   const todayStatus = todayCheckIns[domainType]?.status;
+  const currentStreak = streak?.currentStreak ?? 0;
+  const longestStreak = streak?.longestStreak ?? 0;
 
   return (
     <div className="mx-auto flex w-full max-w-2xl flex-col gap-4 px-4 pb-4 pt-6 sm:px-6 sm:pt-8">
@@ -495,10 +501,14 @@ export default function DetailScreen() {
           Current streak
         </p>
         <p className="font-heading text-3xl font-bold text-base-text">
-          {streak?.currentStreak ?? 0}
-          <span className="text-base-subtext text-base font-normal ml-1">days</span>
+          {currentStreak}
+          <span className="text-base-subtext text-base font-normal ml-1">
+            {dayUnit(currentStreak)}
+          </span>
         </p>
-        <p className="text-base-subtext text-xs mt-1">Longest: {streak?.longestStreak ?? 0} days</p>
+        <p className="text-base-subtext text-xs mt-1">
+          Longest: {longestStreak} {dayUnit(longestStreak)}
+        </p>
         {streak?.lastCheckInDate && (
           <p className="text-base-muted text-xs mt-0.5">Last check-in: {streak.lastCheckInDate}</p>
         )}
