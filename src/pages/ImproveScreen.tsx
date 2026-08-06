@@ -449,11 +449,11 @@ export default function ImproveScreen() {
       {canSeeNudge && isError && !isLoading && (
         <Card>
           <p className="font-heading text-sm font-medium text-status-partial mb-1">
-            Extra suggestion not ready
+            Pick one idea
           </p>
           <p className="text-base-subtext text-sm mb-3">{normaliseNudgeErrorMessage(nudgeError)}</p>
           <Button size="sm" variant="ghost" onClick={() => refetch()} disabled={isFetching}>
-            {isFetching ? 'Trying...' : 'Try again'}
+            {isFetching ? 'Refreshing...' : 'Refresh ideas'}
           </Button>
         </Card>
       )}
@@ -461,13 +461,13 @@ export default function ImproveScreen() {
       {canSeeNudge && isFallbackNudge && !isLoading && !isError && (
         <Card>
           <p className="font-heading text-sm font-medium text-status-partial mb-1">
-            Extra suggestion not ready
+            Pick one idea
           </p>
           <p className="text-base-subtext text-sm mb-3">
-            Use the option below for now. Try again later for a fresh suggestion.
+            The ideas below are ready. Pick one now, or refresh for another option.
           </p>
           <Button size="sm" variant="ghost" onClick={() => refetch()} disabled={isFetching}>
-            {isFetching ? 'Trying...' : 'Try again'}
+            {isFetching ? 'Refreshing...' : 'Refresh ideas'}
           </Button>
         </Card>
       )}
@@ -475,10 +475,10 @@ export default function ImproveScreen() {
       {canSeeNudge && !nudge && !isLoading && !isError && (
         <Card>
           <p className="text-base-subtext text-sm mb-3">
-            No extra suggestion yet today. Try again, or choose one option below.
+            Pick one option below, or refresh for another idea.
           </p>
           <Button size="sm" onClick={() => refetch()}>
-            {isFetching ? 'Trying...' : 'Try again'}
+            {isFetching ? 'Refreshing...' : 'Refresh ideas'}
           </Button>
         </Card>
       )}
@@ -543,7 +543,7 @@ export default function ImproveScreen() {
       {nextCards.length > 0 && (
         <div>
           <h2 className="font-heading text-xs font-medium text-base-subtext tracking-widest uppercase mb-3">
-            Next options
+            Ideas for today
           </h2>
           <div className="flex flex-col gap-3">{nextCards.map((card) => renderCard(card))}</div>
         </div>

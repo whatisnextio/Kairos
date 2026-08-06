@@ -33,16 +33,16 @@ describe('Improve lifecycle helpers', () => {
     expect(normaliseNudgeErrorMessage(new Error('No session'))).toContain('Sign in again');
     expect(normaliseNudgeErrorMessage(new Error('No session'))).toContain('Your options');
     expect(normaliseNudgeErrorMessage(new Error('Tier gate rejected'))).toContain(
-      'included in the app',
+      'Extra ideas are included in the app',
     );
     expect(normaliseNudgeErrorMessage(new Error('Failed to store nudge'))).toContain(
       'could not be saved',
     );
     expect(normaliseNudgeErrorMessage(new Error('AI generation unavailable'))).toBe(
-      'The suggestion is not ready. Try again, or choose an option below.',
+      'Pick one option below, or refresh for another idea.',
     );
     expect(normaliseNudgeErrorMessage(new Error('Provider timeout'))).toBe(
-      'The suggestion is not ready right now. Your options are ready below.',
+      'Your options are ready below.',
     );
     const oldFallbackPhrase = ['framework', 'options', 'below'].join(' ');
     expect(normaliseNudgeErrorMessage(new Error('AI generation unavailable'))).not.toContain(

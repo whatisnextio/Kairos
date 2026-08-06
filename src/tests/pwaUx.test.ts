@@ -74,7 +74,7 @@ describe('PWA UX shell', () => {
 
     expect(improve).toContain('Pick one small move for today.');
     expect(improve).toContain(
-      'Use the option below for now. Try again later for a fresh suggestion.',
+      'The ideas below are ready. Pick one now, or refresh for another option.',
     );
     expect(lifecycle).toContain('Your options are ready below');
     expect(improve).not.toContain('AI acts as');

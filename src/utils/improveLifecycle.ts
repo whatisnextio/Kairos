@@ -32,18 +32,18 @@ export function normaliseNudgeErrorMessage(error: unknown): string {
   }
 
   if (lower.includes('tier')) {
-    return 'Extra suggestions are included in the app. Try again, or choose an option below.';
+    return 'Extra ideas are included in the app. Pick one option below, or refresh.';
   }
 
   if (lower.includes('failed to store')) {
-    return 'The suggestion could not be saved. Try again, or choose an option below.';
+    return 'That idea could not be saved. Pick one option below, or refresh.';
   }
 
   if (lower.includes('failed') || lower.includes('unavailable')) {
-    return 'The suggestion is not ready. Try again, or choose an option below.';
+    return 'Pick one option below, or refresh for another idea.';
   }
 
-  return 'The suggestion is not ready right now. Your options are ready below.';
+  return 'Your options are ready below.';
 }
 
 export function resolveImproveCompletionTarget({
