@@ -195,6 +195,17 @@ test.describe('NFR smoke gates', () => {
     await expectNoHorizontalOverflow(page);
   });
 
+  test('progress streak labels are readable', async ({ page }) => {
+    await loginAsLocalLiam(page);
+    await page.goto('/#/progress');
+
+    await expect(page.getByText('Current: 0').first()).toBeVisible();
+    await expect(page.getByText('Best: 0').first()).toBeVisible();
+    const bodyText = await page.locator('body').innerText();
+    expect(bodyText).not.toMatch(/0current|0best/i);
+    await expectNoHorizontalOverflow(page);
+  });
+
   test('core app screens are accessible on mobile', async ({ page }) => {
     await loginAsLocalLiam(page);
 

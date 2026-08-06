@@ -66,6 +66,15 @@ describe('PWA UX shell', () => {
     expect(home).not.toContain('domainLabels.get(route.parentDomainType)');
   });
 
+  it('keeps Progress streak labels readable', () => {
+    const progress = readFileSync('src/pages/ProgressScreen.tsx', 'utf8');
+
+    expect(progress).toContain('Current: {streak?.currentStreak ?? 0}');
+    expect(progress).toContain('Best: {streak?.longestStreak ?? 0}');
+    expect(progress).not.toContain('>current</span>');
+    expect(progress).not.toContain('>best</span>');
+  });
+
   it('keeps Improve suggestion copy simple and user-facing', () => {
     const improve = readFileSync('src/pages/ImproveScreen.tsx', 'utf8');
     const lifecycle = readFileSync('src/utils/improveLifecycle.ts', 'utf8');

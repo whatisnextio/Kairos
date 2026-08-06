@@ -618,14 +618,12 @@ export default function ProgressScreen() {
                   <div className="flex items-center gap-3">
                     <div className="text-right">
                       <p className="font-heading font-bold text-base-text text-sm">
-                        {streak?.currentStreak ?? 0}
-                        <span className="text-base-muted font-normal text-xs ml-1">current</span>
+                        Current: {streak?.currentStreak ?? 0}
                       </p>
                     </div>
                     <div className="text-right">
                       <p className="font-heading text-base-subtext text-xs">
-                        {streak?.longestStreak ?? 0}
-                        <span className="text-base-muted ml-1">best</span>
+                        Best: {streak?.longestStreak ?? 0}
                       </p>
                     </div>
                   </div>
