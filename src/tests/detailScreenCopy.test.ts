@@ -17,4 +17,13 @@ describe('Detail screen domain labels', () => {
     expect(getDailyDomainLabel(self)).toBe('Self');
     expect(source).toContain('getDailyDomainLabel(domainConfig)');
   });
+
+  it('maps stored check-in statuses to plain labels in the Today card', () => {
+    const source = readFileSync('src/pages/DetailScreen.tsx', 'utf8');
+
+    expect(source).toContain("Partial: 'Part done'");
+    expect(source).toContain('const todayStatus = todayCheckIns[domainType]?.status;');
+    expect(source).toContain("{todayStatus ? STATUS_LABEL[todayStatus] : 'Not checked in'}");
+    expect(source).not.toContain("{todayCheckIns[domainType]?.status ?? 'Not checked in'}");
+  });
 });

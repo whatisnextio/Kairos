@@ -281,6 +281,7 @@ export default function DetailScreen() {
     const byDate = new Map(history.map((c) => [c.date, c.status]));
     return days.map((d) => (d === today ? todayCheckIns[domainType]?.status : byDate.get(d)));
   })();
+  const todayStatus = todayCheckIns[domainType]?.status;
 
   return (
     <div className="mx-auto flex w-full max-w-2xl flex-col gap-4 px-4 pb-4 pt-6 sm:px-6 sm:pt-8">
@@ -513,7 +514,7 @@ export default function DetailScreen() {
             className={`w-2.5 h-2.5 rounded-full ${STATUS_DOT[todayCheckIns[domainType]?.status ?? 'Pending'] ?? 'bg-base-border'}`}
           />
           <span className="text-base-text text-sm">
-            {todayCheckIns[domainType]?.status ?? 'Not checked in'}
+            {todayStatus ? STATUS_LABEL[todayStatus] : 'Not checked in'}
           </span>
         </div>
       </Card>
