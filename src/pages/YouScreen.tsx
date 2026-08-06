@@ -548,9 +548,6 @@ export default function YouScreen() {
                 onChange={handleProfileImage}
               />
             </label>
-            <p className="text-base-muted text-[10px] text-center mt-1 max-w-24 leading-tight">
-              Press Save settings to sync this photo to your account.
-            </p>
           </div>
           <div className="min-w-0 flex-1">
             <p className="font-heading text-lg font-bold text-base-text">{profile.displayName}</p>

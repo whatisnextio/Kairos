@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 
 describe('profile image account storage guardrails', () => {
-  it('explains account photo storage and caps resized images before saving', () => {
+  it('keeps photo editing simple and caps resized images before saving', () => {
     const source = readFileSync('src/pages/YouScreen.tsx', 'utf8');
     const migration = readFileSync('supabase/migrations/028_user_settings.sql', 'utf8');
 
@@ -11,7 +11,8 @@ describe('profile image account storage guardrails', () => {
     expect(source).toContain('estimateDataUrlBytes(output) > PROFILE_IMAGE_MAX_BYTES');
     expect(source).toContain("canvas.toDataURL('image/jpeg', quality)");
     expect(source).toContain('setProfileImageDataUrl(resized)');
-    expect(source).toContain('Press Save settings to sync this photo to your account.');
+    expect(source).toContain('Change');
+    expect(source).not.toContain('Press Save settings to sync this photo to your account.');
     expect(migration).toContain('profile_image_data_url text');
     expect(migration).toContain('octet_length(profile_image_data_url) <= 450000');
   });
