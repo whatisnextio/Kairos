@@ -112,7 +112,7 @@ export default function YouScreen() {
   const { mutate: matchToSquad, isPending: isMatching } = useMatchToSquad();
   const squadFeatureEnabled = isSquadFeatureEnabled();
   const [pushStatus, setPushStatus] = useState<
-    'idle' | 'requesting' | 'done' | 'denied' | 'unsupported'
+    'idle' | 'requesting' | 'done' | 'denied' | 'unsupported' | 'failed'
   >('idle');
   const [settingsDirty, setSettingsDirty] = useState(false);
   const [settingsStatus, setSettingsStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>(
@@ -165,7 +165,7 @@ export default function YouScreen() {
     }
     setPushStatus('requesting');
     const ok = await registerPushForCurrentUser({ ...next, webPushEnabled: true });
-    setPushStatus(ok ? 'done' : Notification.permission === 'denied' ? 'denied' : 'idle');
+    setPushStatus(ok ? 'done' : Notification.permission === 'denied' ? 'denied' : 'failed');
     setNotificationPreferences({ webPushEnabled: ok });
     if (ok) {
       setSettingsDirty(false);
@@ -815,6 +815,21 @@ export default function YouScreen() {
                 className="mt-3 w-full"
               >
                 Turn on phone alerts
+              </Button>
+            </div>
+          )}
+          {notificationPreferences.enabled && pushStatus === 'failed' && (
+            <div className="rounded-lg border border-status-missed/40 bg-status-missed/10 p-3">
+              <p className="text-sm text-base-subtext">
+                Push registration failed. Check your connection and try again.
+              </p>
+              <Button
+                size="sm"
+                variant="secondary"
+                onClick={() => void handleEnableNotifications()}
+                className="mt-3 w-full"
+              >
+                Retry phone alerts
               </Button>
             </div>
           )}

@@ -1,0 +1,4 @@
+-- 034_schedule_daily_cron_jobs.sql
+-- Scheduling is handled by GitHub Actions (see .github/workflows/scheduled-edge-functions.yml)
+-- rather than pg_cron, so no database-level changes are required here.
+-- This file is intentionally minimal to preserve migration numbering.
