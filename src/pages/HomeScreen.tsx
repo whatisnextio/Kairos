@@ -364,10 +364,7 @@ export default function HomeScreen() {
         ))}
       </div>
       {activeDayStateProtocol.actions.some((action) => action.kind === 'dismiss') && (
-        <p className="text-base-muted text-xs mt-3">
-          Not now hides this reminder on this device. If the same item stays open, 12K may suggest a
-          smaller option later today.
-        </p>
+        <p className="text-base-muted text-xs mt-3">Not now hides this reminder on this device.</p>
       )}
     </Card>
   ) : null;

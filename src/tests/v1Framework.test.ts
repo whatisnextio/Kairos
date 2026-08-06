@@ -15,6 +15,7 @@ import {
   buildWeeklyFlywheel,
   getDailyDomainLabel,
   getEarlyWakeProtocol,
+  selectDayStateProtocol,
 } from '@/utils/v1Framework';
 import { describe, expect, it } from 'vitest';
 
@@ -184,6 +185,28 @@ describe('V1 acceptance framework', () => {
     expect(buildAccountabilityPrompt(2).body).not.toContain('not another task');
     expect(buildAccountabilityPrompt(2).steps).toContain('Mark Done, Part done, or Missed.');
     expect(buildAccountabilityPrompt(1).steps).toContain('Record what happened.');
+  });
+
+  it('makes evening check-in the primary Home action when an area is open', () => {
+    const protocol = selectDayStateProtocol({
+      now: new Date('2026-08-04T20:15:00'),
+      domains: getAvailableDomains(OWNER_EMAIL),
+      todayCheckIns: {
+        BODY: checkIn('BODY', 'Done'),
+      },
+    });
+
+    expect(protocol.id).toBe('shutdown');
+    expect(protocol.body).toBe('Fuel is still open. Check in now or set up tomorrow.');
+    expect(protocol.actions.map((action) => action.label)).toEqual([
+      'Check in Fuel',
+      'Plan tomorrow',
+      'Not now',
+    ]);
+    expect(protocol.steps).toEqual([
+      'Choose Done, Part done, or Missed.',
+      'Plan one small action for tomorrow.',
+    ]);
   });
 
   it('schedules repeated structured notification prompts', () => {

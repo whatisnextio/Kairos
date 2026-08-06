@@ -450,10 +450,12 @@ function protocolActions(
 
   if (type === 'shutdown') {
     return [
+      {
+        id: 'open-check-in',
+        label: target ? `Check in ${target.label}` : 'Check in',
+        kind: 'open_check_in',
+      },
       { id: 'set-tomorrow', label: 'Plan tomorrow', kind: 'set_tomorrow' },
-      ...(target
-        ? [{ id: 'mark-part-done', label: 'Part done', kind: 'mark_partial' } as const]
-        : []),
       { id: 'dismiss', label: 'Not now', kind: 'dismiss' },
     ];
   }
@@ -515,12 +517,8 @@ export function selectDayStateProtocol({
       id: 'shutdown',
       type: 'shutdown',
       title: 'End-of-day check',
-      body: `${targetLabel(target)} still needs a check-in. Choose what happened, then plan tomorrow.`,
-      steps: [
-        'Pick one open item.',
-        'Choose Done, Part done, or Missed.',
-        'Plan one small action for tomorrow.',
-      ],
+      body: `${targetLabel(target)} is still open. Check in now or set up tomorrow.`,
+      steps: ['Choose Done, Part done, or Missed.', 'Plan one small action for tomorrow.'],
       target,
       actions: protocolActions('shutdown', target),
     };
