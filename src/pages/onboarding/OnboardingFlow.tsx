@@ -348,7 +348,7 @@ export default function OnboardingFlow() {
               Tell us your name.
             </h1>
             <p className="text-base-subtext text-sm leading-relaxed mb-5">
-              This keeps the app personal. The reminder style only changes how prompts feel.
+              This keeps the app personal. The reminder style only changes how reminders feel.
             </p>
 
             <Input

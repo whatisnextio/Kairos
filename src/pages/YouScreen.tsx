@@ -835,7 +835,7 @@ export default function YouScreen() {
 
           {pushStatus === 'unsupported' && (
             <p className="rounded-lg border border-status-partial/40 bg-status-partial/10 p-3 text-sm text-base-subtext">
-              Web push is not supported here. 12K will keep in-app Home prompts available instead of
+              Web push is not supported here. 12K will keep in-app Home ideas available instead of
               failing silently. Save settings to keep this preference on your account.
             </p>
           )}
@@ -1062,7 +1062,7 @@ export default function YouScreen() {
               </p>
               <p className="text-base-subtext text-xs mb-3">
                 This deletes your profile, journey history, check-ins, notes, extra actions,
-                prompts, squad link, push subscriptions, and auth account.
+                reminders, squad link, push subscriptions, and auth account.
               </p>
               <label className="text-base-subtext text-xs font-heading tracking-widest uppercase">
                 Type DELETE to confirm

@@ -27,6 +27,8 @@ describe('PWA install prompt', () => {
     expect(component).toContain('if (!installEvent');
     expect(component).toContain('Install app');
     expect(component).toContain('hasOpenDialog');
+    expect(component).toContain('Dismiss install message');
+    expect(component).not.toContain('Dismiss install prompt');
     expect(component).not.toContain('Manual install');
     expect(component).not.toContain('Add to Home Screen');
     expect(component).not.toContain('getInstallMode');

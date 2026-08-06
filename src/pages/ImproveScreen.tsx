@@ -271,7 +271,7 @@ export default function ImproveScreen() {
             ? 'Suggested move'
             : nudge.type === 'weekly_challenge'
               ? 'Challenge'
-              : 'Helpful prompt',
+              : 'Helpful idea',
           title: nudge.title,
           body: nudge.body,
           domainLabel: getNudgeDomainLabel(nudge.domainType, authUser?.email),

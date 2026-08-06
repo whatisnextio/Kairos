@@ -102,7 +102,7 @@ export const PRODUCT_POSITIONING = {
   what: '12K is a guided 12-week plan for turning small daily actions into visible change.',
   kairosMeaning:
     'Kairos is Greek for the right or opportune moment: the point where attention becomes action.',
-  why: 'It gives you a clear goal, simple prompts, one check-in, feedback, and a way back when the day slips.',
+  why: 'It gives you a clear goal, simple reminders, one check-in, feedback, and a way back when the day slips.',
   audience: 'Built for adults who want a simple plan. It is for everyone.',
   designedFor:
     'Designed for real life: inconsistent energy, busy work, family pressure, missed days, and the need to rebuild without shame.',

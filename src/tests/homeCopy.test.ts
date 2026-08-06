@@ -11,6 +11,10 @@ describe('Home copy contract', () => {
     expect(source).toContain('still needs a check-in');
     expect(source).toContain('Record what happened');
     expect(source).toContain('a smaller useful action still counts');
+    expect(home).toContain('Helpful idea');
+    expect(home).toContain('Not now hides this reminder on this device');
+    expect(home).not.toContain('Helpful prompt');
+    expect(home).not.toContain('Not now hides this prompt on this device');
     expect(source).not.toContain('Choose the honest status');
     expect(source).not.toContain('Partial is fine for a smaller version');
   });

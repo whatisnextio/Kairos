@@ -1,6 +1,6 @@
 # Kairos / 12K Framework Brief
 
-This is the canonical product brief for 12K and the Kairos framework. Product copy, onboarding, AI prompts, support content, investor copy, and marketing should stay aligned to this page unless the framework itself changes.
+This is the canonical product brief for 12K and the Kairos framework. Product copy, onboarding, AI suggestions, support content, investor copy, and marketing should stay aligned to this page unless the framework itself changes.
 
 ## Plain-English Position
 
@@ -54,7 +54,7 @@ The phases should appear early in onboarding, in progress, in AI context, and in
 Kairos is a practical behaviour-change wrapper, not a clinical programme. It uses evidence-aligned ingredients without making medical claims:
 
 - clear goals and implementation intentions,
-- prompts and cues,
+- simple reminders and cues,
 - self-monitoring,
 - feedback,
 - repetition,

@@ -125,7 +125,7 @@ describe('V1 acceptance framework', () => {
     expect(PRODUCT_POSITIONING.kairosMeaning).not.toMatch(/latin|implement/i);
     expect(PRODUCT_POSITIONING.audience).toContain('It is for everyone');
     expect(PRODUCT_POSITIONING.audience).not.toMatch(/\bmen\b|\bman\b|male/i);
-    expect(PRODUCT_POSITIONING.why).toContain('simple prompts');
+    expect(PRODUCT_POSITIONING.why).toContain('simple reminders');
     expect(PRODUCT_POSITIONING.why).toContain('way back');
     expect(PRODUCT_POSITIONING.categoryIntro).toContain('Body, Fuel, Self, and Connection');
     expect(PRODUCT_POSITIONING.proofLoop).toContain('review the week');

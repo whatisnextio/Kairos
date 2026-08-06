@@ -32,7 +32,7 @@ export const HELP_FAQS = [
   },
   {
     q: 'What research is it based on?',
-    a: 'Kairos uses established behaviour-change ingredients: clear goals, prompts and cues, self-monitoring, feedback, repetition, rewards, and recovery after lapses. It is support, not medical advice.',
+    a: 'Kairos uses established behaviour-change ingredients: clear goals, cues, self-monitoring, feedback, repetition, rewards, and recovery after lapses. It is support, not medical advice.',
   },
   {
     q: 'What are the four areas?',
@@ -63,7 +63,7 @@ export const HELP_FAQS = [
     a: 'Reminders are opt-in where your device supports them. Extra support adds more reminders through the day, including early start, catch up, and evening planning.',
   },
   {
-    q: 'How does the extra prompt work?',
+    q: 'How does the extra idea work?',
     a: 'It suggests short actions from your plan, reminders, check-ins, and extra actions. It is not a chat app or professional advice.',
   },
   {
@@ -96,5 +96,5 @@ export const PRIVACY_COPY = {
 
 export const TERMS_COPY = {
   intro: 'By using 12K you agree to use it as a personal operating system, not medical advice.',
-  ai: 'AI prompts are supportive suggestions generated from your 12K context. They are not medical, psychological, financial, or legal advice.',
+  ai: 'AI suggestions are generated from your 12K context. They are not medical, psychological, financial, or legal advice.',
 } as const;

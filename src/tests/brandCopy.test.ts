@@ -17,7 +17,7 @@ describe('brand and help copy contract', () => {
         'Can I add extra actions?',
         'What does reset do?',
         'How do notifications work?',
-        'How does the extra prompt work?',
+        'How does the extra idea work?',
       ]),
     );
     expect(kairosAnswer).toContain('Greek');
@@ -34,7 +34,7 @@ describe('brand and help copy contract', () => {
     expect(standForAnswer).toContain('not 12 steps');
     expect(standForAnswer).toContain('84 days');
     expect(researchAnswer).toContain('clear goals');
-    expect(researchAnswer).toContain('prompts and cues');
+    expect(researchAnswer).toContain('cues');
     expect(researchAnswer).toContain('self-monitoring');
     expect(researchAnswer).toContain('not medical advice');
     expect(`${standForAnswer} ${researchAnswer}`).not.toMatch(/guarantee|cure|diagnos/i);
@@ -52,6 +52,7 @@ describe('brand and help copy contract', () => {
     expect(publicCopy).toContain('not a chat app or professional advice');
     expect(publicCopy).not.toContain('AI acts as a Kairos accountability coach');
     expect(publicCopy).not.toMatch(/\bAI nudges\b|Today's nudge/i);
+    expect(publicCopy).not.toMatch(/\bprompt\b|\bprompts\b/i);
     expect(publicCopy).not.toMatch(/Kairos Plus|Lifechanger|checkout|billing portal|paid tier/i);
     expect(publicCopy).not.toContain('Brotherhood');
     expect(publicCopy).not.toMatch(/\bmen\b|\bman\b|male/i);

@@ -20,7 +20,7 @@ describe('canonical Kairos framework brief', () => {
     expect(brief).toContain('Kickoff');
     expect(brief).toContain('Sustain');
     expect(brief).toContain('implementation intentions');
-    expect(brief).toContain('prompts and cues');
+    expect(brief).toContain('simple reminders and cues');
     expect(brief).toContain('self-monitoring');
     expect(brief).toContain('AI should act as the framework voice');
     expect(brief).toContain('Labels must be discreet');

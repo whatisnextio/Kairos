@@ -118,7 +118,7 @@ export default function PwaInstallPrompt() {
             type="button"
             onClick={handleDismiss}
             className="text-base-muted hover:text-base-text"
-            aria-label="Dismiss install prompt"
+            aria-label="Dismiss install message"
           >
             <X size={18} aria-hidden="true" />
           </button>
