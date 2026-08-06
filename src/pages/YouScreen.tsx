@@ -11,11 +11,11 @@ import {
   REMINDER_INTENSITY_OPTIONS,
   getLocalNotificationDateKey,
 } from '@/services/localNotifications';
+import { isPushSupported, unsubscribeFromPush } from '@/services/pushNotifications';
 import {
-  isPushSupported,
-  subscribeToPush,
-  unsubscribeFromPush,
-} from '@/services/pushNotifications';
+  registerPushForCurrentUser,
+  syncPushPreferencesForCurrentUser,
+} from '@/services/pushSubscription';
 import { supabase } from '@/services/supabaseClient';
 import { saveUserSettings } from '@/services/userSettings';
 import { useAppStore } from '@/store/useAppStore';
@@ -80,7 +80,6 @@ function resizeImageDataUrl(dataUrl: string): Promise<string> {
   });
 }
 
-const SAVE_PUSH_ENDPOINT = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/save-push-subscription`;
 const DELETE_ACCOUNT_ENDPOINT = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/delete-account`;
 
 const SHARE_PRIVACY_OPTIONS: Array<[keyof SharePrivacyPreferences, string]> = [
@@ -90,48 +89,6 @@ const SHARE_PRIVACY_OPTIONS: Array<[keyof SharePrivacyPreferences, string]> = [
   ['includeDomainDetail', 'Show four area scores'],
   ['includeStats', 'Show level and points'],
 ];
-
-async function syncPushPreferences(preferences: unknown): Promise<boolean> {
-  try {
-    const {
-      data: { session },
-    } = await supabase.auth.getSession();
-    if (!session) return false;
-    const res = await fetch(SAVE_PUSH_ENDPOINT, {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${session.access_token}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ preferences }),
-    });
-    return res.ok;
-  } catch {
-    return false;
-  }
-}
-
-async function registerPush(preferences: unknown): Promise<boolean> {
-  try {
-    const sub = await subscribeToPush();
-    if (!sub) return false;
-    const {
-      data: { session },
-    } = await supabase.auth.getSession();
-    if (!session) return false;
-    const res = await fetch(SAVE_PUSH_ENDPOINT, {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${session.access_token}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ subscription: sub, preferences }),
-    });
-    return res.ok;
-  } catch {
-    return false;
-  }
-}
 
 export default function YouScreen() {
   const {
@@ -207,10 +164,15 @@ export default function YouScreen() {
       return;
     }
     setPushStatus('requesting');
-    const ok = await registerPush({ ...next, webPushEnabled: true });
+    const ok = await registerPushForCurrentUser({ ...next, webPushEnabled: true });
     setPushStatus(ok ? 'done' : Notification.permission === 'denied' ? 'denied' : 'idle');
     setNotificationPreferences({ webPushEnabled: ok });
-    markSettingsDirty();
+    if (ok) {
+      setSettingsDirty(false);
+      setSettingsStatus('saved');
+    } else {
+      markSettingsDirty();
+    }
   }, [markSettingsDirty, notificationPreferences, setNotificationPreferences]);
 
   const handleDisableNotifications = useCallback(async () => {
@@ -218,7 +180,7 @@ export default function YouScreen() {
     setNotificationPreferences({ enabled: false, webPushEnabled: false });
     markSettingsDirty();
     if (isPushSupported()) await unsubscribeFromPush();
-    await syncPushPreferences(next);
+    await syncPushPreferencesForCurrentUser(next);
     setPushStatus(isPushSupported() ? 'idle' : 'unsupported');
   }, [markSettingsDirty, notificationPreferences, setNotificationPreferences]);
 
@@ -419,7 +381,7 @@ export default function YouScreen() {
         });
 
         if ((options?.syncPush ?? true) && nextNotificationPreferences.webPushEnabled) {
-          const pushSynced = await syncPushPreferences(nextNotificationPreferences);
+          const pushSynced = await syncPushPreferencesForCurrentUser(nextNotificationPreferences);
           if (!pushSynced) {
             setSettingsDirty(true);
             setSettingsStatus('error');
@@ -840,6 +802,21 @@ export default function YouScreen() {
             <p className="rounded-lg border border-status-missed/40 bg-status-missed/10 p-3 text-sm text-base-subtext">
               Browser notifications are blocked. Your reminder preference can still be saved here.
             </p>
+          )}
+          {notificationPreferences.enabled && pushStatus === 'idle' && isPushSupported() && (
+            <div className="rounded-lg border border-status-partial/40 bg-status-partial/10 p-3">
+              <p className="text-sm text-base-subtext">
+                Reminders are selected, but this phone still needs browser permission.
+              </p>
+              <Button
+                size="sm"
+                variant="secondary"
+                onClick={() => void handleEnableNotifications()}
+                className="mt-3 w-full"
+              >
+                Turn on phone alerts
+              </Button>
+            </div>
           )}
 
           <label className="flex items-center justify-between gap-3 text-sm text-base-text">

@@ -2,10 +2,14 @@ import Button from '@/components/common/Button';
 import Input from '@/components/common/Input';
 import {
   DEFAULT_NOTIFICATION_PREFERENCES,
+  type NotificationPreferences,
   REMINDER_INTENSITY_OPTIONS,
   type ReminderIntensity,
 } from '@/services/localNotifications';
+import { isPushSupported } from '@/services/pushNotifications';
+import { registerPushForCurrentUser } from '@/services/pushSubscription';
 import { supabase } from '@/services/supabaseClient';
+import { saveUserSettings } from '@/services/userSettings';
 import { useAppStore } from '@/store/useAppStore';
 import type { DomainConfig, DomainType, IdentityAnchorId, Profile } from '@/types';
 import { IDENTITY_ANCHORS, PRODUCT_POSITIONING, getAvailableDomains } from '@/types';
@@ -39,6 +43,9 @@ export default function OnboardingFlow() {
     setTodayCheckIns,
     setNotificationPreferences,
     notificationPreferences,
+    profileImageDataUrl,
+    sharePrivacyPreferences,
+    themePreference,
   } = useAppStore();
 
   const availableDomains = getAvailableDomains(authUser?.email);
@@ -156,6 +163,29 @@ export default function OnboardingFlow() {
       webPushEnabled: false,
     });
     setOnboardingComplete(true);
+  };
+
+  const buildSelectedNotificationPreferences = (): NotificationPreferences => ({
+    ...notificationPreferences,
+    enabled: remindersEnabled,
+    intensity: reminderIntensity,
+    earlyProtocol,
+    webPushEnabled: false,
+  });
+
+  const prepareNotificationPreferences = async (): Promise<NotificationPreferences> => {
+    const selected = buildSelectedNotificationPreferences();
+    if (!selected.enabled || !isPushSupported()) return selected;
+
+    const registered = await registerPushForCurrentUser({
+      ...selected,
+      webPushEnabled: true,
+    });
+
+    return {
+      ...selected,
+      webPushEnabled: registered,
+    };
   };
 
   const handleCommit = async () => {
@@ -286,12 +316,15 @@ export default function OnboardingFlow() {
         })),
       );
       setTodayCheckIns({});
-      setNotificationPreferences({
-        enabled: remindersEnabled,
-        intensity: reminderIntensity,
-        earlyProtocol,
-        webPushEnabled: false,
+      const nextNotificationPreferences = await prepareNotificationPreferences();
+      await saveUserSettings({
+        userId: authUser.id,
+        profileImageDataUrl,
+        notificationPreferences: nextNotificationPreferences,
+        sharePrivacyPreferences,
+        themePreference,
       });
+      setNotificationPreferences(nextNotificationPreferences);
       setOnboardingComplete(true);
     } catch (err) {
       setSubmitError(err instanceof Error ? err.message : 'Setup failed. Please try again.');

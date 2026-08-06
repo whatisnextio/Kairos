@@ -81,6 +81,9 @@ describe('AI nudge availability', () => {
     expect(push).toContain('current_kairos_cycle_id');
     expect(push).toContain('activeCycleByUser');
     expect(push).toContain('nudge.cycle_id === activeCycleByUser.get(nudge.user_id)');
+    expect(push).toContain('function buildFallbackPushPayload');
+    expect(push).toContain('if (!activeCycleByUser.has(userId)) continue;');
+    expect(push).toContain('nudge ? buildPushPayload(nudge) : buildFallbackPushPayload()');
     expect(push).toContain('getLondonIsoDate');
   });
 });

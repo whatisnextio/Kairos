@@ -77,6 +77,14 @@ function buildPushPayload(nudge: DailyNudge): string {
   });
 }
 
+function buildFallbackPushPayload(): string {
+  return JSON.stringify({
+    title: "12K: quick check-in",
+    body: "Open 12K and choose one small action.",
+    url: "/#/",
+  });
+}
+
 function getLondonIsoDate(now = new Date()): string {
   const parts = new Intl.DateTimeFormat("en-GB", {
     timeZone: "Europe/London",
@@ -428,11 +436,10 @@ Deno.serve(async (req: Request) => {
     };
 
     if (!notificationsEnabled(row.preferences)) continue;
+    if (!activeCycleByUser.has(userId)) continue;
 
     const nudge = nudgeMap.get(userId);
-    if (!nudge) continue; // No nudge generated yet for this user today; skip
-
-    const message = buildPushPayload(nudge);
+    const message = nudge ? buildPushPayload(nudge) : buildFallbackPushPayload();
 
     try {
       const { ok, stale } = await sendPush(sub.endpoint, sub.keys, message);

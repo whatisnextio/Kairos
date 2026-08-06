@@ -79,6 +79,15 @@ describe('security hardening', () => {
     expect(adminMetricsPage).not.toContain("['liam@whatisnext.io']");
   });
 
+  it('keeps push delivery secrets in the Supabase deployment path', () => {
+    const workflow = readFileSync('.github/workflows/supabase-deploy.yml', 'utf8');
+
+    expect(workflow).toContain('VAPID_PUBLIC_KEY: ${{ secrets.VAPID_PUBLIC_KEY }}');
+    expect(workflow).toContain('VAPID_PRIVATE_KEY: ${{ secrets.VAPID_PRIVATE_KEY }}');
+    expect(workflow).toContain('VAPID_PUBLIC_KEY="$VAPID_PUBLIC_KEY"');
+    expect(workflow).toContain('VAPID_PRIVATE_KEY="$VAPID_PRIVATE_KEY"');
+  });
+
   it('documents the reviewed security surfaces and residual risks', () => {
     const review = readFileSync('docs/SECURITY_REVIEW.md', 'utf8');
     const functionNames = readdirSync(edgeFunctionRoot, { withFileTypes: true })

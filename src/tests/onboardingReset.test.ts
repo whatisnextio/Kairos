@@ -79,6 +79,10 @@ describe('onboarding and reset contract', () => {
     expect(source).not.toContain('mark it Done');
     expect(source).not.toContain('marked Done');
     expect(source).toContain('setNotificationPreferences');
+    expect(source).toContain('prepareNotificationPreferences');
+    expect(source).toContain('registerPushForCurrentUser');
+    expect(source).toContain('saveUserSettings({');
+    expect(source).toContain('webPushEnabled: registered');
     expect(source).not.toMatch(/cure|fixed guaranteed outcome|medical claim/i);
   });
 

@@ -47,5 +47,10 @@ describe('account settings persistence', () => {
     expect(edgeFunction).toContain('.from("user_settings")');
     expect(edgeFunction).toContain('notification_preferences: body.preferences');
     expect(edgeFunction).toContain('{ onConflict: "user_id" }');
+
+    const registration = readFileSync('src/services/pushSubscription.ts', 'utf8');
+    expect(registration).toContain('registerPushForCurrentUser');
+    expect(registration).toContain('syncPushPreferencesForCurrentUser');
+    expect(registration).toContain('save-push-subscription');
   });
 });

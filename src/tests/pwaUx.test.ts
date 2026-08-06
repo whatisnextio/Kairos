@@ -172,6 +172,8 @@ describe('PWA UX shell', () => {
     expect(you).toContain('failing silently');
     expect(you).toContain('Pause extra reminders');
     expect(you).toContain('Show action names in notifications');
+    expect(you).toContain('Turn on phone alerts');
+    expect(you).toContain('this phone still needs browser permission');
     expect(push).toContain("'Notification' in window");
     expect(push).toContain("'PushManager' in window");
   });
