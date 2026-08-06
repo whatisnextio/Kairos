@@ -144,9 +144,9 @@ export default function ProgressScreen() {
     const nextFocus = weeklyReviewDraft.trim();
     if (!nextFocus) return;
 
-    setWeeklyReviewStatus('Saving next-week focus...');
+    setWeeklyReviewStatus("Saving next week's action...");
     await updateDomainFocus(weeklyReview.recommendation.targetDomainType, nextFocus);
-    setWeeklyReviewStatus('Next-week focus saved.');
+    setWeeklyReviewStatus("Next week's action saved.");
   }
 
   return (
@@ -335,7 +335,7 @@ export default function ProgressScreen() {
                 disabled={!weeklyReviewDraft.trim()}
                 type="button"
               >
-                Save next-week focus
+                Save next week's action
               </Button>
               {weeklyReviewStatus && (
                 <p className="text-base-muted text-xs mt-2">{weeklyReviewStatus}</p>

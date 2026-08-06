@@ -148,7 +148,11 @@ describe('weekly mentor review', () => {
 
     expect(source).toContain('Weekly review due');
     expect(source).toContain('Open weekly review');
-    expect(source).toContain('Save next-week focus');
+    expect(source).toContain("Save next week's action");
+    expect(source).toContain("Saving next week's action...");
+    expect(source).toContain("Next week's action saved.");
+    expect(source).not.toContain('Save next-week focus');
+    expect(source).not.toContain('next-week focus');
     expect(source).toContain('updateDomainFocus(weeklyReview.recommendation.targetDomainType');
     expect(source).toContain('dayInCycle % 7 === 0');
   });

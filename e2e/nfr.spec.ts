@@ -185,6 +185,16 @@ test.describe('NFR smoke gates', () => {
     await expectNoHorizontalOverflow(page);
   });
 
+  test('weekly review uses plain action language', async ({ page }) => {
+    await loginAsLocalLiam(page);
+    await page.goto('/#/progress');
+    await page.getByRole('button', { name: /^review$/i }).click();
+
+    await expect(page.getByRole('button', { name: /save next week's action/i })).toBeVisible();
+    await expect(page.getByText(/next-week focus/i)).toHaveCount(0);
+    await expectNoHorizontalOverflow(page);
+  });
+
   test('core app screens are accessible on mobile', async ({ page }) => {
     await loginAsLocalLiam(page);
 
